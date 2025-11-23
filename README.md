@@ -12,8 +12,12 @@
 正因为使用了高维向量作为索引，其建索引的速度肉眼可见地慢；后续可能考虑使用多进程提速；或提供GPU加速；
 
 ## 使用
+### 1. 使用Python环境
 需要至少3.8以上的Python环境！
 1. 请先在release中下载好AI模型，在config文件夹下新建一个model文件夹，并将模型放到model文件夹下；[下载地址](https://github.com/Just-A-Freshman/VimgFind/releases/download/model/imagenet-b2-opti.onnx)
 3. 使用如下命令配置环境```pip install -r requirements.txt```
 4. 双击main.py即弹出UI界面
 
+### 2. Windows系统下
+打包程序下载地址：
+[Windows可执行程序下载](https://github.com/Just-A-Freshman/VimgFind/releases/download/model/default.zip)
