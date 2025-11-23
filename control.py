@@ -1,4 +1,3 @@
-
 from tkinter import messagebox, filedialog, ttk
 import tkinter as tk
 from pathlib import Path
@@ -96,11 +95,18 @@ class Control(WinGUI):
         answer = messagebox.askyesno("提示", "你确定要删除选中目录吗？")
         if not answer:
             return
+            
+        dirs_to_delete = []
         for item in selected:
             delete_search_dir = self.index_dataset_table.item(item, 'values')[1]
+            dirs_to_delete.append(delete_search_dir)
             self.setting.config["search_dir"].remove(delete_search_dir)
             self.index_dataset_table.delete(item)
-        # 移除索引的逻辑~
+
+        for dir_path in dirs_to_delete:
+            self.utils.remove_files_in_directory(dir_path)
+            
+        self.utils.remove_nonexists()
         self.setting.save_settings()
 
     @utils.Decorator.send_task

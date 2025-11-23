@@ -8,6 +8,9 @@ import subprocess
 import platform
 import functools
 import sys
+import concurrent.futures
+from typing import List, Tuple, Optional
+
 
 from core import EfficientIR
 
@@ -158,8 +161,8 @@ class Utils:
     def max_match_count(self) -> int:
         valid_index_count = 0
         name_index = self._get_name_index()
-        for _, metainfo in name_index:
-            if metainfo != NOTEXISTS:
+        for index_file, _ in name_index:
+            if index_file != NOTEXISTS:
                 valid_index_count += 1
             if valid_index_count > self.__max_match_count:
                 return self.__max_match_count
@@ -168,7 +171,7 @@ class Utils:
     def _get_changed_files_index(self, name_index) -> list[tuple[int, str]]:
         changed_files_index = []
         for idx, [index_file, old_metainfo] in enumerate(name_index):
-            if old_metainfo == NOTEXISTS:
+            if index_file == NOTEXISTS:
                 continue
             new_metainfo = FileOperation.get_metainfo(index_file)
             if old_metainfo != new_metainfo:
@@ -186,10 +189,10 @@ class Utils:
         if not new_files:
             return []
 
-        for idx, [_, old_metainfo] in enumerate(name_index):
+        for idx, [index_file, old_metainfo] in enumerate(name_index):
             new_file = new_files[-1]
             new_metainfo = FileOperation.get_metainfo(new_file)
-            if old_metainfo == NOTEXISTS:
+            if index_file == NOTEXISTS:
                 name_index[idx] = [new_file, new_metainfo]
                 new_files_index.append((idx, new_file))
                 new_files.pop()
@@ -223,25 +226,44 @@ class Utils:
             self.ir_engine.add_fv(fv, idx)
         self.remove_nonexists()
         self.ir_engine.save_index()
-
+ 
     def remove_nonexists(self) -> None:
         name_index = self._get_name_index()
         for idx in tqdm(range(len(name_index)), ascii=False, ncols=50):
             if Path(name_index[idx][0]).exists():
                 continue
             try:
-                # 对元数据标记为空
-                name_index[idx][1] = NOTEXISTS
+                # 对文件标记为空
+                name_index[idx][0] = NOTEXISTS
                 self.ir_engine.hnsw_index.mark_deleted(idx)
             except:
                 pass
         self._save_name_index(name_index)
 
-    def checkout(self, image_path, exists_index):
-        fv = self.ir_engine.get_fv(image_path)
-        sim, ids = self.ir_engine.match(fv, self.max_match_count)
-        return [(sim[i], exists_index[ids[i]][0]) for i in range(len(ids))]
+    def remove_files_in_directory(self, directory: str) -> None:
+        name_index = self._get_name_index()
+        directory_path = Path(directory).resolve()
+        updated = False
 
+        for idx in range(len(name_index)):
+            file_path = Path(name_index[idx][0]).resolve()
+            if file_path.is_relative_to(directory_path):
+                name_index[idx][0] = NOTEXISTS
+                try:
+                    self.ir_engine.hnsw_index.mark_deleted(idx)
+                except Exception:
+                    pass
+                updated = True
+        if updated:
+            self._save_name_index(name_index)
+
+    def checkout(self, image_path, exists_index):
+        max_match_count = self.max_match_count
+        if max_match_count == 0:
+            return []
+        fv = self.ir_engine.get_fv(image_path)
+        sim, ids = self.ir_engine.match(fv, max_match_count)
+        return [(sim[i], exists_index[ids[i]][0]) for i in range(len(ids))]
 
 
 class QueueStream:
