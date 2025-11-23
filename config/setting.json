@@ -5,9 +5,5 @@
     "model_path": "config/models/imagenet-b2-opti.onnx",
     "index_path": "config/index/index.bin",
     "name_index_path": "config/index/name_index.json",
-    "search_dir": [
-        "D:/Users/pbl/Desktop/测试",
-        "D:/原文件/2025-10-25",
-        "D:/PhotoDir/原文件/2025.10.02"
-    ]
+    "search_dir": []
 }
