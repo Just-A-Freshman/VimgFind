@@ -189,7 +189,7 @@ class Utils:
         if not new_files:
             return []
 
-        for idx, [index_file, old_metainfo] in enumerate(name_index):
+        for idx, [index_file, _] in enumerate(name_index):
             new_file = new_files[-1]
             new_metainfo = FileOperation.get_metainfo(new_file)
             if index_file == NOTEXISTS:
@@ -226,7 +226,7 @@ class Utils:
             self.ir_engine.add_fv(fv, idx)
         self.remove_nonexists()
         self.ir_engine.save_index()
- 
+
     def remove_nonexists(self) -> None:
         name_index = self._get_name_index()
         for idx in tqdm(range(len(name_index)), ascii=False, ncols=50):

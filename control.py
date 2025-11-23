@@ -1,4 +1,5 @@
 from tkinter import messagebox, filedialog, ttk
+from ttkbootstrap import Style
 import tkinter as tk
 from pathlib import Path
 import datetime
@@ -9,7 +10,7 @@ from setting import Setting
 import utils
 
 
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageOps
 
 
 
@@ -17,7 +18,7 @@ class Control(WinGUI):
     def __init__(self) -> None:
         self.setting = Setting()
         self.utils = utils.Utils(self.setting.config)
-        self.preview_cite = None
+        self.image_file = None
         super().__init__()
         self.__event_bind()
         self.__style_config()
@@ -39,9 +40,8 @@ class Control(WinGUI):
         self.refresh_index_dataset_table()
 
     def __style_config(self) -> None:
-        style = ttk.Style()
-        style.theme_use("clam")
-        style.configure("TLabel", foreground="#333", font=('微软雅黑', 12))
+        style = Style()
+        style.theme_use(self.setting.config["ui_style"])
 
     def add_search_dir(self) -> None:
         dir_path = filedialog.askdirectory(title="选择索引文件夹")
@@ -63,8 +63,11 @@ class Control(WinGUI):
         answer = messagebox.askyesno("提示", "重建索引极其耗时，\n您确定要进行重建吗？")
         if not answer:
             return
-        os.remove(self.setting.config["index_path"])
-        os.remove(self.setting.config["name_index_path"])
+        try:
+            os.remove(self.setting.config["index_path"])
+            os.remove(self.setting.config["name_index_path"])
+        except FileNotFoundError:
+            pass
         self.sync_index()
 
     def refresh_index_dataset_table(self) -> None:
@@ -119,10 +122,14 @@ class Control(WinGUI):
             return
         self.search_entry.delete(0, "end")
         self.search_entry.insert(0, image_path)
-
         self.result_table.delete(*self.result_table.get_children())
         name_index = self.utils._get_name_index()
         results = self.utils.checkout(image_path, name_index)
+
+        if not results:
+            messagebox.showinfo("提示", "索引中没有任何图片，\n也许你还没有更新索引？")
+            return
+        
         for similarity, image_path in results:
             image_path = Path(image_path)
             mtime = datetime.datetime.fromtimestamp(os.path.getmtime(image_path))
@@ -151,6 +158,7 @@ class Control(WinGUI):
         center_y = canvas_height // 2
 
         with Image.open(image_path) as img:
+            img: Image.Image = ImageOps.exif_transpose(img)
             width, height = img.size
             dpi = img.info.get('dpi')
             dpi = "" if dpi is None else f"{int(dpi[0])} dpi"

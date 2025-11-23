@@ -1,5 +1,5 @@
 from tkinter import Tk, Canvas
-from tkinter.ttk import Scrollbar, Notebook, Frame, Entry, Button, Treeview, Label
+from tkinter.ttk import Notebook, Frame, Entry, Button, Treeview, Label
 from setting import WinInfo
 
 
@@ -32,41 +32,6 @@ class WinGUI(Tk):
         self.resizable(False, False)
         self.iconbitmap(WinInfo.ico_path)
         
-    def scrollbar_autohide(self,vbar, hbar, widget) -> None:
-        def show():
-            if vbar: vbar.lift(widget)
-            if hbar: hbar.lift(widget)
-        def hide():
-            if vbar: vbar.lower(widget)
-            if hbar: hbar.lower(widget)
-        hide()
-        widget.bind("<Enter>", lambda e: show())
-        if vbar: vbar.bind("<Enter>", lambda e: show())
-        if vbar: vbar.bind("<Leave>", lambda e: hide())
-        if hbar: hbar.bind("<Enter>", lambda e: show())
-        if hbar: hbar.bind("<Leave>", lambda e: hide())
-        widget.bind("<Leave>", lambda e: hide())
-    
-    def v_scrollbar(self,vbar, widget, x, y, w, h, pw, ph) -> None:
-        widget.configure(yscrollcommand=vbar.set)
-        vbar.config(command=widget.yview)
-        vbar.place(relx=(w + x) / pw, rely=y / ph, relheight=h / ph, anchor='ne')
-
-    def h_scrollbar(self,hbar, widget, x, y, w, h, pw, ph):
-        widget.configure(xscrollcommand=hbar.set)
-        hbar.config(command=widget.xview)
-        hbar.place(relx=x / pw, rely=(y + h) / ph, relwidth=w / pw, anchor='sw')
-
-    def create_bar(self,master, widget,is_vbar,is_hbar, x, y, w, h, pw, ph) -> None:
-        vbar, hbar = None, None
-        if is_vbar:
-            vbar = Scrollbar(master)
-            self.v_scrollbar(vbar, widget, x, y, w, h, pw, ph)
-        if is_hbar:
-            hbar = Scrollbar(master, orient="horizontal")
-            self.h_scrollbar(hbar, widget, x, y, w, h, pw, ph)
-        self.scrollbar_autohide(vbar, hbar, widget)
-
     def __set_switch_tab(self,parent) -> Notebook:
         frame = Notebook(parent)
         self.search_tab = self.__set_tab_frame(frame)
@@ -88,11 +53,11 @@ class WinGUI(Tk):
     
     def __set_search_button(self,parent) -> Button:
         btn = Button(parent, text="搜索", takefocus=False,)
-        btn.place(relx=0.5041, rely=0.0192, relwidth=0.1222, relheight=0.0690)
+        btn.place(relx=0.51, rely=0.0192, relwidth=0.115, relheight=0.0690)
         return btn
     
     def __set_result_table(self,parent) -> Treeview:
-        columns = {"名称":162, "大小":100, "修改时间": 163 , "相似度":100}
+        columns = {"名称":162, "大小":100, "修改时间": 160 , "相似度":100}
         tk_table = Treeview(parent, show="headings", columns=list(columns), selectmode="browse")
         for text, width in columns.items():
             tk_table.heading(text, text=text, anchor='center')
@@ -103,7 +68,7 @@ class WinGUI(Tk):
     
     def __set_preview_frame(self,parent) -> Frame:
         frame = Frame(parent,)
-        frame.place(relx=0.6414, rely=0.0134, relwidth=0.3469, relheight=0.9157)
+        frame.place(relx=0.6414, rely=0.0134, relwidth=0.3469, relheight=0.9866)
         return frame
     
     def __set_preview_canvas(self,parent) -> Canvas:
@@ -122,7 +87,7 @@ class WinGUI(Tk):
         return label
     
     def __set_index_dataset_table(self,parent) -> Treeview:
-        columns = {" ": 32, "图库目录":630}
+        columns = {" ": 32, "图库目录":628}
         tk_table = Treeview(parent, show="headings", columns=list(columns),)
         for text, width in columns.items():
             tk_table.heading(text, text=text, anchor='center')
