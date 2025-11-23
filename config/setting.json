@@ -5,5 +5,6 @@
     "model_path": "config/models/imagenet-b2-opti.onnx",
     "index_path": "config/index/index.bin",
     "name_index_path": "config/index/name_index.json",
+    "ui_style": "superhero",
     "search_dir": []
 }
