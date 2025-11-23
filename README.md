@@ -11,7 +11,7 @@
 
 ## 使用
 需要至少3.8以上的Python环境！
-1. 请先在release中下载好AI模型，在config文件夹下新建一个model文件夹，并将模型放到model文件夹下；
-2. 使用如下命令配置环境```pip install -r requirements.txt```
-3. 双击main.py即弹出UI界面
+1. 请先在release中下载好AI模型，在config文件夹下新建一个model文件夹，并将模型放到model文件夹下；[下载地址](https://github.com/Just-A-Freshman/VimgFind/releases/download/model/imagenet-b2-opti.onnx)
+3. 使用如下命令配置环境```pip install -r requirements.txt```
+4. 双击main.py即弹出UI界面
 
