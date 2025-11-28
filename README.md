@@ -27,4 +27,4 @@
 
 ### 2. Windows系统下
 打包程序下载地址：
-[Windows可执行程序下载](https://github.com/Just-A-Freshman/VimgFind/releases/download/model/default.zip)
+[Windows可执行程序下载](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/default.zip)
