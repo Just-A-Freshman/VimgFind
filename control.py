@@ -10,7 +10,7 @@ from setting import Setting
 import utils
 
 
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 
 
 
@@ -18,11 +18,10 @@ class Control(WinGUI):
     def __init__(self) -> None:
         self.setting = Setting()
         self.utils = utils.Utils(self.setting.config)
-        self.image_file = None
         super().__init__()
         self.__event_bind()
         self.__style_config()
-        self.check_queue()
+        self.__check_queue()
 
     def __event_bind(self) -> None:
         self.add_index_button.config(command=self.add_search_dir)
@@ -30,18 +29,85 @@ class Control(WinGUI):
         self.delete_index_button.config(command=self.delete_search_dir)
         self.rebuild_index_button.config(command=self.rebuild_index)
         self.search_button.config(command=self.search_image)
-        self.result_table.bind("<<TreeviewSelect>>", lambda e: self.preview_image())
-        self.result_table.bind("<Button-3>", self.create_menu)
-        self.result_table.bind("<Double-Button-1>", self.double_click_open_file)
-        self.index_dataset_table.bind("<Double-Button-1>", self.double_click_open_file)
+        self.preview_canvas1.config(cursor="hand2")
+        self.preview_canvas2.config(cursor="hand2")
+        self.result_table.bind("<<TreeviewSelect>>", self.preview_found_image)
+        self.result_table.bind("<Button-3>", self.__create_menu)
+        self.preview_canvas1.bind("<Button-3>", self.__create_menu)
+        self.preview_canvas2.bind("<Button-3>", self.__create_menu)
+        self.result_table.bind("<Double-Button-1>", self.__double_click_open_file)
+        self.index_dataset_table.bind("<Double-Button-1>", self.__double_click_open_file)
+        self.preview_canvas1.bind("<Double-Button-1>", self.__double_click_open_file)
+        self.preview_canvas2.bind("<Double-Button-1>", self.__double_click_open_file)
         for column in self.result_table["columns"]:
-            self.result_table.heading(column, command=lambda column=column: self.sort_column(column, False))
+            self.result_table.heading(column, command=lambda column=column: self.__sort_column(column, False))
 
         self.refresh_index_dataset_table()
 
     def __style_config(self) -> None:
         style = Style()
         style.theme_use(self.setting.config["ui_style"])
+
+    def __get_widget_selected_file(self, event: tk.Event) -> Path:
+        selected_widget: tk.Widget = event.widget
+        selected_file = Path(".")
+        if isinstance(selected_widget, ttk.Treeview):
+            item = selected_widget.identify_row(event.y)
+            if item:
+                selected_widget.selection_set(item)
+                selected_file = Path(selected_widget.item(item, 'text'))
+        elif isinstance(selected_widget, tk.Canvas):
+            if hasattr(selected_widget, "image_path"):
+                selected_file = Path(getattr(selected_widget, "image_path"))
+        else:
+            pass
+        return selected_file
+
+    def __double_click_open_file(self, event: tk.Event) -> None:
+        selected_file = self.__get_widget_selected_file(event)
+        if not selected_file.exists():
+            messagebox.showinfo("提示", "文件不存在！")
+            return
+        elif selected_file == Path("."):
+            return
+        else:
+            utils.FileOperation.open_file(selected_file)
+
+    def __create_menu(self, event: tk.Event) -> None:
+        selected_file = self.__get_widget_selected_file(event)
+        menu_state = tk.ACTIVE if selected_file.exists() else tk.DISABLED
+        
+        menu_items = [
+            ("复制图片", lambda: utils.FileOperation.copy_file(selected_file)),
+            ("打开图片", lambda: utils.FileOperation.open_file(selected_file)),
+            ("打开文件夹", lambda: utils.FileOperation.open_file(selected_file, highlight=True))
+        ]
+        
+        menu = tk.Menu(tearoff=0)
+        for label, cmd in menu_items:
+            menu.add_command(label=label, command=cmd, compound=tk.LEFT, state=menu_state)
+        
+        menu.post(event.x_root, event.y_root)
+
+    def __sort_column(self, col: str, reverse: bool) -> None:
+        data = [(self.result_table.set(k, col), k) for k in self.result_table.get_children("")]
+        if col == "相似度" or col == "大小":
+            data.sort(key = lambda x: f"{x[0]:0>10}", reverse=reverse)
+        else:
+            data.sort(reverse=reverse)
+        for index, (_, k) in enumerate(data):
+            self.result_table.move(k, "", index)
+        self.result_table.heading(col, command=lambda: self.__sort_column(col, not reverse))
+
+    def __check_queue(self):
+        try:
+            while True:
+                message = utils.Decorator.progress_queue.get_nowait()
+                self.index_tip_label.config(text=message)
+        except Exception:
+            pass
+
+        self.after(300, self.__check_queue)
 
     def add_search_dir(self) -> None:
         dir_path = filedialog.askdirectory(title="选择索引文件夹")
@@ -78,15 +144,40 @@ class Control(WinGUI):
             if search_dir in all_show_dir:
                 continue
             index_id += 1
-            self.index_dataset_table.insert("", "end", values=(index_id, search_dir), text=str(search_dir))
+            self.index_dataset_table.insert("", tk.END, values=(index_id, search_dir), text=str(search_dir))
+
+    def __create_image(self, image_path: Path, canvas: tk.Canvas) -> int:
+        if not image_path.exists():
+            return -1
+        canvas_width = canvas.winfo_width() or 400
+        canvas_height = canvas.winfo_height() or 300
+        x = canvas_width // 2
+        y = canvas_height // 2
+        try:
+            with Image.open(image_path) as img:
+                img: Image.Image = ImageOps.exif_transpose(img)
+                img.thumbnail((canvas_width, canvas_height), Image.Resampling.BICUBIC)
+                image_file = ImageTk.PhotoImage(img)
+        except UnidentifiedImageError:
+            return -1
+        canvas.delete(tk.ALL)
+        setattr(canvas, "image", image_file)
+        setattr(canvas, "image_path", image_path)
+        return canvas.create_image(x, y, anchor=tk.CENTER, image=image_file)
 
     @utils.Decorator.send_task
     @utils.Decorator.redirect_output
     def sync_index(self) -> None:
+        index_button = (self.delete_index_button, self.update_index_button, self.rebuild_index_button)
+        for btn in index_button:
+            btn.config(state=tk.DISABLED)
+
         self.utils.remove_nonexists()
         for image_dir in self.setting.config['search_dir']:
             need_index = self.utils.index_target_dir(image_dir)
             self.utils.update_ir_index(need_index)
+        for btn in index_button:
+            btn.config(state=tk.ACTIVE)
         messagebox.showinfo("提示", "索引更新完成！")
 
     @utils.Decorator.send_task
@@ -117,20 +208,27 @@ class Control(WinGUI):
         if not self.setting.config["search_dir"]:
             messagebox.showinfo("提示", "请在设置选项卡索引至少一个目录！")
             return
+        
         image_path = filedialog.askopenfilename(filetypes=Setting.default_file_type)
         if not image_path:
             return
-        self.search_entry.delete(0, "end")
+        
+        self.search_entry.delete(0, tk.END)
         self.search_entry.insert(0, image_path)
+        image_id = self.__create_image(Path(image_path), self.preview_canvas1)
+        if image_id == -1:
+            messagebox.showwarning("警告", "无法识别该图片类型！")
+            return
+        
         self.result_table.delete(*self.result_table.get_children())
-        name_index = self.utils._get_name_index()
+        name_index = self.utils.get_name_index()
         results = self.utils.checkout(image_path, name_index)
 
         if not results:
             messagebox.showinfo("提示", "索引中没有任何图片，\n也许你还没有更新索引？")
             return
         
-        for similarity, image_path in results:
+        for iid, (similarity, image_path) in enumerate(results):
             image_path = Path(image_path)
             mtime = datetime.datetime.fromtimestamp(os.path.getmtime(image_path))
             content = [
@@ -139,89 +237,19 @@ class Control(WinGUI):
                 mtime.strftime("%Y-%m-%d %H:%M:%S"),
                 f"{similarity:.2f}%"
             ]
-            self.result_table.insert('', "end", values=content, text=str(image_path))
+            self.result_table.insert('', tk.END, values=content, text=str(image_path), iid=iid)
+            if iid == 0:
+                self.result_table.selection_set(iid)
 
     @utils.Decorator.send_task
-    def preview_image(self) -> None:
+    def preview_found_image(self, event: tk.Event) -> None:
         selection = self.result_table.selection()
         if not selection:
             return
         
         first_item = selection[0]
         image_path = self.result_table.item(first_item, 'text')
-        if not image_path or not Path(image_path).exists():
+        if not image_path:
             return
-
-        canvas_width = self.preview_canvas.winfo_width() or 400
-        canvas_height = self.preview_canvas.winfo_height() or 300
-        center_x = canvas_width // 2
-        center_y = canvas_height // 2
-
-        with Image.open(image_path) as img:
-            img: Image.Image = ImageOps.exif_transpose(img)
-            width, height = img.size
-            dpi = img.info.get('dpi')
-            dpi = "" if dpi is None else f"{int(dpi[0])} dpi"
-            self.preview_label.config(
-                text=f"大小信息\n{width}x{height}\t{dpi}\n\n文件路径\n{image_path}"
-            )
-            img.thumbnail((canvas_width, canvas_height), Image.Resampling.BICUBIC)
-            self.image_file = ImageTk.PhotoImage(img)
-            self.preview_canvas.delete("all")
-            self.preview_canvas.create_image(center_x, center_y, anchor=tk.CENTER, image=self.image_file)
-
-    def double_click_open_file(self, event) -> None:
-        table: ttk.Treeview = event.widget
-        if not isinstance(table, ttk.Treeview):
-            return
-        item = table.identify_row(event.y)
-        if not item:
-            return
-        selected_file = Path(table.item(item, 'text'))
-        utils.FileOperation.open_file(selected_file)
-
-    def create_menu(self, event) -> None:
-        item = self.result_table.identify_row(event.y)
-        if not item:
-            return
-        self.result_table.selection_set(item)
-        selected_file = Path(self.result_table.item(item, 'text'))
-          
-        menu = tk.Menu(tearoff=0)
-        menu.add_command(
-            label="复制图片", 
-            command=lambda: utils.FileOperation.copy_file(selected_file), 
-            compound='left'
-        )
-        menu.add_command(
-            label="打开图片", 
-            command=lambda: utils.FileOperation.open_file(selected_file), 
-            compound='left'
-        )
-        menu.add_command(
-            label="打开文件夹", 
-            command=lambda: utils.FileOperation.open_file(selected_file, highlight=True), 
-            compound='left'
-        )
-        menu.post(event.x_root, event.y_root)
-
-    def sort_column(self, col: str, reverse: bool) -> None:
-        data = [(self.result_table.set(k, col), k) for k in self.result_table.get_children("")]
-        if col == "相似度" or col == "大小":
-            data.sort(key = lambda x: f"{x[0]:0>10}", reverse=reverse)
-        else:
-            data.sort(reverse=reverse)
-        for index, (_, k) in enumerate(data):
-            self.result_table.move(k, "", index)
-        self.result_table.heading(col, command=lambda: self.sort_column(col, not reverse))
-
-    def check_queue(self):
-        try:
-            while True:
-                message = utils.Decorator.progress_queue.get_nowait()
-                self.index_tip_label.config(text=message)
-        except Exception:
-            pass
-
-        self.after(500, self.check_queue)
+        self.__create_image(Path(image_path), self.preview_canvas2)
 

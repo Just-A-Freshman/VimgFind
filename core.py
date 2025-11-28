@@ -1,12 +1,15 @@
-import os
+from pathlib import Path
+
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import hnswlib
 import onnxruntime
 
 
 class EfficientIR:
     def __init__(self, img_size, index_capacity, index_path, model_path):
+        self.MEAN_VEC = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+        self.STDDEV_VEC = np.array([0.229, 0.224, 0.225], dtype=np.float32)
         self.img_size = img_size
         self.index_capacity = index_capacity
         self.index_path = index_path
@@ -18,23 +21,13 @@ class EfficientIR:
 
     def img_preprocess(self, image_path):
         try:
-            img: Image.Image = Image.open(image_path).resize(
-                (self.img_size, self.img_size), Image.Resampling.BICUBIC
-            )
-            img = img.convert('RGB')
-        except OSError:
-            print(f'\nFile broken: {image_path}')
+            img: Image.Image = Image.open(image_path)
+            img = img.resize((self.img_size, self.img_size), Image.Resampling.BICUBIC).convert('RGB')
+        except (OSError, UnidentifiedImageError):
             return None
-        input_data = np.array(img).transpose(2, 0, 1)
-        # 预处理
-        img_data = input_data.astype('float32')
-        mean_vec = np.array([0.485, 0.456, 0.406])
-        stddev_vec = np.array([0.229, 0.224, 0.225])
-        norm_img_data = np.zeros(img_data.shape).astype('float32')
-        for i in range(img_data.shape[0]):
-            norm_img_data[i,:,:] = (img_data[i,:,:]/255 - mean_vec[i]) / stddev_vec[i]
-        # add batch channel
-        norm_img_data = norm_img_data.reshape(1, 3, self.img_size, self.img_size).astype('float32')
+        img_data = np.array(img).transpose(2, 0, 1).astype(np.float32)
+        norm_img_data = (img_data / 255.0 - self.MEAN_VEC[:, None, None]) / self.STDDEV_VEC[:, None, None]
+        norm_img_data = np.expand_dims(norm_img_data, axis=0)
         return norm_img_data
 
     def init_index(self):
@@ -42,7 +35,7 @@ class EfficientIR:
         return self.hnsw_index
 
     def load_index(self):
-        if os.path.exists(self.index_path):
+        if Path(self.index_path).exists():
             self.hnsw_index.load_index(self.index_path, max_elements=self.index_capacity)
         else:
             self.hnsw_index.init_index(max_elements=self.index_capacity, ef_construction=200, M=48)
@@ -71,3 +64,4 @@ class EfficientIR:
         query = self.hnsw_index.knn_query(fv, k=nc)
         similarity = (1-np.tanh(query[1][0]/3000))*100
         return similarity, query[0][0]
+

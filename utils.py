@@ -1,20 +1,22 @@
 
 from pathlib import Path
 from queue import Queue
-from threading import Thread
+from threading import Thread, Lock
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import json
 import subprocess
 import platform
 import functools
 import sys
-import concurrent.futures
-from typing import List, Tuple, Optional
+import time
+
 
 
 from core import EfficientIR
 
 from tqdm import tqdm
+import psutil
 
 
 NOTEXISTS = 'NOTEXISTS'
@@ -129,6 +131,7 @@ class Utils:
     def __init__(self, config) -> None:
         self.__max_match_count: int = config["max_match_count"]
         self.__name_index_path: Path = Path(config['name_index_path'])
+        self.__ir_lock = Lock()
         self.ir_engine = EfficientIR(
             config['img_size'],
             config['index_capacity'],
@@ -136,7 +139,7 @@ class Utils:
             config['model_path'],
         )
 
-    def _get_name_index(self) -> list[list]:
+    def get_name_index(self) -> list[list]:
         if not self.__name_index_path.exists():
             Path.mkdir(self.__name_index_path.parent, exist_ok=True)
             self._save_name_index([])
@@ -160,7 +163,7 @@ class Utils:
     @property
     def max_match_count(self) -> int:
         valid_index_count = 0
-        name_index = self._get_name_index()
+        name_index = self.get_name_index()
         for index_file, _ in name_index:
             if index_file != NOTEXISTS:
                 valid_index_count += 1
@@ -206,29 +209,62 @@ class Utils:
         return new_files_index
 
     def index_target_dir(self, target_dir) -> list[tuple[int, str]]:
-        name_index = self._get_name_index()
+        name_index = self.get_name_index()
         changed_files_index = self._get_changed_files_index(name_index)
         new_files_index = self._get_new_files_index(name_index, target_dir)
         self._save_name_index(name_index)
         return changed_files_index + new_files_index
 
-    def update_ir_index(self, need_index) -> None:
-        # hwnd作为图数据库，它的节点是不允许更新的；所谓的更新，其实是先删后增
-        for idx, fpath in tqdm(need_index, ascii=False, ncols=50):
-            fv = self.ir_engine.get_fv(fpath)
-            if fv is None:
-                continue               
+    def _process_item(self, item: tuple[int, str]) -> None:
+        idx, fpath = item
+        fv = self.ir_engine.get_fv(fpath)
+        if fv is None:
+            return
+        
+        with self.__ir_lock:
             try:
                 self.ir_engine.hnsw_index.mark_deleted(idx)
             except Exception:
                 pass
-
             self.ir_engine.add_fv(fv, idx)
+
+    def update_ir_index(
+        self, 
+        need_index: list[tuple[int, str]], 
+        memory_ratio: float = 0.5,
+        max_workers: int = 30
+    ) -> None:
+        # hwnd作为图数据库，它的节点是不允许更新的；所谓的更新，其实是先删后增
+        process = psutil.Process()
+        futures = []
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            pbar = tqdm(total=len(need_index), ascii=False, ncols=50)
+            for item in need_index:
+                while True:
+                    sys_mem = psutil.virtual_memory()
+                    available_mem = sys_mem.available  # 系统可用内存（字节，含缓存/交换）
+                    process_mem = process.memory_info().rss  # 当前进程已用内存（字节）
+                    if process_mem <= available_mem * memory_ratio:
+                        break
+                    time.sleep(0.1)
+
+                future = executor.submit(self._process_item, item)
+                futures.append(future)
+
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                finally:
+                    pbar.update(1)
+
+            pbar.close()
+
         self.remove_nonexists()
         self.ir_engine.save_index()
 
     def remove_nonexists(self) -> None:
-        name_index = self._get_name_index()
+        name_index = self.get_name_index()
         for idx in tqdm(range(len(name_index)), ascii=False, ncols=50):
             if Path(name_index[idx][0]).exists():
                 continue
@@ -241,7 +277,7 @@ class Utils:
         self._save_name_index(name_index)
 
     def remove_files_in_directory(self, directory: str) -> None:
-        name_index = self._get_name_index()
+        name_index = self.get_name_index()
         directory_path = Path(directory).resolve()
         updated = False
 
@@ -257,20 +293,24 @@ class Utils:
         if updated:
             self._save_name_index(name_index)
 
-    def checkout(self, image_path, exists_index):
+    def checkout(self, image_path, exists_index) -> list[tuple[int, str]]:
         max_match_count = self.max_match_count
         if max_match_count == 0:
             return []
+        
         fv = self.ir_engine.get_fv(image_path)
+        if fv is None:
+            return []
+        
         sim, ids = self.ir_engine.match(fv, max_match_count)
         return [(sim[i], exists_index[ids[i]][0]) for i in range(len(ids))]
 
 
 class QueueStream:
-    def __init__(self, queue: Queue):
+    def __init__(self, queue: Queue) -> None:
         self.queue = queue
 
-    def write(self, message):
+    def write(self, message) -> None:
         clean_message = message.replace('\r', '').replace('\n', '').strip()
         if clean_message:
             self.queue.put(clean_message)
