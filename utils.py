@@ -1,25 +1,17 @@
-
 from pathlib import Path
 from queue import Queue
-from threading import Thread, Lock
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Thread
+from typing import Iterator
 import os
-import json
 import subprocess
 import platform
 import functools
 import sys
-import time
 
 
-
-from core import EfficientIR
-
-from tqdm import tqdm
-import psutil
+from setting import Setting
 
 
-NOTEXISTS = 'NOTEXISTS'
 
 
 class Decorator(object):
@@ -58,14 +50,10 @@ class Decorator(object):
 
 class FileOperation(object):
     @staticmethod
-    def get_file_list(target_dir) -> list[str]:
-        accepted_exts = ['.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp']
-        file_path_list = []
-        for root, dirs, files in os.walk(target_dir):
-            for name in files:
-                if name.lower().endswith(tuple(accepted_exts)):
-                    file_path_list.append(os.path.join(root, name))
-        return file_path_list
+    def get_file_iterator(target_dir) -> Iterator[str]:
+        for file_path in Path(target_dir).rglob('*'):
+            if file_path.is_file() and file_path.suffix.lower() in Setting.accepted_exts:
+                yield str(file_path)
 
     @staticmethod
     def open_file(file_path: str | Path, highlight: bool = False) -> None:
@@ -121,189 +109,17 @@ class FileOperation(object):
         subprocess.Popen(args=args, startupinfo=startupinfo)
 
     @staticmethod
-    def get_metainfo(file_path) -> int:
+    def delete_file(file_path: str | Path) -> None:
+        try:
+            os.remove(file_path)
+        except (FileNotFoundError, OSError) as e:
+            print(e)
+
+    @staticmethod
+    def get_metainfo(file_path: str | Path) -> int:
         file_size = os.path.getsize(file_path)
         return file_size
 
-
-
-class Utils:
-    def __init__(self, config) -> None:
-        self.__max_match_count: int = config["max_match_count"]
-        self.__name_index_path: Path = Path(config['name_index_path'])
-        self.__ir_lock = Lock()
-        self.ir_engine = EfficientIR(
-            config['img_size'],
-            config['index_capacity'],
-            config['index_path'],
-            config['model_path'],
-        )
-
-    def get_name_index(self) -> list[list]:
-        if not self.__name_index_path.exists():
-            Path.mkdir(self.__name_index_path.parent, exist_ok=True)
-            self._save_name_index([])
-            return []
-        try:
-            with open(self.__name_index_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            print(f"警告：{self.__name_index_path} 文件损坏，将使用空索引")
-            self._save_name_index([])
-            return []
-        except Exception as e:
-            print(f"读取索引文件失败：{e}，将使用空索引")
-            self._save_name_index([])
-            return []
-
-    def _save_name_index(self, name_index: list) -> None:
-        with open(self.__name_index_path, 'w', encoding='utf-8') as wp:
-            json.dump(name_index, wp, ensure_ascii=False, indent=4)
-
-    @property
-    def max_match_count(self) -> int:
-        valid_index_count = 0
-        name_index = self.get_name_index()
-        for index_file, _ in name_index:
-            if index_file != NOTEXISTS:
-                valid_index_count += 1
-            if valid_index_count > self.__max_match_count:
-                return self.__max_match_count
-        return valid_index_count
-
-    def _get_changed_files_index(self, name_index) -> list[tuple[int, str]]:
-        changed_files_index = []
-        for idx, [index_file, old_metainfo] in enumerate(name_index):
-            if index_file == NOTEXISTS:
-                continue
-            new_metainfo = FileOperation.get_metainfo(index_file)
-            if old_metainfo != new_metainfo:
-                name_index[idx][1] = new_metainfo
-                changed_files_index.append((idx, index_file))
-        return changed_files_index
-    
-    def _get_new_files_index(self, name_index: list, target_dir: str) -> list[tuple[int, str]]:
-        new_files_index = []
-
-        current_files = FileOperation.get_file_list(target_dir)
-        existing_files = set(i[0] for i in name_index)
-        new_files = [f for f in current_files if f not in existing_files]
-
-        if not new_files:
-            return []
-
-        for idx, [index_file, _] in enumerate(name_index):
-            new_file = new_files[-1]
-            new_metainfo = FileOperation.get_metainfo(new_file)
-            if index_file == NOTEXISTS:
-                name_index[idx] = [new_file, new_metainfo]
-                new_files_index.append((idx, new_file))
-                new_files.pop()
-            if len(new_files) == 0:
-                break
-        for new_file in new_files:
-            metainfo = FileOperation.get_metainfo(new_file)
-            name_index.append([new_file, metainfo])
-            new_files_index.append([len(name_index) - 1, new_file])
-
-        return new_files_index
-
-    def index_target_dir(self, target_dir) -> list[tuple[int, str]]:
-        name_index = self.get_name_index()
-        changed_files_index = self._get_changed_files_index(name_index)
-        new_files_index = self._get_new_files_index(name_index, target_dir)
-        self._save_name_index(name_index)
-        return changed_files_index + new_files_index
-
-    def _process_item(self, item: tuple[int, str]) -> None:
-        idx, fpath = item
-        fv = self.ir_engine.get_fv(fpath)
-        if fv is None:
-            return
-        
-        with self.__ir_lock:
-            try:
-                self.ir_engine.hnsw_index.mark_deleted(idx)
-            except Exception:
-                pass
-            self.ir_engine.add_fv(fv, idx)
-
-    def update_ir_index(
-        self, 
-        need_index: list[tuple[int, str]], 
-        memory_ratio: float = 0.5,
-        max_workers: int = 30
-    ) -> None:
-        # hwnd作为图数据库，它的节点是不允许更新的；所谓的更新，其实是先删后增
-        process = psutil.Process()
-        futures = []
-
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            pbar = tqdm(total=len(need_index), ascii=False, ncols=50)
-            for item in need_index:
-                while True:
-                    sys_mem = psutil.virtual_memory()
-                    available_mem = sys_mem.available  # 系统可用内存（字节，含缓存/交换）
-                    process_mem = process.memory_info().rss  # 当前进程已用内存（字节）
-                    if process_mem <= available_mem * memory_ratio:
-                        break
-                    time.sleep(0.1)
-
-                future = executor.submit(self._process_item, item)
-                futures.append(future)
-
-            for future in as_completed(futures):
-                try:
-                    future.result()
-                finally:
-                    pbar.update(1)
-
-            pbar.close()
-
-        self.remove_nonexists()
-        self.ir_engine.save_index()
-
-    def remove_nonexists(self) -> None:
-        name_index = self.get_name_index()
-        for idx in tqdm(range(len(name_index)), ascii=False, ncols=50):
-            if Path(name_index[idx][0]).exists():
-                continue
-            try:
-                # 对文件标记为空
-                name_index[idx][0] = NOTEXISTS
-                self.ir_engine.hnsw_index.mark_deleted(idx)
-            except:
-                pass
-        self._save_name_index(name_index)
-
-    def remove_files_in_directory(self, directory: str) -> None:
-        name_index = self.get_name_index()
-        directory_path = Path(directory).resolve()
-        updated = False
-
-        for idx in range(len(name_index)):
-            file_path = Path(name_index[idx][0]).resolve()
-            if file_path.is_relative_to(directory_path):
-                name_index[idx][0] = NOTEXISTS
-                try:
-                    self.ir_engine.hnsw_index.mark_deleted(idx)
-                except Exception:
-                    pass
-                updated = True
-        if updated:
-            self._save_name_index(name_index)
-
-    def checkout(self, image_path, exists_index) -> list[tuple[int, str]]:
-        max_match_count = self.max_match_count
-        if max_match_count == 0:
-            return []
-        
-        fv = self.ir_engine.get_fv(image_path)
-        if fv is None:
-            return []
-        
-        sim, ids = self.ir_engine.match(fv, max_match_count)
-        return [(sim[i], exists_index[ids[i]][0]) for i in range(len(ids))]
 
 
 class QueueStream:

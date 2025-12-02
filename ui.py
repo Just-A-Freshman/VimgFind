@@ -49,7 +49,7 @@ class WinGUI(tk.Tk):
     
     def __set_search_entry(self, parent) -> Entry:
         ipt = Entry(parent, )
-        ipt.place(relx=0.0093, rely=0.0192, relwidth=0.4889, relheight=0.0690)
+        ipt.place(relx=0.01, rely=0.02, relwidth=0.49, relheight=0.0690)
         return ipt
     
     def __set_search_button(self, parent) -> Button:
@@ -65,12 +65,12 @@ class WinGUI(tk.Tk):
             tk_table.heading(text, text=text, anchor='center')
             tk_table.column(text, anchor='center', width=width, stretch=True)
         
-        tk_table.place(relx=0.0093, rely=0.1111, relwidth=0.6170, relheight=0.888)
+        tk_table.place(relx=0.01, rely=0.1111, relwidth=0.6170, relheight=0.888)
         return tk_table
 
     def __set_preview_frame1(self, parent) -> LabelFrame:
         frame = LabelFrame(parent, text="源图片")
-        frame.place(relx=0.63, rely=0.1, relwidth=0.365, relheight=0.4444)
+        frame.place(relx=0.63, rely=0.095, relwidth=0.365, relheight=0.4444)
         return frame
     
     def __set_preview_frame2(self, parent) -> LabelFrame:
