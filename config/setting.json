@@ -2,9 +2,11 @@
     "img_size": 260,
     "index_capacity": 1000000,
     "max_match_count": 30,
+    "auto_update_index": true,
     "model_path": "config/models/imagenet-b2-opti.onnx",
     "index_path": "config/index/index.bin",
     "name_index_path": "config/index/name_index.json",
     "ui_style": "superhero",
     "search_dir": []
 }
+
