@@ -190,7 +190,8 @@ class Control(WinGUI):
 
         self.search_tools.remove_nonexists()
         for image_dir in self.setting.get_config_property('search_dir'):
-            self.search_tools.update_ir_index(image_dir)
+            if Path(image_dir).exists():
+                self.search_tools.update_ir_index(image_dir)
         for btn in index_button:
             btn.config(state=tk.ACTIVE)
         if show_message:

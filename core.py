@@ -2,12 +2,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Iterator
 import json
-import time
 
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 from tqdm import tqdm
-import psutil
 import hnswlib
 import onnxruntime
 
@@ -26,7 +24,7 @@ class EfficientIR:
     SHIFT = -MEAN_VEC / STDDEV_VEC
     SCALE = 1.0 / (255.0 * STDDEV_VEC)
 
-    def __init__(self, img_size, index_capacity, index_path, model_path):
+    def __init__(self, img_size, index_capacity, index_path, model_path) -> None:
         self.__img_size = img_size
         self.__index_capacity = index_capacity
         self.__index_path = index_path
@@ -35,11 +33,11 @@ class EfficientIR:
         self.__init_model()
         Image.MAX_IMAGE_PIXELS = None
 
-    def __img_preprocess(self, image_path) -> None | np.ndarray:
+    def __img_preprocess(self, image_path: str | Path) -> None | np.ndarray:
         try:
             img: Image.Image = Image.open(image_path)
             img = img.resize((self.__img_size, self.__img_size), Image.Resampling.BICUBIC).convert('RGB')
-        except (OSError, UnidentifiedImageError):
+        except (OSError, FileNotFoundError, UnidentifiedImageError):
             return None
         img_data = np.asarray(img, dtype=np.float32).transpose(2, 0, 1)
         norm_img_data = img_data * self.SCALE + self.SHIFT
@@ -57,7 +55,7 @@ class EfficientIR:
         if Path(self.__index_path).exists():
             self.__hnsw_index.load_index(self.__index_path, max_elements=self.__index_capacity)
         else:
-            self.__hnsw_index.init_index(max_elements=self.__index_capacity, ef_construction=200, M=48)
+            self.__hnsw_index.init_index(max_elements=self.__index_capacity, M=48, ef_construction=200)
 
     def reset_index(self) -> None:
         FileOperation.delete_file(self.__index_path)
@@ -66,20 +64,21 @@ class EfficientIR:
     def save_index(self) -> None:
         self.__hnsw_index.save_index(self.__index_path)
 
-    def get_fv(self, image_path) -> np.ndarray | None:
+    def get_fv(self, image_path: str | Path) -> np.ndarray | None:
         norm_img_data = self.__img_preprocess(image_path)
         if norm_img_data is None:
             return None
         result = self.session.run([], {self.model_input: norm_img_data})
         return result[0][0]
 
-    def add_fv(self, fv, idx) -> None:
+    def add_fv(self, fv: np.ndarray, idx: int) -> None:
         self.__hnsw_index.add_items(fv, idx)
 
-    def delete_fv(self, idx) -> None:
+    def delete_fv(self, idx: int) -> None:
         try:
             self.__hnsw_index.mark_deleted(idx)
         except Exception as e:
+            print(f"删除了该索引{idx}")
             pass
 
     def match(self, fv, nc=5):
@@ -114,15 +113,13 @@ class NameIndexManager(object):
             Path.mkdir(self.__name_index_path.parent, exist_ok=True)
             self.__name_index = []
         finally:
-            self.__init_valid_index_count()
-
-    def __init_valid_index_count(self) -> None:
-        self.__valid_index_count = sum(
-            index_file != NameIndexManager.NOTEXISTS
-            for index_file, _ in self.__name_index
-        )
+            self.__valid_index_count = sum(
+                index_file != NameIndexManager.NOTEXISTS
+                for index_file, _ in self.__name_index
+            )
+            print(self.__valid_index_count)
     
-    def add_name(self, name: Path, idx: int) -> None:
+    def add_name(self, name: Path | str, idx: int) -> None:
         while idx > len(self.__name_index) - 1:
             self.__name_index.append([])
         self.__name_index[idx] = [str(name), FileOperation.get_metainfo(name)]
@@ -192,62 +189,37 @@ class SearchTool(object):
         new_files_index = self.__get_new_files_index(target_dir)
         return changed_files_index + new_files_index
     
-    def update_ir_index(
-        self,
-        image_dir,
-        memory_ratio: float = 0.5,
-        max_workers: int = 30
-    ) -> None:
-        
+    def update_ir_index(self, image_dir, max_workers: int = 20) -> None:
         def _process_item(item) -> tuple[int, str, np.ndarray | None]:
             idx, fpath = item
             fv = self.__ir_engine.get_fv(fpath)
             return idx, fpath, fv
-                
+      
         need_to_update = self.__index_target_dir(image_dir)
-        process = psutil.Process()
-        futures = []
-
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             pbar = tqdm(total=len(need_to_update), ascii=False, ncols=50)
-            for item in need_to_update:
-                while True:
-                    sys_mem = psutil.virtual_memory()
-                    available_mem = sys_mem.available
-                    process_mem = process.memory_info().rss
-                    if process_mem <= available_mem * memory_ratio:
-                        break
-                    time.sleep(0.1)
-                future = executor.submit(_process_item, item)
-                futures.append(future)
-
+            futures = [executor.submit(_process_item, item) for item in need_to_update]
             for future in as_completed(futures):
-                try:
-                    # 只在主线程中修改索引
-                    idx, fpath, fv = future.result()
-                    if fv is not None:
-                        self.__ir_engine.delete_fv(idx)
-                        self.__ir_engine.add_fv(fv, idx)
-                        self.__name_idx_mgr.add_name(fpath, idx)
-                finally:
-                    pbar.update(1)
+                idx, fpath, fv = future.result()
+                if fv is not None:
+                    self.__ir_engine.add_fv(fv, idx)
+                    self.__name_idx_mgr.add_name(fpath, idx)
+                pbar.update(1)
             pbar.close()
-                  
+          
     def remove_nonexists(self) -> None:
-        for idx in tqdm(range(len(self.__name_idx_mgr.name_index)), ascii=False, ncols=50):
-            if Path(self.__name_idx_mgr.name_index[idx][0]).exists():
+        for idx, (index_file, _) in tqdm(enumerate(self.__name_idx_mgr.name_index), ascii=False, ncols=50):
+            if Path(index_file).exists() or index_file == NameIndexManager.NOTEXISTS:
                 continue
             self.__name_idx_mgr.delete_name(idx)
             self.__ir_engine.delete_fv(idx)
 
     def remove_files_in_directory(self, directory: str) -> None:
         directory_path = Path(directory).resolve()
-
-        for idx in range(len(self.__name_idx_mgr.name_index)):
-            file_path_str = self.__name_idx_mgr.name_index[idx][0]
-            if file_path_str == NameIndexManager.NOTEXISTS:
+        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
+            if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            file_path = Path(file_path_str).resolve()
+            file_path = Path(index_file).resolve()
             if not file_path.is_relative_to(directory_path):
                 continue
             self.__name_idx_mgr.delete_name(idx)
@@ -255,6 +227,7 @@ class SearchTool(object):
 
     def checkout(self, image_path) -> Iterator[tuple[float, str]]:
         results_count = self.__name_idx_mgr.results_count
+        print(results_count)
         if results_count == 0:
             return
         
