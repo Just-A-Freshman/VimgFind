@@ -31,5 +31,5 @@
 - (2) [蓝奏云下载链接](https://pc.woozooo.com/mydisk.php)
 
 2、以图搜图+以文搜图版本
-- (1) [Release下载链接]()
+- (1) [Release下载链接](https://github.com/Just-A-Freshman/VimgFind/releases/download/new_program/v2.1.7z)
 - (2) [夸克网盘下载](https://pan.quark.cn/s/8e43e327686f)   提取码：bzPQ
