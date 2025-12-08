@@ -1,0 +1,32 @@
+{
+    "model_config": {
+        "image_size": 224,
+        "context_length": 52,
+        "mean": [
+            0.48145466,
+            0.4578275,
+            0.40821073
+        ],
+        "std": [
+            0.26862954,
+            0.26130258,
+            0.27577711
+        ],
+        "image_encoder_path": "config/clip_model/image_model.onnx",
+        "text_encoder_path": "config/clip_model/text_model.onnx",
+        "vocab_path": "config/clip_model/vocab.txt"
+    },
+    "index_config": {
+        "max_match_count": 30,
+        "vector_index_path": "config/index/vector_index.bin",
+        "name_index_path": "config/index/name_index.json",
+        "index_capacity": 1000000,
+        "index_dim": 512,
+        "search_dir": []
+    },
+    "function_config": {
+        "max_work_thread": 10,
+        "auto_update_index": true,
+        "ui_style": "superhero"
+    }
+}

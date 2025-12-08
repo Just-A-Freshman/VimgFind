@@ -60,7 +60,7 @@ class WinGUI(tk.Tk):
     def __set_result_table(self, parent) -> Treeview:
         columns = {"名称":162, "大小":100, "修改时间": 160 , "相似度":100}
         
-        tk_table = Treeview(parent, show="headings", columns=list(columns), selectmode="browse")
+        tk_table = Treeview(parent, show="headings", columns=list(columns))
         for text, width in columns.items():
             tk_table.heading(text, text=text, anchor='center')
             tk_table.column(text, anchor='center', width=width, stretch=True)
