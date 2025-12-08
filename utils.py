@@ -4,13 +4,34 @@ from threading import Thread
 from typing import Iterator
 import os
 import subprocess
-import platform
 import functools
+import ctypes
 import sys
+import io
+import uuid
+import shutil
+
+
+import win32clipboard
+import win32con
+from PIL import Image, UnidentifiedImageError
+from PIL.ImageFile import ImageFile
+from tqdm import tqdm
 
 
 from setting import Setting
 
+
+
+
+class DROPFILES(ctypes.Structure):
+    _fields_ = [
+        ("pFiles", ctypes.c_uint),
+        ("x", ctypes.c_long),
+        ("y", ctypes.c_long),
+        ("fNC", ctypes.c_int),
+        ("fWide", ctypes.c_int),
+    ]
 
 
 
@@ -51,7 +72,7 @@ class Decorator(object):
 class FileOperation(object):
     @staticmethod
     def get_file_iterator(target_dir) -> Iterator[str]:
-        for file_path in Path(target_dir).rglob('*'):
+        for file_path in tqdm(Path(target_dir).rglob('*'), desc="扫描文件"):
             if file_path.is_file() and file_path.suffix.lower() in Setting.accepted_exts:
                 yield str(file_path)
 
@@ -61,26 +82,12 @@ class FileOperation(object):
         if not file_path.exists():
             raise FileNotFoundError(f"文件不存在：{file_path}")
 
-        system = platform.system()
         command: list[str] = []
-
+        if highlight:
+            command = ["explorer.exe", "/select,", str(file_path)]
+        else:
+            command = ["explorer.exe", str(file_path)]
         try:
-            if system == "Windows":
-                if highlight:
-                    command = ["explorer.exe", "/select,", str(file_path)]
-                else:
-                    command = ["explorer.exe", str(file_path)]
-            elif system == "Darwin":  # macOS
-                if highlight:
-                    command = ["open", "-R", str(file_path)]
-                else:
-                    command = ["open", str(file_path)]
-            elif system == "Linux":
-                # 不支持高亮
-                command = ["xdg-open", str(file_path)]
-            else:
-                raise OSError(f"暂不支持的操作系统：{system}")
-
             result = subprocess.run(
                 command,
                 stdout=subprocess.PIPE,
@@ -90,7 +97,6 @@ class FileOperation(object):
             )
             if result.stderr:
                 print(f"[警告] 打开文件时产生提示：{result.stderr.strip()}")
-
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"打开文件失败：命令 {' '.join(command)} 执行错误，详情：{e.stderr}") from e
         except FileNotFoundError:
@@ -99,14 +105,36 @@ class FileOperation(object):
             raise RuntimeError(f"打开文件时发生未知错误：{str(e)}") from e
 
     @staticmethod
-    def copy_file(file_path: str | Path) -> None:
-        # 注意，这个复制方式仅限Windows平台
-        if not Path(file_path).exists():
+    def copy_files(*file_paths: str | Path) -> None:
+        valid_paths = []
+
+        for path in file_paths:
+            abs_path = Path(path).absolute()
+            if abs_path.exists() and abs_path.is_file():
+                valid_paths.append(str(abs_path).replace("/", "\\") + "\0")
+
+        if not valid_paths:
+            win32clipboard.OpenClipboard()
+            win32clipboard.EmptyClipboard()
+            win32clipboard.CloseClipboard()
             return
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        args = ['powershell', f'Get-Item {file_path} | Set-Clipboard']
-        subprocess.Popen(args=args, startupinfo=startupinfo)
+
+        paths_str = "".join(valid_paths) + "\0"
+        paths_wchar = paths_str.encode("utf-16le")
+        
+        df = DROPFILES()
+        df.pFiles = ctypes.sizeof(DROPFILES)
+        df.fWide = 1
+        buffer = ctypes.string_at(ctypes.pointer(df), ctypes.sizeof(df)) + paths_wchar
+
+        try:
+            win32clipboard.OpenClipboard()
+            win32clipboard.EmptyClipboard()
+            win32clipboard.SetClipboardData(win32clipboard.CF_HDROP, buffer)
+        except Exception as e:
+            raise RuntimeError(f"写入剪贴板失败：{e}")
+        finally:
+            win32clipboard.CloseClipboard()
 
     @staticmethod
     def delete_file(file_path: str | Path) -> None:
@@ -116,10 +144,74 @@ class FileOperation(object):
             print(e)
 
     @staticmethod
+    def clear_folder_all(target_dir: str | Path) -> None:
+        target_dir = Path(target_dir)
+        if not target_dir.exists() or not target_dir.is_dir():
+            return
+        
+        for item_path in target_dir.glob("*"):
+            try:
+                if item_path.is_file() or item_path.is_symlink():
+                    os.remove(item_path)
+                elif item_path.is_dir():
+                    shutil.rmtree(item_path)
+            except PermissionError:
+                print(f"权限不足，无法删除：{item_path}")
+            except FileNotFoundError:
+                print(f"内容已被删除，跳过：{item_path}")
+            except Exception as e:
+                print(f"删除失败 {item_path}：{str(e)}")
+
+    @staticmethod
     def get_metainfo(file_path: str | Path) -> int:
         file_size = os.path.getsize(file_path)
         return file_size
 
+    @staticmethod
+    def generate_unique_filename(target_dir: Path, suffix: str) -> Path:
+        random_name = uuid.uuid4().hex
+        if suffix and not suffix.startswith("."):
+            suffix = f".{suffix}"
+        filename = f"{random_name}{suffix}"
+        full_path = target_dir / filename
+        max_attempts = 10
+        attempts = 0
+        while full_path.exists() and attempts < max_attempts:
+            random_name = uuid.uuid4().hex
+            filename = f"{random_name}{suffix}"
+            full_path = target_dir / filename
+            attempts += 1
+        
+        if attempts >= max_attempts:
+            raise RuntimeError("超出最大尝试次数，无法生成唯一文件名")
+        
+        return full_path
+
+
+
+class ImageOperation(object):
+    @staticmethod
+    def get_clipboard_image_bytes() -> None | ImageFile:
+        try:
+            win32clipboard.OpenClipboard()
+            if not win32clipboard.IsClipboardFormatAvailable(win32con.CF_DIB):
+                return None
+            dib_data = win32clipboard.GetClipboardData(win32con.CF_DIB)
+            return Image.open(io.BytesIO(dib_data))
+        except Exception as e:
+            print(f"Windows读取图像数据失败：{e}")
+            return None
+        finally:
+            win32clipboard.CloseClipboard()
+
+    @staticmethod
+    def get_image_obj(image_path: str | Path) -> ImageFile | None:
+        try:
+            return Image.open(image_path)
+        except (UnidentifiedImageError, OSError, FileNotFoundError) as e:
+            print(e)
+            return
+        
 
 
 class QueueStream:
