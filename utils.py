@@ -10,6 +10,7 @@ import sys
 import io
 import uuid
 import shutil
+import logging
 
 
 import win32clipboard
@@ -51,14 +52,14 @@ class Decorator(object):
         return inner
 
     @staticmethod
-    def redirect_output(target):
-        def inner(*args, **kwargs):
+    def redirect_output(target):# -> Callable[..., None]:
+        def inner(*args, **kwargs) -> None:
             original_stdout = sys.stdout
             original_stderr = sys.stderr
             
             sys.stdout = QueueStream(Decorator.progress_queue)
             sys.stderr = QueueStream(Decorator.progress_queue)
-            
+ 
             try:
                 target(*args, **kwargs)
             finally:
@@ -96,13 +97,13 @@ class FileOperation(object):
                 check=False
             )
             if result.stderr:
-                print(f"[警告] 打开文件时产生提示：{result.stderr.strip()}")
+                logging.error(f"[警告] 打开文件时产生提示：{result.stderr.strip()}")
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"打开文件失败：命令 {' '.join(command)} 执行错误，详情：{e.stderr}") from e
+            logging.error(f"打开文件失败：命令 {' '.join(command)} 执行错误，详情：{e.stderr}")
         except FileNotFoundError:
-            raise RuntimeError(f"打开文件失败：未找到命令 {' '.join(command)}，请检查系统配置") from None
+            logging.error(f"打开文件失败：未找到命令 {' '.join(command)}，请检查系统配置")
         except Exception as e:
-            raise RuntimeError(f"打开文件时发生未知错误：{str(e)}") from e
+            logging.error(f"打开文件时发生未知错误：{str(e)}")
 
     @staticmethod
     def copy_files(*file_paths: str | Path) -> None:
@@ -132,7 +133,7 @@ class FileOperation(object):
             win32clipboard.EmptyClipboard()
             win32clipboard.SetClipboardData(win32clipboard.CF_HDROP, buffer)
         except Exception as e:
-            raise RuntimeError(f"写入剪贴板失败：{e}")
+            logging.error(f"写入剪贴板失败：{e}")
         finally:
             win32clipboard.CloseClipboard()
 
@@ -141,7 +142,7 @@ class FileOperation(object):
         try:
             os.remove(file_path)
         except (FileNotFoundError, OSError) as e:
-            print(e)
+            logging.error(f"删除文件失败: {file_path}")
 
     @staticmethod
     def clear_folder_all(target_dir: str | Path) -> None:
@@ -156,11 +157,11 @@ class FileOperation(object):
                 elif item_path.is_dir():
                     shutil.rmtree(item_path)
             except PermissionError:
-                print(f"权限不足，无法删除：{item_path}")
+                logging.error(f"权限不足，无法删除：{item_path}")
             except FileNotFoundError:
-                print(f"内容已被删除，跳过：{item_path}")
+                return
             except Exception as e:
-                print(f"删除失败 {item_path}：{str(e)}")
+                logging.error(f"删除失败 {item_path}：{str(e)}")
 
     @staticmethod
     def get_metainfo(file_path: str | Path) -> int:
@@ -199,7 +200,6 @@ class ImageOperation(object):
             dib_data = win32clipboard.GetClipboardData(win32con.CF_DIB)
             return Image.open(io.BytesIO(dib_data))
         except Exception as e:
-            print(f"Windows读取图像数据失败：{e}")
             return None
         finally:
             win32clipboard.CloseClipboard()
@@ -209,16 +209,14 @@ class ImageOperation(object):
         try:
             return Image.open(image_path)
         except (UnidentifiedImageError, OSError, FileNotFoundError) as e:
-            print(e)
             return
         
-
 
 class QueueStream:
     def __init__(self, queue: Queue) -> None:
         self.queue = queue
 
-    def write(self, message) -> None:
+    def write(self, message: str) -> None:
         clean_message = message.replace('\r', '').replace('\n', '').strip()
         if clean_message:
             self.queue.put(clean_message)

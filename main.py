@@ -1,10 +1,8 @@
-from control import Control
+from control import CoreControl
 
 
 if __name__ == "__main__":
-    win = Control()
+    win = CoreControl()
     win.mainloop()
-
-
 
 

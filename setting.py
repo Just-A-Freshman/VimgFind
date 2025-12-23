@@ -1,12 +1,15 @@
 import json
 from pathlib import Path
 from typing import Literal
+import logging
+
 
 
 
 class Setting(object):
-    config_path = Path("./config/setting.json")
+    config_path = Path("./config/settingv1.2.json")
     temp_image_path = Path("./temp")
+    error_log = Path("./config/error.log")
     accepted_exts = {'.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp'}
     schedule_save_interval = 600000
 
@@ -15,25 +18,28 @@ class Setting(object):
         self.__config: dict = self.load_settings()
         self.__default_config: dict = {
             "model_config": {
-                "image_size": 224,
-                "context_length": 52,
-                "mean": [0.48145466, 0.4578275, 0.40821073],
-                "std": [0.26862954, 0.26130258, 0.27577711],
-                "image_encoder_path": "config/clip_model/image_model.onnx",
-                "text_encoder_path": "config/clip_model/text_model.onnx",
-                "vocab_path": "config/clip_model/vocab.txt"
+                "image_size": 0,
+                "context_length": 0,
+                "mean": [],
+                "std": [],
+                "normalization": False,
+                "image_encoder_path": "NOTEXISTS",
+                "text_encoder_path": "NOTEXISTS",
+                "vocab_path": "NOTEXISTS"
             },
             "index_config": {
                 "max_match_count": 30,
-                "vector_index_path": "config/index/vector_index.bin",
-                "name_index_path": "config/index/name_index.json",
+                "vector_index_path": "",
+                "name_index_path": "",
                 "index_capacity": 1000000,
+                "index_space": "cosine",
                 "index_dim": 512,
                 "search_dir": []
             },
             "function_config": {
                 "max_work_thread": 10,
                 "auto_update_index": True,
+                "preview_mode": "detail_info",
                 "ui_style": "superhero"
             }
         }
@@ -43,7 +49,7 @@ class Setting(object):
         custom_config: dict = self.__config[config_type_key]
         default_config: dict = self.__default_config[config_type_key]
         if key not in default_config:
-            raise KeyError(
+            logging.error(
                 f"""Key '{key}' does not exist in {config_type_key}
                 (valid keys: {list(default_config.keys())})"""
             )
@@ -66,10 +72,24 @@ class Setting(object):
             json.dump(self.__config, f, indent=4, ensure_ascii=False)
 
 
+
+
 class WinInfo(object):
     ico_path = "config/favicon.ico"
-    title = "VimgFind"
+    title = "以图搜图"
     width = 860
     height = 530
 
+
+
+
+
+
+
+logging.basicConfig(
+    filename=Setting.error_log,
+    level=logging.ERROR,
+    format='%(asctime)s -  %(message)s',
+    encoding='utf-8'
+)
 
