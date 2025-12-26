@@ -1,13 +1,14 @@
 import json
 from pathlib import Path
 from typing import Literal
+from datetime import datetime
 import logging
 
 
 
 
 class Setting(object):
-    config_path = Path("./config/settingv1.2.json")
+    config_path = Path("./config/setting.json")
     temp_image_path = Path("./temp")
     error_log = Path("./config/error.log")
     accepted_exts = {'.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp'}
@@ -44,6 +45,20 @@ class Setting(object):
             }
         }
 
+    def clean_log(self) -> None:
+        with open(Setting.error_log, "r", encoding="utf-8") as f:
+            content = f.readlines()
+        with open(Setting.error_log, "w", encoding="utf-8") as f:
+            for line in content:
+                try:
+                    target_date = datetime.fromisoformat(line.split(" ")[0])
+                    current_date = datetime.today()
+                    delta_days = (target_date - current_date).days
+                    if delta_days < 7:
+                        f.write(line)
+                except (ValueError, IndexError):
+                    pass
+
     def get_config(self, config_type: Literal["model", "index", "function"], key: str):
         config_type_key = f"{config_type}_config"
         custom_config: dict = self.__config[config_type_key]
@@ -59,7 +74,10 @@ class Setting(object):
             self.__config[config_type_key][key] = default_config[key]
         
         return self.__config[config_type_key][key]
-            
+
+    def modity_config(self, config_type: Literal["model", "index", "function"], key: str, content) -> None:
+        self.__config[f"{config_type}_config"][key] = content
+
     def load_settings(self):
         try:
             with open(Setting.config_path, encoding="utf-8") as f:

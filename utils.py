@@ -2,6 +2,7 @@ from pathlib import Path
 from queue import Queue
 from threading import Thread
 from typing import Iterator
+from collections import namedtuple
 import os
 import subprocess
 import functools
@@ -13,9 +14,10 @@ import shutil
 import logging
 
 
+
 import win32clipboard
 import win32con
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
 from tqdm import tqdm
 
@@ -145,6 +147,39 @@ class FileOperation(object):
             logging.error(f"删除文件失败: {file_path}")
 
     @staticmethod
+    def save_as(src_path: str | Path, dest_path: str | Path, is_binary: bool = False, inplace=True) -> bool:
+        src_path = Path(src_path)
+        dest_path = Path(dest_path)
+        if not src_path.exists() or src_path.is_dir() or dest_path.is_dir():
+            return False
+        read_mode = 'rb' if is_binary else 'r',
+        write_mode = 'wb' if is_binary else 'w'
+        encoding = None if is_binary else 'utf-8'
+        try:
+            with open(src_path, mode=read_mode[0], encoding=encoding) as f_src:
+                content = f_src.read()
+            dest_path = dest_path if inplace else FileOperation.generate_copy_name(dest_path)
+            with open(dest_path, mode=write_mode, encoding=encoding) as f_dst:
+                f_dst.write(content)
+            return True
+        except (PermissionError, OSError):
+            return False
+
+    @staticmethod
+    def save_to_dir(*src_paths: str | Path, dest_dir: str | Path, is_binary: bool = False, inplace=True) -> bool:
+        if dest_dir == "":
+            return False
+        dest_dir = Path(dest_dir)
+        if not dest_dir.exists() or not dest_dir.is_dir():
+            return False
+        all_finish = True
+        for src_path in src_paths:
+            ans = FileOperation.save_as(src_path, dest_dir / Path(src_path).name, is_binary, inplace)
+            if not ans:
+                all_finish = False
+        return all_finish
+
+    @staticmethod
     def clear_folder_all(target_dir: str | Path) -> None:
         target_dir = Path(target_dir)
         if not target_dir.exists() or not target_dir.is_dir():
@@ -188,6 +223,15 @@ class FileOperation(object):
         
         return full_path
 
+    @staticmethod
+    def generate_copy_name(file_path: str | Path) -> Path:
+        orig_file_path = curr_file_path = Path(file_path)
+        suffix_num = 2
+        while curr_file_path.exists():
+            curr_file_path = orig_file_path.with_stem(f"{orig_file_path.stem} ({suffix_num})")
+            suffix_num += 1
+        return curr_file_path
+
 
 
 class ImageOperation(object):
@@ -211,6 +255,57 @@ class ImageOperation(object):
         except (UnidentifiedImageError, OSError, FileNotFoundError) as e:
             return
         
+
+
+LoaderResult = namedtuple("LoaderResult", ["item", "size", "photo", "error"])
+class ImageLoader:
+    def __init__(self) -> None:
+        self.task_queue: Queue[tuple] = Queue()
+        self.result_queue: Queue[LoaderResult] = Queue()
+        self.threads: list[Thread] = []
+        self.running = True
+        
+        for _ in range(10):
+            thread = Thread(target=self._worker, daemon=True)
+            thread.start()
+            self.threads.append(thread)
+    
+    def add_task(self, item: str, image_path: str, thumbnail_size: int) -> None:
+        self.task_queue.put((item, image_path, thumbnail_size))
+    
+    def _worker(self) -> None:
+        while self.running:
+            try:
+                item, image_path, thumbnail_size = self.task_queue.get(timeout=1)
+            except Exception:
+                continue
+            img = ImageOperation.get_image_obj(image_path)
+            if img is None:
+                self.result_queue.put(LoaderResult(
+                    item=item, size=(0, 0), photo=None, error="加载图片失败！"
+            ))
+            else:
+                width, height = img.size
+                img.thumbnail((thumbnail_size, thumbnail_size))
+                img =  ImageOps.exif_transpose(img)
+                self.result_queue.put(LoaderResult(
+                    item=item, size=(width, height), photo=ImageTk.PhotoImage(img), error=""
+                ))
+            self.task_queue.task_done()
+                
+    def get_results(self) -> list[LoaderResult]:
+        results = []
+        while not self.result_queue.empty():
+            results.append(self.result_queue.get_nowait())
+        return results
+    
+    def stop(self):
+        self.running = False
+        for thread in self.threads:
+            thread.join(timeout=1)
+
+
+
 
 class QueueStream:
     def __init__(self, queue: Queue) -> None:

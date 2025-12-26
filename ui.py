@@ -1,11 +1,10 @@
-from ttkbootstrap import (
-    Notebook, Frame, Entry, Button, Treeview, 
-    Label, LabelFrame, LINK
+from ttkbootstrap import Button, LINK
+from tkinter.ttk import (
+    Notebook, Frame, Entry, Treeview, Label, LabelFrame
 )
 import tkinter as tk
-
 from setting import WinInfo
-from widgets import BasicPreviewView, PreviewCanvasView
+from widgets import BasicImagePreviewView, PreviewCanvasView
 
 
 
@@ -80,8 +79,8 @@ class WinGUI(tk.Tk):
         preview_results_frame.place(relx=0.01, rely=0.1111, relwidth=0.6170, relheight=0.888)
         return preview_results_frame
     
-    def __set_preview_view(self, parent) -> BasicPreviewView:
-        basic_preview_view = BasicPreviewView()
+    def __set_preview_view(self, parent) -> BasicImagePreviewView:
+        basic_preview_view = BasicImagePreviewView(parent)
         return basic_preview_view
 
     def __set_preview_frame1(self, parent) -> LabelFrame:

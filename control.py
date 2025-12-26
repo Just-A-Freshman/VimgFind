@@ -1,13 +1,14 @@
-from tkinter import messagebox, filedialog, ttk
-from ttkbootstrap import Style
+from tkinter import messagebox, filedialog
+from ttkbootstrap import Style, Treeview
 import tkinter as tk
 from pathlib import Path
 from typing import Literal
+import datetime
 import os
 
 
 from ui import WinGUI
-from widgets import BasicPreviewView, DetailListView, ThumbnailGridView, PreviewResult
+from widgets import BasicImagePreviewView, DetailListView, ThumbnailGridView
 from setting import Setting
 from utils import FileOperation, ImageOperation, Decorator
 from search_tools import SearchTool
@@ -25,13 +26,12 @@ class CoreControl(WinGUI):
         self.search_tools = SearchTool(self.setting)
         self.index_table_control = IndexTableControl(self)
         self.search_control = SearchControl(self)
-        self.search_control.set_preview_mode("medium_ico")
+        Style().theme_use(self.setting.get_config("function", "ui_style"))
+        self.search_control.set_preview_mode(self.setting.get_config("function", "preview_mode"))
         self.bind_event()
-        self.__style_config()
         self.__env_init()
         self.__check_queue()
 
-    @Decorator.send_task
     def bind_event(self) -> None:
         # 搜索控制项
         self.search_by_browser_btn.config(command=self.search_control.search_by_browser)
@@ -61,24 +61,25 @@ class CoreControl(WinGUI):
         if self.setting.get_config("function", "auto_update_index"):
             self.index_table_control.sync_index(show_message=False)
 
-    def __style_config(self) -> None:
-        style = Style()
-        style.theme_use(self.setting.get_config("function", "ui_style"))
-
-    def __get_item_files(self, event: tk.Event, preview_widget: BasicPreviewView) -> list[Path]:
+    def __get_item_files(self, event: tk.Event, preview_widget: BasicImagePreviewView) -> list[Path]:
         selected_items = preview_widget.selection()
         current_selected_item = preview_widget.identify_item(event)
         if current_selected_item == "":
             return []
         if current_selected_item in selected_items:
-            return [Path(item) for item in selected_items]
+            return [Path(preview_widget.item(item)[0]) for item in selected_items]
         preview_widget.selection_set(current_selected_item)
-        return [Path(current_selected_item)]
+        return [Path(preview_widget.item(current_selected_item)[0])]
     
     def double_click_open_file(self, event: tk.Event, widget = None) -> None:
         if widget is None:
             widget = event.widget
-        selected_files = self.__get_item_files(event, widget)
+        if isinstance(widget, BasicImagePreviewView):
+            selected_files = self.__get_item_files(event, widget)
+        elif isinstance(widget, Treeview):
+            selected_files = [Path(widget.item(widget.selection()[0], "values")[1])]
+        else:
+            selected_files = []
         if len(selected_files) == 0:
             return
         selected_file = selected_files[0]
@@ -89,22 +90,37 @@ class CoreControl(WinGUI):
             FileOperation.open_file(selected_file)
 
     def create_right_click_menu(self, event: tk.Event, widget = None) -> None:
+        def get_filename(src_path: Path) -> str:
+            return filedialog.asksaveasfilename(
+                defaultextension=src_path.suffix,
+                filetypes=[("图片文件", f"*{src_path.suffix}")],
+                initialfile=src_path.stem
+            )
         if widget is None:
             widget = event.widget
         selected_files = self.__get_item_files(event, widget)
         if len(selected_files) == 0:
             return
         exists_files: list[Path] = [f for f in selected_files if f.exists()]
-        menu_items = [
-            ("复制图片", lambda: FileOperation.copy_files(*selected_files), len(exists_files) > 0),
-            ("打开图片", lambda: FileOperation.open_file(selected_files[0]), len(exists_files) == 1),
-            ("打开文件夹", lambda: FileOperation.open_file(selected_files[0], True), len(exists_files) == 1)
+        if len(selected_files) == 1 and len(exists_files) == 1:
+            file_path = selected_files[0]
+            menu_items = [
+                ("复制图片", lambda: FileOperation.copy_files(file_path)),
+                ("图片另存为", lambda: FileOperation.save_as(file_path, get_filename(file_path), True)),
+                ("打开图片", lambda: FileOperation.open_file(file_path)),
+                ("打开文件夹", lambda: FileOperation.open_file(file_path, True))
         ]
+        elif len(selected_files) > 1 and len(exists_files) != 0:
+            menu_items = [
+                ("复制图片", lambda: FileOperation.copy_files(*selected_files)),
+                ("图片另存为", lambda: FileOperation.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
+            ]
+        else:
+            menu_items = ["选中文件不存在", lambda: None]
         
         menu = tk.Menu(tearoff=0)
-        for label, cmd, active in menu_items:
-            state = tk.ACTIVE if active else tk.DISABLED
-            menu.add_command(label=label, command=cmd, compound=tk.LEFT, state=state)
+        for label, cmd in menu_items:
+            menu.add_command(label=label, command=cmd, compound=tk.LEFT)
         
         menu.post(event.x_root, event.y_root)
         menu.bind("<Unmap>", lambda e: menu.destroy())
@@ -113,9 +129,8 @@ class CoreControl(WinGUI):
         btn = self.more_options_button
         menu = tk.Menu(tearoff=0)
         menu_items = [
-            ("大图标", lambda: None),
-            ("中等图标", lambda: self.search_control.set_preview_mode("medium_ico")),
-            ("详情", lambda: self.search_control.set_preview_mode("detail_info")), 
+            ("详情模式", lambda: self.search_control.set_preview_mode("detail_info")),
+            ("图标模式", lambda: self.search_control.set_preview_mode("medium_ico")),
             ("/", lambda: None),
         ] + [
             (f"结果数: {num}", lambda num=num: self.search_control.set_preview_result_count(num))
@@ -146,8 +161,11 @@ class CoreControl(WinGUI):
     
     def destroy(self) -> None:
         try:
+            self.setting.save_settings()
+            self.setting.clean_log()
             self.search_tools.destroy()
             self.search_tools.save_index()
+
             FileOperation.clear_folder_all(Setting.temp_image_path)
         except Exception as e:
             messagebox.showerror("错误", str(e))
@@ -174,7 +192,7 @@ class SearchControl(object):
         if image_obj is None:
             messagebox.showwarning("警告", "无法识别该图片类型！")
             return
-        self.core_control.preview_canvas1.insert_result(image_path, image_obj)
+        self.core_control.preview_canvas1.append_result(image_path, image_obj)
         self.__search_image(image_obj)
 
     @Decorator.send_task
@@ -193,7 +211,7 @@ class SearchControl(object):
             if not image_path.parent.exists():
                 Path.mkdir(Setting.temp_image_path, exist_ok=True)
             image_obj.save(image_path)
-        self.core_control.preview_canvas1.insert_result(str(image_path), image_obj)
+        self.core_control.preview_canvas1.append_result(str(image_path), image_obj)
         self.__search_image(image_obj)
 
     @Decorator.send_task
@@ -215,16 +233,32 @@ class SearchControl(object):
             else:
                 messagebox.showerror("错误", "图片搜索失败！\n请查看config/error.log获取错误信息！")
             return
-
-        item = self.core_control.preview_view.insert_result(PreviewResult(*first_result))
-        self.core_control.preview_view.selection_set(item)
+        first_img_path, first_sim = first_result
+        if Path(first_img_path).exists():
+            first_extra_info = self.generate_extra_info(first_img_path, first_sim)
+            item = self.core_control.preview_view.append_result(first_img_path, *first_extra_info)
+            self.core_control.preview_view.selection_set(item)
         
         for img_path, similarity in results:
-            self.core_control.preview_view.insert_result(PreviewResult(img_path, similarity))
+            if Path(img_path).exists():
+                extra_info = self.generate_extra_info(img_path, similarity)
+                self.core_control.preview_view.append_result(img_path, *extra_info)
+
+    def generate_extra_info(self, image_path: str, similarity: float) -> tuple:
+        image_path_obj = Path(image_path)
+        mtime = datetime.datetime.fromtimestamp(os.path.getmtime(image_path))
+        content = (
+            f"{os.path.getsize(image_path_obj) / 1024 / 1024:.2f}MB",
+            mtime.strftime("%Y-%m-%d %H:%M:%S"),
+            f"{similarity:.2f}%"
+        )
+        return content
 
     def set_preview_result_count(self, max_match_count: int) -> None:
+        self.core_control.setting.modity_config("index", "max_match_count", min(max_match_count, 100))
         self.core_control.search_tools.update_max_match_count(max_match_count)
-        image_path = self.core_control.preview_canvas1.selection()[0]
+        item = self.core_control.preview_canvas1.selection()[0]
+        image_path = self.core_control.preview_canvas1.item(item)[0]
         if image_path != "" and Path(image_path).exists():
             self.search_by_browser(image_path)
         elif self.core_control.search_entry.get().strip():
@@ -232,18 +266,22 @@ class SearchControl(object):
         else:
             pass
 
-    def set_preview_mode(self, mode: Literal["detail_info", "medium_ico", "huge_ico"]) -> None:
+    def set_preview_mode(self, mode: Literal["detail_info", "medium_ico"]) -> None:
         results = self.core_control.preview_view.get_show_results()
         current_selection = self.core_control.preview_view.selection()
-        print(len(current_selection))
         self.core_control.preview_view.destroy()
+        self.core_control.setting.modity_config("function", "preview_mode", mode)
         if mode == "detail_info":
-            self.core_control.preview_view = DetailListView(self.core_control.preview_container)
-        elif mode == "medium_ico" or mode == "huge_ico":
+            self.core_control.preview_view = DetailListView(
+                self.core_control.preview_container,
+                {"大小": 100, "修改时间": 160, "相似度": 100}
+            )
+        else:
             self.core_control.preview_view = ThumbnailGridView(self.core_control.preview_container)
         self.core_control.bind_event()
         for result in results:
-            self.core_control.preview_view.insert_result(result)
+            img_path, *extra_info = result
+            self.core_control.preview_view.append_result(img_path, *extra_info)
         self.core_control.preview_view.selection_set(*current_selection)
 
     @Decorator.send_task
@@ -253,9 +291,10 @@ class SearchControl(object):
             return
         
         first_item = selection[0]
-        image_obj = ImageOperation.get_image_obj(first_item)
+        image_path = self.core_control.preview_view.item(first_item)[0]
+        image_obj = ImageOperation.get_image_obj(image_path)
         if image_obj is not None:
-            self.core_control.preview_canvas2.insert_result(first_item, image_obj)
+            self.core_control.preview_canvas2.append_result(image_path, image_obj)
 
 
 
@@ -277,8 +316,8 @@ class IndexTableControl(object):
                 messagebox.showinfo("提示", "该文件夹是在索引目录的子文件夹！")
                 continue
         search_dirs.append(dir_path)
-        self.core_control.setting.save_settings()
         self.refresh_index_dataset_table()
+        self.core_control.setting.save_settings()
 
     def rebuild_index(self) -> None:
         answer = messagebox.askyesno("提示", "重建索引极其耗时，\n您确定要进行重建吗？")
@@ -298,7 +337,7 @@ class IndexTableControl(object):
             if search_dir in all_show_dir:
                 continue
             index_id += 1
-            self.core_control.index_dataset_table.insert("", tk.END, values=(index_id, search_dir), iid=search_dir)
+            self.core_control.index_dataset_table.insert("", tk.END, values=(index_id, search_dir))
 
     @Decorator.send_task
     @Decorator.redirect_output
@@ -339,7 +378,6 @@ class IndexTableControl(object):
 
         for dir_path in dirs_to_delete:
             self.core_control.search_tools.remove_files_in_directory(dir_path)
-            
         self.core_control.search_tools.remove_nonexists()
         self.core_control.setting.save_settings()
 
