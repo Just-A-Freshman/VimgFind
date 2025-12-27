@@ -13,10 +13,10 @@
 [https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/default.zip](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/default.zip)
 
 ## 最新版本
-这是一个占位符，等待完善
+
 
 ## 历史版本
-1. v1.0
-2. v1.1
-3. v2.1
+1. 2.1版本：[https://github.com/Just-A-Freshman/VimgFind/releases/download/new_program/v2.1.7z](https://github.com/Just-A-Freshman/VimgFind/releases/download/new_program/v2.1.7z)
+2. 1.2版本：[https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.2.7z](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.2.7z)
+3. 1.1版本：[https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.1.zip](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.1.zip)
 
