@@ -1,4 +1,5 @@
-from ttkbootstrap import Button, LINK
+from ttkbootstrap import Button
+from ttkbootstrap.constants import LINK
 from tkinter.ttk import (
     Notebook, Frame, Entry, Treeview, Label, LabelFrame
 )

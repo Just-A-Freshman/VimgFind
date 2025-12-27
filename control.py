@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Literal
 import datetime
 import os
-import time
 
 
 from ui import WinGUI
