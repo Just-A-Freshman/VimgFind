@@ -78,22 +78,6 @@ class Setting(object):
     def modity_config(self, config_type: Literal["model", "index", "function"], key: str, content) -> None:
         self.__config[f"{config_type}_config"][key] = content
 
-    def get_config(self, config_type: Literal["model", "index", "function"], key: str):
-        config_type_key = f"{config_type}_config"
-        custom_config: dict = self.__config[config_type_key]
-        default_config: dict = self.__default_config[config_type_key]
-        if key not in default_config:
-            raise KeyError(
-                f"""Key '{key}' does not exist in {config_type_key}
-                (valid keys: {list(default_config.keys())})"""
-            )
-        if key not in custom_config:
-            self.__config[config_type_key][key] = default_config[key]
-        elif type(custom_config[key]) != type(default_config[key]):
-            self.__config[config_type_key][key] = default_config[key]
-        
-        return self.__config[config_type_key][key]
-            
     def load_settings(self):
         try:
             with open(Setting.config_path, encoding="utf-8") as f:

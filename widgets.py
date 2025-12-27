@@ -296,10 +296,10 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._scroll_timer = self.parent.after(100, delayed_resize)
 
     def _on_canvas_click(self, event: tk.Event) -> None:
+        self._canvas.focus_set()
         clicked_item = self.identify_item(event)
         if not clicked_item:
             return
-        
         state = int(event.state)
         ctrl_pressed = (state & 0x0004) != 0
         shift_pressed = (state & 0x0001) != 0
@@ -360,7 +360,7 @@ class ThumbnailGridView(BasicImagePreviewView):
             if item not in self._results:
                 continue
             self._visible_image_data[item] = {'photo': result.photo, 'size': result.size, 'error': result.error}
-            if item in self._visible_items:
+            if item in self._canvas_items:
                 self._create_canvas_item(item)
         self.parent.after(100, self._check_results)
 

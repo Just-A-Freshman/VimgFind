@@ -176,6 +176,8 @@ class CoreControl(WinGUI):
 
 class SearchControl(object):
     def __init__(self, core_control: CoreControl) -> None:
+        self._last_search_content: Image.Image | str = ""
+        self._is_finish_search: bool = True
         self.core_control = core_control
   
     @Decorator.send_task
@@ -211,7 +213,8 @@ class SearchControl(object):
             if not image_path.parent.exists():
                 Path.mkdir(Setting.temp_image_path, exist_ok=True)
             image_obj.save(image_path)
-        self.core_control.preview_canvas1.append_result(str(image_path), image_obj)
+
+        self.core_control.preview_canvas1.append_result(str(image_path.absolute()), image_obj)
         self.__search_image(image_obj)
 
     @Decorator.send_task
@@ -223,6 +226,10 @@ class SearchControl(object):
         if not self.core_control.setting.get_config("index", "search_dir"):
             messagebox.showinfo("提示", "请在设置选项卡索引至少一个目录！")
             return
+        if not self._is_finish_search:
+            return
+        self._is_finish_search = False
+        self._last_search_content = input_data
         self.core_control.preview_view.clear_results()
         results = self.core_control.search_tools.checkout(input_data)
         try:
@@ -243,6 +250,7 @@ class SearchControl(object):
             if Path(img_path).exists():
                 extra_info = self.generate_extra_info(img_path, similarity)
                 self.core_control.preview_view.append_result(img_path, *extra_info)
+        self._is_finish_search = True
 
     def generate_extra_info(self, image_path: str, similarity: float) -> tuple:
         image_path_obj = Path(image_path)
@@ -257,14 +265,8 @@ class SearchControl(object):
     def set_preview_result_count(self, max_match_count: int) -> None:
         self.core_control.setting.modity_config("index", "max_match_count", min(max_match_count, 100))
         self.core_control.search_tools.update_max_match_count(max_match_count)
-        item = self.core_control.preview_canvas1.selection()[0]
-        image_path = self.core_control.preview_canvas1.item(item)[0]
-        if image_path != "" and Path(image_path).exists():
-            self.search_by_browser(image_path)
-        elif self.core_control.search_entry.get().strip():
-            self.search_image_by_text()
-        else:
-            pass
+        if self._last_search_content:
+            self.__search_image(self._last_search_content)
 
     def set_preview_mode(self, mode: Literal["detail_info", "medium_ico"]) -> None:
         results = self.core_control.preview_view.get_show_results()
