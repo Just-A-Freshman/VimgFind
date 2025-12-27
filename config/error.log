@@ -1,0 +1,4 @@
+2025-12-27 00:39:56,789 -  加载ONNX模型失败 NOTEXISTS: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from NOTEXISTS failed:Load model NOTEXISTS failed. File doesn't exist
+2025-12-27 00:40:18,459 -  加载ONNX模型失败 NOTEXISTS: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from NOTEXISTS failed:Load model NOTEXISTS failed. File doesn't exist
+2025-12-27 10:49:41,486 -  加载ONNX模型失败 config\models\image_model.onnx: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from config\models\image_model.onnx failed:Load model config\models\image_model.onnx failed. File doesn't exist
+2025-12-27 10:49:41,490 -  加载ONNX模型失败 config\models\text_model.onnx: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from config\models\text_model.onnx failed:Load model config\models\text_model.onnx failed. File doesn't exist
