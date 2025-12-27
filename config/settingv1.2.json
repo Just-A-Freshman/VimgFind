@@ -1,0 +1,39 @@
+{
+    "model_config": {
+        "image_size": 260,
+        "mean": [
+            0.485,
+            0.456,
+            0.406
+        ],
+        "std": [
+            0.229,
+            0.224,
+            0.225
+        ],
+        "normalization": false,
+        "image_encoder_path": "config/models/imagenet-b2-opti.onnx",
+        "text_encoder_path": "NOTEXISTS",
+        "vocab_path": "NOTEXISTS",
+        "context_length": 52
+    },
+    "index_config": {
+        "max_match_count": 30,
+        "vector_index_path": "config/index/vector_index.bin",
+        "name_index_path": "config/index/name_index.json",
+        "index_capacity": 1000000,
+        "index_dim": 1000,
+        "index_space": "l2",
+        "search_dir": [
+            "D:/PhotoDir/AI婚纱照/1",
+            "D:/PhotoDir/高清模特图像/高清模特图像268张",
+            "D:/PhotoDir/高清模特图像/高清模特图像300张"
+        ]
+    },
+    "function_config": {
+        "max_work_thread": 20,
+        "preview_mode": "detail_info",
+        "auto_update_index": true,
+        "ui_style": "superhero"
+    }
+}
