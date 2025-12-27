@@ -6,14 +6,17 @@
 - v2.2(最新) 恢复了剪切板搜图，增加了【图标预览模式】，【返回结果数控制】，右键菜单【另存为】功能
 <img width="610" height="419" alt="image" src="https://github.com/user-attachments/assets/07aad6f0-351b-48b6-9518-de4792331032" />
 
-## 增量更新指南
-打包可用的新版本程序和v1.1、v2.1的实际差别只在于以下三点：
-1. 可执行的exe程序，可直接使用新版本的exe程序覆盖
-2. ./config/setting.json配置文件，如果要手动更新最好对照着新版的setting.json文件进行修改，避免覆盖了原有配置信息
-3. 文件目录，./config文件夹下的【model】或【clip_model】文件夹需要更名为【models】
-
-增量更新包下载地址（只包含新版本的可执行程序以及settingv1.1.json、settingv2.1.json）
-这是一个占位符，等待上传
 
 ## 下载地址
+### 增量更新版本
+如果已经下载过v1.1版本或v2.1版本，建议下载增量更新包，并按照里面的“更新指南.pdf”进行操作：
+[https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/default.zip](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/default.zip)
+
+## 最新版本
 这是一个占位符，等待完善
+
+## 历史版本
+1. v1.0
+2. v1.1
+3. v2.1
+
