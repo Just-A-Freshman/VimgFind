@@ -6,14 +6,16 @@
 - v2.2(最新) 恢复了剪切板搜图，增加了【图标预览模式】，【返回结果数控制】，右键菜单【另存为】功能
 <img width="610" height="419" alt="image" src="https://github.com/user-attachments/assets/07aad6f0-351b-48b6-9518-de4792331032" />
 
+## 源码部署
+pass
 
 ## 下载地址
 ### 增量更新版本
 如果已经下载过v1.1版本或v2.1版本，建议下载增量更新包，并按照里面的“更新指南.pdf”进行操作：
 [https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/default.zip](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/default.zip)
 
-## 最新版本
-
+## 最新版本(2.2)
+(https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/v2.2.7z)[https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/v2.2.7z]
 
 ## 历史版本
 1. 2.1版本：[https://github.com/Just-A-Freshman/VimgFind/releases/download/new_program/v2.1.7z](https://github.com/Just-A-Freshman/VimgFind/releases/download/new_program/v2.1.7z)
