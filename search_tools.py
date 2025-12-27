@@ -1,18 +1,19 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Thread, Event
 from pathlib import Path
-from typing import Iterator, Literal
-from collections import defaultdict
+from typing import Iterator
 from re import split
+import logging
 
 
 import numpy as np
 from tqdm import tqdm
+from PIL import Image
 
 from setting import Setting
 from IndexManager import VectorIndexManager, NameIndexManager
 from encoder import MultiModalEncoder
-from utils import FileOperation
+from utils import FileOperation, ImageOperation
 
 
 
@@ -27,6 +28,7 @@ class SearchTool(object):
         self.__vec_idx_mgr = VectorIndexManager(
             setting.get_config("index", "vector_index_path"),
             setting.get_config("index", "index_capacity"),
+            setting.get_config("index", "index_space"),
             setting.get_config("index", "index_dim")
         )
         self.__name_idx_mgr = NameIndexManager(
@@ -39,6 +41,7 @@ class SearchTool(object):
             Path(setting.get_config("model", "text_encoder_path")),
             np.array(setting.get_config("model", "mean"), dtype=np.float32)[:, None, None],
             np.array(setting.get_config("model", "std"), dtype=np.float32)[:, None, None],
+            setting.get_config("model", "normalization"),
             setting.get_config("model", "image_size"),
             setting.get_config("model", "context_length")
         )
@@ -78,11 +81,18 @@ class SearchTool(object):
         new_files_index = self.__get_new_files_index(target_dir)
         return changed_files_index + new_files_index
     
+    def update_max_match_count(self, max_match_count: int) -> None:
+        self.__name_idx_mgr.update_max_match_count(max_match_count)
+        
     def update_ir_index(self, image_dir, max_workers: int = 10) -> None:
         def _process_item(item) -> tuple[int, str, np.ndarray | None]:
             self.__search_event.wait()
             idx, fpath = item
-            fv = self.__multimodal_encoder.encode_image(fpath)
+            image_obj = ImageOperation.get_image_obj(fpath)
+            if image_obj is None:
+                fv = None
+            else:
+                fv = self.__multimodal_encoder.encode_image(image_obj)
             return idx, fpath, fv
         self.__init_event.wait()
         need_to_update = self.__index_target_dir(image_dir)
@@ -117,13 +127,13 @@ class SearchTool(object):
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
 
-    def checkout(self, content: str, input_type: Literal["image", "text"]) -> Iterator[tuple[float, str]]:
+    def checkout(self, content: Image.Image | str) -> Iterator[tuple[str, float]]:
         self.__init_event.wait()
         results_count = self.__name_idx_mgr.results_count
-        if results_count == 0 or content.strip() == "":
+        if results_count == 0 or (isinstance(content, str) and content == ""):
             return
         self.stop_update_index()
-        if input_type == "image":
+        if isinstance(content, Image.Image):
             fv = self.__multimodal_encoder.encode_image(content)
         else:
             keywords = split(r"[\s|,]", content)
@@ -132,14 +142,17 @@ class SearchTool(object):
             else:
                 combine_sentence = content
             fv = self.__multimodal_encoder.encode_text(combine_sentence)
-            
+
         if fv is None:
             return
         sim_list, ids_list = self.__vec_idx_mgr.match(fv, results_count)
-        for similarity, img_id in zip(sim_list, ids_list):
-            yield (similarity, self.__name_idx_mgr.name_index[img_id][0])
+        for img_id, similarity in zip(ids_list, sim_list):
+            yield (self.__name_idx_mgr.name_index[img_id][0], similarity)
         self.continue_update_index()
 
+    def is_empty_index(self) -> bool:
+        return self.__name_idx_mgr.results_count == 0
+    
     def reset_index(self) -> None:
         self.__init_event.wait()
         self.__vec_idx_mgr.reset_index()
@@ -150,12 +163,16 @@ class SearchTool(object):
         try:
             self.__vec_idx_mgr.save_index()
             self.__name_idx_mgr.save_index()
-        except Exception:
-            pass
+        except Exception as e:
+            logging.error(f"保存索引时出现错误: {e}")
 
     def stop_update_index(self) -> None:
         self.__search_event.clear()
 
     def continue_update_index(self) -> None:
         self.__search_event.set()
+
+    def destroy(self) -> None:
+        self.__search_event.set()
+        self.__init_event.set()
 
