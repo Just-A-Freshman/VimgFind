@@ -11,11 +11,10 @@ import os
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 
 
-from utils import ImageLoader
+from utils import ImageLoader, FileOperation
 
 
-
-ThemeColor = namedtuple("ThemeColor", ["fg", "bg", "selectbg", "selectfg", "border"])
+ThemeColor = namedtuple("ThemeColor", ["primary", "secondary", "fg", "bg", "selectbg", "selectfg", "inputbg"])
 class BasicImagePreviewView(object):
     def __init__(self, parent: tk.Widget) -> None:
         self.parent = parent
@@ -39,6 +38,9 @@ class BasicImagePreviewView(object):
         color_attr = [getattr(style_color, field) for field in ThemeColor._fields]
         return ThemeColor(*color_attr)
 
+    def _change_theme(self) -> None:
+        self.theme_color = self._get_theme_colors()
+
     def append_result(self, image_path: str, *extra_info: str | int) -> str:
         return self._generate_unique_path_item(image_path)
 
@@ -58,7 +60,7 @@ class BasicImagePreviewView(object):
         return ""
 
     def item(self, item) -> tuple:
-        return self._results[item] 
+        return self._results[item]
 
     def bind(self, sequence: str, func: Callable) -> None:
         pass
@@ -90,11 +92,14 @@ class PreviewCanvasView(BasicImagePreviewView):
             imgtk = ImageTk.PhotoImage(img)
         except UnidentifiedImageError:
             return ""
-        self._results.clear()
-        self._canvas.delete(tk.ALL)
+        self.clear_results()
         self._results[iid] = (image_path, imgtk)
         self._canvas.create_image(x, y, anchor=tk.CENTER, image=imgtk)
         return iid
+    
+    def clear_results(self) -> None:
+        self._results.clear()
+        self._canvas.delete(tk.ALL)
 
     def selection(self) -> tuple[str, ...]:
         return tuple(self._results.keys())
@@ -114,30 +119,25 @@ class PreviewCanvasView(BasicImagePreviewView):
 class DetailListView(BasicImagePreviewView):
     def __init__(self, parent: tk.Widget, extra_columns: dict[str, int]) -> None:
         super().__init__(parent)
-        self.__treeview = self._create_treeview(extra_columns)
-        self.__scrollbar = self._create_scrollbar()
-        self._bind_event()
-
-    def _create_treeview(self, extra_columns: dict[str, int]) -> Treeview:
+        self._create_treeview(extra_columns)
+        self.parent.after(50, self._create_scrollbar)
+        
+    def _create_treeview(self, extra_columns: dict[str, int]):
         columns = {"名称":160, **extra_columns}
-        result_table = Treeview(self.parent, show="headings", columns=list(columns))
+        self.__treeview = Treeview(self.parent, show="headings", columns=list(columns))
         for text, width in columns.items():
-            result_table.heading(text, text=text, anchor='center')
-            result_table.column(text, anchor='center', width=width, stretch=True)
-        result_table.place(relx=0, rely=0, relwidth=1, relheight=1)
-        return result_table
-
-    def _create_scrollbar(self) -> Scrollbar:
-        v_scrollbar = Scrollbar(self.__treeview, orient="vertical", cursor="hand2")
-        v_scrollbar.pack(fill="both", side="right", padx=2, pady=2)
-        return v_scrollbar
-    
-    def _bind_event(self) -> None:
-        self.__scrollbar.config(command=self.__treeview.yview)
-        self.__treeview.configure(yscrollcommand=self.__scrollbar.set)
+            self.__treeview.heading(text, text=text, anchor='center')
+            self.__treeview.column(text, anchor='center', width=width, stretch=True)
+        self.__treeview.place(relx=0, rely=0, relwidth=1, relheight=1)
         for column in self.__treeview["columns"]:
             self.__treeview.heading(column, command=lambda column=column: self._sort_column(column, False))
 
+    def _create_scrollbar(self) -> None:
+        self.__scrollbar = Scrollbar(self.__treeview, orient="vertical", cursor="hand2")
+        self.__scrollbar.pack(fill="both", side="right", padx=2, pady=2)
+        self.__scrollbar.config(command=self.__treeview.yview)
+        self.__treeview.configure(yscrollcommand=self.__scrollbar.set)
+    
     def _get_colomn_idx(self, column) -> int:
         columns: tuple = self.__treeview["columns"]
         return columns.index(column)
@@ -194,11 +194,12 @@ class ThumbnailGridView(BasicImagePreviewView):
     THUMBNAIL_SIZE: int = 110
     GRID_SPACING: int = 10
     MARGIN: int = 10
+    FONT_HEGIHT: int = 33
     PRELOAD_ROWS: int = 3
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent)
-        self._canvas = self._create_canvas()
-        self._scrollbar = self._create_scrollbar()
+        self._create_canvas()
+        self.parent.after(50, self._create_scrollbar)
 
         self._image_loader = ImageLoader()
         self._loading_tasks: set[str] = set()
@@ -220,33 +221,58 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._bind_event()
         self._check_results()
     
-    def _create_canvas(self) -> tk.Canvas:
-        canvas = tk.Canvas(self.parent, highlightthickness=2)
-        canvas.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
+    def _create_canvas(self) -> None:
+        self._canvas = tk.Canvas(self.parent)
+        self._canvas.grid(row=0, column=0, sticky=tk.NSEW, )
         self.parent.grid_rowconfigure(0, weight=1)
         self.parent.grid_columnconfigure(0, weight=1)
-        canvas.configure(takefocus=1)
-        canvas.focus_set()
-        return canvas
-
-    def _create_scrollbar(self) -> Scrollbar:
-        v_scrollbar = Scrollbar(self._canvas, orient=tk.VERTICAL, cursor="hand2")
-        v_scrollbar.grid(row=0, column=1, sticky=tk.NS, padx=2, pady=2)
         self._canvas.grid_columnconfigure(0, weight=1)
         self._canvas.grid_rowconfigure(0, weight=1)
-        return v_scrollbar
+        self._canvas.configure(
+            takefocus=1,
+            background=self.theme_color.inputbg,
+            highlightthickness=1, 
+            highlightbackground=self.theme_color.primary,
+            highlightcolor=self.theme_color.primary
+        )
+        self._canvas.update()
 
-    def _bind_event(self) -> None:
-        self._scrollbar.config(command=self._on_scrollbar_scroll)
+    def _create_scrollbar(self) -> None:
+        # 滚动条的初始化格外慢，因此将将其独立出来
+        self._scrollbar = Scrollbar(self._canvas, orient=tk.VERTICAL, cursor="hand2")
+        self._scrollbar.grid(row=0, column=1, sticky=tk.NS, padx=2, pady=2)
         self._canvas.configure(yscrollcommand=self._scrollbar.set)
+        self._scrollbar.config(command=self._on_scrollbar_scroll)
         self._scrollbar.bind("<B1-Motion>", self._on_scrollbar_drag)
         self._scrollbar.bind("<ButtonRelease-1>", self._on_scrollbar_release)
+
+    def _bind_event(self) -> None:
         self._canvas.bind("<Configure>", self._on_canvas_configure)
         self._canvas.bind("<MouseWheel>", self._on_mousewheel)
         self._canvas.bind("<Button-4>", self._on_mousewheel)  # Linux
         self._canvas.bind("<Button-5>", self._on_mousewheel)  # Linux
         self._canvas.bind("<Button-1>", self._on_canvas_click)
+        self._canvas.bind("<KeyPress>", self._on_keyboard_click)
+        self._canvas.bind("<<ThemeChanged>>", lambda e: self._change_theme())
+        self._canvas.bind("<Enter>", lambda e: self._canvas.config(highlightbackground=self.theme_color.primary))
+        self._canvas.bind("<Leave>", lambda e: self._canvas.config(highlightbackground=self.theme_color.selectbg))
+        self._canvas.bind("<FocusIn>", lambda e: self._canvas.config(highlightthickness=2))
+        self._canvas.bind("<FocusOut>", lambda e: self._canvas.config(highlightthickness=1))
 
+    def _change_theme(self) -> None:
+        super()._change_theme()
+        for item_id in self._canvas.find_all():
+            if self._canvas.type(item_id) == "text":
+                self._canvas.itemconfig(item_id, fill=self.theme_color.fg)
+            elif self._canvas.type(item_id) == "rectangle":
+                self._canvas.itemconfig(item_id, fill=self.theme_color.selectbg)
+        self._canvas.configure(
+            background=self.theme_color.inputbg,
+            highlightbackground=self.theme_color.primary,
+            highlightcolor=self.theme_color.primary,
+            highlightthickness=1
+        )
+        
     def _on_scrollbar_scroll(self, *args) -> None:
         if len(args) == 2:
             self._canvas.yview(*args)
@@ -285,6 +311,42 @@ class ThumbnailGridView(BasicImagePreviewView):
         elif event.num == 5:
             self._canvas.yview_scroll(1, "units")
         self._schedule_load()
+
+    def _on_keyboard_click(self, event: tk.Event) -> None:
+        monitor_key = ["Left", "KP_Left", "Right", "KP_Right", "Up", "KP_Up", "Down", "KP_Down"]
+        if event.keysym not in monitor_key:
+            return
+        items_list = list(self._results.keys())
+        if not items_list or self._cols == 0:
+            return
+        max_index = len(items_list) - 1
+        current_index = max(self._get_item_index(item) for item in self._selected_items)
+        if event.keysym in ("Left", "KP_Left"):
+            target_index = max(0, current_index - 1)
+        elif event.keysym in ("Right", "KP_Right"):
+            target_index = min(max_index, current_index + 1)
+        elif event.keysym in ("Up", "KP_Up"):
+            target_index = current_index if current_index - self._cols < 0 else current_index - self._cols
+        elif event.keysym in ("Down", "KP_Down"):
+            target_index = current_index if current_index + self._cols > max_index else current_index + self._cols
+        if target_index == current_index:
+            return
+        target_item = items_list[target_index]
+        self.selection_set(target_item)
+        self._scroll_to_item(target_item, event)
+
+    def _scroll_to_item(self, item: str, event: tk.Event) -> None:
+        _, y = self._get_item_position(item)
+        item_y1 = y
+        item_y2 = y + self.THUMBNAIL_SIZE + self.FONT_HEGIHT
+        canvas_y1 = self._canvas.canvasy(0)
+        canvas_y2 = canvas_y1 + self._canvas.winfo_height()
+        total_height = self._canvas.bbox(tk.ALL)[3] if self._canvas.bbox(tk.ALL) else 1
+        if item_y2 > canvas_y2:
+            self._canvas.yview_moveto((item_y2 - self._canvas.winfo_height()) / total_height)
+        elif item_y1 < canvas_y1:
+            self._canvas.yview_moveto(item_y1 / total_height)
+        self._on_scrollbar_release(event)
 
     def _on_canvas_configure(self, event) -> None:
         def delayed_resize() -> None:
@@ -389,7 +451,8 @@ class ThumbnailGridView(BasicImagePreviewView):
             text=f"图片加载中...", fill=self.theme_color.fg
         )
         image_info_id = self._canvas.create_text(
-            x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE + self.GRID_SPACING // 2 + 15,
+            x + self.THUMBNAIL_SIZE // 2, 
+            y + self.THUMBNAIL_SIZE + self.GRID_SPACING // 2 + self.FONT_HEGIHT // 2,
             text=truncate_filename, fill=self.theme_color.fg
         )
         self._canvas_items[item] = {
@@ -408,13 +471,22 @@ class ThumbnailGridView(BasicImagePreviewView):
         
         self._canvas.delete(canvas_item["placeholder_id"])
 
-        filename = os.path.basename(self._results[item][0])
+        filename = FileOperation.truncate_filename(self._results[item][0])
         width, height = image_data["size"]
-        tip_info = f"{filename[:8]}{'...' if len(filename) > 8 else ''}\n{width} x {height}"
+        
+        tip_info = f"{filename}\n{width} × {height}"
         self._canvas.itemconfig(canvas_item["image_info_id"], text=tip_info)
         
-        if image_data['photo'] is not None and canvas_item.get("image_id", "") == "":
-            canvas_item["image_id"] = self._canvas.create_image(x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE // 2, image=image_data['photo'])
+        if image_data['photo'] is not None:
+            if "image_id" not in canvas_item:
+                image_id = self._canvas.create_image(
+                    x + self.THUMBNAIL_SIZE // 2, 
+                    y + self.THUMBNAIL_SIZE // 2, 
+                    image=image_data['photo']
+                )
+                canvas_item["image_id"] = image_id
+            else:
+                self._canvas.itemconfig(canvas_item["image_id"], image=image_data['photo'])
         else:
             self._canvas.itemconfig(canvas_item["placeholder_id"], text=f"{image_data.get('error', '加载失败')[:10]}")
 
@@ -438,6 +510,7 @@ class ThumbnailGridView(BasicImagePreviewView):
 
     def _update_layout(self) -> None:
         canvas_width = self._canvas.winfo_width()
+        canvas_height = self._canvas.winfo_height()
         old_cols = self._cols
         item_width = self.THUMBNAIL_SIZE + self.GRID_SPACING
         self._cols = max(1, (canvas_width - self.MARGIN * 2) // item_width)
@@ -457,11 +530,13 @@ class ThumbnailGridView(BasicImagePreviewView):
                 self._canvas.coords(canvas_item["image_info_id"],  x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE + self.GRID_SPACING // 2 + 15)
         
         rows = math.ceil(len(self._results) / self._cols) if self._cols > 0 else 0
-        item_width = self.THUMBNAIL_SIZE + self.GRID_SPACING
         item_height = self.THUMBNAIL_SIZE + self.GRID_SPACING + 30
-        total_width = max(canvas_width, self._cols * item_width + self.MARGIN * 2)
-        total_height = rows * item_height + self.MARGIN * 2
-        self._canvas.configure(scrollregion=(0, 0, total_width, total_height))
+        total_height = rows * item_height + self.MARGIN * 2 if rows > 0 else 0
+        if total_height > canvas_height:
+            self._canvas.configure(scrollregion=(0, 0, canvas_width, total_height))
+        else:
+            self._canvas.configure(scrollregion=(0, 0, canvas_width, canvas_height))
+            self._canvas.yview_moveto(0)  # 确保滚动到顶部
     
     def _get_item_position(self, item: str) -> tuple[int, int]:
         if self._cols == 0:
@@ -488,9 +563,9 @@ class ThumbnailGridView(BasicImagePreviewView):
         item_height = self.THUMBNAIL_SIZE + self.GRID_SPACING + 30
         
         start_row = max(0, canvas_y1 // item_height - self.PRELOAD_ROWS)
-        end_row = min(len(self._results) // self._cols, canvas_y2 // item_height + self.PRELOAD_ROWS)
+        end_row = min(math.ceil(len(self._results) / self._cols), canvas_y2 // item_height + self.PRELOAD_ROWS)
         start_index = int(start_row * self._cols)
-        end_index = int(min(end_row * self._cols + 1, len(self._results)))
+        end_index = int(min(end_row * self._cols - 1, len(self._results) - 1))
         new_visible_items = set()
         for index, item in enumerate(self._results):
             if index < start_index or index > end_index:

@@ -86,6 +86,10 @@ class NameIndexManager(object):
     def results_count(self) -> int:
         return min(self.__max_match_count, self.__valid_index_count)
     
+    @property
+    def valid_index_count(self) -> int:
+        return self.__valid_index_count
+    
     def update_max_match_count(self, max_match_count: int) -> None:
         self.__max_match_count = max_match_count
    

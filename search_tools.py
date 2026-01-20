@@ -16,6 +16,7 @@ from encoder import MultiModalEncoder
 from utils import FileOperation, ImageOperation
 
 
+from time import perf_counter
 
 class SearchTool(object):
     def __init__(self, setting: Setting) -> None:
@@ -46,6 +47,11 @@ class SearchTool(object):
             setting.get_config("model", "context_length")
         )
         self.__init_event.set()
+
+    @property
+    def valid_index_count(self) -> int:
+        self.__init_event.wait()
+        return self.__name_idx_mgr.valid_index_count
 
     def __get_changed_files_index(self) -> list[tuple[int, str]]:
         changed_files_index = []

@@ -96,7 +96,7 @@ class WinInfo(object):
     ico_path = "config/favicon.ico"
     title = "以图搜图"
     width = 860
-    height = 530
+    height = 555
 
 
 

@@ -1,7 +1,7 @@
-from ttkbootstrap import Button
+from ttkbootstrap import Button, Style
 from ttkbootstrap.constants import LINK
 from tkinter.ttk import (
-    Notebook, Frame, Entry, Treeview, Label, LabelFrame
+    Notebook, Frame, Entry, Treeview, Label, LabelFrame, Combobox
 )
 import tkinter as tk
 from setting import WinInfo
@@ -30,6 +30,7 @@ class WinGUI(tk.Tk):
         self.update_index_button = self.__set_update_index_button(self.setting_tab)
         self.delete_index_button = self.__set_delete_index_button(self.setting_tab)
         self.rebuild_index_button = self.__set_rebuild_index_button(self.setting_tab)
+        self.theme_combobox = self.__set_theme_combobox(self.setting_tab)
 
     def __win(self) -> None:
         self.title(WinInfo.title)
@@ -95,7 +96,7 @@ class WinGUI(tk.Tk):
         return frame
 
     def __set_index_tip_label(self, parent) -> Label:
-        label = Label(parent,text="当前索引的图库",anchor="nw")
+        label = Label(parent,text="当前索引的图库(???张图片)",anchor="nw")
         label.place(relx=0, rely=0.02, relwidth=1, relheight=0.0575)
         return label
     
@@ -128,6 +129,14 @@ class WinGUI(tk.Tk):
         btn = Button(parent, text="重建索引目录", takefocus=False,)
         btn.place(relx=0.7974, rely=0.4022, relwidth=0.1921, relheight=0.0862)
         return btn
+    
+    def __set_theme_combobox(self, parent) -> Combobox:
+        style = Style()
+        theme_names = style.theme_names()
+        comb = Combobox(parent, values=theme_names, state="readonly")
+        comb.current(theme_names.index("superhero"))
+        comb.place(relx=0.7974, rely=0.5075, relwidth=0.1921, relheight=0.0862)
+        return comb
     
 
 
