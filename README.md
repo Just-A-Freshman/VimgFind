@@ -21,12 +21,12 @@ pip install -r requirements.txt
 将下载好的模型文件放置到./config/models下。双击./main.py即可运行。
 
 ## 下载地址
-### 增量更新版本
-如果已经下载过v1.1版本或v2.1版本，建议下载增量更新包，并按照里面的“更新指南.pdf”进行操作：
-[增量更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/default.zip)
-
 ### 最新版本(2.3)
+[以图搜图v2.3](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/v2.3.7z)
 
+### 从2.2迁移
+如果你下载过2.2的版本，你可以直接下载下面这个exe程序，然后将其放到2.2版本的文件夹中。
+[exe可执行文件](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/VimgFind2.3.7z)
 
 ### 历史版本
 1. [以图搜图V2.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/v2.2.7z)
