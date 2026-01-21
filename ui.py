@@ -1,4 +1,4 @@
-from ttkbootstrap import Button, Style
+from ttkbootstrap import Button, Checkbutton, Scale, Style
 from ttkbootstrap.constants import LINK
 from tkinter.ttk import (
     Notebook, Frame, Entry, Treeview, Label, LabelFrame, Combobox
@@ -26,11 +26,17 @@ class WinGUI(tk.Tk):
         self.preview_canvas2 = PreviewCanvasView(self.preview_frame2)
         self.index_dataset_table = self.__set_index_dataset_table(self.setting_tab)
         self.index_tip_label = self.__set_index_tip_label(self.setting_tab)
-        self.add_index_button = self.__set_add_index_button(self.setting_tab)
-        self.update_index_button = self.__set_update_index_button(self.setting_tab)
-        self.delete_index_button = self.__set_delete_index_button(self.setting_tab)
-        self.rebuild_index_button = self.__set_rebuild_index_button(self.setting_tab)
-        self.theme_combobox = self.__set_theme_combobox(self.setting_tab)
+        self.index_setting_frame = self.__set_index_setting_frame(self.setting_tab)
+        self.common_setting_frame = self.__set_common_setting_frame(self.setting_tab)
+        self.add_index_button = self.__set_add_index_button(self.index_setting_frame)
+        self.update_index_button = self.__set_update_index_button(self.index_setting_frame)
+        self.delete_index_button = self.__set_delete_index_button(self.index_setting_frame)
+        self.rebuild_index_button = self.__set_rebuild_index_button(self.index_setting_frame)
+        self.theme_combobox = self.__set_theme_combobox(self.common_setting_frame)
+        self.auto_update_btn = self.__set_auto_update_checkbutton(self.common_setting_frame)
+        self.update_threads_count_scale = self.__set_update_threads_count_scale(self.common_setting_frame)
+        self.open_setting_file_button = self.__set_open_setting_btn(self.common_setting_frame)
+        self.open_repertory_button = self.__set_open_open_repertory_btn(self.common_setting_frame)
 
     def __win(self) -> None:
         self.title(WinInfo.title)
@@ -96,48 +102,90 @@ class WinGUI(tk.Tk):
         return frame
 
     def __set_index_tip_label(self, parent) -> Label:
-        label = Label(parent,text="当前索引的图库(???张图片)",anchor="nw")
-        label.place(relx=0, rely=0.02, relwidth=1, relheight=0.0575)
+        label = Label(parent,text="当前索引的图库(~张图片)", anchor=tk.NW, font=("Microsoft Sans Serif", 14))
+        label.place(relx=0.0081, rely=0.04, relwidth=1, relheight=0.0575)
         return label
     
     def __set_index_dataset_table(self, parent) -> Treeview:
-        columns = {" ": 32, "图库目录":628}
-        tk_table = Treeview(parent, show="headings", columns=list(columns),)
-        for text, width in columns.items():
-            tk_table.heading(text, text=text, anchor='center')
-            tk_table.column(text, anchor='center', width=width, stretch=True)
-        
-        tk_table.place(relx=0.0081, rely=0.0881, relwidth=0.7776, relheight=0.9119)
-        return tk_table
+        columns = [" ", "图库目录"]
+        index_dataset_table = Treeview(parent, show="headings", columns=columns)
+        index_dataset_table.heading(0, text=columns[0], anchor=tk.CENTER)
+        index_dataset_table.column(0, width=60, anchor=tk.CENTER, stretch=False)
+        index_dataset_table.heading(1, text=columns[1], anchor=tk.CENTER)
+        index_dataset_table.column(1, anchor=tk.CENTER)
+        index_dataset_table.place(relx=0.0081, rely=0.1111, relwidth=0.7, relheight=0.888)
+        return index_dataset_table
+    
+    def __set_index_setting_frame(self, parent) -> LabelFrame:
+        frame = LabelFrame(parent, text="索引设置")
+        frame.place(relx=0.7181, rely=0.095, relwidth=0.2719, relheight=0.4738)
+        for i in range(4):
+            frame.grid_rowconfigure(i, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+        return frame
     
     def __set_add_index_button(self, parent) -> Button:
-        btn = Button(parent, text="添加索引目录", takefocus=False,)
-        btn.place(relx=0.7974, rely=0.0862, relwidth=0.1921, relheight=0.0862)
+        btn = Button(parent, text="添加索引目录", takefocus=False)
+        btn.grid(row=0, column=0, padx=5, pady=(10, 5), ipadx=10, ipady=5, sticky=tk.NSEW)
         return btn
-    
+
     def __set_update_index_button(self, parent) -> Button:
-        btn = Button(parent, text="更新索引目录", takefocus=False,)
-        btn.place(relx=0.7974, rely=0.1916, relwidth=0.1921, relheight=0.0862)
+        btn = Button(parent, text="更新索引目录", takefocus=False)
+        btn.grid(row=1, column=0, padx=5, pady=5, ipadx=10, ipady=5, sticky=tk.NSEW)
         return btn
-    
+
     def __set_delete_index_button(self, parent) -> Button:
-        btn = Button(parent, text="删除索引目录", takefocus=False,)
-        btn.place(relx=0.7974, rely=0.2969, relwidth=0.1921, relheight=0.0862)
+        btn = Button(parent, text="删除索引目录", takefocus=False)
+        btn.grid(row=2, column=0, padx=5, pady=5, ipadx=10, ipady=5, sticky=tk.NSEW)
         return btn
-    
+
     def __set_rebuild_index_button(self, parent) -> Button:
-        btn = Button(parent, text="重建索引目录", takefocus=False,)
-        btn.place(relx=0.7974, rely=0.4022, relwidth=0.1921, relheight=0.0862)
+        btn = Button(parent, text="重建索引目录", takefocus=False)
+        btn.grid(row=3, column=0, padx=5, pady=(5, 10), ipadx=10, ipady=5, sticky=tk.NSEW)
         return btn
-    
+
+    def __set_common_setting_frame(self, parent) -> LabelFrame:
+        frame = LabelFrame(parent, text="通用设置")
+        frame.place(relx=0.7181, rely=0.58, relwidth=0.2609+0.011, relheight=0.42)
+        for i in range(5):
+            frame.grid_rowconfigure(i, weight=1)
+        frame.grid_columnconfigure(0, weight=1, uniform='space')
+        frame.grid_columnconfigure(1, weight=1, uniform='labels')
+        frame.grid_columnconfigure(2, weight=1, uniform='controls')
+        frame.grid_columnconfigure(3, weight=1, uniform='space')
+        return frame
+
     def __set_theme_combobox(self, parent) -> Combobox:
         style = Style()
         theme_names = style.theme_names()
-        comb = Combobox(parent, values=theme_names, state="readonly")
-        comb.current(theme_names.index("superhero"))
-        comb.place(relx=0.7974, rely=0.5075, relwidth=0.1921, relheight=0.0862)
+        tip = Label(parent, text="界面主题设置")
+        tip.grid(row=1, column=1, padx=(5, 10), sticky=tk.E)
+        comb = Combobox(parent, values=theme_names, state="readonly", width=15)
+        comb.grid(row=1, column=2, padx=(0, 5), sticky=tk.EW)
         return comb
+
+    def __set_auto_update_checkbutton(self, parent) -> Checkbutton:
+        tip = Label(parent, text="自动更新索引")
+        tip.grid(row=2, column=1, padx=(5, 10), sticky=tk.E)
+        checkbtn = Checkbutton(parent, style="square-toggle")
+        checkbtn.grid(row=2, column=2, padx=(0, 5), sticky=tk.W)
+        return checkbtn
+
+    def __set_update_threads_count_scale(self, parent) -> Scale:
+        tip = Label(parent, text="更新线程：$$")
+        tip.grid(row=3, column=1, padx=(5, 10), sticky=tk.E)
+        scale = Scale(parent, from_=4, to=20, orient=tk.HORIZONTAL)
+        scale.grid(row=3, column=2, padx=(0, 5), sticky=tk.EW)
+        scale.config(command=lambda value: tip.config(text=f"更新线程：{int(float(value)):0>2}"))
+        return scale
     
-
-
-
+    def __set_open_setting_btn(self, parent) -> Button:
+        button = Button(parent, text="配置文件", takefocus=True, style=LINK, cursor="hand2")
+        button.grid(row=4, column=1, pady=(5, 0), sticky=tk.E)
+        return button
+    
+    def __set_open_open_repertory_btn(self, parent) -> Button:
+        button = Button(parent, text="仓库地址", takefocus=True, style=LINK, cursor="hand2")
+        button.grid(row=4, column=2, pady=(5, 0), padx=20, sticky=tk.W)
+        return button
+    

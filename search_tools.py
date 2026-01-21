@@ -16,13 +16,12 @@ from encoder import MultiModalEncoder
 from utils import FileOperation, ImageOperation
 
 
-from time import perf_counter
-
 class SearchTool(object):
     def __init__(self, setting: Setting) -> None:
         self.__search_event = Event()
         self.__search_event.set()
         self.__init_event = Event()
+        self.__force_stop_update = False
         Thread(target=self.__async_init, args=(setting, ), daemon=True).start()
         
     def __async_init(self, setting: Setting) -> None:
@@ -67,18 +66,23 @@ class SearchTool(object):
         new_files_index = []
         current_files = FileOperation.get_file_iterator(target_dir)
         existing_files = set(i[0] for i in self.__name_idx_mgr.name_index)
-        new_files = [f for f in current_files if f not in existing_files]
+        new_files = []
+        for file in current_files:
+            if file not in existing_files:
+                new_files.append(file)
+            if self.__force_stop_update:
+                break
 
         if not new_files:
             return []
 
         for idx, [index_file, _] in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
-                new_files_index.append([idx, new_files.pop()]) 
+                new_files_index.append((idx, new_files.pop())) 
             if len(new_files) == 0:
                 break
         for idx, new_file in enumerate(new_files, len(self.__name_idx_mgr.name_index)):
-            new_files_index.append([idx, new_file])
+            new_files_index.append((idx, new_file))
 
         return new_files_index
 
@@ -90,10 +94,12 @@ class SearchTool(object):
     def update_max_match_count(self, max_match_count: int) -> None:
         self.__name_idx_mgr.update_max_match_count(max_match_count)
         
-    def update_ir_index(self, image_dir, max_workers: int = 10) -> None:
+    def update_index(self, image_dir, max_workers: int = 10) -> None:
         def _process_item(item) -> tuple[int, str, np.ndarray | None]:
             self.__search_event.wait()
             idx, fpath = item
+            if self.__force_stop_update:
+                return idx, fpath, None
             image_obj = ImageOperation.get_image_obj(fpath)
             if image_obj is None:
                 fv = None
@@ -112,7 +118,7 @@ class SearchTool(object):
                     self.__name_idx_mgr.add_name(fpath, idx)
                 pbar.update(1)
             pbar.close()
-          
+    
     def remove_nonexists(self) -> None:
         self.__init_event.wait()
         for idx, (index_file, _) in tqdm(enumerate(self.__name_idx_mgr.name_index), ascii=False, ncols=50):
@@ -174,6 +180,9 @@ class SearchTool(object):
 
     def stop_update_index(self) -> None:
         self.__search_event.clear()
+
+    def set_force_end_update(self, state: bool) -> None:
+        self.__force_stop_update = state
 
     def continue_update_index(self) -> None:
         self.__search_event.set()

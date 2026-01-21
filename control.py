@@ -12,36 +12,29 @@ from widgets import BasicImagePreviewView, DetailListView, ThumbnailGridView
 from setting import Setting
 from utils import FileOperation, ImageOperation, Decorator
 from search_tools import SearchTool
-
+import webbrowser
 
 
 from PIL import Image
 from time import perf_counter
 
 
-
 class CoreControl(WinGUI):
     def __init__(self) -> None:
+        start = perf_counter()
         super().__init__()
         self.setting = Setting()
+        self.__change_theme(setting_theme=True)
         self.search_tools = SearchTool(self.setting)
         self.index_table_control = IndexTableControl(self)
         self.search_control = SearchControl(self)
         self.menu_control = MenuControl(self)
-        Style().theme_use(self.setting.get_config("function", "ui_style"))
         self.search_control.set_preview_mode(self.setting.get_config("function", "preview_mode"))
-        self.bind_event()
         self.__env_init()
-        self.__check_queue()
-
-    def bind_event(self) -> None:
-        # 搜索控制项
-        self.search_by_browser_btn.config(command=self.search_control.search_by_browser)
-        self.search_by_clipboard_btn.config(command=self.search_control.search_image_by_clipboard)
-        self.search_entry.bind("<Return>", lambda e: self.search_control.search_image_by_text())
-        self.more_options_button.config(command=self.menu_control.create_preview_setting_menu)
-
-        # 附加功能项
+        self.bind_event(first_time=True)
+        
+    def bind_event(self, first_time=False) -> None:
+        # 搜索展示控制项
         self.preview_view.bind("<<ItemviewSelect>>", self.search_control.preview_found_image)
         self.preview_view.bind("<Control-a>", lambda e: self.preview_view.selection_set(tk.ALL))
         preview_widgets = (self.preview_canvas1, self.preview_canvas2, self.preview_view)
@@ -49,38 +42,48 @@ class CoreControl(WinGUI):
             w.bind("<Button-3>", lambda e, w=w: self.menu_control.create_right_click_menu(e, w))
             w.bind("<Double-Button-1>", lambda e, w=w: self.menu_control.double_click_open_file(e, w))
 
-        # 索引目录控制项
+        if not first_time:
+            return
+        
+        # 搜索输入控制项
+        self.search_by_browser_btn.config(command=self.search_control.search_by_browser)
+        self.search_by_clipboard_btn.config(command=self.search_control.search_image_by_clipboard)
+        self.search_entry.bind("<Return>", lambda e: self.search_control.search_image_by_text())
+        self.more_options_button.config(command=self.menu_control.create_preview_setting_menu)
+        
+        # 索引设置项
         self.index_dataset_table.bind("<Double-Button-1>", self.menu_control.double_click_open_file)
         self.add_index_button.config(command=self.index_table_control.add_search_dir)
         self.update_index_button.config(command=self.index_table_control.sync_index)
         self.delete_index_button.config(command=self.index_table_control.delete_search_dir)
         self.rebuild_index_button.config(command=self.index_table_control.rebuild_index)
 
-        # 其他控制项
-        self.theme_combobox.bind("<<ComboboxSelected>>", self.__change_theme)
+        # 常规设置项
+        self.theme_combobox.bind("<<ComboboxSelected>>", lambda e: self.__change_theme())
+        self.open_setting_file_button.config(command=lambda: FileOperation.open_file(Setting.config_path))
+        self.open_repertory_button.config(command=lambda: webbrowser.open(r"https://github.com/Just-A-Freshman/VimgFind"))
 
     @Decorator.send_task
     def __env_init(self) -> None:
-        self.after(self.setting.schedule_save_interval, self.__schedule_save)
         self.index_table_control.refresh_index_dataset_table()
+        self.update_threads_count_scale.set(value=self.setting.get_config("function", "max_work_thread"))
         if self.setting.get_config("function", "auto_update_index"):
+            self.auto_update_btn.invoke()
             self.index_table_control.sync_index(show_message=False)
+        else:
+            self.index_table_control.update_index_tip()
+        self.after(self.setting.schedule_save_interval, self.__schedule_save)
 
-    def __change_theme(self, event) -> None:
+    def __change_theme(self, setting_theme=False) -> None:
         style = Style()
+        if setting_theme:
+            valid_theme_names = style.theme_names()
+            valid_theme_name = self.setting.get_config("function", "ui_style")
+            valid_theme_name = valid_theme_name if valid_theme_name in valid_theme_names else "superhero"
+            self.theme_combobox.current(valid_theme_names.index(valid_theme_name))
         theme_cbo_value = self.theme_combobox.get()
         style.theme_use(theme_cbo_value)
         self.theme_combobox.selection_clear()
-
-    def __check_queue(self) -> None:
-        try:
-            while True:
-                message = Decorator.progress_queue.get_nowait()
-                self.index_tip_label.config(text=message)
-        except Exception:
-            pass
-
-        self.after(300, self.__check_queue)
 
     def __schedule_save(self) -> None:
         self.search_tools.save_index()
@@ -88,12 +91,15 @@ class CoreControl(WinGUI):
     
     def destroy(self) -> None:
         try:
+            self.setting.modity_config("function", "ui_style", self.theme_combobox.get())
+            self.setting.modity_config("function", "auto_update_index", self.auto_update_btn.instate(['selected']))
+            self.setting.modity_config("function", "max_work_thread", int(float(self.update_threads_count_scale.get())))
             self.setting.save_settings()
             self.setting.clean_log()
             self.search_tools.destroy()
             self.search_tools.save_index()
-
             FileOperation.clear_folder_all(Setting.temp_image_path)
+            self.search_tools.set_force_end_update(True)
         except Exception as e:
             messagebox.showerror("错误", str(e))
         finally:
@@ -202,7 +208,6 @@ class SearchControl(object):
             self.__search_image(self._last_search_content)
 
     def set_preview_mode(self, mode: Literal["detail_info", "medium_ico"]) -> None:
-        start = perf_counter()
         results = self.core_control.preview_view.get_show_results()
         current_selection = self.core_control.preview_view.selection()
         self.core_control.preview_view.destroy()
@@ -239,14 +244,17 @@ class SearchControl(object):
         self._preview_timer = self.core_control.after(100, _preview)
 
 
+
 class IndexTableControl(object):
     def __init__(self, core_control: CoreControl) -> None:
         self.core_control = core_control
+        self._is_updating: bool = False
 
     def update_index_tip(self) -> None:
         self.core_control.index_tip_label.config(
             text=f"当前索引图库({self.core_control.search_tools.valid_index_count}张图片)"
         )
+        self._is_updating = False
 
     def add_search_dir(self) -> None:
         dir_path = filedialog.askdirectory(title="选择索引文件夹")
@@ -259,7 +267,7 @@ class IndexTableControl(object):
         for search_dir in search_dirs:
             if Path(dir_path).is_relative_to(search_dir):
                 messagebox.showinfo("提示", "该文件夹是在索引目录的子文件夹！")
-                continue
+                return
         search_dirs.append(dir_path)
         self.refresh_index_dataset_table()
         self.core_control.setting.save_settings()
@@ -275,34 +283,43 @@ class IndexTableControl(object):
         self.sync_index()
 
     def refresh_index_dataset_table(self) -> None:
-        all_nodes = self.core_control.index_dataset_table.get_children()
-        all_show_dir = {self.core_control.index_dataset_table.item(node, 'values')[1] for node in all_nodes}
-        index_id = len(all_nodes)
-        for search_dir in self.core_control.setting.get_config("index", "search_dir"):
-            if search_dir in all_show_dir:
-                continue
-            index_id += 1
-            self.core_control.index_dataset_table.insert("", tk.END, values=(index_id, search_dir))
+        tb = self.core_control.index_dataset_table
+        all_items = tb.get_children()
+        all_show_dir = {tb.item(node, 'values')[1] for node in all_items}
+        for index_id, item in enumerate(all_items, 1):
+            _, search_dir = tb.item(item, "values")
+            tb.item(item, values=(index_id, search_dir))
+        search_dirs = set(self.core_control.setting.get_config("index", "search_dir"))
+        new_show_dirs = search_dirs - all_show_dir
+        for index_id, search_dir in enumerate(new_show_dirs, len(all_items) + 1):
+            tb.insert("", tk.END, values=(index_id, search_dir))
 
     @Decorator.send_task
     @Decorator.redirect_output
     def sync_index(self, show_message: bool = True) -> None:
-        index_button = (self.core_control.delete_index_button, self.core_control.update_index_button, self.core_control.rebuild_index_button)
-        for btn in index_button:
-            btn.config(state=tk.DISABLED)
-
+        self.core_control.delete_index_button.config(state=tk.DISABLED)
+        self.core_control.rebuild_index_button.config(state=tk.DISABLED)
+        self.core_control.update_index_button.config(
+            text="终止索引更新", 
+            command=lambda: self.core_control.search_tools.set_force_end_update(True)
+        )
+        self._is_updating = True
+        self.__check_queue()
         self.core_control.search_tools.remove_nonexists()
         for image_dir in self.core_control.setting.get_config("index", "search_dir"):
             if Path(image_dir).exists():
-                self.core_control.search_tools.update_ir_index(
-                    image_dir, 
-                    self.core_control.setting.get_config("function", "max_work_thread")
+                self.core_control.search_tools.update_index(
+                    image_dir,
+                    int(float(self.core_control.update_threads_count_scale.get()))
                 )
-        for btn in index_button:
-            btn.config(state=tk.ACTIVE)
+        self.core_control.update_index_button.config(text="更新索引目录", command=self.sync_index)
+        self.core_control.delete_index_button.config(state=tk.ACTIVE)
+        self.core_control.rebuild_index_button.config(state=tk.ACTIVE)
         if show_message:
             messagebox.showinfo("提示", "索引更新完成！")
         self.core_control.after(1000, self.update_index_tip)
+        self.core_control.search_tools.set_force_end_update(False)
+        self._is_updating = False
 
     @Decorator.send_task
     @Decorator.redirect_output
@@ -313,7 +330,8 @@ class IndexTableControl(object):
         answer = messagebox.askyesno("提示", "你确定要删除选中目录吗？")
         if not answer:
             return
-            
+        self._is_updating = True
+        self.__check_queue()
         dirs_to_delete = []
         search_dir: list = self.core_control.setting.get_config("index", "search_dir")
         for item in selected:
@@ -321,13 +339,22 @@ class IndexTableControl(object):
             dirs_to_delete.append(delete_search_dir)
             search_dir.remove(delete_search_dir)
             self.core_control.index_dataset_table.delete(item)
-
+        self.refresh_index_dataset_table()
         for dir_path in dirs_to_delete:
             self.core_control.search_tools.remove_files_in_directory(dir_path)
         self.core_control.search_tools.remove_nonexists()
         self.core_control.setting.save_settings()
         self.core_control.after(1000, self.update_index_tip)
 
+    def __check_queue(self) -> None:
+        try:
+            while True:
+                message = Decorator.progress_queue.get_nowait()
+                self.core_control.index_tip_label.config(text=message)
+        except Exception:
+            pass
+        if self._is_updating:
+            self.core_control.after(200, self.__check_queue)
 
 
 
@@ -389,20 +416,13 @@ class MenuControl(object):
     def create_preview_setting_menu(self) -> None:
         btn = self.core_control.more_options_button
         menu = tk.Menu(tearoff=0)
-        menu_items = [
-            ("详情模式", lambda: self.core_control.search_control.set_preview_mode("detail_info")),
-            ("图标模式", lambda: self.core_control.search_control.set_preview_mode("medium_ico")),
-            ("/", lambda: None),
-        ] + [
-            (f"结果数: {num}", lambda num=num: self.core_control.search_control.set_preview_result_count(num))
-            for num in (10, 30, 50, 100)
-        ]
-        for label, cmd in menu_items:
-            if label == "/": 
-                menu.add_separator()
-                continue
-            menu.add_command(label=label, command=cmd, compound=tk.LEFT)
-            
+        menu.add_command(label="详情模式", command=lambda: self.core_control.search_control.set_preview_mode("detail_info"))
+        menu.add_command(label="图标模式", command=lambda: self.core_control.search_control.set_preview_mode("medium_ico"))
+        menu.add_separator()
+        menu.add_command(label="结果数: 10", command=lambda: self.core_control.search_control.set_preview_result_count(10))
+        menu.add_command(label="结果数: 30", command=lambda: self.core_control.search_control.set_preview_result_count(30))
+        menu.add_command(label="结果数: 50", command=lambda: self.core_control.search_control.set_preview_result_count(50))
+        menu.add_command(label="结果数: 100", command=lambda: self.core_control.search_control.set_preview_result_count(100))    
         menu.post(btn.winfo_rootx() - 60, btn.winfo_rooty() + 30)
         menu.bind("<Unmap>", lambda e: menu.destroy())
 

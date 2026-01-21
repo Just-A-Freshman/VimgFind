@@ -14,7 +14,7 @@ from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 from utils import ImageLoader, FileOperation
 
 
-ThemeColor = namedtuple("ThemeColor", ["primary", "secondary", "fg", "bg", "selectbg", "selectfg", "inputbg"])
+ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
 class BasicImagePreviewView(object):
     def __init__(self, parent: tk.Widget) -> None:
         self.parent = parent

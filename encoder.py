@@ -55,11 +55,6 @@ class MultiModalEncoder:
 
     def _init_onnx_session(self, model_path) -> ort.InferenceSession | None:
         try:
-            providers = ['CPUExecutionProvider']
-            # session = ort.InferenceSession(
-            #     str(model_path),
-            #     providers=providers
-            # )
             session = ort.InferenceSession(
                 str(model_path),
                 providers=['CPUExecutionProvider'],
