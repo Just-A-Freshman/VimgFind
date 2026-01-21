@@ -3,7 +3,8 @@
 - v1.1 基本的以图搜图
 - v1.2 增加剪切板搜图
 - v2.1 增加以文搜图(回车键触发)，但由于更新顺序原因缺少了剪切板搜图功能
-- v2.2(最新) 恢复了剪切板搜图，增加了【图标预览模式】，【返回结果数控制】，右键菜单【另存为】功能
+- v2.2 恢复了剪切板搜图，增加了【图标预览模式】，【返回结果数控制】，右键菜单【另存为】功能
+- v2.3(最新) 修复了一系列BUG并添加了部分功能，详见release
 <img width="610" height="419" alt="image" src="https://github.com/user-attachments/assets/07aad6f0-351b-48b6-9518-de4792331032" />
 
 需要注意，源码及打包程序均仅适用于Windows系统。暂不支持跨平台。
@@ -24,11 +25,12 @@ pip install -r requirements.txt
 如果已经下载过v1.1版本或v2.1版本，建议下载增量更新包，并按照里面的“更新指南.pdf”进行操作：
 [增量更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/default.zip)
 
-### 最新版本(2.2)
-[以图搜图V2.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/v2.2.7z)
+### 最新版本(2.3)
+
 
 ### 历史版本
-1. [以图搜图V2.1](https://github.com/Just-A-Freshman/VimgFind/releases/download/new_program/v2.1.7z)
-2. [以图搜图V1.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.2.7z)
-3. [以图搜图V1.1](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.1.zip)
+1. [以图搜图V2.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/v2.2.7z)
+2. [以图搜图V2.1](https://github.com/Just-A-Freshman/VimgFind/releases/download/new_program/v2.1.7z)
+3. [以图搜图V1.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.2.7z)
+4. [以图搜图V1.1](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.1.zip)
 
