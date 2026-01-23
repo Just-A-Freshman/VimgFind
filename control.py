@@ -289,10 +289,10 @@ class IndexTableControl(object):
         for index_id, item in enumerate(all_items, 1):
             _, search_dir = tb.item(item, "values")
             tb.item(item, values=(index_id, search_dir))
-        search_dirs = set(self.core_control.setting.get_config("index", "search_dir"))
-        new_show_dirs = search_dirs - all_show_dir
-        for index_id, search_dir in enumerate(new_show_dirs, len(all_items) + 1):
-            tb.insert("", tk.END, values=(index_id, search_dir))
+        search_dirs = self.core_control.setting.get_config("index", "search_dir")
+        for index_id, search_dir in enumerate(search_dirs, len(all_items) + 1):
+            if search_dir not in all_show_dir:
+                tb.insert("", tk.END, values=(index_id, search_dir))
 
     @Decorator.send_task
     @Decorator.redirect_output
