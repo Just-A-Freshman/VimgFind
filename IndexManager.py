@@ -32,7 +32,12 @@ class VectorIndexManager:
         if Path(self.__index_path).exists():
             self.__hnsw_index.load_index(self.__index_path, max_elements=self.__index_capacity)
         else:
-            self.__hnsw_index.init_index(max_elements=self.__index_capacity, ef_construction=200, M=32)
+            self.__hnsw_index.init_index(
+                max_elements=self.__index_capacity, 
+                ef_construction=200, 
+                M=32,
+                random_seed=42
+            )
 
     def __init_match_function(self) -> None:
         if self.__space == "cosine":
@@ -59,12 +64,14 @@ class VectorIndexManager:
             logging.error(f"删除向量时出错: {e}")
 
     def match_with_cosine(self, fv, nc=5):
+        self.__hnsw_index.set_ef(max(100, nc * 2))
         labels, distances = self.__hnsw_index.knn_query(fv, k=nc)
         cos_similarities = 1.0 - distances[0]
         logits_per_image = 100 * cos_similarities
         return logits_per_image, labels[0]
     
     def match_with_l2(self, fv, nc=5):
+        self.__hnsw_index.set_ef(max(100, nc * 2))
         query = self.__hnsw_index.knn_query(fv, k=nc)
         similarity = (1 - np.tanh(query[1][0] / 3000)) * 100
         return similarity, query[0][0]
@@ -85,6 +92,10 @@ class NameIndexManager(object):
     @property
     def results_count(self) -> int:
         return min(self.__max_match_count, self.__valid_index_count)
+    
+    @property
+    def valid_index_count(self) -> int:
+        return self.__valid_index_count
     
     def update_max_match_count(self, max_match_count: int) -> None:
         self.__max_match_count = max_match_count

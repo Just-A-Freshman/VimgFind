@@ -1,8 +1,10 @@
 from pathlib import Path
 from queue import Queue
 from threading import Thread
-from typing import Iterator
+from typing import Iterator, Callable
 from collections import namedtuple
+import logging
+import unicodedata
 import os
 import subprocess
 import functools
@@ -11,12 +13,12 @@ import sys
 import io
 import uuid
 import shutil
-import logging
 
 
 
 import win32clipboard
 import win32con
+from tkinter import Tk
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
 from tqdm import tqdm
@@ -54,7 +56,7 @@ class Decorator(object):
         return inner
 
     @staticmethod
-    def redirect_output(target):# -> Callable[..., None]:
+    def redirect_output(target: Callable) -> Callable:
         def inner(*args, **kwargs) -> None:
             original_stdout = sys.stdout
             original_stderr = sys.stderr
@@ -67,7 +69,6 @@ class Decorator(object):
             finally:
                 sys.stdout = original_stdout
                 sys.stderr = original_stderr
-                Decorator.progress_queue.put("当前索引的图库")
         return inner
 
 
@@ -140,6 +141,11 @@ class FileOperation(object):
             win32clipboard.CloseClipboard()
 
     @staticmethod
+    def copy_filepaths(*file_paths: str | Path, tk: Tk) -> None:
+        tk.clipboard_clear()
+        tk.clipboard_append("\n".join([str(i) for i in file_paths]))
+
+    @staticmethod
     def delete_file(file_path: str | Path) -> None:
         try:
             os.remove(file_path)
@@ -197,6 +203,18 @@ class FileOperation(object):
                 return
             except Exception as e:
                 logging.error(f"删除失败 {item_path}：{str(e)}")
+
+    @staticmethod
+    def truncate_filename(filename: str, target_width: int = 16) -> str:
+        file_path = Path(filename)
+        char_width = lambda x: 2 if unicodedata.east_asian_width(x) in ('F', 'W') else 1
+        target_width = target_width - sum(char_width(char) for char in file_path.suffix) - 1
+        curr_width = 0
+        for idx, char in enumerate(file_path.stem):
+            curr_width += char_width(char)
+            if curr_width > target_width:
+                return f"{file_path.stem[:idx]}~{file_path.suffix}"
+        return str(file_path.name)
 
     @staticmethod
     def get_metainfo(file_path: str | Path) -> int:
@@ -264,7 +282,6 @@ class ImageLoader:
         self.result_queue: Queue[LoaderResult] = Queue()
         self.threads: list[Thread] = []
         self.running = True
-        
         for _ in range(10):
             thread = Thread(target=self._worker, daemon=True)
             thread.start()
@@ -289,7 +306,10 @@ class ImageLoader:
                 img.thumbnail((thumbnail_size, thumbnail_size))
                 img =  ImageOps.exif_transpose(img)
                 self.result_queue.put(LoaderResult(
-                    item=item, size=(width, height), photo=ImageTk.PhotoImage(img), error=""
+                    item=item,
+                    size=(width, height), 
+                    photo=ImageTk.PhotoImage(img), 
+                    error=""
                 ))
             self.task_queue.task_done()
                 
@@ -299,7 +319,7 @@ class ImageLoader:
             results.append(self.result_queue.get_nowait())
         return results
     
-    def stop(self):
+    def stop(self) -> None:
         self.running = False
         for thread in self.threads:
             thread.join(timeout=1)
