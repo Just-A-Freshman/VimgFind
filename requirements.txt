@@ -5,8 +5,3 @@ Pillow==12.0.0
 tqdm==4.67.1
 pywin32=311
 ttkbootstrap==1.19.0
-
-
-
-
-
