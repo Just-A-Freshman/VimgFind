@@ -2,7 +2,7 @@
 ## 1. 简介
 <img width="610" height="419" alt="image" src="https://github.com/user-attachments/assets/07aad6f0-351b-48b6-9518-de4792331032" />
 
-该项目是一个Windows平台上的，基于AI模型构建的以图搜图项目，实际上也具备了以文搜图的能力。界面使用Python的tkinter所写，经过ttkbootstrap的简单美化，具有相对友好的界面可供使用。
+该项目是一个Windows平台上的，基于AI模型构建的以图搜图项目，实际上也具备了以文搜图的能力(输入框内回车键触发)。界面使用Python的tkinter所写，经过ttkbootstrap的简单美化，具有相对友好的界面可供使用。
 
 1. 优点：
 - 匹配精度较高，这是基于传统的图像哈希相似度计算而言的；
@@ -34,7 +34,7 @@
 
 4. 启动程序：
     ```
-    .\main.py
+    env/Scripts/pythonw.exe main.py
     ```
 
 请注意，此时虽然可以启动程序，但由于缺乏模型是无法进行搜图的，具体表现为无论怎么更新索引都是立即更新完成，但索引文件为空。请自行下载模型并放置到```config/models```下。下面是两个可供选择的模型和配置文件。
