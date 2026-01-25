@@ -3,5 +3,5 @@ numpy==2.3.5
 onnxruntime==1.23.2
 Pillow==12.0.0
 tqdm==4.67.1
-pywin32=311
+pywin32==311
 ttkbootstrap==1.19.0
