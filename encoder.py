@@ -72,7 +72,17 @@ class MultiModalEncoder:
             fv /= norm
 
     def _preprocess_image(self, img: Image.Image) -> np.ndarray | None:
-        img = img.convert("RGB")
+        # img = img.convert("RGB")
+        if img.mode in ('P', 'PA', '1', 'L', 'LA'):
+            img = img.convert('RGBA')
+        
+        if img.mode == 'RGBA':
+            # 如果有透明通道，创建白色背景
+            background = Image.new('RGB', img.size)
+            background.paste(img, mask=img.split()[-1])  # 使用alpha通道作为mask
+            img = background
+        else:
+            img = img.convert("RGB")
         img = img.resize((self.__image_size, self.__image_size), Image.Resampling.BICUBIC)
         img_array = np.asarray(img, dtype=np.float32).transpose(2, 0, 1)
         img_array = (img_array / 255.0 - self.__mean) / self.__std
@@ -108,7 +118,7 @@ class MultiModalEncoder:
                 text_features_list.append(text_feature)
             text_features = np.stack(text_features_list, axis=0)
             self._normalization(text_features)
+            return text_features
         except Exception as e:
             logging.error(f"编码文字时出现错误: {e}")
-        return text_features
 

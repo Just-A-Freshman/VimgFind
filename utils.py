@@ -249,6 +249,48 @@ class FileOperation(object):
             curr_file_path = orig_file_path.with_stem(f"{orig_file_path.stem} ({suffix_num})")
             suffix_num += 1
         return curr_file_path
+    
+    @staticmethod
+    def extract_file_paths(text: str) -> list[str]:
+        paths = []
+        i = 0
+        n = len(text)
+        while i < n:
+            while i < n and text[i].isspace():
+                i += 1
+            if i >= n:
+                break
+            if text[i] == '{':
+                brace_count = 1
+                j = i + 1
+                while j < n and brace_count > 0:
+                    if text[j] == '{':
+                        brace_count += 1
+                    elif text[j] == '}':
+                        brace_count -= 1
+                    j += 1
+                if brace_count == 0:
+                    path = text[i+1:j-1]
+                    paths.append(path.strip())
+                    i = j
+                else:
+                    j = i + 1
+                    while j < n and not text[j].isspace():
+                        j += 1
+                    path = text[i:j].strip()
+                    if path:
+                        paths.append(path)
+                    i = j
+            else:
+                j = i
+                while j < n and not text[j].isspace():
+                    j += 1
+                path = text[i:j].strip()
+                if path:
+                    paths.append(path)
+                i = j
+        
+        return paths
 
 
 

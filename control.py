@@ -1,5 +1,6 @@
 from tkinter import messagebox, filedialog
 from ttkbootstrap import Style, Treeview
+from tkinterdnd2 import DND_FILES, TkinterDnD
 import tkinter as tk
 from pathlib import Path
 from typing import Literal
@@ -16,12 +17,10 @@ import webbrowser
 
 
 from PIL import Image
-from time import perf_counter
 
 
 class CoreControl(WinGUI):
     def __init__(self) -> None:
-        start = perf_counter()
         super().__init__()
         self.setting = Setting()
         self.__change_theme(setting_theme=True)
@@ -63,6 +62,10 @@ class CoreControl(WinGUI):
         self.open_setting_file_button.config(command=lambda: FileOperation.open_file(Setting.config_path))
         self.open_repertory_button.config(command=lambda: webbrowser.open(r"https://github.com/Just-A-Freshman/VimgFind"))
 
+        # 拖拽文件支持
+        self.drop_target_register(DND_FILES)
+        self.dnd_bind('<<Drop>>', self.__on_drop)
+
     @Decorator.send_task
     def __env_init(self) -> None:
         self.index_table_control.refresh_index_dataset_table()
@@ -84,6 +87,17 @@ class CoreControl(WinGUI):
         theme_cbo_value = self.theme_combobox.get()
         style.theme_use(theme_cbo_value)
         self.theme_combobox.selection_clear()
+
+    def __on_drop(self, event: TkinterDnD.DnDEvent) -> None:
+        file_paths_str: str = getattr(event, "data")
+        file_paths = FileOperation.extract_file_paths(file_paths_str)
+        tab_id = self.switch_tab.select()
+        tab_text = self.switch_tab.tab(tab_id, 'text')
+        if tab_text == "检索":
+            self.search_control.search_by_browser(file_paths[0])
+        elif tab_text == "设置":
+            for dir_path in file_paths:
+                self.index_table_control.add_search_dir(dir_path)
 
     def __schedule_save(self) -> None:
         self.search_tools.save_index()
@@ -116,6 +130,8 @@ class SearchControl(object):
 
     @Decorator.send_task
     def search_by_browser(self, image_path: str | None = None) -> None:
+        if image_path is not None and not Path(image_path).is_file():
+            return
         if not image_path:
             image_path = filedialog.askopenfilename(
                 filetypes=[("图片文件", "*" + ";*".join(Setting.accepted_exts))]
@@ -256,17 +272,20 @@ class IndexTableControl(object):
         )
         self._is_updating = False
 
-    def add_search_dir(self) -> None:
-        dir_path = filedialog.askdirectory(title="选择索引文件夹")
-        if not dir_path:
+    def add_search_dir(self, dir_path: str = "") -> None:
+        if dir_path != "" and not Path(dir_path).is_dir():
             return
+        if dir_path == "":
+            dir_path = filedialog.askdirectory(title="选择索引文件夹")
+            if not dir_path:
+                return
         search_dirs: list = self.core_control.setting.get_config("index", "search_dir")
         if dir_path in search_dirs:
             messagebox.showinfo("提示", "新索引的目录已包含在当前索引目录中！")
             return
         for search_dir in search_dirs:
             if Path(dir_path).is_relative_to(search_dir):
-                messagebox.showinfo("提示", "该文件夹是在索引目录的子文件夹！")
+                messagebox.showinfo("提示", "该文件夹是索引目录的子文件夹！")
                 return
         search_dirs.append(dir_path)
         self.refresh_index_dataset_table()
@@ -290,9 +309,9 @@ class IndexTableControl(object):
             _, search_dir = tb.item(item, "values")
             tb.item(item, values=(index_id, search_dir))
         search_dirs = self.core_control.setting.get_config("index", "search_dir")
-        for index_id, search_dir in enumerate(search_dirs, len(all_items) + 1):
+        for search_dir in search_dirs:
             if search_dir not in all_show_dir:
-                tb.insert("", tk.END, values=(index_id, search_dir))
+                tb.insert("", tk.END, values=(len(all_items), search_dir))
 
     @Decorator.send_task
     @Decorator.redirect_output
@@ -383,6 +402,8 @@ class MenuControl(object):
     def create_right_click_menu(self, event: tk.Event, widget = None) -> None:
         if widget is None:
             widget = event.widget
+        if not isinstance(widget, BasicImagePreviewView):
+            return
         selected_files = self.__get_item_files(event, widget)
         if len(selected_files) == 0:
             return

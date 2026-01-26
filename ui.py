@@ -3,13 +3,14 @@ from ttkbootstrap.constants import LINK
 from tkinter.ttk import (
     Notebook, Frame, Entry, Treeview, Label, LabelFrame, Combobox
 )
+from tkinterdnd2 import TkinterDnD
 import tkinter as tk
 from setting import WinInfo
 from widgets import BasicImagePreviewView, PreviewCanvasView
 
 
 
-class WinGUI(tk.Tk):
+class WinGUI(TkinterDnD.Tk):
     def __init__(self) -> None:
         super().__init__()
         self.__win()
