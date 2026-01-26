@@ -1,0 +1,2 @@
+2026-01-27 00:10:31,167 -  加载ONNX模型失败 config\models\image_model.onnx: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from config\models\image_model.onnx failed:Load model config\models\image_model.onnx failed. File doesn't exist
+2026-01-27 00:10:31,172 -  加载ONNX模型失败 config\models\text_model.onnx: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from config\models\text_model.onnx failed:Load model config\models\text_model.onnx failed. File doesn't exist
