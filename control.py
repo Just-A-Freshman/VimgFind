@@ -309,9 +309,11 @@ class IndexTableControl(object):
             _, search_dir = tb.item(item, "values")
             tb.item(item, values=(index_id, search_dir))
         search_dirs = self.core_control.setting.get_config("index", "search_dir")
+        all_items_count = len(all_items) + 1
         for search_dir in search_dirs:
             if search_dir not in all_show_dir:
-                tb.insert("", tk.END, values=(len(all_items), search_dir))
+                tb.insert("", tk.END, values=(all_items_count, search_dir))
+                all_items_count += 1
 
     @Decorator.send_task
     @Decorator.redirect_output
