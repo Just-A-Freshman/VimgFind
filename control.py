@@ -36,6 +36,7 @@ class CoreControl(WinGUI):
         # 搜索展示控制项
         self.preview_view.bind("<<ItemviewSelect>>", self.search_control.preview_found_image)
         self.preview_view.bind("<Control-a>", lambda e: self.preview_view.selection_set(tk.ALL))
+        self.preview_view.bind("<Control-c>", lambda e: FileOperation.copy_files())
         preview_widgets = (self.preview_canvas1, self.preview_canvas2, self.preview_view)
         for w in preview_widgets:
             w.bind("<Button-3>", lambda e, w=w: self.menu_control.create_right_click_menu(e, w))
@@ -62,7 +63,7 @@ class CoreControl(WinGUI):
         self.open_setting_file_button.config(command=lambda: FileOperation.open_file(Setting.config_path))
         self.open_repertory_button.config(command=lambda: webbrowser.open(r"https://github.com/Just-A-Freshman/VimgFind"))
 
-        # 拖拽文件支持
+        # 全局事件处理
         self.drop_target_register(DND_FILES)
         self.dnd_bind('<<Drop>>', self.__on_drop)
 

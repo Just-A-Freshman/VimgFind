@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter.ttk import Treeview, Scrollbar
 from ttkbootstrap import Style
-from typing import Callable
+from typing import Callable, Any
 from collections import OrderedDict, namedtuple
 import math
 import hashlib
@@ -41,7 +41,7 @@ class BasicImagePreviewView(object):
     def _change_theme(self) -> None:
         self.theme_color = self._get_theme_colors()
 
-    def append_result(self, image_path: str, *extra_info: str | int) -> str:
+    def append_result(self, image_path: str, *extra_info: Any, **kwargs: Any) -> str:
         return self._generate_unique_path_item(image_path)
 
     def get_show_results(self) -> list[tuple]:
@@ -206,13 +206,14 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._visible_image_data: dict[str, dict] = {}
 
         # 记录画布的id项以及索引位置
+        self._tooltip = None
         self._canvas_items: dict[str, dict[str, int]] = {}
         self._visible_items: set[str] = set()
         self._selected_items: set[str] = set()
         
         # 定时器
-        self._scroll_timer = None
-        self._scrollbar_drag_timer = None
+        self._scroll_timer = ""
+        self._scrollbar_drag_timer = ""
 
         self._cols = 0
         self._is_destroy = False
@@ -319,6 +320,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         items_list = list(self._results.keys())
         if not items_list or self._cols == 0:
             return
+        target_index = -1
         max_index = len(items_list) - 1
         current_index = max(self._get_item_index(item) for item in self._selected_items)
         if event.keysym in ("Left", "KP_Left"):
@@ -417,7 +419,6 @@ class ThumbnailGridView(BasicImagePreviewView):
         results = self._image_loader.get_results()
         for result in results:
             item = result.item
-            # 避免之前的异步任务触发_create_canvas_item
             self._loading_tasks.discard(item)
             if item not in self._results:
                 continue
