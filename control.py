@@ -7,10 +7,9 @@ from typing import Literal
 import datetime
 import os
 
-
 from ui import WinGUI
 from widgets import BasicImagePreviewView, DetailListView, ThumbnailGridView
-from setting import Setting
+from setting import Setting, WinInfo
 from utils import FileOperation, ImageOperation, Decorator
 from search_tools import SearchTool
 import webbrowser
@@ -36,7 +35,7 @@ class CoreControl(WinGUI):
         # 搜索展示控制项
         self.preview_view.bind("<<ItemviewSelect>>", self.search_control.preview_found_image)
         self.preview_view.bind("<Control-a>", lambda e: self.preview_view.selection_set(tk.ALL))
-        self.preview_view.bind("<Control-c>", lambda e: FileOperation.copy_files())
+        self.preview_view.bind("<Control-v>", lambda e: self.search_control.search_image_by_clipboard())
         preview_widgets = (self.preview_canvas1, self.preview_canvas2, self.preview_view)
         for w in preview_widgets:
             w.bind("<Button-3>", lambda e, w=w: self.menu_control.create_right_click_menu(e, w))
@@ -86,17 +85,19 @@ class CoreControl(WinGUI):
             valid_theme_name = valid_theme_name if valid_theme_name in valid_theme_names else "superhero"
             self.theme_combobox.current(valid_theme_names.index(valid_theme_name))
         theme_cbo_value = self.theme_combobox.get()
-        style.theme_use(theme_cbo_value)
         self.theme_combobox.selection_clear()
+        # 配置特殊Style
+        style.theme_use(theme_cbo_value)
+        style.configure('TNotebook.Tab', font=('微软雅黑', 12))
+        style.configure("Treeview", rowheight=50)
 
     def __on_drop(self, event: TkinterDnD.DnDEvent) -> None:
         file_paths_str: str = getattr(event, "data")
         file_paths = FileOperation.extract_file_paths(file_paths_str)
-        tab_id = self.switch_tab.select()
-        tab_text = self.switch_tab.tab(tab_id, 'text')
-        if tab_text == "检索":
+        tab_id = self.switch_tab.index(self.switch_tab.select())
+        if tab_id == 0:
             self.search_control.search_by_browser(file_paths[0])
-        elif tab_text == "设置":
+        elif tab_id == 1:
             for dir_path in file_paths:
                 self.index_table_control.add_search_dir(dir_path)
 
@@ -381,6 +382,7 @@ class IndexTableControl(object):
 
 
 class MenuControl(object):
+    ACTIVE_BORDER_WIDTH = 6
     def __init__(self, core_control: CoreControl) -> None:
         self.core_control = core_control
 
@@ -429,8 +431,7 @@ class MenuControl(object):
         else:
             messagebox.showinfo("提示", "选中文件不存在！")
             return
-        
-        menu = tk.Menu(tearoff=0)
+        menu = tk.Menu(tearoff=0, activeborderwidth=self.ACTIVE_BORDER_WIDTH)
         for label, cmd in menu_items:
             menu.add_command(label=label, command=cmd, compound=tk.LEFT)
         
@@ -439,15 +440,21 @@ class MenuControl(object):
 
     def create_preview_setting_menu(self) -> None:
         btn = self.core_control.more_options_button
-        menu = tk.Menu(tearoff=0)
+        menu = tk.Menu(tearoff=0, activeborderwidth=self.ACTIVE_BORDER_WIDTH)
         menu.add_command(label="详情模式", command=lambda: self.core_control.search_control.set_preview_mode("detail_info"))
         menu.add_command(label="图标模式", command=lambda: self.core_control.search_control.set_preview_mode("medium_ico"))
         menu.add_separator()
         menu.add_command(label="结果数: 10", command=lambda: self.core_control.search_control.set_preview_result_count(10))
         menu.add_command(label="结果数: 30", command=lambda: self.core_control.search_control.set_preview_result_count(30))
         menu.add_command(label="结果数: 50", command=lambda: self.core_control.search_control.set_preview_result_count(50))
-        menu.add_command(label="结果数: 100", command=lambda: self.core_control.search_control.set_preview_result_count(100))    
-        menu.post(btn.winfo_rootx() - 60, btn.winfo_rooty() + 30)
+        menu.add_command(label="结果数: 100", command=lambda: self.core_control.search_control.set_preview_result_count(100))
+        menu.add_separator()
+        menu.add_command(label="过滤器", command=lambda: None)
+        menu.add_command(label="清理过滤", command=lambda: None)
+        menu.post(
+            btn.winfo_rootx() + WinInfo.TkS(btn.winfo_width() - menu.winfo_screenmmwidth(), restore=True), 
+            btn.winfo_rooty() + WinInfo.TkS(25)
+        )
         menu.bind("<Unmap>", lambda e: menu.destroy())
 
     def double_click_open_file(self, event: tk.Event, widget = None) -> None:

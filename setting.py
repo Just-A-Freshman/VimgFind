@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import Literal
 from datetime import datetime
 import logging
-
-
+import ctypes
 
 
 class Setting(object):
@@ -52,13 +51,18 @@ class Setting(object):
 
 
 class WinInfo(object):
+    scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
     ico_path = "config/favicon.ico"
     title = "Vimgfind"
-    width = 860
-    height = 555
+    width = 830
+    height = 560
 
-
-
+    @staticmethod
+    def TkS(value: int | float, restore: bool = False) -> int:
+        if not restore:
+            return int(round(value * WinInfo.scale_factor, 0))
+        else:
+            return int(round(value / WinInfo.scale_factor, 0))
 
 
 

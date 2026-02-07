@@ -1,10 +1,13 @@
-from ttkbootstrap import Button, Checkbutton, Scale, Style
+from ttkbootstrap import Button, Entry, Checkbutton, Scale, Style
 from ttkbootstrap.constants import LINK
 from tkinter.ttk import (
-    Notebook, Frame, Entry, Treeview, Label, LabelFrame, Combobox
+    Notebook, Frame, Treeview, Label, LabelFrame, Combobox
 )
 from tkinterdnd2 import TkinterDnD
 import tkinter as tk
+from ctypes import windll
+
+
 from setting import WinInfo
 from widgets import BasicImagePreviewView, PreviewCanvasView
 
@@ -12,6 +15,8 @@ from widgets import BasicImagePreviewView, PreviewCanvasView
 
 class WinGUI(TkinterDnD.Tk):
     def __init__(self) -> None:
+        windll.shcore.SetProcessDpiAwareness(1)
+        self._set_dpi_awareness()
         super().__init__()
         self.__win()
         self.switch_tab = self.__set_switch_tab(self)
@@ -39,22 +44,31 @@ class WinGUI(TkinterDnD.Tk):
         self.open_setting_file_button = self.__set_open_setting_btn(self.common_setting_frame)
         self.open_repertory_button = self.__set_open_open_repertory_btn(self.common_setting_frame)
 
+    def _set_dpi_awareness(self) -> None:
+        try:
+            windll.shcore.SetProcessDpiAwareness(2)
+        except Exception:
+            try:
+                windll.shcore.SetProcessDpiAwareness(1)
+            except Exception:
+                pass
+
     def __win(self) -> None:
         self.title(WinInfo.title)
-        width = WinInfo.width
-        height = WinInfo.height
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
-        geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
+        width = WinInfo.TkS(WinInfo.width)
+        hegiht = WinInfo.TkS(WinInfo.height)
+        geometry = '%dx%d+%d+%d' % (width, hegiht, (screenwidth - width) // 2, (screenheight - hegiht) // 2)
         self.geometry(geometry)
         self.iconbitmap(WinInfo.ico_path)
         
     def __set_switch_tab(self, parent) -> Notebook:
         frame = Notebook(parent)
         self.search_tab = self.__set_tab_frame(frame)
-        frame.add(self.search_tab, text="检索")
+        frame.add(self.search_tab, text="  检索  ")
         self.setting_tab = self.__set_tab_frame(frame)
-        frame.add(self.setting_tab, text="设置")
+        frame.add(self.setting_tab, text="  设置  ")
         frame.place(relx=0, rely=0, relwidth=1, relheight=1)
         return frame
     
@@ -64,7 +78,7 @@ class WinGUI(TkinterDnD.Tk):
         return frame
     
     def __set_search_entry(self, parent) -> Entry:
-        ipt = Entry(parent, )
+        ipt = Entry(parent)
         ipt.place(relx=0.01, rely=0.02, relwidth=0.395, relheight=0.0690)
         return ipt
     
@@ -80,7 +94,7 @@ class WinGUI(TkinterDnD.Tk):
     
     def __set_more_options_button(self, parent) -> Button:
         button = Button(parent, text="• • •", takefocus=False, style=LINK, cursor="hand2")
-        button.place(relx=1, rely=0.0192, width=50, x=-50)
+        button.place(relx=1, rely=0.0192, width=WinInfo.TkS(50), x=WinInfo.TkS(-50))
         return button
     
     def __set_preview_results_frame(self, parent) -> Frame:
@@ -103,7 +117,7 @@ class WinGUI(TkinterDnD.Tk):
         return frame
 
     def __set_index_tip_label(self, parent) -> Label:
-        label = Label(parent,text="当前索引的图库(~张图片)", anchor=tk.NW, font=("Microsoft Sans Serif", 14))
+        label = Label(parent,text="当前索引的图库(~张图片)", anchor=tk.NW, font=("微软雅黑", 14))
         label.place(relx=0.0081, rely=0.04, relwidth=1, relheight=0.0575)
         return label
     
@@ -169,15 +183,15 @@ class WinGUI(TkinterDnD.Tk):
         tip = Label(parent, text="自动更新索引")
         tip.grid(row=2, column=1, padx=(5, 10), sticky=tk.E)
         checkbtn = Checkbutton(parent, style="square-toggle")
-        checkbtn.grid(row=2, column=2, padx=(0, 5), sticky=tk.W)
+        checkbtn.grid(row=2, column=2, padx=(0, 5), sticky=tk.EW)
         return checkbtn
 
     def __set_update_threads_count_scale(self, parent) -> Scale:
-        tip = Label(parent, text="更新线程：$$")
+        tip = Label(parent, text=f"更新线程：$$")
         tip.grid(row=3, column=1, padx=(5, 10), sticky=tk.E)
         scale = Scale(parent, from_=4, to=20, orient=tk.HORIZONTAL)
         scale.grid(row=3, column=2, padx=(0, 5), sticky=tk.EW)
-        scale.config(command=lambda value: tip.config(text=f"更新线程：{int(float(value)):0>2}"))
+        scale.config(command=lambda value: tip.config(text=f"更新线程:  {int(float(value)):0>2}"))
         return scale
     
     def __set_open_setting_btn(self, parent) -> Button:

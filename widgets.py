@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter.ttk import Treeview, Scrollbar
-from ttkbootstrap import Style
+from ttkbootstrap import Style, tooltip
 from typing import Callable, Any
 from collections import OrderedDict, namedtuple
 import math
@@ -12,6 +12,7 @@ from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 
 
 from utils import ImageLoader, FileOperation
+from setting import WinInfo
 
 
 ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
@@ -74,6 +75,7 @@ class PreviewCanvasView(BasicImagePreviewView):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self._canvas = self._create_canvas(parent)
+        self._tooltip = tooltip.ToolTip(self._canvas, text="没有文件", delay=500)
 
     def _create_canvas(self, parent) -> tk.Canvas:
         canvas = tk.Canvas(parent, highlightthickness=0, cursor="hand2")
@@ -95,11 +97,13 @@ class PreviewCanvasView(BasicImagePreviewView):
         self.clear_results()
         self._results[iid] = (image_path, imgtk)
         self._canvas.create_image(x, y, anchor=tk.CENTER, image=imgtk)
+        self._tooltip.text = image_path
         return iid
     
     def clear_results(self) -> None:
         self._results.clear()
         self._canvas.delete(tk.ALL)
+        self._tooltip.text = "没有文件"
 
     def selection(self) -> tuple[str, ...]:
         return tuple(self._results.keys())
@@ -122,7 +126,7 @@ class DetailListView(BasicImagePreviewView):
         self._create_treeview(extra_columns)
         self.parent.after(50, self._create_scrollbar)
         
-    def _create_treeview(self, extra_columns: dict[str, int]):
+    def _create_treeview(self, extra_columns: dict[str, int]) -> None:
         columns = {"名称":160, **extra_columns}
         self.__treeview = Treeview(self.parent, show="headings", columns=list(columns))
         for text, width in columns.items():
@@ -191,10 +195,9 @@ class ThumbnailGridView(BasicImagePreviewView):
     """
     缩略图网格式绘制类，不提供指定位置插入元素及删除操作
     """
-    THUMBNAIL_SIZE: int = 110
-    GRID_SPACING: int = 10
-    MARGIN: int = 10
-    FONT_HEGIHT: int = 33
+    THUMBNAIL_SIZE: int = WinInfo.TkS(110)
+    MARGIN: int = WinInfo.TkS(10)
+    FONT_HEGIHT: int = WinInfo.TkS(32)
     PRELOAD_ROWS: int = 3
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent)
@@ -446,14 +449,14 @@ class ThumbnailGridView(BasicImagePreviewView):
     def _create_placeholder(self, item: str) -> None:
         x, y = self._get_item_position(item)
         filename = os.path.basename(self._results[item][0])
-        truncate_filename = f"{filename[:8]}{'...' if len(filename) > 8 else ''}"
+        truncate_filename = FileOperation.truncate_filename(filename)
         placeholder_id = self._canvas.create_text(
             x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE // 2,
             text=f"图片加载中...", fill=self.theme_color.fg
         )
         image_info_id = self._canvas.create_text(
             x + self.THUMBNAIL_SIZE // 2, 
-            y + self.THUMBNAIL_SIZE + self.GRID_SPACING // 2 + self.FONT_HEGIHT // 2,
+            y + self.THUMBNAIL_SIZE + self.MARGIN // 2 + self.FONT_HEGIHT // 2,
             text=truncate_filename, fill=self.theme_color.fg
         )
         self._canvas_items[item] = {
@@ -513,7 +516,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         canvas_width = self._canvas.winfo_width()
         canvas_height = self._canvas.winfo_height()
         old_cols = self._cols
-        item_width = self.THUMBNAIL_SIZE + self.GRID_SPACING
+        item_width = self.THUMBNAIL_SIZE + self.MARGIN
         self._cols = max(1, (canvas_width - self.MARGIN * 2) // item_width)
         
         if old_cols != self._cols and old_cols != 0:
@@ -528,16 +531,16 @@ class ThumbnailGridView(BasicImagePreviewView):
                     self._canvas.coords(border_id, x - 4, y - 4, x + self.THUMBNAIL_SIZE + 4, y + self.THUMBNAIL_SIZE + 4)
 
                 self._canvas.coords(canvas_item["placeholder_id"], x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE // 2)
-                self._canvas.coords(canvas_item["image_info_id"],  x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE + self.GRID_SPACING // 2 + 15)
+                self._canvas.coords(canvas_item["image_info_id"],  x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE + self.MARGIN // 2 + self.FONT_HEGIHT // 2)
         
         rows = math.ceil(len(self._results) / self._cols) if self._cols > 0 else 0
-        item_height = self.THUMBNAIL_SIZE + self.GRID_SPACING + 30
+        item_height = self.THUMBNAIL_SIZE + self.MARGIN + self.FONT_HEGIHT
         total_height = rows * item_height + self.MARGIN * 2 if rows > 0 else 0
         if total_height > canvas_height:
             self._canvas.configure(scrollregion=(0, 0, canvas_width, total_height))
         else:
             self._canvas.configure(scrollregion=(0, 0, canvas_width, canvas_height))
-            self._canvas.yview_moveto(0)  # 确保滚动到顶部
+            self._canvas.yview_moveto(0)
     
     def _get_item_position(self, item: str) -> tuple[int, int]:
         if self._cols == 0:
@@ -547,11 +550,11 @@ class ThumbnailGridView(BasicImagePreviewView):
         row = index // self._cols
         col = index % self._cols
         
-        item_width = self.THUMBNAIL_SIZE + self.GRID_SPACING
-        item_height = self.THUMBNAIL_SIZE + self.GRID_SPACING + 30
+        item_width = self.THUMBNAIL_SIZE + self.MARGIN
+        item_height = self.THUMBNAIL_SIZE + self.MARGIN + self.FONT_HEGIHT
         
-        x = col * item_width + self.MARGIN + self.GRID_SPACING // 2
-        y = row * item_height + self.MARGIN + self.GRID_SPACING // 2
+        x = col * item_width + self.MARGIN + self.MARGIN // 2
+        y = row * item_height + self.MARGIN + self.MARGIN // 2
         
         return (x, y)        
     
@@ -561,7 +564,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         
         canvas_y1 = self._canvas.canvasy(0)
         canvas_y2 = canvas_y1 + self._canvas.winfo_height()
-        item_height = self.THUMBNAIL_SIZE + self.GRID_SPACING + 30
+        item_height = self.THUMBNAIL_SIZE + self.MARGIN + 30
         
         start_row = max(0, canvas_y1 // item_height - self.PRELOAD_ROWS)
         end_row = min(math.ceil(len(self._results) / self._cols), canvas_y2 // item_height + self.PRELOAD_ROWS)
