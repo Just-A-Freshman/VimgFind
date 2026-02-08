@@ -37,18 +37,22 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 ## 📦 快速上手
 
 ### 1. 直接使用（推荐）
-
 #### 最新版本（v2.3）
 
-下载完整包：[v2.3.2 完整包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/v2.3.2.7z)
+下载完整包：
+- [v2.3.2 完整包：以图搜图+以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/v2.3.2.7z)
+- [v2.3.2 完整包：仅以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/only_search_image.7z)
 
 #### 从 v2.2 版本迁移
 
 无需重新下载完整包，仅更新可执行文件：
 
-下载链接：[v2.3.1 增量更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/VimgFind2.3.7z)
+- [v2.3.2 增量更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/VimgFind2.3.7z)
 
-使用方法：将下载的 exe 文件放入 v2.2 版本安装目录，覆盖原有文件即可。
+操作步骤，将文件解压后，里面有两个文件：
+1. 将`VimgFind2.3.2.exe`覆盖原来可执行文件
+2. 将`tkinterdnd2`文件夹放置到原目录的`_internal`文件夹下
+
 
 ### 2. 历史版本
 
