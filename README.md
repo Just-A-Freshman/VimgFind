@@ -41,7 +41,7 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 
 下载完整包：
 - [v2.3.2 完整包：以图搜图+以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/v2.3.2.7z)
-- [v2.3.2 完整包：仅以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/only_search_image.7z)
+- [v2.3.2 完整包：仅以图搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/only_search_image.7z)
 
 #### 从 v2.2 版本迁移
 
