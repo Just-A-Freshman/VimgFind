@@ -13,6 +13,16 @@ from PIL import Image
 from setting import Setting
 from IndexManager import VectorIndexManager, NameIndexManager
 from encoder import MultiModalEncoder
+
+
+EXT_FILTER_MAP: dict[str, set[str]] = {
+    "PNG": {".png"},
+    "JPG/JPEG": {".jpg", ".jpeg"},
+    "WebP": {".webp"},
+    "GIF": {".gif"},
+    "BMP": {".bmp"},
+    "TIFF": {".tiff", ".tif"},
+}
 from utils import FileOperation, ImageOperation
 
 
@@ -22,6 +32,7 @@ class SearchTool(object):
         self.__search_event.set()
         self.__init_event = Event()
         self.__force_stop_update = False
+        self._checkout_status: str = ""
         Thread(target=self.__async_init, args=(setting, ), daemon=True).start()
         
     def __async_init(self, setting: Setting) -> None:
@@ -139,10 +150,19 @@ class SearchTool(object):
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
 
-    def checkout(self, content: Image.Image | str) -> Iterator[tuple[str, float]]:
+    def checkout(self, content: Image.Image | str, threshold: float = 0.0,
+                 file_ext_label: str = "",
+                 size_min: float | None = None,
+                 size_max: float | None = None,
+                 folder_filters: list[str] | None = None) -> Iterator[tuple[str, float]]:
         self.__init_event.wait()
+        self._checkout_status = "ok"
         results_count = self.__name_idx_mgr.results_count
-        if results_count == 0 or (isinstance(content, str) and content == ""):
+        if results_count == 0:
+            self._checkout_status = "empty_index"
+            return
+        if isinstance(content, str) and content == "":
+            self._checkout_status = "empty_input"
             return
         self.stop_update_index()
         if isinstance(content, Image.Image):
@@ -156,10 +176,44 @@ class SearchTool(object):
             fv = self.__multimodal_encoder.encode_text(combine_sentence)
 
         if fv is None:
+            logging.warning("搜索失败：编码器返回空特征向量，请检查模型文件是否存在")
+            self._checkout_status = "encode_failed"
             return
         sim_list, ids_list = self.__vec_idx_mgr.match(fv, results_count)
+        name_index_len = len(self.__name_idx_mgr.name_index)
+        if len(ids_list) == 0:
+            logging.error("搜索失败：HNSW向量索引为空，请重建索引")
+            self._checkout_status = "hnsw_empty"
+            self.continue_update_index()
+            return
+
+        ext_set = EXT_FILTER_MAP.get(file_ext_label)
+
+        yielded_count = 0
         for img_id, similarity in zip(ids_list, sim_list):
-            yield (self.__name_idx_mgr.name_index[img_id][0], similarity)
+            if similarity < threshold:
+                break
+            if img_id >= name_index_len:
+                logging.warning(f"发现孤立向量ID={img_id}，已自动清理")
+                self.__vec_idx_mgr.delete_vector(img_id)
+                continue
+            file_path = self.__name_idx_mgr.name_index[img_id][0]
+            if ext_set and Path(file_path).suffix.lower() not in ext_set:
+                continue
+            if size_min is not None or size_max is not None:
+                file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
+                if size_min is not None and file_size_mb < size_min:
+                    continue
+                if size_max is not None and file_size_mb > size_max:
+                    continue
+            if folder_filters:
+                file_path_obj = Path(file_path)
+                if not any(file_path_obj.is_relative_to(f) for f in folder_filters):
+                    continue
+            yielded_count += 1
+            yield (file_path, similarity)
+        if yielded_count == 0:
+            self._checkout_status = "no_results"
         self.continue_update_index()
 
     def is_empty_index(self) -> bool:

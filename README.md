@@ -80,6 +80,7 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 2. 进入目录并创建激活虚拟环境(powershell)：
     ```
     cd VimgFind
+    python -m venv env
     env/Scripts/Activate.ps1
     ```
 

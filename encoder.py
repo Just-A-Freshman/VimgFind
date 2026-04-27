@@ -72,12 +72,10 @@ class MultiModalEncoder:
             fv /= norm
 
     def _preprocess_image(self, img: Image.Image) -> np.ndarray | None:
-        # img = img.convert("RGB")
         if img.mode in ('P', 'PA', '1', 'L', 'LA'):
             img = img.convert('RGBA')
         
         if img.mode == 'RGBA':
-            # 如果有透明通道，创建白色背景
             background = Image.new('RGB', img.size)
             background.paste(img, mask=img.split()[-1])  # 使用alpha通道作为mask
             img = background
@@ -91,6 +89,7 @@ class MultiModalEncoder:
 
     def encode_image(self, image_obj: Image.Image) -> np.ndarray | None:
         if self.image_session is None:
+            logging.error("图像编码器未加载，跳过图像编码")
             return None
         
         processed_image = self._preprocess_image(image_obj)
