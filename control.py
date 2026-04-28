@@ -384,7 +384,7 @@ class SearchControl(object):
 
     def set_similarity_threshold(self, value: float) -> None:
         try:
-            self.similarity_threshold = value
+            self.similarity_threshold = float(value)
         except (ValueError, TypeError):
             self.similarity_threshold = 0.0
 
