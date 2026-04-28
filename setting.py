@@ -34,6 +34,8 @@ class Setting(object):
 
     def get_config(self, config_type: Literal["model", "index", "function"], key: str):
         config_type_key = f"{config_type}_config"
+        if key not in self.__config[config_type_key]:
+            self.__config[config_type_key][key] = None
         return self.__config[config_type_key][key]
 
     def modity_config(self, config_type: Literal["model", "index", "function"], key: str, content) -> None:
