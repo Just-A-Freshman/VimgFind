@@ -27,10 +27,10 @@
         "search_dir": []
     },
     "function_config": {
-        "max_work_thread": 4,
+        "max_work_thread": 20,
         "preview_mode": "detail_info",
-        "auto_update_index": false,
-        "ui_style": "cyborg",
-        "similarity_threshold": 21
+        "auto_update_index": true,
+        "ui_style": "superhero",
+        "similarity_threshold": 0
     }
 }
