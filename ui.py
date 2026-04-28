@@ -57,7 +57,8 @@ class FilterPanel(LabelFrame):
 
         # 第 2 行：文件大小
         Label(self, text="文件大小", width=10, anchor=tk.W).grid(
-            row=2, column=0, sticky='w', padx=(12, 0), pady=(10, 10))
+            row=2, column=0, sticky='w', padx=(12, 0), pady=(10, 10)
+        )
         self.size_min = Entry(self, width=6)
         self.size_min.grid(row=2, column=1, sticky='ew', padx=(8, 2), pady=(10, 10))
         self.size_min_unit = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
@@ -369,7 +370,6 @@ class WinGUI(TkinterDnD.Tk):
         return notebook
 
     def _expose_widgets(self) -> None:
-        """暴露搜索/设置页面的控件为顶层属性，供 CoreControl 直接访问。"""
         # 搜索控件
         self.search_entry = self.search_tab.search_entry
         self.filter_btn = self.search_tab.filter_btn
