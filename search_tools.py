@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Thread, Event
 from pathlib import Path
 from typing import Iterator
-from re import split
+from re import sub
 import logging
 
 
@@ -171,12 +171,7 @@ class SearchTool(object):
         if isinstance(content, Image.Image):
             fv = self.__multimodal_encoder.encode_image(content)
         else:
-            keywords = split(r"[\s|,]", content)
-            if len(keywords) > 1:
-                combine_sentence = f"一张照片同时包含了{'、'.join(keywords[:-2])}和{keywords[-1]}"
-            else:
-                combine_sentence = content
-            fv = self.__multimodal_encoder.encode_text(combine_sentence)
+            fv = self.__multimodal_encoder.encode_text(sub(r"[\s,]+", "，", content))
 
         if fv is None:
             logging.warning("搜索失败：编码器返回空特征向量，请检查模型文件是否存在")

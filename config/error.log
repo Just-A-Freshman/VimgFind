@@ -175,3 +175,4 @@
 2026-04-28 11:01:07,523 -  加载ONNX模型失败 NOTEXISTS: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from NOTEXISTS failed:Load model NOTEXISTS failed. File doesn't exist
 2026-04-28 11:01:17,611 -  加载ONNX模型失败 NOTEXISTS: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from NOTEXISTS failed:Load model NOTEXISTS failed. File doesn't exist
 2026-04-28 11:06:39,809 -  加载ONNX模型失败 NOTEXISTS: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from NOTEXISTS failed:Load model NOTEXISTS failed. File doesn't exist
+2026-04-28 11:16:48,428 -  加载ONNX模型失败 NOTEXISTS: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from NOTEXISTS failed:Load model NOTEXISTS failed. File doesn't exist

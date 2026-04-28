@@ -18,7 +18,7 @@ import shutil
 
 import win32clipboard
 import win32con
-from tkinter import Tk
+from tkinter import Tk, messagebox, filedialog
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
 from tqdm import tqdm
@@ -313,6 +313,37 @@ class ImageOperation(object):
         try:
             return Image.open(image_path)
         except (UnidentifiedImageError, OSError, FileNotFoundError) as e:
+            return
+
+    @staticmethod
+    def save_as_image(src_path: Path) -> None:
+        filetypes = [
+            ("PNG 图片", "*.png"),
+            ("JPEG 图片", "*.jpg"),
+            ("WebP 图片", "*.webp"),
+            ("BMP 图片", "*.bmp"),
+            ("GIF 图片", "*.gif"),
+            ("TIFF 图片", "*.tiff"),
+        ]
+        dest = filedialog.asksaveasfilename(
+            defaultextension=src_path.suffix,
+            filetypes=filetypes,
+            initialfile=src_path.stem
+        )
+        if not dest:
+            return
+        dest = Path(dest)
+        try:
+            if dest.suffix.lower() == src_path.suffix.lower():
+                if not FileOperation.save_as(src_path, dest, True):
+                    raise Exception("系统权限错误！")
+            img: Image.Image = Image.open(src_path)
+            if dest.suffix.lower() in ('.jpg', '.jpeg') and img.mode == 'RGBA':
+                img = img.convert('RGB')
+            img.save(dest)
+            return 
+        except Exception as e:
+            messagebox.showerror("保存失败", str(e))
             return
         
 

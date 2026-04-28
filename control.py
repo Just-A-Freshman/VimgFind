@@ -560,15 +560,7 @@ class MenuControl(object):
             return [Path(preview_widget.item(item)[0]) for item in selected_items]
         preview_widget.selection_set(current_selected_item)
         return [Path(preview_widget.item(current_selected_item)[0])]
-    
-    @staticmethod
-    def ask_for_filename(src_path: Path) -> str:
-        return filedialog.asksaveasfilename(
-            defaultextension=src_path.suffix,
-            filetypes=[("图片文件", f"*{src_path.suffix}")],
-            initialfile=src_path.stem
-        )
-    
+
     def create_right_click_menu(self, event: tk.Event, widget = None) -> None:
         if widget is None:
             widget = event.widget
@@ -583,7 +575,7 @@ class MenuControl(object):
             menu_items = [
                 ("复制图片", lambda: FileOperation.copy_files(file_path)),
                 ("复制路径", lambda: FileOperation.copy_filepaths(file_path, tk=self.core_control)),
-                ("图片另存为", lambda: FileOperation.save_as(file_path, self.ask_for_filename(file_path), True)),
+                ("图片另存为", lambda: ImageOperation.save_as_image(file_path)),
                 ("打开图片", lambda: FileOperation.open_file(file_path)),
                 ("打开文件夹", lambda: FileOperation.open_file(file_path, True))
             ]

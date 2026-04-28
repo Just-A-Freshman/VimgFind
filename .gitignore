@@ -218,3 +218,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Index file
+name_index.json
+vector_index.bin
+vocab.txt
+*.bin
+
+# weight file
+*.onnx
+
+# log file
+error.log
