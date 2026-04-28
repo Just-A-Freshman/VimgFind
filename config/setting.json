@@ -31,9 +31,9 @@
     },
     "function_config": {
         "max_work_thread": 10,
-        "preview_mode": "medium_ico",
+        "preview_mode": "detail_info",
         "auto_update_index": true,
-        "ui_style": "superhero",
-        "similarity_threshold": 54
+        "ui_style": "cyborg",
+        "similarity_threshold": 47
     }
 }

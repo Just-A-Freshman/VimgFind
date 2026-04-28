@@ -194,8 +194,11 @@ class FilterController:
             self.core.filter_panel.place_forget()
         else:
             self.save_filter_state()
-            self.core.filter_panel.place(relx=0.01, rely=0.096, relwidth=0.395, relheight=0.48)
-            self.core.filter_panel.lift()
+            fp = self.core.filter_panel
+            fp.place(relx=0.01, rely=0.096, relwidth=0.395)
+            fp.update_idletasks()
+            fp.place(relx=0.01, rely=0.096, relwidth=0.395, height=fp.winfo_reqheight())
+            fp.lift()
 
     def confirm_filter(self) -> None:
         self.core.filter_panel.place_forget()

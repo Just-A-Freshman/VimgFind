@@ -32,8 +32,9 @@ class FilterPanel(LabelFrame):
         self._build()
 
     def _build(self) -> None:
-        for col, weight in enumerate([0, 1, 0, 0, 1, 0, 1]):
+        for col, weight in enumerate([0, 1, 0, 0, 1, 0, 0]):
             self.grid_columnconfigure(col, weight=weight)
+        self.grid_columnconfigure(6, minsize=12)
 
         # 第 0 行：相似度阈值
         Label(self, text="相似度阈值", width=10, anchor=tk.W).grid(
@@ -52,7 +53,7 @@ class FilterPanel(LabelFrame):
             values=["所有图片文件", "PNG", "JPG/JPEG", "WebP", "GIF", "BMP", "TIFF"],
             state="readonly",
         )
-        self.ext_combo.grid(row=1, column=1, columnspan=5, sticky='ew', padx=(8, 4), pady=(10, 10))
+        self.ext_combo.grid(row=1, column=1, columnspan=5, sticky='ew', padx=(8, 0), pady=(10, 10))
         self.ext_combo.current(0)
 
         # 第 2 行：文件大小
@@ -68,7 +69,7 @@ class FilterPanel(LabelFrame):
         self.size_max = Entry(self, width=6)
         self.size_max.grid(row=2, column=4, sticky='ew', padx=(4, 2), pady=(10, 10))
         self.size_max_unit = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
-        self.size_max_unit.grid(row=2, column=5, sticky='ew', padx=(0, 2), pady=(10, 10))
+        self.size_max_unit.grid(row=2, column=5, sticky='ew', padx=(0, 0), pady=(10, 10))
         self.size_max_unit.current(1)
 
         # 第 3 行：所属文件夹标签 + 全选 + 多选列表
@@ -81,7 +82,7 @@ class FilterPanel(LabelFrame):
         lbox_frame = Frame(self)
         lbox_frame.grid(
             row=3, column=1, columnspan=5, sticky='new',
-            padx=(8, 2), pady=(10, 2)
+            padx=(8, 0), pady=(10, 2)
         )
         lbox_frame.grid_columnconfigure(0, weight=1)
         self.folder_listbox = tk.Listbox(
@@ -93,7 +94,7 @@ class FilterPanel(LabelFrame):
 
         # 底部按钮
         btn_frame = Frame(self)
-        btn_frame.grid(row=4, column=0, columnspan=7, pady=(14, 16))
+        btn_frame.grid(row=4, column=0, columnspan=7, pady=(14, 30))
         btn_center = Frame(btn_frame)
         btn_center.pack(anchor='center')
         self.confirm_btn = Button(btn_center, text="确定", takefocus=False, cursor="hand2", padding=(20, 8))
