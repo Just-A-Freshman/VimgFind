@@ -18,7 +18,7 @@
         "context_length": 52
     },
     "index_config": {
-        "max_match_count": 30,
+        "max_match_count": 50,
         "vector_index_path": "config/index/vector_index.bin",
         "name_index_path": "config/index/name_index.json",
         "index_capacity": 1000000,
@@ -35,9 +35,9 @@
     },
     "function_config": {
         "max_work_thread": 20,
-        "preview_mode": "detail_info",
+        "preview_mode": "medium_ico",
         "auto_update_index": true,
-        "ui_style": "superhero",
-        "similarity_threshold": 67
+        "ui_style": "cyborg",
+        "similarity_threshold": 90
     }
 }

@@ -1,4 +1,4 @@
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, font as tkfont
 from ttkbootstrap import Style, Treeview
 from tkinterdnd2 import DND_FILES, TkinterDnD
 import tkinter as tk
@@ -154,10 +154,9 @@ class CoreControl(WinGUI):
         if w == self.filter_btn:
             return
         while w:
-            if w == self.filter_panel:
+            if w == self.filter_panel or isinstance(w, str):
                 return
-            if not isinstance(w, str):
-                w = w.master
+            w = w.master
         self.__cancel_filter()
 
     def _save_filter_state(self) -> None:
@@ -589,6 +588,7 @@ class MenuControl(object):
 
     def create_preview_setting_menu(self) -> None:
         btn = self.core_control.more_options_button
+        frame1 = self.core_control.preview_frame1
         menu = tk.Menu(tearoff=0, activeborderwidth=self.ACTIVE_BORDER_WIDTH)
         menu.add_command(label="详情模式", command=lambda: self.core_control.search_control.set_preview_mode("detail_info"))
         menu.add_command(label="图标模式", command=lambda: self.core_control.search_control.set_preview_mode("medium_ico"))
@@ -597,8 +597,13 @@ class MenuControl(object):
         menu.add_command(label="结果数: 30", command=lambda: self.core_control.search_control.set_preview_result_count(30))
         menu.add_command(label="结果数: 50", command=lambda: self.core_control.search_control.set_preview_result_count(50))
         menu.add_command(label="结果数: 100", command=lambda: self.core_control.search_control.set_preview_result_count(100))
+
+        # 菜单右边缘与"源图片" LabelFrame 右边缘对齐
+        frame1_right = frame1.winfo_rootx() + frame1.winfo_width()
+        menu_font = tkfont.Font(font=menu.cget("font"))
+        menu_width = int(menu_font.measure("结果数: 100") * 1.75)
         menu.post(
-            btn.winfo_rootx() + WinInfo.TkS(btn.winfo_width() - menu.winfo_screenmmwidth(), restore=True), 
+            frame1_right - menu_width,
             btn.winfo_rooty() + WinInfo.TkS(25)
         )
         menu.bind("<Unmap>", lambda e: menu.destroy())
