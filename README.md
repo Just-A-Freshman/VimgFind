@@ -29,66 +29,64 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 ### ⚠️ 已知局限
 
 - 磁盘占用：索引文件体积相对较大，参考数据：400 张图片对应约 1MB 磁盘空间
-
 - 内存消耗：程序启动后占用内存较高，配置较低的设备需留意
-
-- 功能待完善：暂不支持搜索过滤功能，后续将逐步迭代
 
 ## 📦 快速上手
 
 ### 1. 直接使用（推荐）
-#### 最新版本（v2.3）
 
-下载完整包：
+#### 测试版
+
+- [v2.4.1 完整包：以图搜图 + 以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind2.4.1.zip)
+
+#### 稳定版本
+
 - [v2.3.2 完整包：以图搜图+以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/v2.3.2.7z)
 - [v2.3.2 完整包：仅以图搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/only_search_image.7z)
 
-#### 从 v2.2 版本迁移
+#### 从2.3 升级到 2.4
 
-无需重新下载完整包，仅更新可执行文件：
+- [2.4.1 可执行程序](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind2.4.1.zip)
 
-- [v2.3.2 增量更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/VimgFind2.3.7z)
-
-操作步骤，将文件解压后，里面有两个文件：
-1. 将`VimgFind2.3.2.exe`覆盖原来可执行文件
-2. 将`tkinterdnd2`文件夹放置到原目录的`_internal`文件夹下
+将上述文件解压后得到`VimgFind2.4.1.exe`，将其放置到原安装目录下（替代原来的可执行文件）
 
 
 ### 2. 历史版本
 
-- **v2.2**：[下载链接](https://github.com/Just-A-Freshman/VimgFind/releases/download/programv2.2/v2.2.7z)
-恢复剪切板搜图，新增图标预览模式、返回结果数控制、右键“另存为”功能
-
-- **v2.1**：[下载链接](https://github.com/Just-A-Freshman/VimgFind/releases/download/new_program/v2.1.7z)
-新增以文搜图（回车键触发），暂不支持剪切板搜图
-
-- **v1.2**：[下载链接](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.2.7z)
-新增剪切板搜图功能
-
-- **v1.1**：[下载链接](https://github.com/Just-A-Freshman/VimgFind/releases/download/program/v1.1.zip)
-具备基础以图搜图功能
+所有历史版本请自行查看：[Releases · Just-A-Freshman/VimgFind](https://github.com/Just-A-Freshman/VimgFind/releases)
 
 ### 3. 源码运行
 
 环境要求：Python 3.9 及以上版本
 
-1. 克隆仓库到本地：
+1. 克隆仓库到本地（main分支）：
+
     ```
     git clone https://github.com/Just-A-Freshman/VimgFind.git
     ```
 
+    如果希望克隆测试版本代码，需切换到dev分支：
+
+    ```
+    git clone -b dev https://github.com/Just-A-Freshman/VimgFind.git
+    ```
+
 2. 进入目录并创建激活虚拟环境(powershell)：
+
     ```
     cd VimgFind
+    python -m venv env
     env/Scripts/Activate.ps1
     ```
 
 3. 安装依赖包：
+
     ```
     pip install -r requirements.txt
     ```
 
 4. 启动程序：
+
     ```
     env/Scripts/python.exe main.py
     ```
@@ -97,10 +95,10 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 
 源码运行前需手动下载模型，放置于 `config/models` 目录下。配置文件需确保命名为 `setting.json`（非默认名称需手动重命名），具体对应关系如下：
 
-|模型|配置文件|功能描述|
-|---|---|---|
-|[chinese_clip](https://github.com/Just-A-Freshman/VimgFind/releases/download/model/chinese_clip_onnx.7z)|config/setting.json|默认配置，支持以图搜图 + 以文搜图|
-|[imagenet](https://github.com/Just-A-Freshman/VimgFind/releases/download/model/imagenet-b2-opti.onnx)|config/setting_imagenet.json|轻量化配置，仅支持以图搜图|
+| 模型                                                         | 配置文件                     | 功能描述                          |
+| ------------------------------------------------------------ | ---------------------------- | --------------------------------- |
+| [chinese_clip](https://github.com/Just-A-Freshman/VimgFind/releases/download/model/chinese_clip_onnx.7z) | config/setting.json          | 默认配置，支持以图搜图 + 以文搜图 |
+| [imagenet](https://github.com/Just-A-Freshman/VimgFind/releases/download/model/imagenet-b2-opti.onnx) | config/setting_imagenet.json | 轻量化配置，仅支持以图搜图        |
 
 
 提示：若未配置模型，程序启动后更新索引会秒完成，但索引文件为空，无法正常搜图。
