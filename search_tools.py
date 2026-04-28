@@ -14,6 +14,8 @@ from setting import Setting
 from IndexManager import VectorIndexManager, NameIndexManager
 from encoder import MultiModalEncoder
 
+from utils import FileOperation, ImageOperation
+
 
 EXT_FILTER_MAP: dict[str, set[str]] = {
     "PNG": {".png"},
@@ -23,8 +25,6 @@ EXT_FILTER_MAP: dict[str, set[str]] = {
     "BMP": {".bmp"},
     "TIFF": {".tiff", ".tif"},
 }
-from utils import FileOperation, ImageOperation
-
 
 class SearchTool(object):
     def __init__(self, setting: Setting) -> None:
@@ -150,11 +150,14 @@ class SearchTool(object):
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
 
-    def checkout(self, content: Image.Image | str, threshold: float = 0.0,
-                 file_ext_label: str = "",
-                 size_min: float | None = None,
-                 size_max: float | None = None,
-                 folder_filters: list[str] | None = None) -> Iterator[tuple[str, float]]:
+    def checkout(
+            self, 
+            content: Image.Image | str, threshold: float = 0.0,
+            file_ext_label: str = "",
+            size_min: float | None = None,
+            size_max: float | None = None,
+            folder_filters: list[str] | None = None
+        ) -> Iterator[tuple[str, float]]:
         self.__init_event.wait()
         self._checkout_status = "ok"
         results_count = self.__name_idx_mgr.results_count

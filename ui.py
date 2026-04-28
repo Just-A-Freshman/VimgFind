@@ -32,19 +32,15 @@ class FilterPanel(LabelFrame):
         self._build()
 
     def _build(self) -> None:
-        # Grid 列配置（用于跨行对齐）
-        # Col 0: 标签(width=10) | Col 1: 左侧输入区(expand) | Col 2: 第一单位下拉框
-        # Col 3: "到"分隔符 | Col 4: 右侧输入区(expand) | Col 5: 第二单位下拉框
-        # Col 6: 尾部(expand)
         for col, weight in enumerate([0, 1, 0, 0, 1, 0, 1]):
             self.grid_columnconfigure(col, weight=weight)
 
         # 第 0 行：相似度阈值
         Label(self, text="相似度阈值", width=10, anchor=tk.W).grid(
-            row=0, column=0, sticky='w', padx=(12, 0), pady=(20, 10))
+            row=0, column=0, sticky='w', padx=(12, 0), pady=(20, 10)
+        )
         self.sim_scale = Scale(self, from_=0, to=100, orient=tk.HORIZONTAL)
-        self.sim_scale.grid(row=0, column=1, columnspan=4, sticky='ew',
-                            padx=(8, 4), pady=(20, 10))
+        self.sim_scale.grid(row=0, column=1, columnspan=4, sticky='ew', padx=(8, 4), pady=(20, 10))
         self.sim_value = Label(self, text="0%", width=5)
         self.sim_value.grid(row=0, column=5, sticky='e', pady=(20, 10))
 
@@ -56,8 +52,7 @@ class FilterPanel(LabelFrame):
             values=["所有图片文件", "PNG", "JPG/JPEG", "WebP", "GIF", "BMP", "TIFF"],
             state="readonly",
         )
-        self.ext_combo.grid(row=1, column=1, columnspan=5, sticky='ew',
-                            padx=(8, 4), pady=(10, 10))
+        self.ext_combo.grid(row=1, column=1, columnspan=5, sticky='ew', padx=(8, 4), pady=(10, 10))
         self.ext_combo.current(0)
 
         # 第 2 行：文件大小
@@ -88,9 +83,11 @@ class FilterPanel(LabelFrame):
             padx=(8, 2), pady=(10, 2)
         )
         lbox_frame.grid_columnconfigure(0, weight=1)
-        self.folder_listbox = tk.Listbox(lbox_frame, selectmode=tk.MULTIPLE,
-                                          height=5, width=1, activestyle='none',
-                                          exportselection=False, justify=tk.LEFT)
+        self.folder_listbox = tk.Listbox(
+            lbox_frame, selectmode=tk.MULTIPLE,
+            height=5, width=1, activestyle='none',
+            exportselection=False, justify=tk.LEFT
+        )
         self.folder_listbox.grid(row=0, column=0, sticky='ew')
 
         # 底部按钮
@@ -142,9 +139,11 @@ class SearchFrame(Frame):
 
     def __set_filter_btn(self) -> tk.Label:
         btn = tk.Label(self, text="▼", cursor="hand2", bd=0, highlightthickness=0, relief=tk.FLAT)
-        btn.place(in_=self.search_entry, relx=1.0, rely=0.1, anchor='ne',
-                  x=WinInfo.TkS(-3), y=WinInfo.TkS(3),
-                  width=WinInfo.TkS(28), height=WinInfo.TkS(26))
+        btn.place(
+            in_=self.search_entry, relx=1.0, rely=0.1, anchor='ne',
+            x=WinInfo.TkS(-3), y=WinInfo.TkS(3),
+            width=WinInfo.TkS(28), height=WinInfo.TkS(26)
+        )
         return btn
 
     def __set_search_by_browser_button(self) -> Button:

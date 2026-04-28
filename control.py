@@ -18,21 +18,17 @@ import webbrowser
 from PIL import Image
 
 
+
 class CoreControl(WinGUI):
     def __init__(self) -> None:
         super().__init__()
         self.setting = Setting()
+        self.filter_control = FilterController(self)
         self.__change_theme(setting_theme=True)
         self.search_tools = SearchTool(self.setting)
         self.index_table_control = IndexTableControl(self)
         self.search_control = SearchControl(self)
         self.menu_control = MenuControl(self)
-        self._folder_all_var = tk.BooleanVar(value=True)
-        self._folder_paths: list[str] = []
-        try:
-            self.search_control.similarity_threshold = float(self.setting.get_config("function", "similarity_threshold"))
-        except (KeyError, ValueError, TypeError):
-            pass
         self.search_control.set_preview_mode(self.setting.get_config("function", "preview_mode"))
         self.__env_init()
         self.bind_event(first_time=True)
@@ -55,11 +51,11 @@ class CoreControl(WinGUI):
         self.search_by_clipboard_btn.config(command=self.search_control.search_image_by_clipboard)
         self.search_entry.bind("<Return>", lambda e: self.search_control.search_image_by_text())
         self.more_options_button.config(command=self.menu_control.create_preview_setting_menu)
-        self.filter_btn.bind("<Button-1>", lambda e: self.__toggle_filter_panel())
-        self.filter_panel.confirm_btn.config(command=self.__confirm_filter)
-        self.filter_panel.cancel_btn.config(command=self.__cancel_filter)
-        self.bind_all("<Button-1>", self._on_root_click, "+")
-        self.__init_filter_panel()
+        self.filter_btn.bind("<Button-1>", lambda e: self.filter_control.toggle_filter_panel())
+        self.filter_panel.confirm_btn.config(command=self.filter_control.confirm_filter)
+        self.filter_panel.cancel_btn.config(command=self.filter_control.cancel_filter)
+        self.bind_all("<Button-1>", self.filter_control.on_root_click, "+")
+        self.filter_control.init_filter_panel()
 
         # 索引设置项
         self.index_dataset_table.bind("<Double-Button-1>", self.menu_control.double_click_open_file)
@@ -79,6 +75,7 @@ class CoreControl(WinGUI):
 
     @Decorator.send_task
     def __env_init(self) -> None:
+        self.search_control.set_similarity_threshold(self.setting.get_config("function", "similarity_threshold"))
         self.index_table_control.refresh_index_dataset_table()
         self.update_threads_count_scale.set(value=self.setting.get_config("function", "max_work_thread"))
         if self.setting.get_config("function", "auto_update_index"):
@@ -87,105 +84,6 @@ class CoreControl(WinGUI):
         else:
             self.index_table_control.update_index_tip()
         self.after(self.setting.schedule_save_interval, self.__schedule_save)
-
-    def __init_filter_panel(self) -> None:
-        self.filter_panel.sim_scale.set(self.search_control.similarity_threshold)
-        self.filter_panel.sim_value.config(text=f"{int(self.search_control.similarity_threshold)}%")
-        self.filter_panel.sim_scale.config(
-            command=lambda value: (
-                self.filter_panel.sim_value.config(text=f"{int(float(value))}%"),
-                self.search_control.set_similarity_threshold(float(value))
-            )
-        )
-        self.__sync_filter_btn_style()
-        self._refresh_folder_filter()
-        self.filter_panel.folder_listbox.selection_set(0, tk.END)
-        self.filter_panel.folder_select_all.config(
-            variable=self._folder_all_var, command=self._on_folder_select_all)
-        self.filter_panel.folder_listbox.bind(
-            "<<ListboxSelect>>", self._on_folder_listbox_select)
-
-    def _refresh_folder_filter(self) -> None:
-        dirs = self.setting.get_config("index", "search_dir")
-        self._folder_paths = list(dirs)
-        lb = self.filter_panel.folder_listbox
-        lb.delete(0, tk.END)
-        for d in self._folder_paths:
-            lb.insert(tk.END, d)
-
-    def _on_folder_select_all(self) -> None:
-        lb = self.filter_panel.folder_listbox
-        if self._folder_all_var.get():
-            lb.selection_set(0, tk.END)
-        else:
-            lb.selection_clear(0, tk.END)
-
-    def _on_folder_listbox_select(self, *_) -> None:
-        lb = self.filter_panel.folder_listbox
-        all_selected = len(lb.curselection()) == lb.size()
-        self._folder_all_var.set(all_selected)
-
-    def __sync_filter_btn_style(self) -> None:
-        style = Style()
-        entry_bg = style.lookup('TEntry', 'fieldbackground')
-        entry_fg = style.lookup('TEntry', 'foreground')
-        self.filter_btn.config(bg=entry_bg, fg=entry_fg)
-
-    def __toggle_filter_panel(self) -> None:
-        if self.filter_panel.winfo_viewable():
-            self.filter_panel.place_forget()
-        else:
-            self._save_filter_state()
-            self.filter_panel.place(relx=0.01, rely=0.096, relwidth=0.395, relheight=0.48)
-            self.filter_panel.lift()
-
-    def __confirm_filter(self) -> None:
-        self.filter_panel.place_forget()
-        self.search_control.resend_last_search()
-
-    def __cancel_filter(self) -> None:
-        self._restore_filter_state()
-        self.filter_panel.place_forget()
-
-    def _on_root_click(self, event) -> None:
-        if not self.filter_panel.winfo_viewable():
-            return
-        w = event.widget
-        if w == self.filter_btn:
-            return
-        while w:
-            if w == self.filter_panel or isinstance(w, str):
-                return
-            w = w.master
-        self.__cancel_filter()
-
-    def _save_filter_state(self) -> None:
-        self._saved_threshold = self.search_control.similarity_threshold
-        self._saved_ext = self.filter_panel.ext_combo.get()
-        self._saved_size_min = self.filter_panel.size_min.get()
-        self._saved_size_min_unit = self.filter_panel.size_min_unit.get()
-        self._saved_size_max = self.filter_panel.size_max.get()
-        self._saved_size_max_unit = self.filter_panel.size_max_unit.get()
-        self._saved_folder_selection = self.filter_panel.folder_listbox.curselection()
-        self._saved_folder_all = self._folder_all_var.get()
-
-    def _restore_filter_state(self) -> None:
-        if not hasattr(self, '_saved_threshold'):
-            return
-        self.search_control.similarity_threshold = self._saved_threshold
-        self.filter_panel.sim_scale.set(self._saved_threshold)
-        self.filter_panel.sim_value.config(text=f"{int(self._saved_threshold)}%")
-        self.filter_panel.ext_combo.set(self._saved_ext)
-        self.filter_panel.size_min.delete(0, tk.END)
-        self.filter_panel.size_min.insert(0, self._saved_size_min)
-        self.filter_panel.size_min_unit.set(self._saved_size_min_unit)
-        self.filter_panel.size_max.delete(0, tk.END)
-        self.filter_panel.size_max.insert(0, self._saved_size_max)
-        self.filter_panel.size_max_unit.set(self._saved_size_max_unit)
-        self.filter_panel.folder_listbox.selection_clear(0, tk.END)
-        for idx in self._saved_folder_selection:
-            self.filter_panel.folder_listbox.selection_set(idx)
-        self._folder_all_var.set(self._saved_folder_all)
 
     def __change_theme(self, setting_theme=False) -> None:
         style = Style()
@@ -200,7 +98,7 @@ class CoreControl(WinGUI):
         style.theme_use(theme_cbo_value)
         style.configure('TNotebook.Tab', font=('微软雅黑', 12))
         style.configure("Treeview", rowheight=50)
-        self.__sync_filter_btn_style()
+        self.filter_control._sync_filter_btn_style()
 
     def __on_drop(self, event: TkinterDnD.DnDEvent) -> None:
         file_paths_str: str = getattr(event, "data")
@@ -232,6 +130,122 @@ class CoreControl(WinGUI):
             messagebox.showerror("错误", str(e))
         finally:
             super().destroy()
+
+
+
+class FilterController:
+    def __init__(self, core: 'CoreControl') -> None:
+        self.core = core
+        self._folder_all_var = tk.BooleanVar(value=True)
+        self._folder_paths: list[str] = []
+        self._saved_threshold: float | None = None
+        self._saved_ext: str = ""
+        self._saved_size_min: str = ""
+        self._saved_size_min_unit: str = ""
+        self._saved_size_max: str = ""
+        self._saved_size_max_unit: str = ""
+        self._saved_folder_selection: tuple = ()
+        self._saved_folder_all: bool = True
+
+    def init_filter_panel(self) -> None:
+        fp = self.core.filter_panel
+        fp.sim_scale.set(self.core.search_control.similarity_threshold)
+        fp.sim_value.config(text=f"{int(self.core.search_control.similarity_threshold)}%")
+        fp.sim_scale.config(
+            command=lambda value: (
+                fp.sim_value.config(text=f"{int(float(value))}%"),
+                self.core.search_control.set_similarity_threshold(float(value))
+            )
+        )
+        self._sync_filter_btn_style()
+        self.refresh_folder_filter()
+        fp.folder_select_all.config(variable=self._folder_all_var, command=self._on_folder_select_all)
+        fp.folder_listbox.bind("<<ListboxSelect>>", self._on_folder_listbox_select)
+        self._on_folder_select_all()
+
+    def refresh_folder_filter(self) -> None:
+        dirs = self.core.setting.get_config("index", "search_dir")
+        self._folder_paths = list(dirs)
+        lb = self.core.filter_panel.folder_listbox
+        lb.delete(0, tk.END)
+        for d in self._folder_paths:
+            lb.insert(tk.END, d)
+
+    def _on_folder_select_all(self) -> None:
+        lb = self.core.filter_panel.folder_listbox
+        if self._folder_all_var.get():
+            lb.selection_set(0, tk.END)
+        else:
+            lb.selection_clear(0, tk.END)
+
+    def _on_folder_listbox_select(self, *_) -> None:
+        lb = self.core.filter_panel.folder_listbox
+        all_selected = len(lb.curselection()) == lb.size()
+        self._folder_all_var.set(all_selected)
+
+    def _sync_filter_btn_style(self) -> None:
+        style = Style()
+        entry_bg = style.lookup('TEntry', 'fieldbackground')
+        entry_fg = style.lookup('TEntry', 'foreground')
+        self.core.filter_btn.config(bg=entry_bg, fg=entry_fg)
+
+    def toggle_filter_panel(self) -> None:
+        if self.core.filter_panel.winfo_viewable():
+            self.core.filter_panel.place_forget()
+        else:
+            self.save_filter_state()
+            self.core.filter_panel.place(relx=0.01, rely=0.096, relwidth=0.395, relheight=0.48)
+            self.core.filter_panel.lift()
+
+    def confirm_filter(self) -> None:
+        self.core.filter_panel.place_forget()
+        self.core.search_control.resend_last_search()
+
+    def cancel_filter(self) -> None:
+        self.restore_filter_state()
+        self.core.filter_panel.place_forget()
+
+    def on_root_click(self, event) -> None:
+        if not self.core.filter_panel.winfo_viewable():
+            return
+        w = event.widget
+        if w == self.core.filter_btn:
+            return
+        while w:
+            if w == self.core.filter_panel or isinstance(w, str):
+                return
+            w = w.master
+        self.cancel_filter()
+
+    def save_filter_state(self) -> None:
+        fp = self.core.filter_panel
+        self._saved_threshold = self.core.search_control.similarity_threshold
+        self._saved_ext = fp.ext_combo.get()
+        self._saved_size_min = fp.size_min.get()
+        self._saved_size_min_unit = fp.size_min_unit.get()
+        self._saved_size_max = fp.size_max.get()
+        self._saved_size_max_unit = fp.size_max_unit.get()
+        self._saved_folder_selection = fp.folder_listbox.curselection()
+        self._saved_folder_all = self._folder_all_var.get()
+
+    def restore_filter_state(self) -> None:
+        if self._saved_threshold is None:
+            return
+        fp = self.core.filter_panel
+        self.core.search_control.similarity_threshold = self._saved_threshold
+        fp.sim_scale.set(self._saved_threshold)
+        fp.sim_value.config(text=f"{int(self._saved_threshold)}%")
+        fp.ext_combo.set(self._saved_ext)
+        fp.size_min.delete(0, tk.END)
+        fp.size_min.insert(0, self._saved_size_min)
+        fp.size_min_unit.set(self._saved_size_min_unit)
+        fp.size_max.delete(0, tk.END)
+        fp.size_max.insert(0, self._saved_size_max)
+        fp.size_max_unit.set(self._saved_size_max_unit)
+        fp.folder_listbox.selection_clear(0, tk.END)
+        for idx in self._saved_folder_selection:
+            fp.folder_listbox.selection_set(idx)
+        self._folder_all_var.set(self._saved_folder_all)
 
 
 
@@ -314,11 +328,11 @@ class SearchControl(object):
         fp = self.core_control.filter_panel
         size_min = _parse_size(fp.size_min.get(), fp.size_min_unit.get())
         size_max = _parse_size(fp.size_max.get(), fp.size_max_unit.get())
-        if self.core_control._folder_all_var.get():
+        if self.core_control.filter_control._folder_all_var.get():
             folder_filters = None
         else:
             selected = fp.folder_listbox.curselection()
-            fpaths = self.core_control._folder_paths
+            fpaths = self.core_control.filter_control._folder_paths
             folder_filters = [fpaths[i] for i in selected] or None
         results = self.core_control.search_tools.checkout(
             input_data, self.similarity_threshold,
@@ -366,7 +380,10 @@ class SearchControl(object):
             self.__search_image(self._last_search_content)
 
     def set_similarity_threshold(self, value: float) -> None:
-        self.similarity_threshold = value
+        try:
+            self.similarity_threshold = value
+        except (ValueError, TypeError):
+            self.similarity_threshold = 0.0
 
     def resend_last_search(self) -> None:
         if self._last_search_content:
@@ -463,7 +480,7 @@ class IndexTableControl(object):
             if search_dir not in all_show_dir:
                 tb.insert("", tk.END, values=(all_items_count, search_dir))
                 all_items_count += 1
-        self.core_control._refresh_folder_filter()
+        self.core_control.filter_control.refresh_folder_filter()
 
     @Decorator.send_task
     @Decorator.redirect_output
@@ -598,7 +615,6 @@ class MenuControl(object):
         menu.add_command(label="结果数: 50", command=lambda: self.core_control.search_control.set_preview_result_count(50))
         menu.add_command(label="结果数: 100", command=lambda: self.core_control.search_control.set_preview_result_count(100))
 
-        # 菜单右边缘与"源图片" LabelFrame 右边缘对齐
         frame1_right = frame1.winfo_rootx() + frame1.winfo_width()
         menu_font = tkfont.Font(font=menu.cget("font"))
         menu_width = int(menu_font.measure("结果数: 100") * 1.75)

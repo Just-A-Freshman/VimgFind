@@ -34,10 +34,10 @@
         ]
     },
     "function_config": {
-        "max_work_thread": 20,
-        "preview_mode": "medium_ico",
-        "auto_update_index": true,
+        "max_work_thread": 4,
+        "preview_mode": "detail_info",
+        "auto_update_index": false,
         "ui_style": "cyborg",
-        "similarity_threshold": 90
+        "similarity_threshold": 21
     }
 }
