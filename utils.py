@@ -234,6 +234,10 @@ class FileOperation(object):
         return file_size
 
     @staticmethod
+    def normalize_path(path: str) -> str:
+        return os.path.normcase(os.path.realpath(path))
+
+    @staticmethod
     def generate_unique_filename(target_dir: Path, suffix: str) -> Path:
         random_name = uuid.uuid4().hex
         if suffix and not suffix.startswith("."):
