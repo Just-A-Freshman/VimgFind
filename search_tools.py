@@ -88,12 +88,15 @@ class SearchTool(object):
     def __get_new_files_index(self, target_dir: str) -> list[tuple[int, str]]:
         new_files_index = []
         current_files = FileOperation.get_file_iterator(target_dir)
-        existing_files = set(i[0] for i in self.__name_idx_mgr.name_index)
+        existing_files = set(
+            FileOperation.normalize_path(i[0])
+            for i in self.__name_idx_mgr.name_index
+        )
         new_files = []
         for file in current_files:
             if self.__force_stop_update:
                 break
-            if file not in existing_files:
+            if FileOperation.normalize_path(file) not in existing_files:
                 new_files.append(file)
 
         if not new_files:
