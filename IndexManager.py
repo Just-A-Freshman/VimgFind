@@ -118,7 +118,10 @@ class NameIndexManager(object):
     def add_name(self, name: Path | str, idx: int) -> None:
         while idx > len(self.__name_index) - 1:
             self.__name_index.append([NameIndexManager.NOTEXISTS, 0])
-        self.__name_index[idx] = [str(name), FileOperation.get_metainfo(name)]
+        self.__name_index[idx] = [
+            FileOperation.normalize_path(str(name)),
+            FileOperation.get_metainfo(name)
+        ]
         self.__valid_index_count += 1
     
     def delete_name(self, idx: int) -> None:
