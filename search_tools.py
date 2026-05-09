@@ -145,6 +145,19 @@ class SearchTool(object):
                 pbar.update(1)
             pbar.close()
     
+    def remove_duplicate(self) -> None:
+        self.__init_event.wait()
+        seen_paths: set[str] = set()
+        for idx, (file_path, _) in enumerate(self.__name_idx_mgr.name_index):
+            if file_path == NameIndexManager.NOTEXISTS:
+                continue
+            normalized = FileOperation.normalize_path(file_path)
+            if normalized in seen_paths:
+                self.__name_idx_mgr.delete_name(idx)
+                self.__vec_idx_mgr.delete_vector(idx)
+            else:
+                seen_paths.add(normalized)
+
     def remove_nonexists(self) -> None:
         self.__init_event.wait()
         for idx, (index_file, _) in tqdm(enumerate(self.__name_idx_mgr.name_index), ascii=False, ncols=50):

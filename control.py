@@ -734,6 +734,7 @@ class IndexTableControl(object):
                     image_dir,
                     int(float(self.core_control.update_threads_count_scale.get()))
                 )
+        self.core_control.search_tools.remove_duplicate()
         self.core_control.update_index_button.config(text="更新索引目录", command=self.sync_index)
         self.core_control.delete_index_button.config(state=tk.ACTIVE)
         self.core_control.rebuild_index_button.config(state=tk.ACTIVE)
