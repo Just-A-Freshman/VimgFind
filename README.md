@@ -1,6 +1,6 @@
 # VimgFind
 
-## 🌟 项目简介
+## 1. 项目简介
 
 VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**以图搜图**与**以文搜图**（搜索框内按回车键触发）功能，兼顾性能与易用性。
 
@@ -16,9 +16,8 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 <img width="610" height="419" alt="image" src="https://github.com/user-attachments/assets/07aad6f0-351b-48b6-9518-de4792331032" />
 
 
-## 📋 功能特性
-
-### ✅ 核心优势
+## 2. 功能特性
+### 2.1 核心优势
 
 - 匹配精度高：相较于传统图像哈希相似度计算，AI 驱动的匹配更精准
 
@@ -26,36 +25,34 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 
 - 搜索响应快：借助 HNSW 向量索引特性，实现毫秒级搜图
 
-### ⚠️ 已知局限
+### 2.2 已知局限
 
 - 磁盘占用：索引文件体积相对较大，参考数据：400 张图片对应约 1MB 磁盘空间
 - 内存消耗：程序启动后占用内存较高，配置较低的设备需留意
 
-## 📦 快速上手
+## 3. 快速上手
 
-### 1. 直接使用（推荐）
+### 3.1. 直接使用
+#### 最新版
 
-#### 测试版
+- [v2.4.2 完整包：以图搜图 + 以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.2-win64.7z)
 
-- [v2.4.1 完整包：以图搜图 + 以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.1-win64.7z)
+#### 从2.3 升级到 2.4
 
-#### 稳定版本
+- [2.4.2 增量更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.2-win64-update.zip)
+
+点击`hta`结尾的文件，选择旧版的可执行程序后点击更新即可。
+
+更新日志请查看：https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.4
+
+### 3.2. 历史版本
 
 - [v2.3.2 完整包：以图搜图+以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/VimgFind-2.3.2-win64.7z)
 - [v2.3.2 完整包：仅以图搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/VimgFind-2.3.2-win64-simple.7z)
 
-#### 从2.3 升级到 2.4
+其他历史版本请自行查看：[Releases · Just-A-Freshman/VimgFind](https://github.com/Just-A-Freshman/VimgFind/releases)
 
-- [2.4.1 可执行程序](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.1-win64-update.zip)
-
-将上述文件解压后得到`VimgFind2.4.1.exe`，将其放置到原安装目录下（替代原来的可执行文件）
-
-
-### 2. 历史版本
-
-所有历史版本请自行查看：[Releases · Just-A-Freshman/VimgFind](https://github.com/Just-A-Freshman/VimgFind/releases)
-
-### 3. 源码运行
+### 3.3 源码运行
 
 环境要求：Python 3.9 及以上版本
 
@@ -91,9 +88,9 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
     env/Scripts/python.exe main.py
     ```
 
-### 🧩 模型与配置说明
+### 3.4 模型与配置说明
 
-源码运行前需手动下载模型，放置于 `config/models` 目录下。配置文件需确保命名为 `setting.json`（非默认名称需手动重命名），具体对应关系如下：
+3.3中，源码运行前需手动下载模型，放置于 `config/models` 目录下。配置文件需确保命名为 `setting.json`（非默认名称需手动重命名），具体对应关系如下：
 
 | 模型                                                         | 配置文件                     | 功能描述                          |
 | ------------------------------------------------------------ | ---------------------------- | --------------------------------- |
@@ -102,3 +99,11 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 
 
 提示：若未配置模型，程序启动后更新索引会秒完成，但索引文件为空，无法正常搜图。
+
+
+
+## 4. 未来规划
+
+1. 增加跨平台支持：计划未来支持Macos和Linux系统 (2.5版本)
+2. 引入 [多模型 - 多索引] 机制：用户可以自由切换不同的搜图模型，不同的模型有自己单独的索引文件夹 和 索引文件 (2.5版本)
+
