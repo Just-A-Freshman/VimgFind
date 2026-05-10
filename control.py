@@ -25,13 +25,12 @@ class CoreControl(WinGUI):
         self.setting = Setting()
         self.filter_control = FilterController(self)
         self.__change_theme(setting_theme=True)
-        self.search_tools = SearchTool(self.setting)
         self.index_table_control = IndexTableControl(self)
         self.search_control = SearchControl(self)
         self.menu_control = MenuControl(self)
         self.search_control.set_preview_mode(self.setting.get_config("function", "preview_mode"))
-        self.__env_init()
         self.bind_event(first_time=True)
+        self.after(0, self._delayed_init)
         
     def bind_event(self, first_time=False) -> None:
         self.preview_view.bind("<<ItemviewSelect>>", self.search_control.preview_found_image)
@@ -71,6 +70,11 @@ class CoreControl(WinGUI):
 
         self.drop_target_register(DND_FILES)
         self.dnd_bind('<<Drop>>', self.__on_drop)
+
+    def _delayed_init(self) -> None:
+        """在 mainloop 启动后初始化 SearchTool，避免后台 I/O 阻塞 UI 首次渲染。"""
+        self.search_tools = SearchTool(self.setting)
+        self.__env_init()
 
     @Decorator.send_task
     def __env_init(self) -> None:
