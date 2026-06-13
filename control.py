@@ -29,6 +29,7 @@ class CoreControl(WinGUI):
         self.search_control = SearchControl(self)
         self.menu_control = MenuControl(self)
         self.search_control.set_preview_mode(self.setting.get_config("function", "preview_mode"))
+        self.search_control.set_similarity_threshold(self.setting.get_config("function", "similarity_threshold"))
         self.bind_event(first_time=True)
         self.after(0, self._delayed_init)
         
@@ -78,7 +79,6 @@ class CoreControl(WinGUI):
 
     @Decorator.send_task
     def __env_init(self) -> None:
-        self.search_control.set_similarity_threshold(self.setting.get_config("function", "similarity_threshold"))
         self.index_table_control.refresh_index_dataset_table()
         self.update_threads_count_scale.set(value=self.setting.get_config("function", "max_work_thread"))
         if self.setting.get_config("function", "auto_update_index"):
