@@ -85,9 +85,9 @@ class SearchTool(object):
                 changed_files_index.append((idx, index_file))
         return changed_files_index
     
-    def __get_new_files_index(self, target_dir: str) -> list[tuple[int, str]]:
+    def __get_new_files_index(self, target_dir: str, exclude_rules: list[str] | None = None) -> list[tuple[int, str]]:
         new_files_index = []
-        current_files = FileOperation.get_file_iterator(target_dir)
+        current_files = FileOperation.get_file_iterator(target_dir, exclude_rules)
         existing_files = set(
             FileOperation.normalize_path(i[0])
             for i in self.__name_idx_mgr.name_index
@@ -112,15 +112,15 @@ class SearchTool(object):
 
         return new_files_index
 
-    def __index_target_dir(self, target_dir) -> list[tuple[int, str]]:
+    def __index_target_dir(self, target_dir, exclude_rules: list[str] | None = None) -> list[tuple[int, str]]:
         changed_files_index = self.__get_changed_files_index()
-        new_files_index = self.__get_new_files_index(target_dir)
+        new_files_index = self.__get_new_files_index(target_dir, exclude_rules)
         return changed_files_index + new_files_index
-    
+
     def update_max_match_count(self, max_match_count: int) -> None:
         self.__name_idx_mgr.update_max_match_count(max_match_count)
-        
-    def update_index(self, image_dir, max_workers: int = 10) -> None:
+
+    def update_index(self, image_dir, max_workers: int = 10, exclude_rules: list[str] | None = None) -> None:
         def _process_item(item) -> tuple[int, str, np.ndarray | None]:
             self.__search_event.wait()
             idx, fpath = item
@@ -133,7 +133,7 @@ class SearchTool(object):
                 fv = self.__multimodal_encoder.encode_image(image_obj)
             return idx, fpath, fv
         self.__init_event.wait()
-        need_to_update = self.__index_target_dir(image_dir)
+        need_to_update = self.__index_target_dir(image_dir, exclude_rules)
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             pbar = tqdm(total=len(need_to_update), ascii=False, ncols=50)
             futures = [executor.submit(_process_item, item) for item in need_to_update]
@@ -166,6 +166,23 @@ class SearchTool(object):
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
 
+    def get_excluded_files(self, rules: list[str]) -> list[str]:
+        """返回索引中所有已落入排除规则的文件路径"""
+        self.__init_event.wait()
+        result: list[str] = []
+        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
+            if index_file == NameIndexManager.NOTEXISTS:
+                continue
+            p = Path(index_file).parent
+            while True:
+                if FO.match_exclude_rule(p.name, str(p), rules):
+                    result.append(index_file)
+                    break
+                if p.parent == p:
+                    break
+                p = p.parent
+        return result
+
     def remove_files_in_directory(self, directory: str) -> None:
         self.__init_event.wait()
         directory_path = Path(directory).resolve()
@@ -177,6 +194,17 @@ class SearchTool(object):
                 continue
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
+
+    def remove_files(self, file_paths: list[str]) -> None:
+        """按文件路径列表从索引中移除"""
+        self.__init_event.wait()
+        file_set = {FileOperation.normalize_path(p) for p in file_paths}
+        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
+            if index_file == NameIndexManager.NOTEXISTS:
+                continue
+            if FileOperation.normalize_path(index_file) in file_set:
+                self.__name_idx_mgr.delete_name(idx)
+                self.__vec_idx_mgr.delete_vector(idx)
 
     def checkout(
             self,

@@ -7,7 +7,7 @@ from typing import Literal
 import datetime
 import os
 
-from ui import WinGUI
+from ui import WinGUI, ExcludeDialog
 from widgets import BasicImagePreviewView, DetailListView, ThumbnailGridView
 from setting import Setting, WinInfo
 from utils import FileOperation, ImageOperation, Decorator
@@ -61,6 +61,7 @@ class CoreControl(WinGUI):
         self.index_dataset_table.bind("<ButtonRelease-1>", self.index_table_control.drag_end, add="+")
 
         self.add_index_button.config(command=self.index_table_control.add_search_dir)
+        self.exclude_button.config(command=self.__open_exclude_dialog)
         self.update_index_button.config(command=self.index_table_control.sync_index)
         self.delete_index_button.config(command=self.index_table_control.delete_search_dir)
         self.rebuild_index_button.config(command=self.index_table_control.rebuild_index)
@@ -111,6 +112,9 @@ class CoreControl(WinGUI):
         elif tab_id == 1:
             for dir_path in file_paths:
                 self.index_table_control.add_search_dir(dir_path)
+
+    def __open_exclude_dialog(self) -> None:
+        ExcludeDialog(self, self.setting)
 
     def __schedule_save(self) -> None:
         self.search_tools.save_index()
@@ -726,17 +730,35 @@ class IndexTableControl(object):
         self.core_control.delete_index_button.config(state=tk.DISABLED)
         self.core_control.rebuild_index_button.config(state=tk.DISABLED)
         self.core_control.update_index_button.config(
-            text="终止索引更新", 
+            text="终止索引更新",
             command=lambda: self.core_control.search_tools.set_force_end_update(True)
         )
         self._is_updating = True
         self.__check_queue()
         self.core_control.search_tools.remove_nonexists()
+
+        exclude_rules: list[str] = self.core_control.setting.get_config("index", "exclude_rules") or []
+
+        # 检测已索引文件是否落入排除规则
+        if exclude_rules:
+            excluded_files = self.core_control.search_tools.get_excluded_files(exclude_rules)
+            if excluded_files:
+                answer = messagebox.askyesno(
+                    "提示",
+                    f"检测到 {len(excluded_files)} 个已索引图片\n"
+                    f"位于当前排除规则的文件夹中。\n\n"
+                    f"是否自动从索引中移除？\n"
+                    f"（移除后需重新索引才能恢复）"
+                )
+                if answer:
+                    self.core_control.search_tools.remove_files(excluded_files)
+
         for image_dir in self.core_control.setting.get_config("index", "search_dir"):
             if Path(image_dir).exists():
                 self.core_control.search_tools.update_index(
                     image_dir,
-                    int(float(self.core_control.update_threads_count_scale.get()))
+                    int(float(self.core_control.update_threads_count_scale.get())),
+                    exclude_rules
                 )
         self.core_control.search_tools.remove_duplicate()
         self.core_control.update_index_button.config(text="更新索引目录", command=self.sync_index)

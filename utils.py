@@ -75,22 +75,64 @@ class Decorator(object):
 
 class FileOperation(object):
     @staticmethod
-    def get_file_iterator(target_dir: str) -> Iterator[str]:
+    def match_exclude_rule(folder_name: str, folder_path: str, rules: list[str]) -> bool:
+        """判断一个目录是否匹配任一排除规则"""
+        for rule in rules:
+            rule = rule.strip()
+            if not rule:
+                continue
+            # 规则是绝对路径 → 精确匹配（归一化后比较）
+            if os.path.isabs(rule):
+                if FileOperation.normalize_path(folder_path) == FileOperation.normalize_path(rule):
+                    return True
+            # 规则包含路径分隔符 → 路径后缀匹配
+            elif '/' in rule or '\\' in rule:
+                normalized_rule = FileOperation.normalize_path(rule)
+                normalized_path = FileOperation.normalize_path(folder_path)
+                if normalized_path.endswith(normalized_rule):
+                    return True
+            # 纯文件夹名 → 大小写不敏感匹配
+            else:
+                if folder_name.lower() == rule.lower():
+                    return True
+        return False
+
+    @staticmethod
+    def get_file_iterator(target_dir: str, exclude_rules: list[str] | None = None) -> Iterator[str]:
         accepted = Setting.accepted_exts
         def _scandir(path):
             try:
                 with os.scandir(path) as it:
                     for entry in it:
-                        if entry.is_file(follow_symlinks=False):
+                        if entry.is_dir(follow_symlinks=False):
+                            if exclude_rules and FileOperation.match_exclude_rule(entry.name, entry.path, exclude_rules):
+                                continue
+                            yield from _scandir(entry.path)
+                        elif entry.is_file(follow_symlinks=False):
                             name = entry.name
                             dot = name.rfind('.')
                             if dot != -1 and name[dot:].lower() in accepted:
                                 yield entry.path
-                        elif entry.is_dir(follow_symlinks=False):
-                            yield from _scandir(entry.path)
             except PermissionError:
                 pass
         return _scandir(target_dir)
+
+    @staticmethod
+    def preview_exclusion(target_dir: str, rules: list[str]) -> list[str]:
+        """扫描目录结构，返回所有被排除规则命中的文件夹路径（平铺列表）"""
+        matched: list[str] = []
+        try:
+            with os.scandir(target_dir) as it:
+                for entry in it:
+                    if not entry.is_dir(follow_symlinks=False):
+                        continue
+                    if FileOperation.match_exclude_rule(entry.name, entry.path, rules):
+                        matched.append(entry.path)
+                    # 递归进入子目录
+                    matched.extend(FileOperation.preview_exclusion(entry.path, rules))
+        except PermissionError:
+            pass
+        return matched
 
     @staticmethod
     def open_file(file_path: str | Path, highlight: bool = False) -> None:
