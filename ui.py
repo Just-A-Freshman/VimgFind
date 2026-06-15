@@ -188,9 +188,10 @@ class SettingFrame(Frame):
     index_tip_label: Label
     index_dataset_table: Treeview
     index_setting_frame: LabelFrame
+    scan_setting_frame: LabelFrame
     common_setting_frame: LabelFrame
     add_index_button: Button
-    exclude_button: Button
+    exclude_manage_btn: Button
     update_index_button: Button
     delete_index_button: Button
     rebuild_index_button: Button
@@ -207,15 +208,16 @@ class SettingFrame(Frame):
         self.index_tip_label = self.__set_index_tip_label()
         self.index_dataset_table = self.__set_index_dataset_table()
         self.index_setting_frame = self.__set_index_setting_frame()
+        self.scan_setting_frame = self.__set_scan_setting_frame()
         self.common_setting_frame = self.__set_common_setting_frame()
         self.add_index_button = self.__set_add_index_button()
-        self.exclude_button = self.__set_exclude_button()
         self.update_index_button = self.__set_update_index_button()
         self.delete_index_button = self.__set_delete_index_button()
         self.rebuild_index_button = self.__set_rebuild_index_button()
         self.theme_combobox = self.__set_theme_combobox()
         self.auto_update_btn = self.__set_auto_update_checkbutton()
         self.update_threads_count_scale = self.__set_update_threads_count_scale()
+        self.exclude_manage_btn = self.__set_exclude_manage()
         self.open_setting_file_button = self.__set_open_setting_btn()
         self.open_repertory_button = self.__set_open_open_repertory_btn()
 
@@ -235,43 +237,72 @@ class SettingFrame(Frame):
         return table
 
     def __set_index_setting_frame(self) -> LabelFrame:
-        frame = LabelFrame(self, text="索引设置")
-        frame.place(relx=0.7181, rely=0.095, relwidth=0.2719, relheight=0.4738)
+        frame = LabelFrame(self, text="目录管理")
+        frame.place(relx=0.7181, rely=0.095, relwidth=0.2719, relheight=0.44)
         for i in range(4):
             frame.grid_rowconfigure(i, weight=1)
-        frame.grid_columnconfigure(0, weight=7, uniform='btn')
-        frame.grid_columnconfigure(1, weight=3, uniform='btn')
+        frame.grid_columnconfigure(0, weight=1)
         return frame
 
     def __set_add_index_button(self) -> Button:
         btn = Button(self.index_setting_frame, text="添加索引目录", takefocus=False)
-        btn.grid(row=0, column=0, padx=(5, 2), pady=(10, 5), ipadx=6, ipady=5, sticky=tk.NSEW)
-        return btn
-
-    def __set_exclude_button(self) -> Button:
-        btn = Button(self.index_setting_frame, text="排除", style="secondary", takefocus=False)
-        btn.grid(row=0, column=1, padx=(2, 5), pady=(10, 5), ipadx=6, ipady=5, sticky=tk.NSEW)
+        btn.grid(row=0, column=0, padx=5, pady=(10, 5), ipadx=10, ipady=5, sticky=tk.NSEW)
         return btn
 
     def __set_update_index_button(self) -> Button:
         btn = Button(self.index_setting_frame, text="更新索引目录", takefocus=False)
-        btn.grid(row=1, column=0, columnspan=2, padx=5, pady=5, ipadx=10, ipady=5, sticky=tk.NSEW)
+        btn.grid(row=1, column=0, padx=5, pady=5, ipadx=10, ipady=5, sticky=tk.NSEW)
         return btn
 
     def __set_delete_index_button(self) -> Button:
         btn = Button(self.index_setting_frame, text="删除索引目录", takefocus=False)
-        btn.grid(row=2, column=0, columnspan=2, padx=5, pady=5, ipadx=10, ipady=5, sticky=tk.NSEW)
+        btn.grid(row=2, column=0, padx=5, pady=5, ipadx=10, ipady=5, sticky=tk.NSEW)
         return btn
 
     def __set_rebuild_index_button(self) -> Button:
         btn = Button(self.index_setting_frame, text="重建索引目录", takefocus=False)
-        btn.grid(row=3, column=0, columnspan=2, padx=5, pady=(5, 10), ipadx=10, ipady=5, sticky=tk.NSEW)
+        btn.grid(row=3, column=0, padx=5, pady=(5, 10), ipadx=10, ipady=5, sticky=tk.NSEW)
         return btn
+
+    def __set_scan_setting_frame(self) -> LabelFrame:
+        frame = LabelFrame(self, text="扫描设置")
+        frame.place(relx=0.7181, rely=0.54, relwidth=0.2719, relheight=0.26)
+        for i in range(3):
+            frame.grid_rowconfigure(i, weight=1)
+        frame.grid_columnconfigure(0, weight=1, uniform='space')
+        frame.grid_columnconfigure(1, weight=1, uniform='labels')
+        frame.grid_columnconfigure(2, weight=1, uniform='controls')
+        frame.grid_columnconfigure(3, weight=1, uniform='space')
+        return frame
+
+    def __set_auto_update_checkbutton(self) -> Checkbutton:
+        tip = Label(self.scan_setting_frame, text="自动更新索引", anchor=tk.W)
+        tip.grid(row=0, column=1, padx=(5, 10), sticky=tk.E)
+        checkbtn = Checkbutton(self.scan_setting_frame, style="square-toggle")
+        checkbtn.grid(row=0, column=2, padx=(0, 5), sticky=tk.EW)
+        return checkbtn
+
+    def __set_update_threads_count_scale(self) -> Scale:
+        tip = Label(self.scan_setting_frame, text="更新线程：$$", anchor=tk.W)
+        tip.grid(row=1, column=1, padx=(5, 10), sticky=tk.E)
+        scale = Scale(self.scan_setting_frame, from_=4, to=20, orient=tk.HORIZONTAL)
+        scale.grid(row=1, column=2, padx=(0, 5), sticky=tk.EW)
+        scale.config(command=lambda value: tip.config(text=f"更新线程:  {int(float(value)):0>2}"))
+        return scale
+
+    def __set_exclude_manage(self) -> Button:
+        # 直接用 Tcl 命令修改 link 样式，消除按钮内边距并左对齐，与 Label 文本对齐
+        manage_btn = Button(
+            self.scan_setting_frame, text="索引排除规则",
+            takefocus=False, cursor="hand2", style=LINK
+        )
+        manage_btn.grid(row=2, column=1, padx=(15, 0), sticky=tk.E)
+        return manage_btn
 
     def __set_common_setting_frame(self) -> LabelFrame:
         frame = LabelFrame(self, text="通用设置")
-        frame.place(relx=0.7181, rely=0.58, relwidth=0.2609 + 0.011, relheight=0.42)
-        for i in range(5):
+        frame.place(relx=0.7181, rely=0.805, relwidth=0.2719, relheight=0.175)
+        for i in range(2):
             frame.grid_rowconfigure(i, weight=1)
         frame.grid_columnconfigure(0, weight=1, uniform='space')
         frame.grid_columnconfigure(1, weight=1, uniform='labels')
@@ -283,34 +314,19 @@ class SettingFrame(Frame):
         style = Style()
         theme_names = style.theme_names()
         tip = Label(self.common_setting_frame, text="界面主题设置")
-        tip.grid(row=1, column=1, padx=(5, 10), sticky=tk.E)
+        tip.grid(row=0, column=1, padx=(5, 10), sticky=tk.E)
         comb = Combobox(self.common_setting_frame, values=theme_names, state="readonly", width=15)
-        comb.grid(row=1, column=2, padx=(0, 5), sticky=tk.EW)
+        comb.grid(row=0, column=2, padx=(0, 5), sticky=tk.EW)
         return comb
-
-    def __set_auto_update_checkbutton(self) -> Checkbutton:
-        tip = Label(self.common_setting_frame, text="自动更新索引")
-        tip.grid(row=2, column=1, padx=(5, 10), sticky=tk.E)
-        checkbtn = Checkbutton(self.common_setting_frame, style="square-toggle")
-        checkbtn.grid(row=2, column=2, padx=(0, 5), sticky=tk.EW)
-        return checkbtn
-
-    def __set_update_threads_count_scale(self) -> Scale:
-        tip = Label(self.common_setting_frame, text="更新线程：$$")
-        tip.grid(row=3, column=1, padx=(5, 10), sticky=tk.E)
-        scale = Scale(self.common_setting_frame, from_=4, to=20, orient=tk.HORIZONTAL)
-        scale.grid(row=3, column=2, padx=(0, 5), sticky=tk.EW)
-        scale.config(command=lambda value: tip.config(text=f"更新线程:  {int(float(value)):0>2}"))
-        return scale
 
     def __set_open_setting_btn(self) -> Button:
         button = Button(self.common_setting_frame, text="配置文件", takefocus=True, style=LINK, cursor="hand2")
-        button.grid(row=4, column=1, pady=(5, 0), sticky=tk.E)
+        button.grid(row=1, column=1, pady=(5, 0), sticky=tk.E)
         return button
 
     def __set_open_open_repertory_btn(self) -> Button:
         button = Button(self.common_setting_frame, text="检查更新", takefocus=True, style=LINK, cursor="hand2")
-        button.grid(row=4, column=2, pady=(5, 0), padx=50, sticky=tk.W)
+        button.grid(row=1, column=2, pady=(5, 0), padx=50, sticky=tk.W)
         return button
 
 
@@ -399,9 +415,10 @@ class WinGUI(TkinterDnD.Tk):
         self.index_dataset_table = self.setting_tab.index_dataset_table
         self.index_tip_label = self.setting_tab.index_tip_label
         self.index_setting_frame = self.setting_tab.index_setting_frame
+        self.scan_setting_frame = self.setting_tab.scan_setting_frame
         self.common_setting_frame = self.setting_tab.common_setting_frame
         self.add_index_button = self.setting_tab.add_index_button
-        self.exclude_button = self.setting_tab.exclude_button
+        self.exclude_manage_btn = self.setting_tab.exclude_manage_btn
         self.update_index_button = self.setting_tab.update_index_button
         self.delete_index_button = self.setting_tab.delete_index_button
         self.rebuild_index_button = self.setting_tab.rebuild_index_button
