@@ -249,7 +249,7 @@ class SettingFrame(Frame):
         return btn
 
     def __set_exclude_button(self) -> Button:
-        btn = Button(self.index_setting_frame, text="⚙ 排除", style="secondary", takefocus=False)
+        btn = Button(self.index_setting_frame, text="排除", style="secondary", takefocus=False)
         btn.grid(row=0, column=1, padx=(2, 5), pady=(10, 5), ipadx=6, ipady=5, sticky=tk.NSEW)
         return btn
 
@@ -415,134 +415,113 @@ class WinGUI(TkinterDnD.Tk):
 class ExcludeDialog(tk.Toplevel):
     def __init__(self, parent, setting) -> None:
         super().__init__(parent)
+        self.withdraw()  # 隐藏初始窗口，避免 geometry 设置前闪现
         self.setting = setting
         self.result: bool | None = None  # True=保存, None=取消
 
         self._cancel_scan = False
         self._scan_thread: Thread | None = None
-        self._hint_timer: str | None = None
 
         self.title("排除设置")
         self.iconbitmap(WinInfo.ico_path)
         win_w = WinInfo.TkS(620)
         win_h = WinInfo.TkS(520)
+        # 按钮 padding 基于对话框参考高度等比缩放
+        self._ipady = max(4, win_h // 81)
+        self._ipadx = max(4, win_h // 56)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.minsize(500, 400)
         self.transient(parent)
         self.grab_set()
-        self.protocol("WM_DELETE_WINDOW", self._on_cancel)
+        self.protocol("WM_DELETE_WINDOW", self._on_save)
 
         self._build_upper()
         self._build_lower()
-        self._build_buttons()
 
         self._load_rules()
+        self.deiconify()  # 所有组件就绪后再显示
 
     # ── 上半块：排除规则 ──────────────────────────────────────────
 
     def _build_upper(self) -> None:
         frame = LabelFrame(self, text="排除规则")
-        frame.place(relx=0.04, rely=0.03, relwidth=0.92, relheight=0.38)
+        frame.place(relx=0.04, rely=0.03, relwidth=0.92, relheight=0.40)
 
         btn_frame = tk.Frame(frame)
-        btn_frame.pack(fill=tk.X, padx=8, pady=(8, 4))
+        btn_frame.pack(fill=tk.X, padx=4, pady=(6, 10))
         Button(btn_frame, text="添加排除目录", command=self._on_add_dir,
-               takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 6))
+               takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
         Button(btn_frame, text="添加排除名称", command=self._on_add_name,
-               takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 6))
+               takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
         Button(btn_frame, text="删除选中行", command=self._on_delete_selected,
-               takefocus=False, cursor="hand2").pack(side=tk.LEFT)
+               takefocus=False, cursor="hand2").pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
 
         tree_frame = tk.Frame(frame)
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=(0, 8))
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=(4, 4))
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
 
-        self.rules_tree = Treeview(tree_frame, show="tree", columns=())
-        self.rules_tree.grid(row=0, column=0, sticky=tk.NSEW)
+        self.rules_listbox = tk.Listbox(tree_frame, activestyle='none', cursor="hand2")
+        self.rules_listbox.grid(row=0, column=0, sticky=tk.NSEW)
 
-        scroll = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.rules_tree.yview)
+        scroll = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.rules_listbox.yview)
         scroll.grid(row=0, column=1, sticky=tk.NS)
-        self.rules_tree.configure(yscrollcommand=scroll.set)
+        self.rules_listbox.configure(yscrollcommand=scroll.set)
 
     # ── 下半块：预览排除效果 ──────────────────────────────────────
 
     def _build_lower(self) -> None:
         frame = LabelFrame(self, text="选择任意文件夹预览排除效果")
-        frame.place(relx=0.04, rely=0.44, relwidth=0.92, relheight=0.44)
+        frame.place(relx=0.04, rely=0.46, relwidth=0.92, relheight=0.53)
 
         # 路径栏 + 浏览按钮
         path_frame = tk.Frame(frame)
-        path_frame.pack(fill=tk.X, padx=8, pady=(0, 4))
+        path_frame.pack(fill=tk.X, padx=4, pady=(0, 10))
         self.preview_path_var = tk.StringVar()
         self.preview_path_entry = Entry(path_frame, textvariable=self.preview_path_var)
-        self.preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4))
+        self.preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4), ipady=self._ipady)
         self.browse_btn = Button(path_frame, text="浏览", command=self._on_browse_preview,
                                  takefocus=False, cursor="hand2")
-        self.browse_btn.pack(side=tk.RIGHT)
+        self.browse_btn.pack(side=tk.RIGHT, ipadx=self._ipadx * 2, ipady=self._ipady)
 
-        # 预览结果 Treeview
+        # 底部状态提示（输入框与列表之间）
+        self.preview_status_var = tk.StringVar()
+        self.preview_status_label = Label(frame, textvariable=self.preview_status_var, anchor=tk.W)
+        self.preview_status_label.pack(fill=tk.X, padx=4, pady=(0, 2))
+
+        # 预览结果 Listbox
         tree_frame = tk.Frame(frame)
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=8, pady=(0, 4))
+        tree_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=0)
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
 
-        self.preview_tree = Treeview(
-            tree_frame, show="headings",
-            columns=["被排除的文件夹"],
-            cursor="hand2"
-        )
-        self.preview_tree.heading("被排除的文件夹", text="被排除的文件夹", anchor=tk.CENTER)
-        self.preview_tree.column("被排除的文件夹", anchor=tk.W)
-        self.preview_tree.grid(row=0, column=0, sticky=tk.NSEW)
-        self.preview_tree.bind("<Double-Button-1>", self._on_preview_double_click)
+        self.preview_listbox = tk.Listbox(tree_frame, activestyle='none', cursor="hand2")
+        self.preview_listbox.grid(row=0, column=0, sticky=tk.NSEW)
+        self.preview_listbox.bind("<Double-Button-1>", self._on_preview_double_click)
 
-        preview_scroll_v = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.preview_tree.yview)
+        preview_scroll_v = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.preview_listbox.yview)
         preview_scroll_v.grid(row=0, column=1, sticky=tk.NS)
-        preview_scroll_h = Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=self.preview_tree.xview)
+        preview_scroll_h = Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=self.preview_listbox.xview)
         preview_scroll_h.grid(row=1, column=0, columnspan=2, sticky=tk.EW)
-        self.preview_tree.configure(
+        self.preview_listbox.configure(
             yscrollcommand=preview_scroll_v.set,
             xscrollcommand=preview_scroll_h.set
         )
-
-        # 状态提示行
-        self.preview_status_var = tk.StringVar()
-        self.preview_status_label = Label(frame, textvariable=self.preview_status_var)
-        self.preview_status_label.pack(anchor=tk.W, padx=8, pady=(0, 4))
-
-        # 扫描超时提示（默认隐藏）
-        self.scan_hint_var = tk.StringVar()
-        self.scan_hint_label = Label(frame, textvariable=self.scan_hint_var,
-                                     foreground="gray")
-        self.scan_hint_label.pack(anchor=tk.W, padx=8, pady=(0, 4))
-
-    # ── 底部按钮 ──────────────────────────────────────────────────
-
-    def _build_buttons(self) -> None:
-        btn_frame = tk.Frame(self)
-        btn_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=15, pady=(5, 15))
-
-        inner = tk.Frame(btn_frame)
-        inner.pack(anchor=tk.CENTER)
-        Button(inner, text="保存", command=self._on_save,
-               takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 30))
-        Button(inner, text="取消", command=self._on_cancel,
-               takefocus=False, cursor="hand2", style="secondary").pack(side=tk.LEFT)
 
     # ── 规则操作 ──────────────────────────────────────────────────
 
     def _load_rules(self) -> None:
         rules: list[str] = self.setting.get_config("index", "exclude_rules") or []
         for rule in rules:
-            self.rules_tree.insert("", tk.END, text=rule)
+            self.rules_listbox.insert(tk.END, rule)
+        self.preview_status_var.set("被排除索引的文件夹")
 
     def _collect_rules(self) -> list[str]:
         rules: list[str] = []
-        for item in self.rules_tree.get_children(""):
-            text = self.rules_tree.item(item, "text")
+        for i in range(self.rules_listbox.size()):
+            text = self.rules_listbox.get(i)
             if text:
                 rules.append(text)
         return rules
@@ -550,20 +529,20 @@ class ExcludeDialog(tk.Toplevel):
     def _on_add_dir(self) -> None:
         dir_path = filedialog.askdirectory(title="选择要排除的目录")
         if dir_path:
-            self.rules_tree.insert("", tk.END, text=dir_path)
+            self.rules_listbox.insert(tk.END, dir_path)
             self._trigger_preview()
 
     def _on_add_name(self) -> None:
         name = simpledialog.askstring("添加排除名称", "输入要排除的文件夹名称：", parent=self)
         if name and name.strip():
-            self.rules_tree.insert("", tk.END, text=name.strip())
+            self.rules_listbox.insert(tk.END, name.strip())
             self._trigger_preview()
 
     def _on_delete_selected(self) -> None:
-        selected = self.rules_tree.selection()
+        selected = self.rules_listbox.curselection()
         if selected:
-            for item in selected:
-                self.rules_tree.delete(item)
+            for i in reversed(selected):
+                self.rules_listbox.delete(i)
             self._trigger_preview()
 
     # ── 预览扫描 ──────────────────────────────────────────────────
@@ -571,21 +550,18 @@ class ExcludeDialog(tk.Toplevel):
     def _trigger_preview(self) -> None:
         # 取消前一次扫描
         self._cancel_scan = True
-        self._cancel_hint_timer()
 
         dir_path = self.preview_path_var.get().strip()
         if not dir_path or not Path(dir_path).is_dir():
             return
 
         # 清空旧结果
-        for item in self.preview_tree.get_children(""):
-            self.preview_tree.delete(item)
-        self.preview_status_var.set("正在扫描目录结构...")
-        self.scan_hint_var.set("")
+        self.preview_listbox.delete(0, tk.END)
+        self.preview_status_var.set("正在扫描目录结构...（关闭窗口终止扫描）")
 
         rules = self._collect_rules()
         if not rules:
-            self.preview_status_var.set("")
+            self.preview_status_var.set("被排除索引的文件夹")
             return
 
         self._cancel_scan = False
@@ -593,9 +569,6 @@ class ExcludeDialog(tk.Toplevel):
             target=self._do_preview, args=(dir_path, rules), daemon=True
         )
         self._scan_thread.start()
-
-        # 3 秒后显示提示
-        self._hint_timer = self.after(3000, self._show_hint)
 
     def _do_preview(self, target_dir: str, rules: list[str]) -> None:
         try:
@@ -607,20 +580,9 @@ class ExcludeDialog(tk.Toplevel):
             self.after(0, lambda: self._update_preview(matched))
 
     def _update_preview(self, matched: list[str]) -> None:
-        self.preview_status_var.set("")
+        self.preview_status_var.set("被排除索引的文件夹")
         for path in matched:
-            self.preview_tree.insert("", tk.END, values=(path,))
-
-    def _show_hint(self) -> None:
-        self.scan_hint_var.set("关闭窗口终止扫描")
-
-    def _hide_hint(self) -> None:
-        self.scan_hint_var.set("")
-
-    def _cancel_hint_timer(self) -> None:
-        if self._hint_timer:
-            self.after_cancel(self._hint_timer)
-            self._hint_timer = None
+            self.preview_listbox.insert(tk.END, path)
 
     def _on_browse_preview(self) -> None:
         dir_path = filedialog.askdirectory(title="选择要预览的目录")
@@ -629,25 +591,19 @@ class ExcludeDialog(tk.Toplevel):
             self._trigger_preview()
 
     def _on_preview_double_click(self, event: tk.Event) -> None:
-        selected = self.preview_tree.selection()
+        selected = self.preview_listbox.curselection()
         if not selected:
             return
-        values = self.preview_tree.item(selected[0], "values")
-        if values and Path(values[0]).is_dir():
-            FileOperation.open_file(values[0])
+        path = self.preview_listbox.get(selected[0])
+        if path and Path(path).is_dir():
+            FileOperation.open_file(path)
 
     # ── 保存 / 取消 ──────────────────────────────────────────────
 
     def _on_save(self) -> None:
         self._cancel_scan = True
-        self._cancel_hint_timer()
         rules = self._collect_rules()
         self.setting.modity_config("index", "exclude_rules", rules)
         self.setting.save_settings()
         self.result = True
-        self.destroy()
-
-    def _on_cancel(self) -> None:
-        self._cancel_scan = True
-        self._cancel_hint_timer()
         self.destroy()
