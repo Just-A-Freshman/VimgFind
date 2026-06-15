@@ -5,7 +5,7 @@ from tkinter.ttk import (
 )
 from tkinterdnd2 import TkinterDnD
 import tkinter as tk
-from tkinter import simpledialog, filedialog
+from tkinter import filedialog
 from threading import Thread
 from ctypes import windll
 from pathlib import Path
@@ -451,11 +451,9 @@ class ExcludeDialog(tk.Toplevel):
 
         btn_frame = tk.Frame(frame)
         btn_frame.pack(fill=tk.X, padx=4, pady=(6, 10))
-        Button(btn_frame, text="添加排除目录", command=self._on_add_dir,
+        Button(btn_frame, text="新建规则", command=self._on_add_name,
                takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
-        Button(btn_frame, text="添加排除名称", command=self._on_add_name,
-               takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
-        Button(btn_frame, text="删除选中行", command=self._on_delete_selected,
+        Button(btn_frame, text="删除规则", command=self._on_delete_selected,
                takefocus=False, cursor="hand2").pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
 
         tree_frame = tk.Frame(frame)
@@ -463,12 +461,18 @@ class ExcludeDialog(tk.Toplevel):
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
 
-        self.rules_listbox = tk.Listbox(tree_frame, activestyle='none', cursor="hand2")
-        self.rules_listbox.grid(row=0, column=0, sticky=tk.NSEW)
+        # 使用全局 Treeview 行高（control.py 中设为 50）
 
-        scroll = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.rules_listbox.yview)
+        self.rules_tree = Treeview(
+            tree_frame, columns=("name",), show="",
+            selectmode="browse", cursor="hand2"
+        )
+        self.rules_tree.column("name", stretch=True)
+        self.rules_tree.grid(row=0, column=0, sticky=tk.NSEW)
+
+        scroll = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.rules_tree.yview)
         scroll.grid(row=0, column=1, sticky=tk.NS)
-        self.rules_listbox.configure(yscrollcommand=scroll.set)
+        self.rules_tree.configure(yscrollcommand=scroll.set)
 
     # ── 下半块：预览排除效果 ──────────────────────────────────────
 
@@ -491,21 +495,25 @@ class ExcludeDialog(tk.Toplevel):
         self.preview_status_label = Label(frame, textvariable=self.preview_status_var, anchor=tk.W)
         self.preview_status_label.pack(fill=tk.X, padx=4, pady=(0, 2))
 
-        # 预览结果 Listbox
+        # 预览结果 Treeview
         tree_frame = tk.Frame(frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=0)
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
 
-        self.preview_listbox = tk.Listbox(tree_frame, activestyle='none', cursor="hand2")
-        self.preview_listbox.grid(row=0, column=0, sticky=tk.NSEW)
-        self.preview_listbox.bind("<Double-Button-1>", self._on_preview_double_click)
+        self.preview_tree = Treeview(
+            tree_frame, columns=("path",), show="",
+            cursor="hand2"
+        )
+        self.preview_tree.column("path", stretch=True)
+        self.preview_tree.grid(row=0, column=0, sticky=tk.NSEW)
+        self.preview_tree.bind("<Double-Button-1>", self._on_preview_double_click)
 
-        preview_scroll_v = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.preview_listbox.yview)
+        preview_scroll_v = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.preview_tree.yview)
         preview_scroll_v.grid(row=0, column=1, sticky=tk.NS)
-        preview_scroll_h = Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=self.preview_listbox.xview)
+        preview_scroll_h = Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=self.preview_tree.xview)
         preview_scroll_h.grid(row=1, column=0, columnspan=2, sticky=tk.EW)
-        self.preview_listbox.configure(
+        self.preview_tree.configure(
             yscrollcommand=preview_scroll_v.set,
             xscrollcommand=preview_scroll_h.set
         )
@@ -515,34 +523,75 @@ class ExcludeDialog(tk.Toplevel):
     def _load_rules(self) -> None:
         rules: list[str] = self.setting.get_config("index", "exclude_rules") or []
         for rule in rules:
-            self.rules_listbox.insert(tk.END, rule)
+            self.rules_tree.insert("", tk.END, values=(rule,))
         self.preview_status_var.set("被排除索引的文件夹")
 
     def _collect_rules(self) -> list[str]:
         rules: list[str] = []
-        for i in range(self.rules_listbox.size()):
-            text = self.rules_listbox.get(i)
+        for child in self.rules_tree.get_children():
+            text = self.rules_tree.item(child, "values")[0].strip()
             if text:
                 rules.append(text)
         return rules
 
-    def _on_add_dir(self) -> None:
-        dir_path = filedialog.askdirectory(title="选择要排除的目录")
-        if dir_path:
-            self.rules_listbox.insert(tk.END, dir_path)
-            self._trigger_preview()
-
     def _on_add_name(self) -> None:
-        name = simpledialog.askstring("添加排除名称", "输入要排除的文件夹名称：", parent=self)
-        if name and name.strip():
-            self.rules_listbox.insert(tk.END, name.strip())
-            self._trigger_preview()
+        """在 Treeview 底部插入空行，覆盖全宽 Entry 输入规则名称"""
+        if hasattr(self, '_rule_entry') and self._rule_entry and self._rule_entry.winfo_exists():
+            self._rule_entry.destroy()
+
+        tree = self.rules_tree
+        parent = tree.master
+
+        iid = tree.insert("", tk.END, values=("",))
+        tree.update_idletasks()
+
+        # 用 bbox 获取该行精确位置
+        item_bbox = tree.bbox(iid, column="name")
+        if item_bbox:
+            ix, iy, _, ih = item_bbox
+            entry_x = tree.winfo_x() + ix
+            entry_y = tree.winfo_y() + iy
+            entry_h = ih
+        else:
+            row_height = 50
+            children = tree.get_children()
+            row_idx = children.index(iid)
+            entry_x = 2
+            entry_y = row_idx * row_height + 2
+            entry_h = row_height
+
+        # Entry 宽度 = Treeview 视口宽度
+        entry_w = tree.winfo_width()
+
+        # Treeview 字体走 style 系统，不能直接用 cget("font")
+        tv_font = Style().lookup("Treeview", "font") or "TkDefaultFont"
+        entry = tk.Entry(parent, font=tv_font, bd=0, highlightthickness=1)
+        self._rule_entry = entry
+
+        _confirming = False
+        def on_confirm(event=None):
+            nonlocal _confirming
+            if _confirming:
+                return
+            _confirming = True
+            text = entry.get().strip()
+            if text:
+                tree.item(iid, values=(text,))
+                self._trigger_preview()
+            else:
+                tree.delete(iid)
+            entry.master.after_idle(entry.destroy)
+
+        entry.place(x=entry_x, y=entry_y, width=entry_w, height=entry_h)
+        tree.yview_moveto(1.0)
+        entry.focus_set()
+        entry.bind("<Return>", on_confirm)
+        entry.bind("<FocusOut>", on_confirm)
 
     def _on_delete_selected(self) -> None:
-        selected = self.rules_listbox.curselection()
+        selected = self.rules_tree.selection()
         if selected:
-            for i in reversed(selected):
-                self.rules_listbox.delete(i)
+            self.rules_tree.delete(*selected)
             self._trigger_preview()
 
     # ── 预览扫描 ──────────────────────────────────────────────────
@@ -556,7 +605,7 @@ class ExcludeDialog(tk.Toplevel):
             return
 
         # 清空旧结果
-        self.preview_listbox.delete(0, tk.END)
+        self.preview_tree.delete(*self.preview_tree.get_children())
         self.preview_status_var.set("正在扫描目录结构...（关闭窗口终止扫描）")
 
         rules = self._collect_rules()
@@ -582,7 +631,7 @@ class ExcludeDialog(tk.Toplevel):
     def _update_preview(self, matched: list[str]) -> None:
         self.preview_status_var.set("被排除索引的文件夹")
         for path in matched:
-            self.preview_listbox.insert(tk.END, path)
+            self.preview_tree.insert("", tk.END, values=(path,))
 
     def _on_browse_preview(self) -> None:
         dir_path = filedialog.askdirectory(title="选择要预览的目录")
@@ -591,10 +640,10 @@ class ExcludeDialog(tk.Toplevel):
             self._trigger_preview()
 
     def _on_preview_double_click(self, event: tk.Event) -> None:
-        selected = self.preview_listbox.curselection()
-        if not selected:
+        item = self.preview_tree.identify_row(event.y)
+        if not item:
             return
-        path = self.preview_listbox.get(selected[0])
+        path = self.preview_tree.item(item, "values")[0].strip()
         if path and Path(path).is_dir():
             FileOperation.open_file(path)
 
