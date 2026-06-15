@@ -469,6 +469,7 @@ class ExcludeDialog(tk.Toplevel):
         )
         self.rules_tree.column("name", stretch=True)
         self.rules_tree.grid(row=0, column=0, sticky=tk.NSEW)
+        self.rules_tree.bind("<Double-Button-1>", self._on_item_double_click)
 
         scroll = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.rules_tree.yview)
         scroll.grid(row=0, column=1, sticky=tk.NS)
@@ -534,18 +535,17 @@ class ExcludeDialog(tk.Toplevel):
                 rules.append(text)
         return rules
 
-    def _on_add_name(self) -> None:
-        """在 Treeview 底部插入空行，覆盖全宽 Entry 输入规则名称"""
+    def _edit_item(self, iid: str, initial_text: str = "") -> None:
+        """在指定 item 行上创建 Entry 进行编辑（新建/双击修改共用）"""
         if hasattr(self, '_rule_entry') and self._rule_entry and self._rule_entry.winfo_exists():
             self._rule_entry.destroy()
 
         tree = self.rules_tree
+        # 编辑期间暂时取消高亮
+        tree.selection_remove(*tree.selection())
         parent = tree.master
 
-        iid = tree.insert("", tk.END, values=("",))
         tree.update_idletasks()
-
-        # 用 bbox 获取该行精确位置
         item_bbox = tree.bbox(iid, column="name")
         if item_bbox:
             ix, iy, _, ih = item_bbox
@@ -560,12 +560,13 @@ class ExcludeDialog(tk.Toplevel):
             entry_y = row_idx * row_height + 2
             entry_h = row_height
 
-        # Entry 宽度 = Treeview 视口宽度
         entry_w = tree.winfo_width()
-
-        # Treeview 字体走 style 系统，不能直接用 cget("font")
         tv_font = Style().lookup("Treeview", "font") or "TkDefaultFont"
+
         entry = tk.Entry(parent, font=tv_font, bd=0, highlightthickness=1)
+        entry.insert(0, initial_text)
+        entry.select_range(0, tk.END)
+        entry.icursor(tk.END)
         self._rule_entry = entry
 
         _confirming = False
@@ -577,16 +578,43 @@ class ExcludeDialog(tk.Toplevel):
             text = entry.get().strip()
             if text:
                 tree.item(iid, values=(text,))
+                tree.selection_set(iid)
+                tree.focus(iid)
                 self._trigger_preview()
-            else:
+            elif not initial_text:
+                # 新建模式下空内容则删除该行
+                tree.delete(iid)
+            entry.master.after_idle(entry.destroy)
+
+        def on_cancel(event=None):
+            """Escape 取消编辑，新建模式删空行，编辑模式恢复原值"""
+            nonlocal _confirming
+            if _confirming:
+                return
+            _confirming = True
+            if not initial_text:
                 tree.delete(iid)
             entry.master.after_idle(entry.destroy)
 
         entry.place(x=entry_x, y=entry_y, width=entry_w, height=entry_h)
-        tree.yview_moveto(1.0)
         entry.focus_set()
         entry.bind("<Return>", on_confirm)
         entry.bind("<FocusOut>", on_confirm)
+        entry.bind("<Escape>", on_cancel)
+
+    def _on_add_name(self) -> None:
+        """在 Treeview 底部插入空行，进入编辑"""
+        iid = self.rules_tree.insert("", tk.END, values=("",))
+        self.rules_tree.yview_moveto(1.0)
+        self._edit_item(iid, "")
+
+    def _on_item_double_click(self, event: tk.Event) -> None:
+        """双击已有规则进行编辑"""
+        iid = self.rules_tree.identify_row(event.y)
+        if not iid:
+            return
+        text = self.rules_tree.item(iid, "values")[0]
+        self._edit_item(iid, text)
 
     def _on_delete_selected(self) -> None:
         selected = self.rules_tree.selection()
