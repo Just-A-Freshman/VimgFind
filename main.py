@@ -1,7 +1,7 @@
-from control import CoreControl
+from controllers import AppController
 
 
 if __name__ == "__main__":
-    win = CoreControl()
-    win.mainloop()
+    app = AppController()
+    app.view.mainloop()
 
