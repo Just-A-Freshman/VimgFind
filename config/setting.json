@@ -24,18 +24,14 @@
         "index_capacity": 1000000,
         "index_dim": 512,
         "index_space": "cosine",
-        "search_dir": [
-            "D:/PhotoDir/高清模特图像/高清模特图像300张",
-            "D:/PhotoDir/高清模特图像/高清模特图像268张",
-            "D:/Users/pbl/Desktop/测试文件夹"
-        ],
+        "search_dir": [],
         "exclude_rules": []
     },
     "function_config": {
         "max_work_thread": 10,
-        "preview_mode": "detail_info",
+        "preview_mode": "medium_ico",
         "auto_update_index": true,
         "ui_style": "superhero",
-        "similarity_threshold": 89
+        "similarity_threshold": 73
     }
 }
