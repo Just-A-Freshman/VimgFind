@@ -8,8 +8,8 @@ from tkinter import font as tkfont
 from tkinter.ttk import Treeview
 
 from utils import FileOperation, ImageOperation
-from widgets import BasicImagePreviewView
-from setting import WinInfo
+from views.widgets import BasicImagePreviewView
+from config import WinInfo
 
 if TYPE_CHECKING:
     from .app_controller import AppController

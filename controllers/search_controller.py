@@ -9,9 +9,9 @@ import tkinter as tk
 
 from PIL import Image
 
-from setting import Setting
+from config import Setting
 from utils import ImageOperation, FileOperation, Decorator
-from search_tools import SearchStatus
+from models import SearchStatus
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -157,7 +157,7 @@ class SearchController(object):
         tab.preview_view.destroy()
         self.app.setting.modity_config("function", "preview_mode", mode)
 
-        from widgets import DetailListView, ThumbnailGridView
+        from views.widgets import DetailListView, ThumbnailGridView
         if mode == "detail_info":
             tab.preview_view = DetailListView(
                 tab.preview_container,

@@ -5,9 +5,9 @@ import tkinter as tk
 import webbrowser
 
 from views import WinGUI, ExcludeDialog
-from setting import Setting, WinInfo
+from config import Setting, WinInfo
 from utils import FileOperation, Decorator
-from search_tools import SearchTool
+from models import SearchTool
 
 from .filter_controller import FilterController
 from .search_controller import SearchController
