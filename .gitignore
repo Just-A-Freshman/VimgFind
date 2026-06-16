@@ -230,3 +230,6 @@ vocab.txt
 
 # log file
 error.log
+
+# Test dir
+test/
