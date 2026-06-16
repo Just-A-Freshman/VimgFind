@@ -15,15 +15,15 @@ class DetailListView(BasicImagePreviewView):
         columns = {"名称": 160, **extra_columns}
         self.__treeview = Treeview(self.parent, show="headings", columns=list(columns))
         for text, width in columns.items():
-            self.__treeview.heading(text, text=text, anchor='center')
-            self.__treeview.column(text, anchor='center', width=width, stretch=True)
+            self.__treeview.heading(text, text=text, anchor=tk.CENTER)
+            self.__treeview.column(text, anchor=tk.CENTER, width=width, stretch=True)
         self.__treeview.place(relx=0, rely=0, relwidth=1, relheight=1)
         for column in self.__treeview["columns"]:
             self.__treeview.heading(column, command=lambda column=column: self._sort_column(column, False))
 
     def _create_scrollbar(self) -> None:
-        self.__scrollbar = Scrollbar(self.__treeview, orient="vertical", cursor="hand2")
-        self.__scrollbar.pack(fill="both", side="right", padx=2, pady=2)
+        self.__scrollbar = Scrollbar(self.__treeview, orient=tk.VERTICAL, cursor="hand2")
+        self.__scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=2, pady=2)
         self.__scrollbar.config(command=self.__treeview.yview)
         self.__treeview.configure(yscrollcommand=self.__scrollbar.set)
 

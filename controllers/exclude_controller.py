@@ -2,6 +2,7 @@
 
 import os
 import logging
+import tkinter as tk
 from threading import Thread
 from pathlib import Path
 
@@ -215,9 +216,9 @@ class ExcludePreviewController:
         dirs = sorted(rel for rel, is_dir in filtered if is_dir)
         files = sorted(rel for rel, is_dir in filtered if not is_dir)
         for rel in dirs:
-            self.dialog.preview_tree.insert("", "end", values=("\U0001f4c2" + rel,))
+            self.dialog.preview_tree.insert("", tk.END, values=("\U0001f4c2" + rel,))
         for rel in files:
-            self.dialog.preview_tree.insert("", "end", values=("\U0001f4c4" + rel,))
+            self.dialog.preview_tree.insert("", tk.END, values=("\U0001f4c4" + rel,))
 
         if not selected and self._preview_excluded >= self._preview_total > 0:
             self.dialog.set_status_foreground("red")

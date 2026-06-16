@@ -189,7 +189,7 @@ class IndexController(object):
         ghost.overrideredirect(True)
         ghost.attributes("-alpha", 0.75, "-topmost", True)
 
-        label = tk.Label(ghost, text=str(dir_path), anchor="w", padx=12, pady=6)
+        label = tk.Label(ghost, text=str(dir_path), anchor=tk.W, padx=12, pady=6)
         label.pack()
 
         ghost.update_idletasks()
