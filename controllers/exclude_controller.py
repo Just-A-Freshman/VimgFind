@@ -30,7 +30,6 @@ class ExcludePreviewController:
 
         self._cancel_scan = False
         self._scan_thread: Thread | None = None
-        self._hint_timer: str | None = None
         self._preview_cache: list[tuple[str, bool]] = []    # excluded items (for display)
         self._scan_cache: list[tuple[str, bool]] = []       # all scanned items (for re-filter)
         self._preview_total = 0
@@ -280,23 +279,10 @@ class ExcludePreviewController:
             self.setting.modity_config("index", "exclude_rules", rules)
             self.setting.save_settings()
             self.dialog.save_result = True
-
-            if self.rules_changed():
-                if self._hint_timer:
-                    self.dialog.after_cancel(self._hint_timer)
-                self.dialog.title("排除规则已更新，点击[设置]>[清理排除项]清理已索引文件")
-                self._hint_timer = self.dialog.after(5000, self._finish_save)
-            else:
-                self.dialog.destroy()
+            self.dialog.destroy()
         except Exception as e:
             logging.error("on_save error: %s", e, exc_info=True)
-            # Force-close the dialog so the user isn't stuck
             try:
                 self.dialog.destroy()
             except Exception:
                 pass
-
-    def _finish_save(self) -> None:
-        self._hint_timer = None
-        self.dialog.title("排除设置")
-        self.dialog.destroy()
