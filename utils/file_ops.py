@@ -10,7 +10,6 @@ from tkinter import Tk
 from typing import Iterator
 
 import win32clipboard
-import win32con
 
 from config import Setting
 
