@@ -11,7 +11,7 @@ from typing import Iterator
 
 import win32clipboard
 
-from config import Setting
+from .exclude_rules import compile_rules, is_accepted_extension
 
 
 class DROPFILES(ctypes.Structure):
@@ -26,58 +26,31 @@ class DROPFILES(ctypes.Structure):
 
 class FileOperation(object):
     @staticmethod
-    def match_exclude_rule(folder_name: str, folder_path: str, rules: list[str]) -> bool:
-        for rule in rules:
-            rule = rule.strip()
-            if not rule:
-                continue
-            if os.path.isabs(rule):
-                if FileOperation.normalize_path(folder_path) == FileOperation.normalize_path(rule):
-                    return True
-            elif '/' in rule or '\\' in rule:
-                normalized_rule = FileOperation.normalize_path(rule)
-                normalized_path = FileOperation.normalize_path(folder_path)
-                if normalized_path.endswith(normalized_rule):
-                    return True
-            else:
-                if folder_name.lower() == rule.lower():
-                    return True
-        return False
-
-    @staticmethod
     def get_file_iterator(target_dir: str, exclude_rules: list[str] | None = None) -> Iterator[str]:
-        accepted = Setting.accepted_exts
-        def _scandir(path):
+        rules_obj = compile_rules(exclude_rules)
+
+        def _scandir(path: str) -> Iterator[str]:
             try:
                 with os.scandir(path) as it:
                     for entry in it:
                         if entry.is_dir(follow_symlinks=False):
-                            if exclude_rules and FileOperation.match_exclude_rule(entry.name, entry.path, exclude_rules):
-                                continue
+                            rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
+                            if rules_obj and rules_obj.is_excluded(rel, is_dir=True):
+                                if not rules_obj.is_affected_by_negation(rel):
+                                    continue  # skip whole subtree
                             yield from _scandir(entry.path)
                         elif entry.is_file(follow_symlinks=False):
-                            name = entry.name
-                            dot = name.rfind('.')
-                            if dot != -1 and name[dot:].lower() in accepted:
-                                yield entry.path
+                            if not is_accepted_extension(entry.name):
+                                continue
+                            if rules_obj:
+                                rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
+                                if rules_obj.is_excluded(rel, is_dir=False):
+                                    continue
+                            yield entry.path
             except PermissionError:
                 pass
-        return _scandir(target_dir)
 
-    @staticmethod
-    def preview_exclusion(target_dir: str, rules: list[str]) -> list[str]:
-        matched: list[str] = []
-        try:
-            with os.scandir(target_dir) as it:
-                for entry in it:
-                    if not entry.is_dir(follow_symlinks=False):
-                        continue
-                    if FileOperation.match_exclude_rule(entry.name, entry.path, rules):
-                        matched.append(entry.path)
-                    matched.extend(FileOperation.preview_exclusion(entry.path, rules))
-        except PermissionError:
-            pass
-        return matched
+        return _scandir(target_dir)
 
     @staticmethod
     def open_file(file_path: str | Path, highlight: bool = False) -> None:
