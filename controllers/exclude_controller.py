@@ -1,6 +1,7 @@
 """Controller for ExcludeDialog preview scanning, filtering, and save logic."""
 
 import os
+import logging
 from threading import Thread
 from pathlib import Path
 
@@ -28,7 +29,8 @@ class ExcludePreviewController:
         self._cancel_scan = False
         self._scan_thread: Thread | None = None
         self._hint_timer: str | None = None
-        self._preview_cache: list[tuple[str, bool]] = []
+        self._preview_cache: list[tuple[str, bool]] = []    # excluded items (for display)
+        self._scan_cache: list[tuple[str, bool]] = []       # all scanned items (for re-filter)
         self._preview_total = 0
         self._preview_excluded = 0
         self._debounce_timer: str | None = None
@@ -56,6 +58,7 @@ class ExcludePreviewController:
         self._cancel_scan = True
         self.dialog.show_stop_button()
         self._preview_cache.clear()
+        self._scan_cache.clear()
         self._preview_total = 0
         self._preview_excluded = 0
 
@@ -82,10 +85,14 @@ class ExcludePreviewController:
     def _do_preview(self, target_dir: str, rules: list[str]) -> None:
         rules_obj = compile_rules(rules)
         if not rules_obj:
-            self.dialog.after(0, self._preview_empty)
+            try:
+                self.dialog.after(0, self._preview_empty)
+            except Exception:
+                pass
             return
 
-        cache: list[tuple[str, bool]] = []
+        excluded_cache: list[tuple[str, bool]] = []
+        scan_cache: list[tuple[str, bool]] = []
         total = 0
         excluded = 0
         truncated = False
@@ -102,8 +109,9 @@ class ExcludePreviewController:
                         total += 1
 
                         if entry.is_dir(follow_symlinks=False):
+                            scan_cache.append((rel, True))
                             if rules_obj.is_excluded(rel, is_dir=True):
-                                cache.append((rel, True))
+                                excluded_cache.append((rel, True))
                                 excluded += 1
                                 if excluded >= MAX_PREVIEW_ITEMS:
                                     truncated = True
@@ -113,25 +121,30 @@ class ExcludePreviewController:
                         elif entry.is_file(follow_symlinks=False):
                             if not is_accepted_extension(entry.name):
                                 continue
+                            scan_cache.append((rel, False))
                             if rules_obj.is_excluded(rel, is_dir=False):
-                                cache.append((rel, False))
+                                excluded_cache.append((rel, False))
                                 excluded += 1
                                 if excluded >= MAX_PREVIEW_ITEMS:
                                     truncated = True
                                     return
 
                         if total % PROGRESS_INTERVAL == 0:
-                            self.dialog.after(
-                                0, lambda t=total, e=excluded: self._update_status(t, e)
-                            )
+                            try:
+                                self.dialog.after(
+                                    0, lambda t=total, e=excluded: self._update_status(t, e)
+                                )
+                            except Exception:
+                                pass
             except PermissionError:
                 pass
 
         _walk(target_dir)
 
-        self.dialog.after(
-            0, lambda: self._preview_complete(cache, total, excluded, truncated)
-        )
+        try:
+            self.dialog.after(0, lambda: self._preview_complete(excluded_cache, scan_cache, total, excluded, truncated))
+        except Exception:
+            pass
 
     def _update_status(self, total: int, excluded: int) -> None:
         if self._closed:
@@ -144,10 +157,11 @@ class ExcludePreviewController:
         self.dialog.hide_stop_button()
         self.dialog.set_status("被排除索引的文件夹/文件")
 
-    def _preview_complete(self, cache, total, excluded, truncated) -> None:
+    def _preview_complete(self, cache, scan_cache, total, excluded, truncated) -> None:
         if self._closed:
             return
         self._preview_cache = cache
+        self._scan_cache = scan_cache
         self._preview_total = total
         self._preview_excluded = excluded
 
@@ -208,23 +222,77 @@ class ExcludePreviewController:
             self.dialog.set_status_foreground("red")
             self.dialog.set_status("⚠️ 当前规则排除了所有文件，索引结果为空")
 
+    # ── Re-filter (rule changed, no re-scan) ──────────────────────────
+
+    def refilter_preview(self) -> None:
+        """Re-apply rules against cached scan data without re-scanning."""
+        if not self._scan_cache:
+            return
+        rules = self.dialog.collect_rules()
+        rules_obj = compile_rules(rules)
+        if not rules_obj:
+            self._preview_cache.clear()
+            self._preview_excluded = 0
+            self._refresh_preview_tree()
+            return
+
+        excluded_cache: list[tuple[str, bool]] = []
+        excluded = 0
+        truncated = False
+        for rel, is_dir in self._scan_cache:
+            if excluded >= MAX_PREVIEW_ITEMS:
+                truncated = True
+                break
+            if rules_obj.is_excluded(rel, is_dir):
+                excluded_cache.append((rel, is_dir))
+                excluded += 1
+
+        self._preview_cache = excluded_cache
+        self._preview_excluded = excluded
+        self._preview_total = len(self._scan_cache)
+
+        self.dialog.hide_stop_button()
+        self.dialog.reset_status_foreground()
+
+        if truncated:
+            self.dialog.set_status(
+                f"排除项过多，仅展示前 {MAX_PREVIEW_ITEMS} 条，建议缩小预览范围"
+            )
+        else:
+            self.dialog.set_status(f"被排除索引的文件夹/文件（共 {excluded} 项）")
+
+        if excluded > 0 and excluded >= self._preview_total and not truncated:
+            self.dialog.set_status("⚠️ 当前规则排除了所有文件，索引结果为空")
+            self.dialog.set_status_foreground("red")
+
+        self._refresh_preview_tree()
+
     # ── Save ──────────────────────────────────────────────────────────
 
     def on_save(self) -> None:
         self._closed = True
         self._cancel_scan = True
-        rules = self.dialog.collect_rules()
-        self.setting.modity_config("index", "exclude_rules", rules)
-        self.setting.save_settings()
-        self.dialog.save_result = True
 
-        if self.rules_changed():
-            if self._hint_timer:
-                self.dialog.after_cancel(self._hint_timer)
-            self.dialog.title("排除规则已更新，点击[设置]>[清理排除项]清理已索引文件")
-            self._hint_timer = self.dialog.after(5000, self._finish_save)
-        else:
-            self.dialog.destroy()
+        try:
+            rules = self.dialog.collect_rules()
+            self.setting.modity_config("index", "exclude_rules", rules)
+            self.setting.save_settings()
+            self.dialog.save_result = True
+
+            if self.rules_changed():
+                if self._hint_timer:
+                    self.dialog.after_cancel(self._hint_timer)
+                self.dialog.title("排除规则已更新，点击[设置]>[清理排除项]清理已索引文件")
+                self._hint_timer = self.dialog.after(5000, self._finish_save)
+            else:
+                self.dialog.destroy()
+        except Exception as e:
+            logging.error("on_save error: %s", e, exc_info=True)
+            # Force-close the dialog so the user isn't stuck
+            try:
+                self.dialog.destroy()
+            except Exception:
+                pass
 
     def _finish_save(self) -> None:
         self._hint_timer = None
