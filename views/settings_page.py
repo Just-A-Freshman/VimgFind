@@ -12,6 +12,7 @@ class SettingFrame(Frame):
     common_setting_frame: LabelFrame
     add_index_button: Button
     exclude_button: Button
+    clean_excluded_button: Button
     update_index_button: Button
     delete_index_button: Button
     rebuild_index_button: Button
@@ -38,6 +39,7 @@ class SettingFrame(Frame):
         self.auto_update_btn = self.__set_auto_update_checkbutton()
         self.update_threads_count_scale = self.__set_update_threads_count_scale()
         self.exclude_button = self.__set_exclude_button()
+        self.clean_excluded_button = self.__set_clean_excluded_button()
         self.open_setting_file_button = self.__set_open_setting_btn()
         self.open_repertory_button = self.__set_open_open_repertory_btn()
 
@@ -117,6 +119,14 @@ class SettingFrame(Frame):
         )
         manage_btn.grid(row=2, column=1, padx=(15, 0), sticky=tk.E)
         return manage_btn
+
+    def __set_clean_excluded_button(self) -> Button:
+        btn = Button(
+            self.scan_setting_frame, text="清理排除项",
+            takefocus=False, cursor="hand2", style=LINK
+        )
+        btn.grid(row=2, column=2, padx=(5, 0), sticky=tk.W)
+        return btn
 
     def __set_common_setting_frame(self) -> LabelFrame:
         frame = LabelFrame(self, text="通用设置")
