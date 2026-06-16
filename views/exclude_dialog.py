@@ -202,7 +202,7 @@ class ExcludeDialog(tk.Toplevel):
                 tree.item(iid, values=(text,))
                 tree.selection_set(iid)
                 tree.focus(iid)
-                self.controller.trigger_preview()
+                self.controller.refilter_preview()
             elif not initial_text:
                 tree.delete(iid)
             entry.master.after_idle(entry.destroy)
@@ -238,7 +238,7 @@ class ExcludeDialog(tk.Toplevel):
         selected = self.rules_tree.selection()
         if selected:
             self.rules_tree.delete(*selected)
-            self.controller.trigger_preview()
+            self.controller.refilter_preview()
 
     def _open_help_doc(self) -> None:
         doc_path = Path(__file__).parent / "docs" / "exclude_rules.md"
