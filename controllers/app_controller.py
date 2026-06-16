@@ -7,7 +7,7 @@ import webbrowser
 from views import WinGUI, ExcludeDialog
 from settings import Setting, WinInfo
 from utils import FileOperation, Decorator
-from models import SearchTool
+from core import SearchTool
 
 from .filter_controller import FilterController
 from .search_controller import SearchController
