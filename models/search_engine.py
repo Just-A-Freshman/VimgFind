@@ -5,6 +5,7 @@ from typing import Iterator
 from re import sub
 from enum import Enum
 import logging
+import os
 
 import numpy as np
 from tqdm import tqdm
@@ -15,6 +16,7 @@ from .index_manager import VectorIndexManager, NameIndexManager
 from .multimodal_encoder import MultiModalEncoder
 from utils.file_ops import FileOperation
 from utils.image_ops import ImageOperation
+from utils.exclude_rules import compile_rules
 
 
 class SearchStatus(str, Enum):
@@ -167,20 +169,25 @@ class SearchTool(object):
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
 
-    def get_excluded_files(self, rules: list[str]) -> list[str]:
+    def get_excluded_files(self, rules: list[str], search_dirs: list[str]) -> list[str]:
         self.__init_event.wait()
+        rules_obj = compile_rules(rules)
+        if not rules_obj:
+            return []
+
         result: list[str] = []
         for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            p = Path(index_file).parent
-            while True:
-                if FileOperation.match_exclude_rule(p.name, str(p), rules):
-                    result.append(index_file)
+            # Find which search_dir this file belongs to and get relative path
+            for search_dir in search_dirs:
+                sd = os.path.normpath(search_dir)
+                ip = os.path.normpath(index_file)
+                if ip.startswith(sd):
+                    rel = ip[len(sd):].lstrip("\\/")
+                    if rules_obj.is_excluded(rel, is_dir=False):
+                        result.append(index_file)
                     break
-                if p.parent == p:
-                    break
-                p = p.parent
         return result
 
     def remove_files_in_directory(self, directory: str) -> None:
