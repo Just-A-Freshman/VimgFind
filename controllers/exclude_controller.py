@@ -10,7 +10,7 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 from utils.exclude_rules import compile_rules, is_accepted_extension
 
 
-MAX_PREVIEW_ITEMS = 50000
+MAX_PREVIEW_ITEMS = 500000
 PROGRESS_INTERVAL = 500
 
 
@@ -32,6 +32,7 @@ class ExcludePreviewController:
         self._preview_total = 0
         self._preview_excluded = 0
         self._debounce_timer: str | None = None
+        self._closed = False  # set True on save to suppress stale after() callbacks
 
     # ── Rule change detection ─────────────────────────────────────────
 
@@ -128,19 +129,24 @@ class ExcludePreviewController:
 
         _walk(target_dir)
 
-        if not self._cancel_scan:
-            self.dialog.after(
-                0, lambda: self._preview_complete(cache, total, excluded, truncated)
-            )
+        self.dialog.after(
+            0, lambda: self._preview_complete(cache, total, excluded, truncated)
+        )
 
     def _update_status(self, total: int, excluded: int) -> None:
+        if self._closed:
+            return
         self.dialog.set_status(f"已排除 {excluded} 项（共扫描 {total} 项）")
 
     def _preview_empty(self) -> None:
+        if self._closed:
+            return
         self.dialog.hide_stop_button()
         self.dialog.set_status("被排除索引的文件夹/文件")
 
     def _preview_complete(self, cache, total, excluded, truncated) -> None:
+        if self._closed:
+            return
         self._preview_cache = cache
         self._preview_total = total
         self._preview_excluded = excluded
@@ -162,7 +168,7 @@ class ExcludePreviewController:
         self._refresh_preview_tree()
 
     def _refresh_preview_from_cache(self) -> None:
-        if not self._preview_cache:
+        if self._closed or not self._preview_cache:
             return
         self._refresh_preview_tree()
 
@@ -205,6 +211,7 @@ class ExcludePreviewController:
     # ── Save ──────────────────────────────────────────────────────────
 
     def on_save(self) -> None:
+        self._closed = True
         self._cancel_scan = True
         rules = self.dialog.collect_rules()
         self.setting.modity_config("index", "exclude_rules", rules)
