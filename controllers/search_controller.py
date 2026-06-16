@@ -11,7 +11,7 @@ from PIL import Image
 
 from settings import Setting
 from utils import ImageOperation, FileOperation, Decorator
-from models import SearchStatus
+from core import SearchStatus
 
 if TYPE_CHECKING:
     from .app_controller import AppController
