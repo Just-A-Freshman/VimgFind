@@ -6,7 +6,7 @@ from tkinter import filedialog
 from threading import Thread
 from pathlib import Path
 
-from setting import WinInfo
+from config import WinInfo
 from utils import FileOperation
 
 

@@ -82,6 +82,7 @@ class SearchController(object):
         self.__search_image(text)
 
     def __search_image(self, input_data: Image.Image | str) -> None:
+        assert self.app.search_tools
         if not self.app.setting.get_config("index", "search_dir"):
             messagebox.showinfo("提示", "请在设置选项卡索引至少一个目录！")
             return
@@ -135,6 +136,7 @@ class SearchController(object):
         return content
 
     def set_preview_result_count(self, max_match_count: int) -> None:
+        assert self.app.search_tools
         self.app.setting.modity_config("index", "max_match_count", min(max_match_count, 100))
         self.app.search_tools.update_max_match_count(max_match_count)
         if self._last_search_content:

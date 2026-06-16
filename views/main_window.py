@@ -2,7 +2,7 @@ from tkinter.ttk import Notebook
 from tkinterdnd2 import TkinterDnD
 from ctypes import windll
 
-from setting import WinInfo
+from config import WinInfo
 from .search_page import SearchFrame
 from .settings_page import SettingFrame
 

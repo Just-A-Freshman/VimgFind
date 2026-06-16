@@ -53,7 +53,7 @@ class MenuController(object):
             menu_items = [
                 ("复制图片", lambda: FileOperation.copy_files(*selected_files)),
                 ("复制路径", lambda: FileOperation.copy_filepaths(*selected_files, tk=self.app.view)),
-                ("图片另存为", lambda: ImageOperation.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
+                ("图片另存为", lambda: FileOperation.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
             ]
         else:
             messagebox.showinfo("提示", "选中文件不存在！")
