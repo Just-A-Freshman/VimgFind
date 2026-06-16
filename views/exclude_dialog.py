@@ -135,10 +135,9 @@ class ExcludeDialog(tk.Toplevel):
         tree_frame.grid_columnconfigure(0, weight=1)
 
         self.preview_tree = Treeview(
-            tree_frame, columns=("path",), show="",
-            cursor="hand2"
+            tree_frame, columns=("path",), show="", cursor="hand2"
         )
-        self.preview_tree.column("path", stretch=True)
+        self.preview_tree.column("path", stretch=False, width=3000)
         self.preview_tree.grid(row=0, column=0, sticky=tk.NSEW)
         self.preview_tree.bind("<Double-Button-1>", self._on_preview_double_click)
 
