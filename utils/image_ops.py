@@ -8,7 +8,7 @@ import win32con
 from PIL import Image, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
 
-from config import Setting
+from settings import Setting
 from .file_ops import FileOperation
 
 

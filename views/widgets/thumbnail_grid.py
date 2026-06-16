@@ -3,7 +3,7 @@ from tkinter.ttk import Scrollbar
 import math
 import os
 
-from config import WinInfo
+from settings import WinInfo
 from utils.file_ops import FileOperation
 from .base import BasicImagePreviewView
 from .image_loader import ImageLoader

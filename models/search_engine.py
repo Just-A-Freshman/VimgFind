@@ -11,7 +11,7 @@ import numpy as np
 from tqdm import tqdm
 from PIL import Image
 
-from config import Setting
+from settings import Setting
 from .index_manager import VectorIndexManager, NameIndexManager
 from .multimodal_encoder import MultiModalEncoder
 from utils.file_ops import FileOperation

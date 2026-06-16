@@ -6,7 +6,7 @@ import urllib.error
 from collections import namedtuple
 from typing import cast
 
-from config import WinInfo
+from settings import WinInfo
 
 
 UpdateCheckResult = namedtuple(

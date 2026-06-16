@@ -8,7 +8,7 @@ from tkinter import filedialog
 from pathlib import Path
 import os
 
-from config import WinInfo
+from settings import WinInfo
 from utils import FileOperation
 
 

@@ -5,7 +5,7 @@ import tkinter as tk
 import webbrowser
 
 from views import WinGUI, ExcludeDialog
-from config import Setting, WinInfo
+from settings import Setting, WinInfo
 from utils import FileOperation, Decorator
 from models import SearchTool
 

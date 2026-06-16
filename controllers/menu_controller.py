@@ -9,7 +9,7 @@ from tkinter.ttk import Treeview
 
 from utils import FileOperation, ImageOperation
 from views.widgets import BasicImagePreviewView
-from config import WinInfo
+from settings import WinInfo
 
 if TYPE_CHECKING:
     from .app_controller import AppController

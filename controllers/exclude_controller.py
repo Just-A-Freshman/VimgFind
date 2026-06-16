@@ -9,6 +9,8 @@ import pathspec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
 from utils.exclude_rules import compile_rules, is_accepted_extension
+from views.exclude_dialog import ExcludeDialog
+from settings import Setting
 
 
 MAX_PREVIEW_ITEMS = 500000
@@ -18,7 +20,7 @@ PROGRESS_INTERVAL = 500
 class ExcludePreviewController:
     """Handles preview scanning, rule filtering, and save logic for ExcludeDialog."""
 
-    def __init__(self, dialog, setting) -> None:
+    def __init__(self, dialog: ExcludeDialog, setting: Setting) -> None:
         self.dialog = dialog
         self.setting = setting
 

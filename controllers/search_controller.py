@@ -9,7 +9,7 @@ import tkinter as tk
 
 from PIL import Image
 
-from config import Setting
+from settings import Setting
 from utils import ImageOperation, FileOperation, Decorator
 from models import SearchStatus
 

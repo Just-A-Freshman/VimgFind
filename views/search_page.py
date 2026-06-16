@@ -2,7 +2,7 @@ from ttkbootstrap import Button, Entry, Checkbutton, Scale
 from tkinter.ttk import Frame, Label, LabelFrame, Combobox, Scrollbar
 import tkinter as tk
 
-from config import WinInfo
+from settings import WinInfo
 from .widgets import BasicImagePreviewView, PreviewCanvasView
 
 
