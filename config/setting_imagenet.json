@@ -24,7 +24,8 @@
         "index_capacity": 1000000,
         "index_dim": 1000,
         "index_space": "l2",
-        "search_dir": []
+        "search_dir": [],
+        "exclude_rules": []
     },
     "function_config": {
         "max_work_thread": 20,
