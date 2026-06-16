@@ -5,11 +5,8 @@ from ttkbootstrap.constants import LINK
 from tkinter.ttk import LabelFrame, Entry, Label, Treeview, Scrollbar
 import tkinter as tk
 from tkinter import filedialog
-from pathlib import Path
-import os
 
 from settings import WinInfo
-from utils import FileOperation
 
 
 class ExcludeDialog(tk.Toplevel):
@@ -42,7 +39,7 @@ class ExcludeDialog(tk.Toplevel):
         self._build_upper()
         self._build_lower()
 
-        self._load_rules()
+        self.controller.load_rules_into_view()
         self.deiconify()
 
     # ── UI helpers for controller ─────────────────────────────────────
@@ -83,7 +80,7 @@ class ExcludeDialog(tk.Toplevel):
                takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
         Button(btn_frame, text="删除规则", command=self._on_delete_selected,
                takefocus=False, cursor="hand2").pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
-        Button(btn_frame, text="帮助文档", command=self._open_help_doc,
+        Button(btn_frame, text="帮助文档", command=self.controller.open_help_doc,
                takefocus=False, cursor="hand2", style=LINK).pack(side=tk.RIGHT, padx=(15, 0))
 
         tree_frame = tk.Frame(frame)
@@ -135,7 +132,7 @@ class ExcludeDialog(tk.Toplevel):
         )
         self.preview_tree.column("path", stretch=False, width=3000)
         self.preview_tree.grid(row=0, column=0, sticky=tk.NSEW)
-        self.preview_tree.bind("<Double-Button-1>", self._on_preview_double_click)
+        self.preview_tree.bind("<Double-Button-1>", self.controller.on_preview_double_click)
 
         preview_scroll_v = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.preview_tree.yview)
         preview_scroll_v.grid(row=0, column=1, sticky=tk.NS)
@@ -145,12 +142,6 @@ class ExcludeDialog(tk.Toplevel):
             yscrollcommand=preview_scroll_v.set,
             xscrollcommand=preview_scroll_h.set
         )
-
-    def _load_rules(self) -> None:
-        rules: list[str] = self.setting.get_config("index", "exclude_rules") or []
-        for rule in rules:
-            self.rules_tree.insert("", tk.END, values=(rule,))
-        self.preview_status_var.set("被排除索引的文件夹/文件")
 
     def _edit_item(self, iid: str, initial_text: str = "") -> None:
         if hasattr(self, '_rule_entry') and self._rule_entry and self._rule_entry.winfo_exists():
@@ -233,24 +224,9 @@ class ExcludeDialog(tk.Toplevel):
             self.rules_tree.delete(*selected)
             self.controller.refilter_preview()
 
-    def _open_help_doc(self) -> None:
-        doc_path = Path(__file__).parent.parent / "docs" / "exclude_rules.md"
-        FileOperation.open_file(doc_path)
-
     def _on_browse_preview(self) -> None:
         dir_path = filedialog.askdirectory(title="选择要预览的目录")
         if dir_path:
             self.preview_path_var.set(dir_path)
             self.controller.trigger_preview()
 
-    def _on_preview_double_click(self, event: tk.Event) -> None:
-        item = self.preview_tree.identify_row(event.y)
-        if not item:
-            return
-        raw = self.preview_tree.item(item, "values")[0].strip()
-        path = raw[1:] if len(raw) > 1 else raw
-        preview_dir = self.preview_path_var.get().strip()
-        if preview_dir and path:
-            full_path = os.path.join(preview_dir, path)
-            if Path(full_path).exists():
-                FileOperation.open_file(full_path)

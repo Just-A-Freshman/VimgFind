@@ -9,6 +9,7 @@ from pathlib import Path
 import pathspec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
+from utils.file_ops import FileOperation
 from utils.exclude_rules import compile_rules, is_accepted_extension
 from views.exclude_dialog import ExcludeDialog
 from settings import Setting
@@ -268,6 +269,36 @@ class ExcludePreviewController:
             self.dialog.set_status_foreground("red")
 
         self._refresh_preview_tree()
+
+    # ── Load rules into view ──────────────────────────────────────────
+
+    def load_rules_into_view(self) -> None:
+        """从 setting 读取排除规则并填充到 dialog 的 Treeview 中。"""
+        rules = self.setting.get_config("index", "exclude_rules") or []
+        for rule in rules:
+            self.dialog.rules_tree.insert("", tk.END, values=(rule,))
+        self.dialog.set_status("被排除索引的文件夹/文件")
+
+    # ── Help & preview click ──────────────────────────────────────────
+
+    @staticmethod
+    def open_help_doc() -> None:
+        """打开排除规则帮助文档。"""
+        doc_path = Path(__file__).parent.parent / "docs" / "exclude_rules.md"
+        FileOperation.open_file(doc_path)
+
+    def on_preview_double_click(self, event: tk.Event) -> None:
+        """处理预览树双击事件：打开对应文件/文件夹。"""
+        item = self.dialog.preview_tree.identify_row(event.y)
+        if not item:
+            return
+        raw = self.dialog.preview_tree.item(item, "values")[0].strip()
+        path = raw[1:] if len(raw) > 1 else raw
+        preview_dir = self.dialog.preview_path_var.get().strip()
+        if preview_dir and path:
+            full_path = os.path.join(preview_dir, path)
+            if Path(full_path).exists():
+                FileOperation.open_file(full_path)
 
     # ── Save ──────────────────────────────────────────────────────────
 
