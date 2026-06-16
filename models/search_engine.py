@@ -175,16 +175,17 @@ class SearchTool(object):
         if not rules_obj:
             return []
 
+        # Normalize search_dirs the same way name_index stores paths
+        # (os.path.realpath + os.path.normcase -> lowered, symlink-resolved)
+        normalized_dirs = [os.path.normcase(os.path.realpath(d)) for d in search_dirs]
+
         result: list[str] = []
         for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            # Find which search_dir this file belongs to and get relative path
-            for search_dir in search_dirs:
-                sd = os.path.normpath(search_dir)
-                ip = os.path.normpath(index_file)
-                if ip.startswith(sd):
-                    rel = ip[len(sd):].lstrip("\\/")
+            for nd in normalized_dirs:
+                if index_file.startswith(nd):
+                    rel = index_file[len(nd):].lstrip("\\/")
                     if rules_obj.is_excluded(rel, is_dir=False):
                         result.append(index_file)
                     break

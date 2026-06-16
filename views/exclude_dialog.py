@@ -73,8 +73,6 @@ class ExcludeDialog(tk.Toplevel):
     def hide_stop_button(self) -> None:
         self.stop_btn.pack_forget()
 
-    # ── Upper: rule list ──────────────────────────────────────────────
-
     def _build_upper(self) -> None:
         frame = LabelFrame(self, text="排除规则")
         frame.place(relx=0.04, rely=0.03, relwidth=0.92, relheight=0.40)
@@ -105,8 +103,6 @@ class ExcludeDialog(tk.Toplevel):
         scroll = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.rules_tree.yview)
         scroll.grid(row=0, column=1, sticky=tk.NS)
         self.rules_tree.configure(yscrollcommand=scroll.set)
-
-    # ── Lower: preview ────────────────────────────────────────────────
 
     def _build_lower(self) -> None:
         frame = LabelFrame(self, text="选择任意文件夹预览排除效果")
@@ -149,8 +145,6 @@ class ExcludeDialog(tk.Toplevel):
             yscrollcommand=preview_scroll_v.set,
             xscrollcommand=preview_scroll_h.set
         )
-
-    # ── Rule editing (pure UI) ────────────────────────────────────────
 
     def _load_rules(self) -> None:
         rules: list[str] = self.setting.get_config("index", "exclude_rules") or []
@@ -240,10 +234,8 @@ class ExcludeDialog(tk.Toplevel):
             self.controller.refilter_preview()
 
     def _open_help_doc(self) -> None:
-        doc_path = Path(__file__).parent / "docs" / "exclude_rules.md"
+        doc_path = Path(__file__).parent.parent / "docs" / "exclude_rules.md"
         FileOperation.open_file(doc_path)
-
-    # ── Preview directory selection & file open ───────────────────────
 
     def _on_browse_preview(self) -> None:
         dir_path = filedialog.askdirectory(title="选择要预览的目录")
