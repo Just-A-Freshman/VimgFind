@@ -1,5 +1,5 @@
 from ttkbootstrap import Button, Entry, Checkbutton, Scale
-from tkinter.ttk import Frame, Label, LabelFrame, Combobox
+from tkinter.ttk import Frame, Label, LabelFrame, Combobox, Scrollbar
 import tkinter as tk
 
 from config import WinInfo
@@ -79,12 +79,16 @@ class FilterPanel(LabelFrame):
             padx=(8, 0), pady=(10, 2)
         )
         lbox_frame.grid_columnconfigure(0, weight=1)
+        lbox_frame.grid_rowconfigure(0, weight=1)
         self.folder_listbox = tk.Listbox(
             lbox_frame, selectmode=tk.MULTIPLE,
             height=5, width=1, activestyle='none',
             exportselection=False, justify=tk.LEFT
         )
         self.folder_listbox.grid(row=0, column=0, sticky='ew')
+        folder_scroll_h = Scrollbar(lbox_frame, orient=tk.HORIZONTAL, command=self.folder_listbox.xview)
+        folder_scroll_h.grid(row=1, column=0, sticky='ew')
+        self.folder_listbox.configure(xscrollcommand=folder_scroll_h.set)
 
         # 底部按钮
         btn_frame = Frame(self)
