@@ -224,18 +224,6 @@ class IndexController(object):
 
         exclude_rules: list[str] = self.app.setting.get_config("index", "exclude_rules") or []
 
-        if exclude_rules:
-            excluded_files = self.app.search_tools.get_excluded_files(exclude_rules)
-            if excluded_files:
-                answer = messagebox.askyesno(
-                    "提示",
-                    f"检测到 {len(excluded_files)} 个已索引图片\n"
-                    f"满足当前排除规则。\n\n"
-                    f"是否自动从索引中移除？\n"
-                )
-                if answer:
-                    self.app.search_tools.remove_files(excluded_files)
-
         for image_dir in self.app.setting.get_config("index", "search_dir"):
             if Path(image_dir).exists():
                 self.app.search_tools.update_index(
@@ -278,6 +266,35 @@ class IndexController(object):
         self.app.search_tools.remove_nonexists()
         self.app.setting.save_settings()
         self.app.view.after(1000, self.update_index_tip)
+
+    @Decorator.send_task
+    def clean_excluded(self) -> None:
+        assert self.app.search_tools
+        search_dirs = self.app.setting.get_config("index", "search_dir")
+        rules = self.app.setting.get_config("index", "exclude_rules") or []
+        if not rules:
+            messagebox.showinfo("提示", "当前没有设置排除规则。")
+            return
+        if not search_dirs:
+            messagebox.showinfo("提示", "当前没有索引目录。")
+            return
+
+        excluded = self.app.search_tools.get_excluded_files(rules, search_dirs)
+        if not excluded:
+            messagebox.showinfo("提示", "索引中没有匹配排除规则的文件。")
+            return
+
+        answer = messagebox.askyesno(
+            "确认清理",
+            f"将在索引中移除 {len(excluded)} 个匹配排除规则的文件记录。\n\n"
+            f"此操作不可撤消，是否继续？"
+        )
+        if not answer:
+            return
+        self.app.search_tools.remove_files(excluded)
+        self.app.search_tools.remove_nonexists()
+        self.app.view.after(1000, self.update_index_tip)
+        messagebox.showinfo("提示", f"已清理 {len(excluded)} 个文件记录。")
 
     def __check_queue(self) -> None:
         try:

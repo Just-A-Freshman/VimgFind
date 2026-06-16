@@ -70,6 +70,7 @@ class AppController:
 
         setting_tab.add_index_button.config(command=self.index_controller.add_search_dir)
         setting_tab.exclude_button.config(command=self.__open_exclude_dialog)
+        setting_tab.clean_excluded_button.config(command=self.index_controller.clean_excluded)
         setting_tab.update_index_button.config(command=self.index_controller.sync_index)
         setting_tab.delete_index_button.config(command=self.index_controller.delete_search_dir)
         setting_tab.rebuild_index_button.config(command=self.index_controller.rebuild_index)
