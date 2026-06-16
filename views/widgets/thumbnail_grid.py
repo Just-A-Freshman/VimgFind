@@ -3,8 +3,6 @@ from tkinter.ttk import Scrollbar
 import math
 import os
 
-from PIL import Image
-
 from config import WinInfo
 from utils.file_ops import FileOperation
 from .base import BasicImagePreviewView
