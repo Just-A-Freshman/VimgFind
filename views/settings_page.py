@@ -114,7 +114,7 @@ class SettingFrame(Frame):
 
     def __set_exclude_button(self) -> Button:
         manage_btn = Button(
-            self.scan_setting_frame, text="索引排除规则",
+            self.scan_setting_frame, text="管理排除规则",
             takefocus=False, cursor="hand2", style=LINK
         )
         manage_btn.grid(row=2, column=1, padx=(15, 0), sticky=tk.E)
@@ -122,7 +122,7 @@ class SettingFrame(Frame):
 
     def __set_clean_excluded_button(self) -> Button:
         btn = Button(
-            self.scan_setting_frame, text="清理排除项",
+            self.scan_setting_frame, text="清理排除图片",
             takefocus=False, cursor="hand2", style=LINK
         )
         btn.grid(row=2, column=2, padx=(5, 0), sticky=tk.W)
