@@ -35,19 +35,19 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 ### 3.1. 直接使用
 #### 最新版
 
-- [v2.4.2 完整包：以图搜图 + 以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.2-win64.7z)
+- [v2.4.3 完整包：以图搜图 + 以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.3-win64.7z)
 
 #### 从2.3 升级到 2.4
 
-- [2.4.2 增量更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.2-win64-update.zip)
+- [2.4.3 增量更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.3-win64-update.zip)
 
-点击`hta`结尾的文件，选择旧版的可执行程序后点击更新即可。
+双击`hta`结尾的文件，选择旧版的可执行程序后点击更新即可。
 
 更新日志请查看：https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.4
 
 ### 3.2. 历史版本
 
-- [v2.3.2 完整包：以图搜图+以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/VimgFind-2.3.2-win64.7z)
+- [v2.4.2 完整包：以图搜图+以文搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.4/VimgFind-2.4.2-win64.7z)
 - [v2.3.2 完整包：仅以图搜图](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.3/VimgFind-2.3.2-win64-simple.7z)
 
 其他历史版本请自行查看：[Releases · Just-A-Freshman/VimgFind](https://github.com/Just-A-Freshman/VimgFind/releases)
