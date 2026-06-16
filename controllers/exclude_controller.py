@@ -66,11 +66,6 @@ class ExcludePreviewController:
         self.dialog.set_status("正在扫描目录结构...（点击停止终止扫描）")
 
         rules = self.dialog.collect_rules()
-        if not rules:
-            self.dialog.set_status("被排除索引的文件夹/文件")
-            self.dialog.hide_stop_button()
-            return
-
         self._cancel_scan = False
         self._scan_thread = Thread(
             target=self._do_preview, args=(dir_path, rules), daemon=True
@@ -79,12 +74,6 @@ class ExcludePreviewController:
 
     def _do_preview(self, target_dir: str, rules: list[str]) -> None:
         rules_obj = compile_rules(rules)
-        if not rules_obj:
-            try:
-                self.dialog.after(0, self._preview_empty)
-            except Exception:
-                pass
-            return
 
         excluded_cache: list[tuple[str, bool]] = []
         scan_cache: list[tuple[str, bool]] = []
@@ -105,7 +94,7 @@ class ExcludePreviewController:
 
                         if entry.is_dir(follow_symlinks=False):
                             scan_cache.append((rel, True))
-                            if rules_obj.is_excluded(rel, is_dir=True):
+                            if rules_obj and rules_obj.is_excluded(rel, is_dir=True):
                                 excluded_cache.append((rel, True))
                                 excluded += 1
                                 if excluded >= MAX_PREVIEW_ITEMS:
@@ -117,7 +106,7 @@ class ExcludePreviewController:
                             if not is_accepted_extension(entry.name):
                                 continue
                             scan_cache.append((rel, False))
-                            if rules_obj.is_excluded(rel, is_dir=False):
+                            if rules_obj and rules_obj.is_excluded(rel, is_dir=False):
                                 excluded_cache.append((rel, False))
                                 excluded += 1
                                 if excluded >= MAX_PREVIEW_ITEMS:
@@ -145,12 +134,6 @@ class ExcludePreviewController:
         if self._closed:
             return
         self.dialog.set_status(f"已排除 {excluded} 项（共扫描 {total} 项）")
-
-    def _preview_empty(self) -> None:
-        if self._closed:
-            return
-        self.dialog.hide_stop_button()
-        self.dialog.set_status("被排除索引的文件夹/文件")
 
     def _preview_complete(self, cache, scan_cache, total, excluded, truncated) -> None:
         if self._closed:
