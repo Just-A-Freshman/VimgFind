@@ -261,8 +261,9 @@ class IndexController(object):
             search_dir.remove(delete_search_dir)
             self.app.view.setting_tab.index_dataset_table.delete(item)
         self.refresh_index_dataset_table()
+        remaining_dirs = [d for d in self.app.setting.get_config("index", "search_dir")]
         for dir_path in dirs_to_delete:
-            self.app.search_tools.remove_files_in_directory(dir_path)
+            self.app.search_tools.remove_files_in_directory(dir_path, remaining_dirs)
         self.app.search_tools.remove_nonexists()
         self.app.setting.save_settings()
         self.app.view.after(1000, self.update_index_tip)

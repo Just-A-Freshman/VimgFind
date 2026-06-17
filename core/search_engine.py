@@ -203,14 +203,17 @@ class SearchTool(object):
                     break
         return result
 
-    def remove_files_in_directory(self, directory: str) -> None:
+    def remove_files_in_directory(self, directory: str, keep_dirs: list[str] | None = None) -> None:
         self.__init_event.wait()
         directory_path = Path(directory).resolve()
+        keep_paths = [Path(d).resolve() for d in (keep_dirs or [])]
         for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
             file_path = Path(index_file).resolve()
             if not file_path.is_relative_to(directory_path):
+                continue
+            if any(file_path.is_relative_to(kp) for kp in keep_paths):
                 continue
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
