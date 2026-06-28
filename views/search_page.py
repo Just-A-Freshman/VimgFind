@@ -181,7 +181,7 @@ class SearchFrame(Frame):
         return frame
 
     def __set_nav_buttons(self) -> None:
-        self.nav_frame = tk.Frame(self.preview_container, bg="#6c757d", borderwidth=10)
+        self.nav_frame = tk.Frame(self.preview_container, bg="#6c757d", borderwidth=12)
         self.nav_page_label = tk.Label(
             self.nav_frame, text="0 / 0", bg="#6c757d", fg="white", font=("", 10)
         )
