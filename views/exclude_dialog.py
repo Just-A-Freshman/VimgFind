@@ -1,26 +1,23 @@
-"""Exclude rules management dialog — UI only. Control logic in ExcludePreviewController."""
+"""Exclude rules management dialog — pure UI. Events wired externally via callbacks."""
 
+from typing import Callable
 from ttkbootstrap import Button, Style
 from ttkbootstrap.constants import LINK
 from tkinter.ttk import LabelFrame, Entry, Label, Treeview, Scrollbar
-import tkinter as tk
 from tkinter import filedialog
+import tkinter as tk
 
 from settings import WinInfo
 
 
 class ExcludeDialog(tk.Toplevel):
-    """Modal dialog for managing exclusion rules and previewing their effect."""
+    on_rules_changed: Callable[[], None] | None = None
+    on_preview_requested: Callable[[], None] | None = None
 
     def __init__(self, parent, setting) -> None:
         super().__init__(parent)
         self.withdraw()
         self.setting = setting
-        self.save_result: bool | None = None  # True=保存, None=取消
-        # Lazy import to avoid circular dependency:
-        # exclude_dialog → exclude_controller → app_controller → views
-        from controllers.exclude_controller import ExcludePreviewController
-        self.controller = ExcludePreviewController(self, setting)
 
         self.title("排除设置")
         self.iconbitmap(WinInfo.ico_path)
@@ -34,15 +31,10 @@ class ExcludeDialog(tk.Toplevel):
         self.minsize(500, 400)
         self.transient(parent)
         self.grab_set()
-        self.protocol("WM_DELETE_WINDOW", self.controller.on_save)
-
         self._build_upper()
         self._build_lower()
 
-        self.controller.load_rules_into_view()
         self.deiconify()
-
-    # ── UI helpers for controller ─────────────────────────────────────
 
     def collect_rules(self) -> list[str]:
         rules: list[str] = []
@@ -76,12 +68,19 @@ class ExcludeDialog(tk.Toplevel):
 
         btn_frame = tk.Frame(frame)
         btn_frame.pack(fill=tk.X, padx=4, pady=(6, 10))
-        Button(btn_frame, text="新建规则", command=self._on_add_name,
-               takefocus=False, cursor="hand2").pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
-        Button(btn_frame, text="删除规则", command=self._on_delete_selected,
-               takefocus=False, cursor="hand2").pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
-        Button(btn_frame, text="帮助文档", command=self.controller.open_help_doc,
-               takefocus=False, cursor="hand2", style=LINK).pack(side=tk.RIGHT, padx=(15, 0))
+        Button(
+            btn_frame, text="新建规则", command=self._on_add_name,
+            takefocus=False, cursor="hand2"
+        ).pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
+        Button(
+            btn_frame, text="删除规则", command=self._on_delete_selected,
+            takefocus=False, cursor="hand2"
+        ).pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
+        self.help_btn = Button(
+            btn_frame, text="帮助文档", command=lambda: None,
+            takefocus=False, cursor="hand2", style=LINK
+        )
+        self.help_btn.pack(side=tk.RIGHT, padx=(15, 0))
 
         tree_frame = tk.Frame(frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=(4, 4))
@@ -95,7 +94,6 @@ class ExcludeDialog(tk.Toplevel):
         self.rules_tree.column("name", stretch=True)
         self.rules_tree.grid(row=0, column=0, sticky=tk.NSEW)
         self.rules_tree.bind("<Double-Button-1>", self._on_item_double_click)
-        self.rules_tree.bind("<<TreeviewSelect>>", self.controller.on_rule_select)
 
         scroll = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.rules_tree.yview)
         scroll.grid(row=0, column=1, sticky=tk.NS)
@@ -110,8 +108,10 @@ class ExcludeDialog(tk.Toplevel):
         self.preview_path_var = tk.StringVar()
         self.preview_path_entry = Entry(path_frame, textvariable=self.preview_path_var)
         self.preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4), ipady=self._ipady)
-        self.browse_btn = Button(path_frame, text="浏览", command=self._on_browse_preview,
-                                 takefocus=False, cursor="hand2")
+        self.browse_btn = Button(
+            path_frame, text="浏览", command=self._on_browse_preview,
+            takefocus=False, cursor="hand2"
+        )
         self.browse_btn.pack(side=tk.RIGHT, ipadx=self._ipadx * 2, ipady=self._ipady)
 
         status_frame = tk.Frame(frame)
@@ -119,20 +119,18 @@ class ExcludeDialog(tk.Toplevel):
         self.preview_status_var = tk.StringVar()
         self.preview_status_label = Label(status_frame, textvariable=self.preview_status_var, anchor=tk.W)
         self.preview_status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.stop_btn = Button(status_frame, text="停止", style=LINK, cursor="hand2",
-                                command=self.controller.stop_scan)
+        self.stop_btn = Button(
+            status_frame, text="停止", style=LINK, cursor="hand2", command=lambda: None
+        )
 
         tree_frame = tk.Frame(frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=0)
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
 
-        self.preview_tree = Treeview(
-            tree_frame, columns=("path",), show="", cursor="hand2"
-        )
+        self.preview_tree = Treeview(tree_frame, columns=("path",), show="", cursor="hand2")
         self.preview_tree.column("path", stretch=False, width=3000)
         self.preview_tree.grid(row=0, column=0, sticky=tk.NSEW)
-        self.preview_tree.bind("<Double-Button-1>", self.controller.on_preview_double_click)
 
         preview_scroll_v = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.preview_tree.yview)
         preview_scroll_v.grid(row=0, column=1, sticky=tk.NS)
@@ -186,7 +184,8 @@ class ExcludeDialog(tk.Toplevel):
                 tree.item(iid, values=(text,))
                 tree.selection_set(iid)
                 tree.focus(iid)
-                self.controller.refilter_preview()
+                if self.on_rules_changed:
+                    self.on_rules_changed()
             elif not initial_text:
                 tree.delete(iid)
             entry.master.after_idle(entry.destroy)
@@ -222,11 +221,13 @@ class ExcludeDialog(tk.Toplevel):
         selected = self.rules_tree.selection()
         if selected:
             self.rules_tree.delete(*selected)
-            self.controller.refilter_preview()
+            if self.on_rules_changed:
+                self.on_rules_changed()
 
     def _on_browse_preview(self) -> None:
         dir_path = filedialog.askdirectory(title="选择要预览的目录")
         if dir_path:
             self.preview_path_var.set(dir_path)
-            self.controller.trigger_preview()
+            if self.on_preview_requested:
+                self.on_preview_requested()
 

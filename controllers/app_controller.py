@@ -6,9 +6,10 @@ import webbrowser
 
 from views import WinGUI, ExcludeDialog
 from settings import Setting, WinInfo
-from utils import FileOperation, Decorator
+from utils import FileOperation, Decorator, UpdateChecker
 from core import SearchTool
 
+from .exclude_controller import ExcludePreviewController
 from .filter_controller import FilterController
 from .search_controller import SearchController
 from .index_controller import IndexController
@@ -130,7 +131,16 @@ class AppController:
                 self.index_controller.add_search_dir(dir_path)
 
     def __open_exclude_dialog(self) -> None:
-        ExcludeDialog(self.view, self.setting)
+        dialog = ExcludeDialog(self.view, self.setting)
+        controller = ExcludePreviewController(dialog, self.setting)
+        dialog.on_rules_changed = controller.refilter_preview
+        dialog.on_preview_requested = controller.trigger_preview
+        dialog.help_btn.config(command=controller.open_help_doc)
+        dialog.stop_btn.config(command=controller.stop_scan)
+        dialog.rules_tree.bind("<<TreeviewSelect>>", controller.on_rule_select)
+        dialog.preview_tree.bind("<Double-Button-1>", controller.on_preview_double_click)
+        dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
+        controller.load_rules_into_view()
 
     def __schedule_save(self) -> None:
         if self.search_tools:
@@ -160,8 +170,6 @@ class AppController:
 
     @Decorator.send_task
     def __check_for_update(self) -> None:
-        from utils import UpdateChecker
-
         result = UpdateChecker.check()
         if result.error is not None:
             messagebox.showerror(

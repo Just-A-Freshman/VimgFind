@@ -1,5 +1,3 @@
-"""Controller for ExcludeDialog preview scanning, filtering, and save logic."""
-
 import os
 import logging
 import tkinter as tk
@@ -20,8 +18,6 @@ PROGRESS_INTERVAL = 500
 
 
 class ExcludePreviewController:
-    """Handles preview scanning, rule filtering, and save logic for ExcludeDialog."""
-
     def __init__(self, dialog: ExcludeDialog, setting: Setting) -> None:
         self.dialog = dialog
         self.setting = setting
@@ -155,7 +151,6 @@ class ExcludePreviewController:
 
     @staticmethod
     def _filter_topmost(dirs: list[str], files: list[str]) -> tuple[list[str], list[str]]:
-        """过滤被祖先目录隐含覆盖的冗余子项。"""
         kept_dirs = []
         prefixes = set()
         for d in dirs:
@@ -213,7 +208,6 @@ class ExcludePreviewController:
             self.dialog.set_status(f"显示排除：{dir_count} 个目录，{file_count} 个文件")
 
     def refilter_preview(self) -> None:
-        """Re-apply rules against cached scan data without re-scanning."""
         if not self._scan_cache:
             return
         rules = self.dialog.collect_rules()
@@ -244,22 +238,17 @@ class ExcludePreviewController:
         self._refresh_preview_tree()
 
     def load_rules_into_view(self) -> None:
-        """从 setting 读取排除规则并填充到 dialog 的 Treeview 中。"""
         rules = self.setting.get_config("index", "exclude_rules") or []
         for rule in rules:
             self.dialog.rules_tree.insert("", tk.END, values=(rule,))
         self.dialog.set_status("被排除索引的文件夹/文件")
 
-    # ── Help & preview click ──────────────────────────────────────────
-
     @staticmethod
     def open_help_doc() -> None:
-        """打开排除规则帮助文档。"""
         doc_path = Path(__file__).parent.parent / "docs" / "exclude_rules.md"
         FileOperation.open_file(doc_path)
 
     def on_preview_double_click(self, event: tk.Event) -> None:
-        """处理预览树双击事件：打开对应文件/文件夹。"""
         item = self.dialog.preview_tree.identify_row(event.y)
         if not item:
             return
@@ -279,7 +268,6 @@ class ExcludePreviewController:
             rules = self.dialog.collect_rules()
             self.setting.modity_config("index", "exclude_rules", rules)
             self.setting.save_settings()
-            self.dialog.save_result = True
             self.dialog.destroy()
         except Exception as e:
             logging.error("on_save error: %s", e, exc_info=True)
