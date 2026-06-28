@@ -56,6 +56,8 @@ class AppController:
         tab.search_by_browser_btn.config(command=self.search_controller.search_by_browser)
         tab.search_by_clipboard_btn.config(command=self.search_controller.search_image_by_clipboard)
         tab.search_entry.bind("<Return>", lambda e: self.search_controller.search_image_by_text())
+        tab.nav_prev.config(command=lambda: self.search_controller._debounce_navigate(-1))
+        tab.nav_next.config(command=lambda: self.search_controller._debounce_navigate(1))
         tab.more_options_button.config(command=self.menu_controller.create_preview_setting_menu)
         tab.filter_btn.bind("<Button-1>", lambda e: self.filter_controller.toggle_filter_panel())
         tab.filter_panel.confirm_btn.config(command=self.filter_controller.confirm_filter)
@@ -122,7 +124,7 @@ class AppController:
         file_paths = FileOperation.extract_file_paths(file_paths_str)
         tab_id = self.view.switch_tab.index(self.view.switch_tab.select())
         if tab_id == 0:
-            self.search_controller.search_by_browser(file_paths[0])
+            self.search_controller.search_by_browser(file_paths)
         elif tab_id == 1:
             for dir_path in file_paths:
                 self.index_controller.add_search_dir(dir_path)

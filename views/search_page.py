@@ -114,6 +114,9 @@ class SearchFrame(Frame):
     preview_frame2: LabelFrame
     preview_canvas1: PreviewCanvasView
     preview_canvas2: PreviewCanvasView
+    nav_frame: Frame
+    nav_prev: Button
+    nav_next: Button
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
@@ -131,6 +134,7 @@ class SearchFrame(Frame):
         self.preview_frame2 = self.__set_preview_frame2()
         self.preview_canvas1 = PreviewCanvasView(self.preview_frame1)
         self.preview_canvas2 = PreviewCanvasView(self.preview_frame2)
+        self.__set_nav_buttons()
 
     def __set_search_entry(self) -> Entry:
         ipt = Entry(self)
@@ -175,3 +179,29 @@ class SearchFrame(Frame):
         frame = LabelFrame(self, text="匹配图片")
         frame.place(relx=0.63, rely=0.5555, relwidth=0.365, relheight=0.4444)
         return frame
+
+    def __set_nav_buttons(self) -> None:
+        self.nav_frame = Frame(self.preview_container)
+        self.nav_prev = Button(
+            self.nav_frame, text="◀", takefocus=False,
+            cursor="hand2", padding=(8, 2), width=3
+        )
+        self.nav_prev.pack(side=tk.LEFT, padx=(0, 4))
+        self.nav_next = Button(
+            self.nav_frame, text="▶", takefocus=False,
+            cursor="hand2", padding=(8, 2), width=3
+        )
+        self.nav_next.pack(side=tk.LEFT)
+        self.nav_frame.place(relx=1.0, rely=1.0, anchor=tk.SE, x=WinInfo.TkS(-10), y=WinInfo.TkS(-10))
+        self.nav_frame.place_forget()
+
+    def set_nav_visible(self, show: bool) -> None:
+        if show:
+            self.nav_frame.place(relx=0.99, rely=1.0, anchor=tk.SE, x=WinInfo.TkS(-8), y=WinInfo.TkS(-1))
+            self.nav_frame.lift()
+        else:
+            self.nav_frame.place_forget()
+
+    def set_nav_state(self, has_prev: bool, has_next: bool) -> None:
+        self.nav_prev.config(state=tk.NORMAL if has_prev else tk.DISABLED)
+        self.nav_next.config(state=tk.NORMAL if has_next else tk.DISABLED)
