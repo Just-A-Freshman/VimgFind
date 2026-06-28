@@ -9,6 +9,7 @@ import ctypes
 class Setting(object):
     config_path = Path("./config/setting.json")
     temp_image_path = Path("./temp")
+    temp_multi_search_queue = temp_image_path / "multi_search_queue.txt"
     error_log = Path("./config/error.log")
     accepted_exts = {'.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp'}
     schedule_save_interval = 600000
@@ -51,7 +52,7 @@ class Setting(object):
 
 
 class WinInfo(object):
-    version = "2.4.3"
+    version = "2.5.1"
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
     ico_path = "config/favicon.ico"
