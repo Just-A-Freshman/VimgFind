@@ -13,7 +13,7 @@ from views.exclude_dialog import ExcludeDialog
 from settings import Setting
 
 
-MAX_PREVIEW_ITEMS = 500000
+MAX_PREVIEW_ITEMS = 100000
 PROGRESS_INTERVAL = 500
 
 
