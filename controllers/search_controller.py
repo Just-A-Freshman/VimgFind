@@ -6,7 +6,6 @@ from pathlib import Path
 import linecache
 import datetime
 import os
-import threading
 import tkinter as tk
 
 from PIL import Image
@@ -29,7 +28,6 @@ class SearchController(object):
         self.app = app_controller
         self._queue_index: int = 0
         self._queue_total: int = 0
-        self._nav_lock = threading.Lock()
         self._nav_debounce_timer: str = ""
 
     @Decorator.send_task
@@ -203,13 +201,12 @@ class SearchController(object):
         def do_navigate() -> None:
             self._nav_debounce_timer = ""
             if 0 <= self._queue_index < self._queue_total:
-                with self._nav_lock:
-                    self.__search_image()
+                self.__search_image()
         tab = self.app.view.search_tab
         self._queue_index = max(0, min(self._queue_index + direction, self._queue_total - 1))
         if self._nav_debounce_timer:
             tab.after_cancel(self._nav_debounce_timer)
-        self._nav_debounce_timer = tab.after(100, do_navigate)
+        self._nav_debounce_timer = tab.after(50, do_navigate)
 
     @staticmethod
     def generate_extra_info(image_path: str, similarity: float) -> tuple:
