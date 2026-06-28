@@ -123,8 +123,8 @@ class SearchController(object):
                 has_prev=self._queue_index > 0,
                 has_next=self._queue_index < self._queue_total - 1
             )
+            tab.set_nav_page_label(self._queue_index + 1, self._queue_total)
             queue_path = linecache.getline(str(Setting.temp_multi_search_queue), self._queue_index + 1).strip()
-            print(queue_path)
             if not queue_path or not Path(queue_path).is_file():
                 messagebox.showinfo("提示", f"第 {self._queue_index + 1} 张图片不存在或已被删除！")
                 self._is_finish_search = True

@@ -114,7 +114,7 @@ class SearchFrame(Frame):
     preview_frame2: LabelFrame
     preview_canvas1: PreviewCanvasView
     preview_canvas2: PreviewCanvasView
-    nav_frame: Frame
+    nav_frame: tk.Frame
     nav_prev: Button
     nav_next: Button
 
@@ -181,27 +181,35 @@ class SearchFrame(Frame):
         return frame
 
     def __set_nav_buttons(self) -> None:
-        self.nav_frame = Frame(self.preview_container)
+        self.nav_frame = tk.Frame(self.preview_container, bg="#6c757d", borderwidth=10)
+        self.nav_page_label = tk.Label(
+            self.nav_frame, text="0 / 0", bg="#6c757d", fg="white", font=("", 10)
+        )
+        self.nav_page_label.pack(side=tk.LEFT, padx=(30, 0))
         self.nav_prev = Button(
             self.nav_frame, text="◀", takefocus=False,
             cursor="hand2", padding=(8, 2), width=3
         )
-        self.nav_prev.pack(side=tk.LEFT, padx=(0, 4))
         self.nav_next = Button(
             self.nav_frame, text="▶", takefocus=False,
             cursor="hand2", padding=(8, 2), width=3
         )
-        self.nav_next.pack(side=tk.LEFT)
-        self.nav_frame.place(relx=1.0, rely=1.0, anchor=tk.SE, x=WinInfo.TkS(-10), y=WinInfo.TkS(-10))
-        self.nav_frame.place_forget()
+        self.nav_next.pack(side=tk.RIGHT, padx=(0, 10))
+        self.nav_prev.pack(side=tk.RIGHT, padx=(0, 10))
+        self.nav_frame.pack_forget()
 
     def set_nav_visible(self, show: bool) -> None:
         if show:
-            self.nav_frame.place(relx=0.99, rely=1.0, anchor=tk.SE, x=WinInfo.TkS(-8), y=WinInfo.TkS(-1))
+            self.nav_frame.grid(
+                row=1, column=0, sticky='ew', padx=(2, WinInfo.TkS(12.5)), pady=(0, 3)
+            )
             self.nav_frame.lift()
         else:
-            self.nav_frame.place_forget()
+            self.nav_frame.grid_forget()
 
     def set_nav_state(self, has_prev: bool, has_next: bool) -> None:
         self.nav_prev.config(state=tk.NORMAL if has_prev else tk.DISABLED)
         self.nav_next.config(state=tk.NORMAL if has_next else tk.DISABLED)
+
+    def set_nav_page_label(self, current: int, total: int) -> None:
+        self.nav_page_label.config(text=f"{current} / {total}")

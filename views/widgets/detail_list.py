@@ -13,11 +13,15 @@ class DetailListView(BasicImagePreviewView):
 
     def _create_treeview(self, extra_columns: dict[str, int]) -> None:
         columns = {"名称": 160, **extra_columns}
-        self.__treeview = Treeview(self.parent, show="headings", columns=list(columns))
+        self.__treeview = Treeview(self.parent, show="headings", columns=list(columns), padding=1)
         for text, width in columns.items():
             self.__treeview.heading(text, text=text, anchor=tk.CENTER)
             self.__treeview.column(text, anchor=tk.CENTER, width=width, stretch=True)
-        self.__treeview.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.__treeview.grid(row=0, column=0, sticky=tk.NSEW)
+        self.parent.grid_rowconfigure(0, weight=1)
+        self.parent.grid_columnconfigure(0, weight=1)
+        self.__treeview.grid_columnconfigure(0, weight=1)
+        self.__treeview.grid_rowconfigure(0, weight=1)
         for column in self.__treeview["columns"]:
             self.__treeview.heading(column, command=lambda column=column: self._sort_column(column, False))
 
