@@ -32,8 +32,8 @@ class WinGUI(TkinterDnD.Tk):
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         width = WinInfo.TkS(WinInfo.width)
-        hegiht = WinInfo.TkS(WinInfo.height)
-        geometry = '%dx%d+%d+%d' % (width, hegiht, (screenwidth - width) // 2, (screenheight - hegiht) // 2)
+        height = WinInfo.TkS(WinInfo.height)
+        geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) // 2, (screenheight - height) // 2)
         self.geometry(geometry)
         self.iconbitmap(WinInfo.ico_path)
 

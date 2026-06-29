@@ -126,7 +126,7 @@ class FileOperation(object):
         dest_path = Path(dest_path)
         if not src_path.exists() or src_path.is_dir() or dest_path.is_dir():
             return False
-        read_mode = 'rb' if is_binary else 'r',
+        read_mode = 'rb' if is_binary else 'r'
         write_mode = 'wb' if is_binary else 'w'
         encoding = None if is_binary else 'utf-8'
         try:
@@ -258,3 +258,17 @@ class FileOperation(object):
                     paths.append(path)
                 i = j
         return paths
+    
+    @staticmethod
+    def get_folder_size(folder_path: str | Path) -> int:
+        total_size = 0
+        try:
+            with os.scandir(folder_path) as entries:
+                for entry in entries:
+                    if entry.is_file(follow_symlinks=False):
+                        total_size += entry.stat(follow_symlinks=False).st_size
+                    elif entry.is_dir(follow_symlinks=False):
+                        total_size += FileOperation.get_folder_size(entry.path)
+        except (PermissionError, OSError):
+            pass
+        return total_size

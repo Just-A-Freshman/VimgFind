@@ -151,10 +151,10 @@ class AppController:
         try:
             setting_tab = self.view.setting_tab
             search_tab = self.view.search_tab
-            self.setting.modity_config("function", "ui_style", setting_tab.theme_combobox.get())
-            self.setting.modity_config("function", "auto_update_index", setting_tab.auto_update_btn.instate(['selected']))
-            self.setting.modity_config("function", "max_work_thread", int(float(setting_tab.update_threads_count_scale.get())))
-            self.setting.modity_config("function", "similarity_threshold", int(float(search_tab.filter_panel.sim_scale.get())))
+            self.setting.modify_config("function", "ui_style", setting_tab.theme_combobox.get())
+            self.setting.modify_config("function", "auto_update_index", setting_tab.auto_update_btn.instate(['selected']))
+            self.setting.modify_config("function", "max_work_thread", int(float(setting_tab.update_threads_count_scale.get())))
+            self.setting.modify_config("function", "similarity_threshold", int(float(search_tab.filter_panel.sim_scale.get())))
             self.setting.save_settings()
             self.setting.clean_log()
             if self.search_tools:

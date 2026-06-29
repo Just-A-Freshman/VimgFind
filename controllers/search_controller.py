@@ -23,12 +23,12 @@ class SearchController(object):
     def __init__(self, app_controller: AppController) -> None:
         self._last_search_content: Image.Image | str = ""
         self._is_finish_search: bool = True
-        self._preview_timer = ""
+        self._preview_timer: str | None = None
         self.similarity_threshold: float = 0.0
         self.app = app_controller
         self._queue_index: int = 0
         self._queue_total: int = 0
-        self._nav_debounce_timer: str = ""
+        self._nav_debounce_timer: str | None = None
 
     @Decorator.send_task
     def search_by_browser(self, image_paths: str | list[str] | None = None) -> None:
@@ -88,7 +88,7 @@ class SearchController(object):
                 return
         if image_path is None:
             image_path = FileOperation.generate_unique_filename(Setting.temp_image_path, ".jpg")
-            if os.path.getsize(Setting.temp_image_path) > 1024 * 1024 * 30:
+            if FileOperation.get_folder_size(Setting.temp_image_path) > 1024 * 1024 * 30:
                 FileOperation.clear_folder_all(Setting.temp_image_path)
             if not image_path.parent.exists():
                 Setting.temp_image_path.mkdir(exist_ok=True)
@@ -199,12 +199,12 @@ class SearchController(object):
 
     def _debounce_navigate(self, direction: int) -> None:
         def do_navigate() -> None:
-            self._nav_debounce_timer = ""
+            self._nav_debounce_timer = None
             if 0 <= self._queue_index < self._queue_total:
                 self.__search_image()
         tab = self.app.view.search_tab
         self._queue_index = max(0, min(self._queue_index + direction, self._queue_total - 1))
-        if self._nav_debounce_timer:
+        if self._nav_debounce_timer is not None:
             tab.after_cancel(self._nav_debounce_timer)
         self._nav_debounce_timer = tab.after(50, do_navigate)
 
@@ -225,7 +225,7 @@ class SearchController(object):
 
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
-        self.app.setting.modity_config("index", "max_match_count", min(max_match_count, 100))
+        self.app.setting.modify_config("index", "max_match_count", min(max_match_count, 100))
         self.app.search_tools.update_max_match_count(max_match_count)
         self.resend_last_search()
 
@@ -240,7 +240,7 @@ class SearchController(object):
         results = tab.preview_view.get_show_results()
         current_selection = tab.preview_view.selection()
         tab.preview_view.destroy()
-        self.app.setting.modity_config("function", "preview_mode", mode)
+        self.app.setting.modify_config("function", "preview_mode", mode)
         if mode == "detail_info":
             tab.preview_view = DetailListView(
                 tab.preview_container,
@@ -270,6 +270,6 @@ class SearchController(object):
         selection = self.app.view.search_tab.preview_view.selection()
         if not selection:
             return
-        if self._preview_timer:
+        if self._preview_timer is not None:
             self.app.view.after_cancel(self._preview_timer)
         self._preview_timer = self.app.view.after(100, _preview)

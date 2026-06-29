@@ -233,8 +233,8 @@ class IndexController(object):
                 )
         self.app.search_tools.remove_duplicate()
         tab.update_index_button.config(text="更新索引目录", command=self.sync_index)
-        tab.delete_index_button.config(state=tk.ACTIVE)
-        tab.rebuild_index_button.config(state=tk.ACTIVE)
+        tab.delete_index_button.config(state=tk.NORMAL)
+        tab.rebuild_index_button.config(state=tk.NORMAL)
         if show_message:
             messagebox.showinfo("提示", "索引更新完成！")
         self.app.view.after(1000, self.update_index_tip)

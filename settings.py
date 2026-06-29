@@ -6,11 +6,14 @@ import logging
 import ctypes
 
 
+ROOT = Path(__file__).resolve().parent
+
+
 class Setting(object):
-    config_path = Path("./config/setting.json")
-    temp_image_path = Path("./temp")
+    config_path = ROOT / "config" / "setting.json"
+    temp_image_path = ROOT / "temp"
     temp_multi_search_queue = temp_image_path / "multi_search_queue.txt"
-    error_log = Path("./config/error.log")
+    error_log = ROOT / "config" / "error.log"
     accepted_exts = {'.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp'}
     schedule_save_interval = 600000
 
@@ -38,7 +41,7 @@ class Setting(object):
             self.__config[config_type_key][key] = None
         return self.__config[config_type_key][key]
 
-    def modity_config(self, config_type: Literal["model", "index", "function"], key: str, content) -> None:
+    def modify_config(self, config_type: Literal["model", "index", "function"], key: str, content) -> None:
         self.__config[f"{config_type}_config"][key] = content
 
     def load_settings(self):

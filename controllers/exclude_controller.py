@@ -38,7 +38,7 @@ class ExcludePreviewController:
         return current != self._original_rules
 
     def on_rule_select(self, event=None) -> None:
-        if self._debounce_timer:
+        if self._debounce_timer is not None:
             self.dialog.after_cancel(self._debounce_timer)
         self._debounce_timer = self.dialog.after(500, self._refresh_preview_from_cache)
 
@@ -266,7 +266,7 @@ class ExcludePreviewController:
 
         try:
             rules = self.dialog.collect_rules()
-            self.setting.modity_config("index", "exclude_rules", rules)
+            self.setting.modify_config("index", "exclude_rules", rules)
             self.setting.save_settings()
             self.dialog.destroy()
         except Exception as e:
