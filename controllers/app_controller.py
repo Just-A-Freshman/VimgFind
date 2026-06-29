@@ -160,11 +160,10 @@ class AppController:
             self.setting.save_settings()
             self.setting.clean_log()
             if self.search_tools:
+                self.search_tools.set_force_end_update(True)
                 self.search_tools.save_index()
                 self.search_tools.destroy()
             file_ops.clear_folder_all(Setting.temp_image_path)
-            if self.search_tools:
-                self.search_tools.set_force_end_update(True)
         except Exception as e:
             messagebox.showerror("错误", str(e))
         finally:
