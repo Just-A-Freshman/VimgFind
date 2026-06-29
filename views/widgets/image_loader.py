@@ -37,8 +37,8 @@ class ImageLoader:
                 ))
             else:
                 img = ImageOps.exif_transpose(img) or img
-                img.thumbnail((thumbnail_size, thumbnail_size))
                 width, height = img.size
+                img.thumbnail((thumbnail_size, thumbnail_size))
                 self.result_queue.put(LoaderResult(
                     item=item,
                     size=(width, height),
