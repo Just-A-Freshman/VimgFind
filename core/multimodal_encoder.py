@@ -118,3 +118,4 @@ class MultiModalEncoder:
             return text_features
         except Exception as e:
             logging.error(f"编码文字时出现错误: {e}")
+            return None

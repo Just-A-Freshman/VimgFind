@@ -1,6 +1,6 @@
-from queue import Queue
 from threading import Thread
 from collections import namedtuple
+import queue
 
 from PIL import ImageTk, ImageOps
 
@@ -12,8 +12,8 @@ LoaderResult = namedtuple("LoaderResult", ["item", "size", "photo", "error"])
 
 class ImageLoader:
     def __init__(self) -> None:
-        self.task_queue: Queue[tuple] = Queue()
-        self.result_queue: Queue[LoaderResult] = Queue()
+        self.task_queue: queue.Queue[tuple] = queue.Queue()
+        self.result_queue: queue.Queue[LoaderResult] = queue.Queue()
         self.threads: list[Thread] = []
         self.running = True
         for _ in range(10):
@@ -28,7 +28,7 @@ class ImageLoader:
         while self.running:
             try:
                 item, image_path, thumbnail_size = self.task_queue.get(timeout=1)
-            except Exception:
+            except queue.Empty:
                 continue
             img = image_ops.parse_image_from_path(image_path)
             if img is None:
