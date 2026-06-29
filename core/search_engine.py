@@ -141,7 +141,12 @@ class SearchTool(object):
             pbar = tqdm(total=len(need_to_update), ascii=False, ncols=50)
             futures = [executor.submit(_process_item, item) for item in need_to_update]
             for future in as_completed(futures):
-                idx, fpath, fv = future.result()
+                try:
+                    idx, fpath, fv = future.result()
+                except Exception as e:
+                    logging.error(f"索引线程错误: {e}", exc_info=True)
+                    pbar.update(1)
+                    continue
                 if fv is not None:
                     self.__vec_idx_mgr.add_vector(fv, idx)
                     self.__name_idx_mgr.add_name(fpath, idx)

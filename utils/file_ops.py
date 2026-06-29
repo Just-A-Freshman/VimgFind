@@ -124,11 +124,11 @@ def save_as(src_path: str | Path, dest_path: str | Path, is_binary: bool = False
     dest_path = Path(dest_path)
     if not src_path.exists() or src_path.is_dir() or dest_path.is_dir():
         return False
-    read_mode = 'rb' if is_binary else 'r',
+    read_mode = 'rb' if is_binary else 'r'
     write_mode = 'wb' if is_binary else 'w'
     encoding = None if is_binary else 'utf-8'
     try:
-        with open(src_path, mode=read_mode[0], encoding=encoding) as f_src:
+        with open(src_path, mode=read_mode, encoding=encoding) as f_src:
             content = f_src.read()
         dest_path = dest_path if inplace else generate_copy_name(dest_path)
         with open(dest_path, mode=write_mode, encoding=encoding) as f_dst:

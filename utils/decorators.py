@@ -1,4 +1,5 @@
 import functools
+import logging
 import sys
 from queue import Queue
 from threading import Thread
@@ -24,12 +25,12 @@ progress_queue: Queue = Queue()
 def send_task(target):
     @functools.wraps(target)
     def inner(*args, **kwargs):
-        thread = Thread(
-            target=target,
-            args=args,
-            kwargs=kwargs,
-            daemon=True
-        )
+        def _wrapped():
+            try:
+                target(*args, **kwargs)
+            except Exception as e:
+                logging.error(f"后台任务 [{target.__name__}] 异常: {e}", exc_info=True)
+        thread = Thread(target=_wrapped, daemon=True)
         thread.start()
     return inner
 

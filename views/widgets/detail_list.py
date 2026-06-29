@@ -38,7 +38,7 @@ class DetailListView(BasicImagePreviewView):
     def _sort_column(self, col: str, reverse: bool) -> None:
         data = [(self.__treeview.set(k, col), k) for k in self.__treeview.get_children("")]
         if col == "相似度" or col == "大小":
-            data.sort(key=lambda x: f"{x[0]:0>10}", reverse=reverse)
+            data.sort(key=lambda x: float(x[0].rstrip("MB%")), reverse=reverse)
         else:
             data.sort(reverse=reverse)
         for index, (_, k) in enumerate(data):

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Literal
 from pathlib import Path
 import linecache
 import datetime
+import logging
 import os
 import tkinter as tk
 
@@ -116,76 +117,77 @@ class SearchController(object):
         if not self._is_finish_search:
             return
         self._is_finish_search = False
-        tab = self.app.view.search_tab
-
-        if input_data is None and self._queue_total > 0:
-            tab.set_nav_state(
-                has_prev=self._queue_index > 0,
-                has_next=self._queue_index < self._queue_total - 1
-            )
-            tab.set_nav_page_label(self._queue_index + 1, self._queue_total)
-            queue_path = linecache.getline(str(Setting.temp_multi_search_queue), self._queue_index + 1).strip()
-            if not queue_path or not Path(queue_path).is_file():
-                messagebox.showinfo("提示", f"第 {self._queue_index + 1} 张图片不存在或已被删除！")
-                self._is_finish_search = True
-                return
-            tab.search_entry.delete(0, tk.END)
-            tab.search_entry.insert(0, queue_path)
-            image_obj = image_ops.parse_image_from_path(queue_path)
-            if image_obj is None:
-                messagebox.showwarning("警告", "无法识别该图片类型！")
-                self._is_finish_search = True
-                return
-            tab.preview_canvas1.append_result(queue_path, image_obj)
-            tab.set_nav_visible(True)
-            actual_input = image_obj
-        else:
-            if self._queue_total == 0:
-                tab.set_nav_visible(False)
-            if isinstance(input_data, str):
-                tab.preview_canvas1.clear_results()
-                actual_input = input_data
-            elif isinstance(input_data, Image.Image):
-                source_path = tab.search_entry.get().strip()
-                if source_path and Path(source_path).is_file():
-                    tab.preview_canvas1.append_result(source_path, input_data)
-                actual_input = input_data
-            else:
-                self._is_finish_search = True
-                return
-
-        self._last_search_content = actual_input
-        tab.preview_view.clear_results()
-        ext, size_min, size_max, folder_filters = self.app.filter_controller.get_search_filters()
-        results = self.app.search_tools.checkout(
-            actual_input, self.similarity_threshold,
-            ext, size_min, size_max, folder_filters
-        )
         try:
-            first_result = next(results)
-        except StopIteration:
-            status = self.app.search_tools.checkout_status
-            if status == SearchStatus.EMPTY_INDEX:
-                messagebox.showinfo("提示", "索引中还没有任何图像，也许\n你还没有添加并更新索引目录？")
-            elif status == SearchStatus.EMPTY_INPUT:
-                messagebox.showinfo("提示", "输入内容为空，没有搜索结果哦！")
-            elif status == SearchStatus.NO_RESULTS:
-                messagebox.showinfo("提示", "筛选条件过于严格，没有匹配到任何图像！")
-            else:
-                messagebox.showerror("错误", "图片搜索失败！\n请查看config/error.log获取错误信息！")
-            self._is_finish_search = True
-            return
-        first_img_path, first_sim = first_result
-        if Path(first_img_path).exists():
-            first_extra_info = SearchController.generate_extra_info(first_img_path, first_sim)
-            item = tab.preview_view.append_result(first_img_path, *first_extra_info)
-            tab.preview_view.selection_set(item)
+            tab = self.app.view.search_tab
 
-        for img_path, similarity in results:
-            if Path(img_path).exists():
-                extra_info = SearchController.generate_extra_info(img_path, similarity)
-                tab.preview_view.append_result(img_path, *extra_info)
-        self._is_finish_search = True
+            if input_data is None and self._queue_total > 0:
+                tab.set_nav_state(
+                    has_prev=self._queue_index > 0,
+                    has_next=self._queue_index < self._queue_total - 1
+                )
+                tab.set_nav_page_label(self._queue_index + 1, self._queue_total)
+                queue_path = linecache.getline(str(Setting.temp_multi_search_queue), self._queue_index + 1).strip()
+                if not queue_path or not Path(queue_path).is_file():
+                    messagebox.showinfo("提示", f"第 {self._queue_index + 1} 张图片不存在或已被删除！")
+                    return
+                tab.search_entry.delete(0, tk.END)
+                tab.search_entry.insert(0, queue_path)
+                image_obj = image_ops.parse_image_from_path(queue_path)
+                if image_obj is None:
+                    messagebox.showwarning("警告", "无法识别该图片类型！")
+                    return
+                tab.preview_canvas1.append_result(queue_path, image_obj)
+                tab.set_nav_visible(True)
+                actual_input = image_obj
+            else:
+                if self._queue_total == 0:
+                    tab.set_nav_visible(False)
+                if isinstance(input_data, str):
+                    tab.preview_canvas1.clear_results()
+                    actual_input = input_data
+                elif isinstance(input_data, Image.Image):
+                    source_path = tab.search_entry.get().strip()
+                    if source_path and Path(source_path).is_file():
+                        tab.preview_canvas1.append_result(source_path, input_data)
+                    actual_input = input_data
+                else:
+                    return
+
+            self._last_search_content = actual_input
+            tab.preview_view.clear_results()
+            ext, size_min, size_max, folder_filters = self.app.filter_controller.get_search_filters()
+            results = self.app.search_tools.checkout(
+                actual_input, self.similarity_threshold,
+                ext, size_min, size_max, folder_filters
+            )
+            try:
+                first_result = next(results)
+            except StopIteration:
+                status = self.app.search_tools.checkout_status
+                if status == SearchStatus.EMPTY_INDEX:
+                    messagebox.showinfo("提示", "索引中还没有任何图像，也许\n你还没有添加并更新索引目录？")
+                elif status == SearchStatus.EMPTY_INPUT:
+                    messagebox.showinfo("提示", "输入内容为空，没有搜索结果哦！")
+                elif status == SearchStatus.NO_RESULTS:
+                    messagebox.showinfo("提示", "筛选条件过于严格，没有匹配到任何图像！")
+                else:
+                    messagebox.showerror("错误", "图片搜索失败！\n请查看config/error.log获取错误信息！")
+                return
+            first_img_path, first_sim = first_result
+            if Path(first_img_path).exists():
+                first_extra_info = SearchController.generate_extra_info(first_img_path, first_sim)
+                item = tab.preview_view.append_result(first_img_path, *first_extra_info)
+                tab.preview_view.selection_set(item)
+
+            for img_path, similarity in results:
+                if Path(img_path).exists():
+                    extra_info = SearchController.generate_extra_info(img_path, similarity)
+                    tab.preview_view.append_result(img_path, *extra_info)
+        except Exception as e:
+            logging.error(f"搜索异常: {e}", exc_info=True)
+            messagebox.showerror("搜索失败", f"搜索过程发生异常：{e}\n请查看 error.log 获取详细信息。")
+        finally:
+            self._is_finish_search = True
 
     def _write_queue_file(self, paths: list[str]) -> None:
         linecache.clearcache()

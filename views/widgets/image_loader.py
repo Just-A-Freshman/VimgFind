@@ -42,7 +42,7 @@ class ImageLoader:
                 self.result_queue.put(LoaderResult(
                     item=item,
                     size=(width, height),
-                    photo=ImageTk.PhotoImage(img),
+                    photo=img,
                     error=""
                 ))
             self.task_queue.task_done()
@@ -50,7 +50,11 @@ class ImageLoader:
     def get_results(self) -> list[LoaderResult]:
         results = []
         while not self.result_queue.empty():
-            results.append(self.result_queue.get_nowait())
+            result = self.result_queue.get_nowait()
+            photo = ImageTk.PhotoImage(result.photo) if result.photo is not None else None
+            results.append(LoaderResult(
+                item=result.item, size=result.size, photo=photo, error=result.error
+            ))
         return results
 
     def stop(self) -> None:
