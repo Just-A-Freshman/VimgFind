@@ -15,11 +15,14 @@ from . import file_ops
 def parse_image_from_clipboard_bytes() -> None | ImageFile:
     try:
         win32clipboard.OpenClipboard()
+    except Exception:
+        return None
+    try:
         if not win32clipboard.IsClipboardFormatAvailable(win32con.CF_DIB):
             return None
         dib_data = win32clipboard.GetClipboardData(win32con.CF_DIB)
         return Image.open(io.BytesIO(dib_data))
-    except Exception as e:
+    except Exception:
         return None
     finally:
         win32clipboard.CloseClipboard()
@@ -73,6 +76,7 @@ def save_as_image(src_path: Path) -> None:
         if dest.suffix.lower() == src_path.suffix.lower():
             if not file_ops.save_as(src_path, dest, True):
                 raise Exception("系统权限错误！")
+            return
         img: Image.Image = Image.open(src_path)
         if dest.suffix.lower() in ('.jpg', '.jpeg') and img.mode == 'RGBA':
             img = img.convert('RGB')
