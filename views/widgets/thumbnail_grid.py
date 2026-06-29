@@ -29,8 +29,8 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._visible_items: set[str] = set()
         self._selected_items: set[str] = set()
 
-        self._scroll_timer = ""
-        self._scrollbar_drag_timer = ""
+        self._scroll_timer: str | None = None
+        self._scrollbar_drag_timer: str | None = None
 
         self._cols = 0
         self._is_destroy = False
@@ -279,12 +279,12 @@ class ThumbnailGridView(BasicImagePreviewView):
         image_data = self._visible_image_data[item]
         canvas_item = self._canvas_items[item]
         x, y = self._get_item_position(item)
-        self._canvas.delete(canvas_item["placeholder_id"])
         filename = file_ops.truncate_filename(self._results[item][0])
-        width, height = image_data["size"]
-        tip_info = f"{filename}\n{width} × {height}"
-        self._canvas.itemconfig(canvas_item["image_info_id"], text=tip_info)
         if image_data['photo'] is not None:
+            self._canvas.delete(canvas_item["placeholder_id"])
+            width, height = image_data["size"]
+            tip_info = f"{filename}\n{width} × {height}"
+            self._canvas.itemconfig(canvas_item["image_info_id"], text=tip_info)
             if "image_id" not in canvas_item:
                 image_id = self._canvas.create_image(
                     x + self.THUMBNAIL_SIZE // 2,
@@ -296,6 +296,7 @@ class ThumbnailGridView(BasicImagePreviewView):
                 self._canvas.itemconfig(canvas_item["image_id"], image=image_data['photo'])
         else:
             self._canvas.itemconfig(canvas_item["placeholder_id"], text=f"{image_data.get('error', '加载失败')[:10]}")
+            self._canvas.itemconfig(canvas_item["image_info_id"], text=filename)
 
     def _set_item_selected(self, item: str, selected: bool) -> None:
         canvas_item = self._canvas_items[item]

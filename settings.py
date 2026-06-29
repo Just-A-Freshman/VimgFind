@@ -29,7 +29,7 @@ class Setting(object):
                 try:
                     target_date = datetime.fromisoformat(line.split(" ")[0])
                     current_date = datetime.today()
-                    delta_days = (target_date - current_date).days
+                    delta_days = (current_date - target_date).days
                     if delta_days < 7:
                         f.write(line)
                 except (ValueError, IndexError):

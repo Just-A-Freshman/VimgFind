@@ -31,7 +31,7 @@ class DetailListView(BasicImagePreviewView):
         self.__scrollbar.config(command=self.__treeview.yview)
         self.__treeview.configure(yscrollcommand=self.__scrollbar.set)
 
-    def _get_colomn_idx(self, column) -> int:
+    def _get_column_idx(self, column) -> int:
         columns: tuple = self.__treeview["columns"]
         return columns.index(column)
 

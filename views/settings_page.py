@@ -105,7 +105,7 @@ class SettingFrame(Frame):
         return checkbtn
 
     def __set_update_threads_count_scale(self) -> Scale:
-        tip = Label(self.scan_setting_frame, text="更新线程：$$", anchor=tk.W)
+        tip = Label(self.scan_setting_frame, text="更新线程：8", anchor=tk.W)
         tip.grid(row=1, column=1, padx=(5, 10), sticky=tk.E)
         scale = Scale(self.scan_setting_frame, from_=4, to=20, orient=tk.HORIZONTAL)
         scale.grid(row=1, column=2, padx=(0, 5), sticky=tk.EW)

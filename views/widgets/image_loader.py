@@ -36,9 +36,9 @@ class ImageLoader:
                     item=item, size=(0, 0), photo=None, error="加载图片失败！"
                 ))
             else:
-                width, height = img.size
+                img = ImageOps.exif_transpose(img) or img
                 img.thumbnail((thumbnail_size, thumbnail_size))
-                img = ImageOps.exif_transpose(img)
+                width, height = img.size
                 self.result_queue.put(LoaderResult(
                     item=item,
                     size=(width, height),
