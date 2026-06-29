@@ -182,15 +182,11 @@ class SearchTool(object):
         if not rules_obj:
             return []
 
-        # Normalize search_dirs the same way name_index stores paths
         normalized_dirs = [os.path.normcase(os.path.realpath(d)) for d in search_dirs]
 
         def _is_excluded(rel_path: str) -> bool:
-            """Check if file is excluded (file-level or any parent directory)."""
-            # Check the file itself
             if rules_obj.is_excluded(rel_path, is_dir=False):
                 return True
-            # Check parent directories up the tree
             parts = rel_path.replace("\\", "/").split("/")
             for i in range(len(parts)):
                 parent = "/".join(parts[:i + 1]) + "/"
