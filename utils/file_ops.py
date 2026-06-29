@@ -86,9 +86,16 @@ def copy_files(*file_paths: str | Path) -> None:
         if abs_path.exists() and abs_path.is_file():
             valid_paths.append(str(abs_path).replace("/", "\\") + "\0")
     if not valid_paths:
-        win32clipboard.OpenClipboard()
-        win32clipboard.EmptyClipboard()
-        win32clipboard.CloseClipboard()
+        try:
+            win32clipboard.OpenClipboard()
+        except Exception:
+            return
+        try:
+            win32clipboard.EmptyClipboard()
+        except Exception:
+            pass
+        finally:
+            win32clipboard.CloseClipboard()
         return
 
     paths_str = "".join(valid_paths) + "\0"
@@ -99,6 +106,10 @@ def copy_files(*file_paths: str | Path) -> None:
     buffer = ctypes.string_at(ctypes.pointer(df), ctypes.sizeof(df)) + paths_wchar
     try:
         win32clipboard.OpenClipboard()
+    except Exception as e:
+        logging.error(f"打开剪贴板失败：{e}")
+        return
+    try:
         win32clipboard.EmptyClipboard()
         win32clipboard.SetClipboardData(win32clipboard.CF_HDROP, buffer)
     except Exception as e:
