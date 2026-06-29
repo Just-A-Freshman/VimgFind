@@ -65,13 +65,13 @@ class AppController:
         tab.filter_btn.bind("<Button-1>", lambda e: self.filter_controller.toggle_filter_panel())
         tab.filter_panel.confirm_btn.config(command=self.filter_controller.confirm_filter)
         tab.filter_panel.cancel_btn.config(command=self.filter_controller.cancel_filter)
-        self.view.bind_all("<Button-1>", self.filter_controller.on_root_click, "+")
+        self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)
         self.filter_controller.init_filter_panel()
 
         setting_tab.index_dataset_table.bind("<Double-Button-1>", self.menu_controller.double_click_open_file)
-        setting_tab.index_dataset_table.bind("<ButtonPress-1>", self.index_controller.drag_start, add="+")
-        setting_tab.index_dataset_table.bind("<B1-Motion>", self.index_controller.drag_motion, add="+")
-        setting_tab.index_dataset_table.bind("<ButtonRelease-1>", self.index_controller.drag_end, add="+")
+        setting_tab.index_dataset_table.bind("<ButtonPress-1>", self.index_controller.drag_start)
+        setting_tab.index_dataset_table.bind("<B1-Motion>", self.index_controller.drag_motion)
+        setting_tab.index_dataset_table.bind("<ButtonRelease-1>", self.index_controller.drag_end)
 
         setting_tab.add_index_button.config(command=self.index_controller.add_search_dir)
         setting_tab.exclude_button.config(command=self.__open_exclude_dialog)
