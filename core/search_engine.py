@@ -40,34 +40,36 @@ EXT_FILTER_MAP: dict[str, set[str]] = {
 }
 
 class SearchTool(object):
-    def __init__(self, setting: Setting) -> None:
+    def __init__(self, setting: Setting, model_id: str | None = None) -> None:
         self.__search_event = Event()
         self.__search_event.set()
         self.__init_event = Event()
         self.__force_stop_update = False
         self._checkout_status: SearchStatus = SearchStatus.OK
+        self.__model_id = model_id or setting.app.current_model
         Thread(target=self.__async_init, args=(setting, ), daemon=True).start()
 
     def __async_init(self, setting: Setting) -> None:
+        cfg = setting.model
         self.__vec_idx_mgr = VectorIndexManager(
-            setting.get_config("index", "vector_index_path"),
-            setting.get_config("index", "index_capacity"),
-            setting.get_config("index", "index_space"),
-            setting.get_config("index", "index_dim")
+            cfg.vector_index_path,
+            cfg.index_capacity,
+            cfg.index_space,
+            cfg.index_dim
         )
         self.__name_idx_mgr = NameIndexManager(
-            Path(setting.get_config("index", "name_index_path")),
-            setting.get_config("index", "max_match_count")
+            Path(cfg.name_index_path),
+            cfg.max_match_count
         )
         self.__multimodal_encoder = MultiModalEncoder(
-            Path(setting.get_config("model", "vocab_path")),
-            Path(setting.get_config("model", "image_encoder_path")),
-            Path(setting.get_config("model", "text_encoder_path")),
-            np.array(setting.get_config("model", "mean"), dtype=np.float32)[:, None, None],
-            np.array(setting.get_config("model", "std"), dtype=np.float32)[:, None, None],
-            setting.get_config("model", "normalization"),
-            setting.get_config("model", "image_size"),
-            setting.get_config("model", "context_length")
+            Path(cfg.vocab_path),
+            Path(cfg.image_encoder_path),
+            Path(cfg.text_encoder_path),
+            np.array(cfg.mean, dtype=np.float32)[:, None, None],
+            np.array(cfg.std, dtype=np.float32)[:, None, None],
+            cfg.normalization,
+            cfg.image_size,
+            cfg.context_length
         )
         self.__init_event.set()
 

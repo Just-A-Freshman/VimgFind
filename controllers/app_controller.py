@@ -31,12 +31,8 @@ class AppController:
         self.menu_controller = MenuController(self)
 
         self.__change_theme(setting_theme=True)
-        self.search_controller.set_preview_mode(
-            self.setting.get_config("function", "preview_mode")
-        )
-        self.search_controller.set_similarity_threshold(
-            self.setting.get_config("function", "similarity_threshold")
-        )
+        self.search_controller.set_preview_mode(self.setting.app.preview_mode)
+        self.search_controller.set_similarity_threshold(self.setting.app.similarity_threshold)
         self.bind_event(first_time=True)
         self.view.after(0, self._delayed_init)
         self.view.protocol("WM_DELETE_WINDOW", self.destroy)
@@ -90,17 +86,29 @@ class AppController:
         self.view.dnd_bind('<<Drop>>', self.__on_drop)
 
     def _delayed_init(self) -> None:
-        self.search_tools = SearchTool(self.setting)
+        model_id = self.setting.app.current_model
+        self.search_tools = SearchTool(self.setting, model_id)
         self.__env_init()
+
+    def switch_model(self, model_id: str) -> None:
+        if model_id == self.setting.app.current_model:
+            return
+        if self.search_tools:
+            self.search_tools.save_index()
+            self.search_tools.destroy()
+        self.setting.use_model(model_id)
+        self.search_tools = SearchTool(self.setting, model_id)
+        self.view.search_tab.preview_view.clear_results()
+        self.view.search_tab.preview_canvas1.clear_results()
+        self.view.search_tab.preview_canvas2.clear_results()
+        self.index_controller.refresh_index_dataset_table()
 
     @decorators.send_task
     def __env_init(self) -> None:
         setting_tab = self.view.setting_tab
         self.index_controller.refresh_index_dataset_table()
-        setting_tab.update_threads_count_scale.set(
-            value=self.setting.get_config("function", "max_work_thread")
-        )
-        if self.setting.get_config("function", "auto_update_index"):
+        setting_tab.update_threads_count_scale.set(self.setting.app.max_work_thread)
+        if self.setting.app.auto_update_index:
             setting_tab.auto_update_btn.invoke()
             self.index_controller.sync_index(show_message=False)
         else:
@@ -112,7 +120,7 @@ class AppController:
         setting_tab = self.view.setting_tab
         if setting_theme:
             valid_theme_names = style.theme_names()
-            valid_theme_name = self.setting.get_config("function", "ui_style")
+            valid_theme_name = self.setting.app.ui_style
             valid_theme_name = valid_theme_name if valid_theme_name in valid_theme_names else "superhero"
             setting_tab.theme_combobox.current(valid_theme_names.index(valid_theme_name))
         theme_cbo_value = setting_tab.theme_combobox.get()
@@ -153,11 +161,11 @@ class AppController:
         try:
             setting_tab = self.view.setting_tab
             search_tab = self.view.search_tab
-            self.setting.modify_config("function", "ui_style", setting_tab.theme_combobox.get())
-            self.setting.modify_config("function", "auto_update_index", setting_tab.auto_update_btn.instate(['selected']))
-            self.setting.modify_config("function", "max_work_thread", int(float(setting_tab.update_threads_count_scale.get())))
-            self.setting.modify_config("function", "similarity_threshold", int(float(search_tab.filter_panel.sim_scale.get())))
-            self.setting.save_settings()
+            self.setting.app.ui_style = setting_tab.theme_combobox.get()
+            self.setting.app.auto_update_index = setting_tab.auto_update_btn.instate(['selected'])
+            self.setting.app.max_work_thread = int(float(setting_tab.update_threads_count_scale.get()))
+            self.setting.app.similarity_threshold = int(float(search_tab.filter_panel.sim_scale.get()))
+            self.setting.save()
             self.setting.clean_log()
             if self.search_tools:
                 self.search_tools.set_force_end_update(True)

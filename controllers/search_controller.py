@@ -111,7 +111,7 @@ class SearchController(object):
 
     def __search_image(self, input_data: Image.Image | str | None = None) -> None:
         assert self.app.search_tools
-        if not self.app.setting.get_config("index", "search_dir"):
+        if not self.app.setting.model.search_dir:
             messagebox.showinfo("提示", "请在设置选项卡索引至少一个目录！")
             return
         if not self._is_finish_search:
@@ -229,22 +229,23 @@ class SearchController(object):
 
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
-        self.app.setting.modify_config("index", "max_match_count", min(max_match_count, 100))
+        self.app.setting.model.max_match_count = min(max_match_count, 100)
         self.app.search_tools.update_max_match_count(max_match_count)
         self.resend_last_search()
 
-    def set_similarity_threshold(self, value: float) -> None:
+    def set_similarity_threshold(self, value: float | None) -> None:
         try:
-            self.similarity_threshold = min(float(value), 100)
+            if value is not None:
+                self.similarity_threshold = min(float(value), 100)
         except (ValueError, TypeError):
             self.similarity_threshold = 0.0
 
-    def set_preview_mode(self, mode: Literal["detail_info", "medium_ico"]) -> None:
+    def set_preview_mode(self, mode: str) -> None:
         tab = self.app.view.search_tab
         results = tab.preview_view.get_show_results()
         current_selection = tab.preview_view.selection()
         tab.preview_view.destroy()
-        self.app.setting.modify_config("function", "preview_mode", mode)
+        self.app.setting.app.preview_mode = mode
         if mode == "detail_info":
             tab.preview_view = DetailListView(
                 tab.preview_container,

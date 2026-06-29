@@ -21,8 +21,7 @@ class ExcludePreviewController:
     def __init__(self, dialog: ExcludeDialog, setting: Setting) -> None:
         self.dialog = dialog
         self.setting = setting
-
-        self._original_rules: list[str] = (self.setting.get_config("index", "exclude_rules") or [])
+        self._original_rules: list[str] = (self.setting.model.exclude_rules or [])
         self._cancel_scan = False
         self._scan_thread: Thread | None = None
         self._preview_cache: list[tuple[str, bool]] = []
@@ -238,7 +237,7 @@ class ExcludePreviewController:
         self._refresh_preview_tree()
 
     def load_rules_into_view(self) -> None:
-        rules = self.setting.get_config("index", "exclude_rules") or []
+        rules = self.setting.model.exclude_rules or []
         for rule in rules:
             self.dialog.rules_tree.insert("", tk.END, values=(rule,))
         self.dialog.set_status("被排除索引的文件夹/文件")
@@ -265,9 +264,8 @@ class ExcludePreviewController:
         self._cancel_scan = True
 
         try:
-            rules = self.dialog.collect_rules()
-            self.setting.modify_config("index", "exclude_rules", rules)
-            self.setting.save_settings()
+            self.setting.model.exclude_rules = self.dialog.collect_rules()
+            self.setting.save()
             self.dialog.destroy()
         except Exception as e:
             logging.error("on_save error: %s", e, exc_info=True)
