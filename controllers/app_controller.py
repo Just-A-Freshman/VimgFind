@@ -6,7 +6,9 @@ import webbrowser
 
 from views import WinGUI, ExcludeDialog
 from settings import Setting, WinInfo
-from utils import FileOperation, Decorator, UpdateChecker
+import utils.file_ops as file_ops
+import utils.decorators as decorators
+import utils.update_checker as update_checker
 from core import SearchTool
 
 from .exclude_controller import ExcludePreviewController
@@ -80,7 +82,7 @@ class AppController:
 
         setting_tab.theme_combobox.bind("<<ComboboxSelected>>", lambda e: self.__change_theme())
         setting_tab.open_setting_file_button.config(
-            command=lambda: FileOperation.open_file(Setting.config_path)
+            command=lambda: file_ops.open_file(Setting.config_path)
         )
         setting_tab.open_repertory_button.config(command=self.__check_for_update)
 
@@ -91,7 +93,7 @@ class AppController:
         self.search_tools = SearchTool(self.setting)
         self.__env_init()
 
-    @Decorator.send_task
+    @decorators.send_task
     def __env_init(self) -> None:
         setting_tab = self.view.setting_tab
         self.index_controller.refresh_index_dataset_table()
@@ -122,7 +124,7 @@ class AppController:
 
     def __on_drop(self, event) -> None:
         file_paths_str: str = getattr(event, "data")
-        file_paths = FileOperation.extract_file_paths(file_paths_str)
+        file_paths = file_ops.extract_file_paths(file_paths_str)
         tab_id = self.view.switch_tab.index(self.view.switch_tab.select())
         if tab_id == 0:
             self.search_controller.search_by_browser(file_paths)
@@ -160,7 +162,7 @@ class AppController:
             if self.search_tools:
                 self.search_tools.destroy()
                 self.search_tools.save_index()
-            FileOperation.clear_folder_all(Setting.temp_image_path)
+            file_ops.clear_folder_all(Setting.temp_image_path)
             if self.search_tools:
                 self.search_tools.set_force_end_update(True)
         except Exception as e:
@@ -168,9 +170,9 @@ class AppController:
         finally:
             self.view.destroy()
 
-    @Decorator.send_task
+    @decorators.send_task
     def __check_for_update(self) -> None:
-        result = UpdateChecker.check()
+        result = update_checker.check()
         if result.error is not None:
             messagebox.showerror(
                 "检查更新失败",

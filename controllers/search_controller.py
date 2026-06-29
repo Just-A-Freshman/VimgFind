@@ -11,7 +11,9 @@ import tkinter as tk
 from PIL import Image
 
 from settings import Setting
-from utils import ImageOperation, FileOperation, Decorator
+import utils.file_ops as file_ops
+import utils.image_ops as image_ops
+import utils.decorators as decorators
 from views.widgets import DetailListView, ThumbnailGridView
 from core import SearchStatus
 
@@ -30,7 +32,7 @@ class SearchController(object):
         self._queue_total: int = 0
         self._nav_debounce_timer: str | None = None
 
-    @Decorator.send_task
+    @decorators.send_task
     def search_by_browser(self, image_paths: str | list[str] | None = None) -> None:
         if isinstance(image_paths, str):
             image_paths = [image_paths]
@@ -53,15 +55,15 @@ class SearchController(object):
             tab = self.app.view.search_tab
             tab.search_entry.delete(0, tk.END)
             tab.search_entry.insert(0, image_path)
-            image_obj = ImageOperation.parse_image_from_path(image_path)
+            image_obj = image_ops.parse_image_from_path(image_path)
             if image_obj is None:
                 messagebox.showwarning("警告", "无法识别该图片类型！")
                 return
             self.__search_image(image_obj)
 
-    @Decorator.send_task
+    @decorators.send_task
     def search_image_by_clipboard(self) -> None:
-        image_obj = ImageOperation.parse_image_from_clipboard_bytes()
+        image_obj = image_ops.parse_image_from_clipboard_bytes()
         image_path = None
 
         if image_obj is None:
@@ -74,22 +76,22 @@ class SearchController(object):
                     self.__search_image()
                     return
                 elif len(valid_paths) == 1:
-                    image_obj = ImageOperation.parse_image_from_path(valid_paths[0])
+                    image_obj = image_ops.parse_image_from_path(valid_paths[0])
                     if image_obj is not None:
                         image_path = Path(valid_paths[0])
                     else:
                         raise tk.TclError
                 else:
-                    image_obj = ImageOperation.parse_image_from_url(copy_text)
+                    image_obj = image_ops.parse_image_from_url(copy_text)
                     if image_obj is None:
                         raise tk.TclError
             except tk.TclError:
                 messagebox.showinfo("提示", "无法识别剪切板中的图片数据！")
                 return
         if image_path is None:
-            image_path = FileOperation.generate_unique_filename(Setting.temp_image_path, ".jpg")
-            if FileOperation.get_folder_size(Setting.temp_image_path) > 1024 * 1024 * 30:
-                FileOperation.clear_folder_all(Setting.temp_image_path)
+            image_path = file_ops.generate_unique_filename(Setting.temp_image_path, ".jpg")
+            if file_ops.get_folder_size(Setting.temp_image_path) > 1024 * 1024 * 30:
+                file_ops.clear_folder_all(Setting.temp_image_path)
             if not image_path.parent.exists():
                 Setting.temp_image_path.mkdir(exist_ok=True)
             image_obj.save(image_path)
@@ -100,7 +102,7 @@ class SearchController(object):
         self._delete_queue_file()
         self.__search_image(image_obj)
 
-    @Decorator.send_task
+    @decorators.send_task
     def search_image_by_text(self) -> None:
         text = self.app.view.search_tab.search_entry.get().strip()
         self._delete_queue_file()
@@ -129,7 +131,7 @@ class SearchController(object):
                 return
             tab.search_entry.delete(0, tk.END)
             tab.search_entry.insert(0, queue_path)
-            image_obj = ImageOperation.parse_image_from_path(queue_path)
+            image_obj = image_ops.parse_image_from_path(queue_path)
             if image_obj is None:
                 messagebox.showwarning("警告", "无法识别该图片类型！")
                 self._is_finish_search = True
@@ -257,12 +259,12 @@ class SearchController(object):
         tab.preview_view.selection_set(*current_selection)
 
     def preview_found_image(self, event: tk.Event) -> None:
-        @Decorator.send_task
+        @decorators.send_task
         def _preview() -> None:
             try:
                 first_item = selection[0]
                 image_path = self.app.view.search_tab.preview_view.item(first_item)[0]
-                image_obj = ImageOperation.parse_image_from_path(image_path)
+                image_obj = image_ops.parse_image_from_path(image_path)
                 if image_obj is not None:
                     self.app.view.search_tab.preview_canvas2.append_result(image_path, image_obj)
             except KeyError:

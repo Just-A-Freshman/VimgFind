@@ -4,7 +4,7 @@ import math
 import os
 
 from settings import WinInfo
-from utils.file_ops import FileOperation
+import utils.file_ops as file_ops
 from .base import BasicImagePreviewView
 from .image_loader import ImageLoader
 
@@ -257,7 +257,7 @@ class ThumbnailGridView(BasicImagePreviewView):
     def _create_placeholder(self, item: str) -> None:
         x, y = self._get_item_position(item)
         filename = os.path.basename(self._results[item][0])
-        truncate_filename = FileOperation.truncate_filename(filename)
+        display_name = file_ops.truncate_filename(filename)
         placeholder_id = self._canvas.create_text(
             x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE // 2,
             text="图片加载中...", fill=self.theme_color.fg
@@ -265,7 +265,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         image_info_id = self._canvas.create_text(
             x + self.THUMBNAIL_SIZE // 2,
             y + self.THUMBNAIL_SIZE + self.MARGIN // 2 + self.FONT_HEIGHT // 2,
-            text=truncate_filename, fill=self.theme_color.fg
+            text=display_name, fill=self.theme_color.fg
         )
         self._canvas_items[item] = {
             "placeholder_id": placeholder_id,
@@ -280,7 +280,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         canvas_item = self._canvas_items[item]
         x, y = self._get_item_position(item)
         self._canvas.delete(canvas_item["placeholder_id"])
-        filename = FileOperation.truncate_filename(self._results[item][0])
+        filename = file_ops.truncate_filename(self._results[item][0])
         width, height = image_data["size"]
         tip_info = f"{filename}\n{width} × {height}"
         self._canvas.itemconfig(canvas_item["image_info_id"], text=tip_info)

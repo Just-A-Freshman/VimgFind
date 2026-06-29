@@ -6,7 +6,7 @@ import logging
 import numpy as np
 import hnswlib
 
-from utils.file_ops import FileOperation
+import utils.file_ops as file_ops
 
 
 class VectorIndexManager:
@@ -46,7 +46,7 @@ class VectorIndexManager:
             self.match = lambda: None
 
     def reset_index(self) -> None:
-        FileOperation.delete_file(self.__index_path)
+        file_ops.delete_file(self.__index_path)
         self.__init_index()
 
     def save_index(self) -> None:
@@ -116,8 +116,8 @@ class NameIndexManager(object):
         while idx > len(self.__name_index) - 1:
             self.__name_index.append([NameIndexManager.NOTEXISTS, 0])
         self.__name_index[idx] = [
-            FileOperation.normalize_path(str(name)),
-            FileOperation.get_metainfo(name)
+            file_ops.normalize_path(str(name)),
+            file_ops.get_metainfo(name)
         ]
         self.__valid_index_count += 1
 
@@ -129,7 +129,7 @@ class NameIndexManager(object):
             pass
 
     def reset_index(self) -> None:
-        FileOperation.delete_file(self.__name_index_path)
+        file_ops.delete_file(self.__name_index_path)
         self.__init_index()
 
     def save_index(self) -> None:

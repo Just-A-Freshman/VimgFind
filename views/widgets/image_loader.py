@@ -2,9 +2,9 @@ from queue import Queue
 from threading import Thread
 from collections import namedtuple
 
-from PIL import Image, ImageTk, ImageOps
+from PIL import ImageTk, ImageOps
 
-from utils.image_ops import ImageOperation
+import utils.image_ops as image_ops
 
 
 LoaderResult = namedtuple("LoaderResult", ["item", "size", "photo", "error"])
@@ -30,7 +30,7 @@ class ImageLoader:
                 item, image_path, thumbnail_size = self.task_queue.get(timeout=1)
             except Exception:
                 continue
-            img = ImageOperation.parse_image_from_path(image_path)
+            img = image_ops.parse_image_from_path(image_path)
             if img is None:
                 self.result_queue.put(LoaderResult(
                     item=item, size=(0, 0), photo=None, error="加载图片失败！"

@@ -7,8 +7,8 @@ from pathlib import Path
 import pathspec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
-from utils.file_ops import FileOperation
-from utils.exclude_rules import compile_rules, is_accepted_extension
+import utils.file_ops as file_ops
+import utils.exclude_rules as exclude_rules
 from views.exclude_dialog import ExcludeDialog
 from settings import Setting
 
@@ -69,7 +69,7 @@ class ExcludePreviewController:
         self._scan_thread.start()
 
     def _do_preview(self, target_dir: str, rules: list[str]) -> None:
-        rules_obj = compile_rules(rules)
+        rules_obj = exclude_rules.compile_rules(rules)
 
         excluded_cache: list[tuple[str, bool]] = []
         scan_cache: list[tuple[str, bool]] = []
@@ -99,7 +99,7 @@ class ExcludePreviewController:
                             else:
                                 _walk(entry.path)
                         elif entry.is_file(follow_symlinks=False):
-                            if not is_accepted_extension(entry.name):
+                            if not exclude_rules.is_accepted_extension(entry.name):
                                 continue
                             scan_cache.append((rel, False))
                             if rules_obj and rules_obj.is_excluded(rel, is_dir=False):
@@ -211,7 +211,7 @@ class ExcludePreviewController:
         if not self._scan_cache:
             return
         rules = self.dialog.collect_rules()
-        rules_obj = compile_rules(rules)
+        rules_obj = exclude_rules.compile_rules(rules)
         if not rules_obj:
             self._preview_cache.clear()
             self._preview_excluded = 0
@@ -246,7 +246,7 @@ class ExcludePreviewController:
     @staticmethod
     def open_help_doc() -> None:
         doc_path = Path(__file__).parent.parent / "docs" / "exclude_rules.md"
-        FileOperation.open_file(doc_path)
+        file_ops.open_file(doc_path)
 
     def on_preview_double_click(self, event: tk.Event) -> None:
         item = self.dialog.preview_tree.identify_row(event.y)
@@ -258,7 +258,7 @@ class ExcludePreviewController:
         if preview_dir and path:
             full_path = os.path.join(preview_dir, path)
             if Path(full_path).exists():
-                FileOperation.open_file(full_path)
+                file_ops.open_file(full_path)
 
     def on_save(self) -> None:
         self._closed = True

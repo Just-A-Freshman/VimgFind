@@ -5,7 +5,7 @@ from tkinter import messagebox, filedialog
 from pathlib import Path
 import tkinter as tk
 
-from utils import Decorator
+import utils.decorators as decorators
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -207,8 +207,8 @@ class IndexController(object):
         self._insert_before = None
         self._drag_ghost = None
 
-    @Decorator.send_task
-    @Decorator.redirect_output
+    @decorators.send_task
+    @decorators.redirect_output
     def sync_index(self, show_message: bool = True) -> None:
         assert self.app.search_tools
         tab = self.app.view.setting_tab
@@ -241,8 +241,8 @@ class IndexController(object):
         self.app.search_tools.set_force_end_update(False)
         self._is_updating = False
 
-    @Decorator.send_task
-    @Decorator.redirect_output
+    @decorators.send_task
+    @decorators.redirect_output
     def delete_search_dir(self) -> None:
         assert self.app.search_tools
         selected = self.app.view.setting_tab.index_dataset_table.selection()
@@ -268,7 +268,7 @@ class IndexController(object):
         self.app.setting.save_settings()
         self.app.view.after(1000, self.update_index_tip)
 
-    @Decorator.send_task
+    @decorators.send_task
     def clean_excluded(self) -> None:
         assert self.app.search_tools
         search_dirs = self.app.setting.get_config("index", "search_dir")
@@ -300,7 +300,7 @@ class IndexController(object):
     def __check_queue(self) -> None:
         try:
             while True:
-                message = Decorator.progress_queue.get_nowait()
+                message = decorators.progress_queue.get_nowait()
                 self.app.view.setting_tab.index_tip_label.config(text=message)
         except Exception:
             pass

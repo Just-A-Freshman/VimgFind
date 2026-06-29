@@ -7,7 +7,8 @@ from tkinter import messagebox, filedialog
 from tkinter import font as tkfont
 from tkinter.ttk import Treeview
 
-from utils import FileOperation, ImageOperation
+import utils.file_ops as file_ops
+import utils.image_ops as image_ops
 from views.widgets import BasicImagePreviewView
 from settings import WinInfo
 
@@ -43,17 +44,17 @@ class MenuController(object):
         if len(selected_files) == 1 and len(exists_files) == 1:
             file_path = selected_files[0]
             menu_items = [
-                ("复制图片", lambda: FileOperation.copy_files(file_path)),
-                ("复制路径", lambda: FileOperation.copy_filepaths(file_path, tk=self.app.view)),
-                ("图片另存为", lambda: ImageOperation.save_as_image(file_path)),
-                ("打开图片", lambda: FileOperation.open_file(file_path)),
-                ("打开文件夹", lambda: FileOperation.open_file(file_path, True))
+                ("复制图片", lambda: file_ops.copy_files(file_path)),
+                ("复制路径", lambda: file_ops.copy_filepaths(file_path, tk=self.app.view)),
+                ("图片另存为", lambda: image_ops.save_as_image(file_path)),
+                ("打开图片", lambda: file_ops.open_file(file_path)),
+                ("打开文件夹", lambda: file_ops.open_file(file_path, True))
             ]
         elif len(selected_files) > 1 and len(exists_files) != 0:
             menu_items = [
-                ("复制图片", lambda: FileOperation.copy_files(*selected_files)),
-                ("复制路径", lambda: FileOperation.copy_filepaths(*selected_files, tk=self.app.view)),
-                ("图片另存为", lambda: FileOperation.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
+                ("复制图片", lambda: file_ops.copy_files(*selected_files)),
+                ("复制路径", lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view)),
+                ("图片另存为", lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
             ]
         else:
             messagebox.showinfo("提示", "选中文件不存在！")
@@ -103,4 +104,4 @@ class MenuController(object):
             messagebox.showinfo("提示", "文件不存在！")
             return
         else:
-            FileOperation.open_file(selected_file)
+            file_ops.open_file(selected_file)

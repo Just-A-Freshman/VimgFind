@@ -1,13 +1,3 @@
-"""
-File exclusion rule engine based on .gitignore syntax.
-Uses pathspec library for pattern matching.
-
-Usage:
-    rules = compile_rules(["*.log", "cache/", "!important.log"])
-    if rules and rules.is_excluded("人物/测试.jpg", is_dir=False):
-        # excluded
-"""
-
 import pathspec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
@@ -15,7 +5,6 @@ from settings import Setting
 
 
 def _has_wildcard(pattern: str) -> bool:
-    """Check if pattern contains wildcard characters."""
     for ch in ("*", "?", "["):
         if ch in pattern:
             return True
@@ -23,7 +12,6 @@ def _has_wildcard(pattern: str) -> bool:
 
 
 def _normalize_rules(rules: list[str]) -> list[str]:
-    """Filter empty/comment lines, lowercase, deduplicate rules."""
     seen = set()
     normalized: list[str] = []
     for rule in rules:
@@ -98,7 +86,6 @@ class ExcludeRules:
 
 
 def is_accepted_extension(filename: str) -> bool:
-    """Check if file has an accepted image extension."""
     if not filename:
         return False
     dot = filename.rfind(".")

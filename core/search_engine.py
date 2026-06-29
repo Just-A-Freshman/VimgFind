@@ -14,8 +14,8 @@ from PIL import Image
 from settings import Setting
 from .index_manager import VectorIndexManager, NameIndexManager
 from .multimodal_encoder import MultiModalEncoder
-from utils.file_ops import FileOperation
-from utils.image_ops import ImageOperation
+import utils.file_ops as file_ops
+import utils.image_ops as image_ops
 from utils.exclude_rules import compile_rules
 
 
@@ -83,23 +83,23 @@ class SearchTool(object):
         for idx, [index_file, old_metainfo] in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            new_metainfo = FileOperation.get_metainfo(index_file)
+            new_metainfo = file_ops.get_metainfo(index_file)
             if old_metainfo != new_metainfo:
                 changed_files_index.append((idx, index_file))
         return changed_files_index
 
     def __get_new_files_index(self, target_dir: str, exclude_rules: list[str] | None = None) -> list[tuple[int, str]]:
         new_files_index = []
-        current_files = FileOperation.get_file_iterator(target_dir, exclude_rules)
+        current_files = file_ops.get_file_iterator(target_dir, exclude_rules)
         existing_files = set(
-            FileOperation.normalize_path(i[0])
+            file_ops.normalize_path(i[0])
             for i in self.__name_idx_mgr.name_index
         )
         new_files = []
         for file in current_files:
             if self.__force_stop_update:
                 break
-            if FileOperation.normalize_path(file) not in existing_files:
+            if file_ops.normalize_path(file) not in existing_files:
                 new_files.append(file)
 
         if not new_files:
@@ -129,7 +129,7 @@ class SearchTool(object):
             idx, fpath = item
             if self.__force_stop_update:
                 return idx, fpath, None
-            image_obj = ImageOperation.parse_image_from_path(fpath)
+            image_obj = image_ops.parse_image_from_path(fpath)
             if image_obj is None:
                 fv = None
             else:
@@ -154,7 +154,7 @@ class SearchTool(object):
         for idx, (file_path, _) in enumerate(self.__name_idx_mgr.name_index):
             if file_path == NameIndexManager.NOTEXISTS:
                 continue
-            normalized = FileOperation.normalize_path(file_path)
+            normalized = file_ops.normalize_path(file_path)
             if normalized in seen_paths:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
@@ -220,11 +220,11 @@ class SearchTool(object):
 
     def remove_files(self, file_paths: list[str]) -> None:
         self.__init_event.wait()
-        file_set = {FileOperation.normalize_path(p) for p in file_paths}
+        file_set = {file_ops.normalize_path(p) for p in file_paths}
         for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            if FileOperation.normalize_path(index_file) in file_set:
+            if file_ops.normalize_path(index_file) in file_set:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
 

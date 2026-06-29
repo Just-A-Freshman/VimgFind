@@ -18,34 +18,33 @@ class QueueStream:
         pass
 
 
-class Decorator(object):
-    progress_queue = Queue()
+progress_queue: Queue = Queue()
 
-    @staticmethod
-    def send_task(target):
-        @functools.wraps(target)
-        def inner(*args, **kwargs):
-            thread = Thread(
-                target=target,
-                args=args,
-                kwargs=kwargs,
-                daemon=True
-            )
-            thread.start()
-        return inner
 
-    @staticmethod
-    def redirect_output(target: Callable) -> Callable:
-        def inner(*args, **kwargs) -> None:
-            original_stdout = sys.stdout
-            original_stderr = sys.stderr
+def send_task(target):
+    @functools.wraps(target)
+    def inner(*args, **kwargs):
+        thread = Thread(
+            target=target,
+            args=args,
+            kwargs=kwargs,
+            daemon=True
+        )
+        thread.start()
+    return inner
 
-            sys.stdout = QueueStream(Decorator.progress_queue)
-            sys.stderr = QueueStream(Decorator.progress_queue)
 
-            try:
-                target(*args, **kwargs)
-            finally:
-                sys.stdout = original_stdout
-                sys.stderr = original_stderr
-        return inner
+def redirect_output(target: Callable) -> Callable:
+    def inner(*args, **kwargs) -> None:
+        original_stdout = sys.stdout
+        original_stderr = sys.stderr
+
+        sys.stdout = QueueStream(progress_queue)
+        sys.stderr = QueueStream(progress_queue)
+
+        try:
+            target(*args, **kwargs)
+        finally:
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+    return inner
