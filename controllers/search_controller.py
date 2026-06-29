@@ -26,12 +26,12 @@ class SearchController(object):
     def __init__(self, app_controller: AppController) -> None:
         self._last_search_content: Image.Image | str = ""
         self._is_finish_search: bool = True
-        self._preview_timer: int | None = None
+        self._preview_timer: str | None = None
         self.similarity_threshold: float = 0.0
         self.app = app_controller
         self._queue_index: int = 0
         self._queue_total: int = 0
-        self._nav_debounce_timer: int | None = None
+        self._nav_debounce_timer: str | None = None
 
     @decorators.send_task
     def search_by_browser(self, image_paths: str | list[str] | None = None) -> None:

@@ -25,12 +25,12 @@ class ExcludePreviewController:
         self._original_rules: list[str] = (self.setting.get_config("index", "exclude_rules") or [])
         self._cancel_scan = False
         self._scan_thread: Thread | None = None
-        self._preview_cache: list[tuple[str, bool]] = []    # excluded items (for display)
-        self._scan_cache: list[tuple[str, bool]] = []       # all scanned items (for re-filter)
+        self._preview_cache: list[tuple[str, bool]] = []
+        self._scan_cache: list[tuple[str, bool]] = []
         self._preview_total = 0
         self._preview_excluded = 0
-        self._debounce_timer: int | None = None
-        self._closed = False  # set True on save to suppress stale after() callbacks
+        self._debounce_timer: str | None = None
+        self._closed = False
         self._preview_truncated = False
 
     def rules_changed(self) -> bool:
