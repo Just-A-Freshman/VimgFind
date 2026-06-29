@@ -47,8 +47,6 @@ def parse_image_from_url(url: str) -> Image.Image | None:
                 raise ValueError(f"URL不是图像链接: Content-Type={content_type}, URL={url}")
             image_data = response.read()
             image: Image.Image = Image.open(io.BytesIO(image_data)).convert("RGB")
-            if hasattr(image, 'load'):
-                image.load()
             return image
     except Exception:
         return

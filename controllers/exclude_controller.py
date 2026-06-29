@@ -29,7 +29,7 @@ class ExcludePreviewController:
         self._scan_cache: list[tuple[str, bool]] = []       # all scanned items (for re-filter)
         self._preview_total = 0
         self._preview_excluded = 0
-        self._debounce_timer: str | None = None
+        self._debounce_timer: int | None = None
         self._closed = False  # set True on save to suppress stale after() callbacks
         self._preview_truncated = False
 

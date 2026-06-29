@@ -66,7 +66,7 @@ class MultiModalEncoder:
     def _normalization(self, fv: np.ndarray) -> None:
         if self.__normalization:
             norm = np.linalg.norm(fv, axis=-1, keepdims=True)
-            fv[fv == 0] = 1.0
+            norm[norm == 0] = 1.0
             fv /= norm
 
     def _preprocess_image(self, img: Image.Image) -> np.ndarray | None:

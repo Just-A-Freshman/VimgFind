@@ -28,6 +28,8 @@ class SearchStatus(str, Enum):
     NO_RESULTS = "no_results"
 
 
+THRESHOLD_EPSILON = 1e-3
+
 EXT_FILTER_MAP: dict[str, set[str]] = {
     "PNG": {".png"},
     "JPG/JPEG": {".jpg", ".jpeg"},
@@ -285,7 +287,7 @@ class SearchTool(object):
         ) -> Iterator[tuple[str, float]]:
         ext_set = EXT_FILTER_MAP.get(file_ext_label)
         yielded_count = 0
-        threshold -= 1e-3
+        threshold -= THRESHOLD_EPSILON
 
         for img_id, similarity in zip(ids_list, sim_list):
             if similarity < threshold:

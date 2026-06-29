@@ -8,6 +8,11 @@ import hnswlib
 
 import utils.file_ops as file_ops
 
+L2_TEMPERATURE_SCALE = 3000       # L2 距离 tanh 变换的温度参数
+HNSW_EF_CONSTRUCTION = 200        # HNSW 索引构建时的动态范围
+HNSW_M = 32                       # HNSW 每个节点的最大连接数
+HNSW_MIN_EF = 100                 # HNSW 搜索时的最小 ef 参数
+
 
 class VectorIndexManager:
     def __init__(
@@ -32,8 +37,8 @@ class VectorIndexManager:
         else:
             self.__hnsw_index.init_index(
                 max_elements=self.__index_capacity,
-                ef_construction=200,
-                M=32,
+                ef_construction=HNSW_EF_CONSTRUCTION,
+                M=HNSW_M,
                 random_seed=42
             )
 
@@ -62,16 +67,16 @@ class VectorIndexManager:
             logging.error(f"删除向量时出错: {e}")
 
     def match_with_cosine(self, fv, nc=5):
-        self.__hnsw_index.set_ef(max(100, nc * 2))
+        self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 2))
         labels, distances = self.__hnsw_index.knn_query(fv, k=nc)
         cos_similarities = 1.0 - distances[0]
         logits_per_image = 100 * cos_similarities
         return logits_per_image, labels[0]
 
     def match_with_l2(self, fv, nc=5):
-        self.__hnsw_index.set_ef(max(100, nc * 2))
+        self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 2))
         query = self.__hnsw_index.knn_query(fv, k=nc)
-        similarity = (1 - np.tanh(query[1][0] / 3000)) * 100
+        similarity = (1 - np.tanh(query[1][0] / L2_TEMPERATURE_SCALE)) * 100
         return similarity, query[0][0]
 
 
