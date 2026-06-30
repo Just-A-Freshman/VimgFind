@@ -11,7 +11,6 @@ import utils.decorators as decorators
 import utils.update_checker as update_checker
 
 from core import SearchTool
-
 from .exclude_controller import ExcludePreviewController
 from .filter_controller import FilterController
 from .search_controller import SearchController
@@ -81,7 +80,7 @@ class AppController:
 
         setting_tab.theme_combobox.bind("<<ComboboxSelected>>", lambda e: self.__change_theme())
         setting_tab.open_setting_file_button.config(
-            command=lambda: file_ops.open_file(Setting.config_path)
+            command=lambda: file_ops.open_file(Setting.setting_path)
         )
         setting_tab.check_update_button.config(command=self.__check_for_update)
 
@@ -111,6 +110,7 @@ class AppController:
         self.view.search_tab.preview_canvas1.clear_results()
         self.view.search_tab.preview_canvas2.clear_results()
         self.index_controller.refresh_index_dataset_table()
+        self.view.after(100, self.index_controller.update_index_tip)
 
     @decorators.send_task
     def __env_init(self) -> None:
@@ -149,6 +149,11 @@ class AppController:
         elif tab_id == 1:
             for dir_path in file_paths:
                 self.index_controller.add_search_dir(dir_path)
+        elif tab_id == 2:
+            # 这里需要一个本地模型解析的逻辑
+            pass
+        else:
+            pass
 
     def __open_exclude_dialog(self) -> None:
         dialog = ExcludeDialog(self.view, self.setting)
