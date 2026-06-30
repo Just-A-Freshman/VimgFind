@@ -24,6 +24,14 @@ class AppSettings:
 
 @dataclass
 class ModelConfig:
+    # --- meta_info section ---
+    id: str = ""
+    name: str = ""
+    version: str = ""
+    description: str = ""
+    download_url: str = ""
+    checksum_sha256: str = ""
+
     # --- model_config section ---
     image_size: int = 224
     context_length: int = 52
@@ -44,6 +52,9 @@ class ModelConfig:
     search_dir: list[str] = field(default_factory=list)
     exclude_rules: list[str] = field(default_factory=list)
 
+    _meta_keys = frozenset({
+        "id", "name", "version", "description", "download_url", "checksum_sha256",
+    })
     _model_keys = frozenset({
         "image_size", "context_length", "mean", "std", "normalization",
         "image_encoder_path", "text_encoder_path", "vocab_path",
@@ -57,6 +68,7 @@ class ModelConfig:
     @classmethod
     def from_dict(cls, data: dict) -> ModelConfig:
         merged: dict = {}
+        merged.update(data.get("meta_info", {}))
         merged.update(data.get("model_config", {}))
         merged.update(data.get("index_config", {}))
         valid = {f.name for f in fields(cls)}
@@ -118,18 +130,25 @@ class Setting(object):
             app_dict = {f.name: getattr(self._app, f.name) for f in fields(AppSettings)}
             json.dump(app_dict, f, indent=4, ensure_ascii=False)
         for mid, cfg in self._model_cache.items():
+            meta_part: dict = {}
             model_part: dict = {}
             index_part: dict = {}
             for f in fields(ModelConfig):
                 val = getattr(cfg, f.name)
-                if f.name in ModelConfig._model_keys:
+                if f.name in ModelConfig._meta_keys:
+                    meta_part[f.name] = val
+                elif f.name in ModelConfig._model_keys:
                     model_part[f.name] = val
                 elif f.name in ModelConfig._index_keys:
                     index_part[f.name] = val
             model_path = self.models_dir / mid / "model.json"
             with open(model_path, "w", encoding="utf-8") as f:
                 json.dump(
-                    {"model_config": model_part, "index_config": index_part},
+                    {
+                        "meta_info": meta_part,
+                        "model_config": model_part,
+                        "index_config": index_part,
+                    },
                     f, indent=4, ensure_ascii=False,
                 )
 
