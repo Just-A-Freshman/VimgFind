@@ -21,6 +21,8 @@ class AppSettings:
     ui_style: str = "superhero"
     similarity_threshold: int = 48
     current_model: str = "chinese-clip"
+    remote_manifest_url = "https://raw.githubusercontent.com/Just-A-Freshman/VimgFind/main/models.json"
+    cache_ttl = 3600
 
 
 @dataclass
