@@ -5,11 +5,13 @@ from ctypes import windll
 from settings import WinInfo
 from .search_page import SearchFrame
 from .settings_page import SettingFrame
+from .model_page import ModelFrame
 
 
 class WinGUI(TkinterDnD.Tk):
     search_tab: SearchFrame
     setting_tab: SettingFrame
+    model_tab: ModelFrame
     switch_tab: Notebook
 
     def __init__(self) -> None:
@@ -43,5 +45,7 @@ class WinGUI(TkinterDnD.Tk):
         notebook.add(self.search_tab, text="  检索  ")
         self.setting_tab = SettingFrame(notebook)
         notebook.add(self.setting_tab, text="  设置  ")
+        self.model_tab = ModelFrame(notebook)
+        notebook.add(self.model_tab, text="  模型  ")
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
         return notebook
