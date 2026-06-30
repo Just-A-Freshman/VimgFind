@@ -20,7 +20,7 @@ class SettingFrame(Frame):
     auto_update_btn: Checkbutton
     update_threads_count_scale: Scale
     open_setting_file_button: Button
-    open_repertory_button: Button
+    check_update_button: Button
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
@@ -41,7 +41,7 @@ class SettingFrame(Frame):
         self.exclude_button = self.__set_exclude_button()
         self.clean_excluded_button = self.__set_clean_excluded_button()
         self.open_setting_file_button = self.__set_open_setting_btn()
-        self.open_repertory_button = self.__set_open_open_repertory_btn()
+        self.check_update_button = self.__set_open_open_repertory_btn()
 
     def __set_index_tip_label(self) -> Label:
         label = Label(self, text="当前索引的图库(~张图片)", anchor=tk.NW, font=("微软雅黑", 14))
