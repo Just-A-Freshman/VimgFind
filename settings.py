@@ -79,11 +79,12 @@ class ModelConfig:
 
 
 class Setting(object):
-    config_path = ROOT / "config" / "setting.json"
-    models_dir = ROOT / "config" / "models"
+    config_path = ROOT / "config"
     temp_image_path = ROOT / "temp"
+    setting_path = config_path / "setting.json"
+    models_dir = config_path / "models"
     temp_multi_search_queue = temp_image_path / "multi_search_queue.txt"
-    error_log = ROOT / "config" / "error.log"
+    error_log = config_path / "error.log"
     accepted_exts = {'.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp'}
     schedule_save_interval = 600000
 
@@ -91,7 +92,6 @@ class Setting(object):
         Path.mkdir(Setting.temp_image_path, exist_ok=True)
         self._app = AppSettings()
         self._model_cache: dict[str, ModelConfig] = {}
-        self.__initialize()
 
     @property
     def app(self) -> AppSettings:
@@ -109,18 +109,6 @@ class Setting(object):
         if model_id not in self._model_cache:
             self._model_cache[model_id] = self._load_model_config(model_id)
 
-    def __initialize(self) -> None:
-        from utils.config_migration import run_config_migrations
-        config_dict, model_cache_dicts = run_config_migrations(
-            Setting.config_path, Setting.models_dir
-        )
-        app_fields = {f.name for f in fields(AppSettings)}
-        for k, v in config_dict.items():
-            if k in app_fields:
-                setattr(self._app, k, v)
-        for mid, data in model_cache_dicts.items():
-            self._model_cache[mid] = ModelConfig.from_dict(data)
-
     def _load_model_config(self, model_id: str) -> ModelConfig:
         model_path = self.models_dir / model_id / "model.json"
         if model_path.exists():
@@ -129,7 +117,7 @@ class Setting(object):
         return ModelConfig()
 
     def save(self) -> None:
-        with open(Setting.config_path, "w", encoding="utf-8") as f:
+        with open(Setting.setting_path, "w", encoding="utf-8") as f:
             app_dict = {f.name: getattr(self._app, f.name) for f in fields(AppSettings)}
             json.dump(app_dict, f, indent=4, ensure_ascii=False)
         for mid, cfg in self._model_cache.items():
