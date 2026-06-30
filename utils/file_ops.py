@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import unicodedata
 import uuid
+import hashlib
 from pathlib import Path
 from tkinter import Tk
 from typing import Iterator
@@ -281,3 +282,29 @@ def get_folder_size(folder_path: str | Path) -> int:
     except (PermissionError, OSError):
         pass
     return total_size
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while True:
+            chunk = f.read(65536)
+            if not chunk:
+                break
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def merge_dirs(src: Path, dst: Path, skip_names: set[str] | None = None) -> None:
+    if skip_names is None:
+        skip_names = set()
+    dst.mkdir(parents=True, exist_ok=True)
+    for item in src.iterdir():
+        if item.name in skip_names:
+            continue
+        target = dst / item.name
+        if item.is_dir():
+            target.mkdir(parents=True, exist_ok=True)
+            merge_dirs(item, target, skip_names)
+        else:
+            item.replace(target)
