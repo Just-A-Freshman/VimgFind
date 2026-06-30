@@ -11,7 +11,7 @@ from typing import Iterator
 
 import win32clipboard
 
-from .exclude_rules import compile_rules, is_accepted_extension
+import utils.exclude_rules as exclude_rules
 
 
 class DROPFILES(ctypes.Structure):
@@ -24,8 +24,8 @@ class DROPFILES(ctypes.Structure):
     ]
 
 
-def get_file_iterator(target_dir: str, exclude_rules: list[str] | None = None) -> Iterator[str]:
-    rules_obj = compile_rules(exclude_rules)
+def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = None) -> Iterator[str]:
+    rules_obj = exclude_rules.compile_rules(exclude_rules_list)
 
     def _scandir(path: str) -> Iterator[str]:
         try:
@@ -35,10 +35,10 @@ def get_file_iterator(target_dir: str, exclude_rules: list[str] | None = None) -
                         rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
                         if rules_obj and rules_obj.is_excluded(rel, is_dir=True):
                             if not rules_obj.is_affected_by_negation(rel):
-                                continue  # skip whole subtree
+                                continue
                         yield from _scandir(entry.path)
                     elif entry.is_file(follow_symlinks=False):
-                        if not is_accepted_extension(entry.name):
+                        if not exclude_rules.is_accepted_extension(entry.name):
                             continue
                         if rules_obj:
                             rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
