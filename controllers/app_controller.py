@@ -186,7 +186,7 @@ class AppController:
                 self.search_tools.set_force_end_update(True)
                 self.search_tools.save_index()
                 self.search_tools.destroy()
-            file_ops.clear_folder_all(Setting.temp_image_path)
+            file_ops.rmtree(Setting.temp_image_path)
         except Exception as e:
             messagebox.showerror("错误", str(e))
         finally:

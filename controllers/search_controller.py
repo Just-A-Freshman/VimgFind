@@ -92,7 +92,7 @@ class SearchController(object):
         if image_path is None:
             image_path = file_ops.generate_unique_filename(Setting.temp_image_path, ".jpg")
             if file_ops.get_folder_size(Setting.temp_image_path) > 1024 * 1024 * 30:
-                file_ops.clear_folder_all(Setting.temp_image_path)
+                file_ops.rmtree(Setting.temp_image_path)
             if not image_path.parent.exists():
                 Setting.temp_image_path.mkdir(exist_ok=True)
             image_obj.save(image_path)
