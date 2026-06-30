@@ -61,17 +61,11 @@ class IndexController(object):
 
     def refresh_index_dataset_table(self) -> None:
         tb = self.app.view.setting_tab.index_dataset_table
-        all_items = tb.get_children()
-        all_show_dir = {tb.item(node, 'values')[1] for node in all_items}
-        for index_id, item in enumerate(all_items, 1):
-            _, search_dir = tb.item(item, "values")
-            tb.item(item, values=(index_id, search_dir))
+        for item in tb.get_children():
+            tb.delete(item)
         search_dirs = self.app.setting.model.search_dir
-        all_items_count = len(all_items) + 1
-        for search_dir in search_dirs:
-            if search_dir not in all_show_dir:
-                tb.insert("", tk.END, values=(all_items_count, search_dir))
-                all_items_count += 1
+        for index, dir_path in enumerate(search_dirs, 1):
+            tb.insert("", tk.END, values=(index, dir_path))
         self.app.filter_controller.refresh_folder_filter()
 
     def drag_start(self, event: tk.Event) -> None:
