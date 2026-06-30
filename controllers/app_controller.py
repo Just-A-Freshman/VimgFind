@@ -9,6 +9,7 @@ from settings import Setting, WinInfo
 import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.update_checker as update_checker
+
 from core import SearchTool
 
 from .exclude_controller import ExcludePreviewController
@@ -16,6 +17,7 @@ from .filter_controller import FilterController
 from .search_controller import SearchController
 from .index_controller import IndexController
 from .menu_controller import MenuController
+from .model_controller import ModelController
 
 
 
@@ -29,6 +31,7 @@ class AppController:
         self.search_controller = SearchController(self)
         self.index_controller = IndexController(self)
         self.menu_controller = MenuController(self)
+        self.model_controller = ModelController(self)
 
         self.__change_theme(setting_theme=True)
         self.search_controller.set_preview_mode(self.setting.app.preview_mode)
@@ -38,13 +41,13 @@ class AppController:
         self.view.protocol("WM_DELETE_WINDOW", self.destroy)
 
     def bind_event(self, first_time=False) -> None:
-        tab = self.view.search_tab
+        search_tab = self.view.search_tab
         setting_tab = self.view.setting_tab
 
-        tab.preview_view.bind("<<ItemviewSelect>>", self.search_controller.preview_found_image)
-        tab.preview_view.bind("<Control-a>", lambda e: tab.preview_view.selection_set(tk.ALL))
-        tab.preview_view.bind("<Control-v>", lambda e: self.search_controller.search_image_by_clipboard())
-        preview_widgets = (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view)
+        search_tab.preview_view.bind("<<ItemviewSelect>>", self.search_controller.preview_found_image)
+        search_tab.preview_view.bind("<Control-a>", lambda e: search_tab.preview_view.selection_set(tk.ALL))
+        search_tab.preview_view.bind("<Control-v>", lambda e: self.search_controller.search_image_by_clipboard())
+        preview_widgets = (search_tab.preview_canvas1, search_tab.preview_canvas2, search_tab.preview_view)
         for w in preview_widgets:
             w.bind("<Button-3>", lambda e, w=w: self.menu_controller.create_right_click_menu(e, w))
             w.bind("<Double-Button-1>", lambda e, w=w: self.menu_controller.double_click_open_file(e, w))
@@ -52,15 +55,15 @@ class AppController:
         if not first_time:
             return
 
-        tab.search_by_browser_btn.config(command=self.search_controller.search_by_browser)
-        tab.search_by_clipboard_btn.config(command=self.search_controller.search_image_by_clipboard)
-        tab.search_entry.bind("<Return>", lambda e: self.search_controller.search_image_by_text())
-        tab.nav_prev.config(command=lambda: self.search_controller._debounce_navigate(-1))
-        tab.nav_next.config(command=lambda: self.search_controller._debounce_navigate(1))
-        tab.more_options_button.config(command=self.menu_controller.create_preview_setting_menu)
-        tab.filter_btn.bind("<Button-1>", lambda e: self.filter_controller.toggle_filter_panel())
-        tab.filter_panel.confirm_btn.config(command=self.filter_controller.confirm_filter)
-        tab.filter_panel.cancel_btn.config(command=self.filter_controller.cancel_filter)
+        search_tab.search_by_browser_btn.config(command=self.search_controller.search_by_browser)
+        search_tab.search_by_clipboard_btn.config(command=self.search_controller.search_image_by_clipboard)
+        search_tab.search_entry.bind("<Return>", lambda e: self.search_controller.search_image_by_text())
+        search_tab.nav_prev.config(command=lambda: self.search_controller._debounce_navigate(-1))
+        search_tab.nav_next.config(command=lambda: self.search_controller._debounce_navigate(1))
+        search_tab.more_options_button.config(command=self.menu_controller.create_preview_setting_menu)
+        search_tab.filter_btn.bind("<Button-1>", lambda e: self.filter_controller.toggle_filter_panel())
+        search_tab.filter_panel.confirm_btn.config(command=self.filter_controller.confirm_filter)
+        search_tab.filter_panel.cancel_btn.config(command=self.filter_controller.cancel_filter)
         self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)
         self.filter_controller.init_filter_panel()
 
@@ -80,7 +83,13 @@ class AppController:
         setting_tab.open_setting_file_button.config(
             command=lambda: file_ops.open_file(Setting.config_path)
         )
-        setting_tab.open_repertory_button.config(command=self.__check_for_update)
+        setting_tab.check_update_button.config(command=self.__check_for_update)
+
+        model_tab = self.view.model_tab
+        model_tab.model_tree.bind("<<TreeviewSelect>>", self.model_controller.on_model_select)
+        model_tab.use_btn.config(command=self.model_controller.use_model)
+        model_tab.uninstall_btn.config(command=self.model_controller.uninstall_model)
+        model_tab.download_btn.config(command=self.model_controller.download_model)
 
         self.view.drop_target_register(DND_FILES)
         self.view.dnd_bind('<<Drop>>', self.__on_drop)
@@ -114,6 +123,7 @@ class AppController:
         else:
             self.index_controller.update_index_tip()
         self.view.after(self.setting.schedule_save_interval, self.__schedule_save)
+        self.model_controller.load_model_list()
 
     def __change_theme(self, setting_theme=False) -> None:
         style = Style()
