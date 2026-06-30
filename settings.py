@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parent
 @dataclass
 class AppSettings:
     max_work_thread: int = 10
-    preview_mode: Literal["medium_ico", "detail_list"] = "medium_ico"
+    preview_mode: Literal["medium_ico", "detail_info"] = "medium_ico"
     auto_update_index: bool = True
     ui_style: str = "superhero"
     similarity_threshold: int = 48

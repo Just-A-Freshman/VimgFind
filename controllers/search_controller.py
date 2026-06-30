@@ -240,7 +240,7 @@ class SearchController(object):
         except (ValueError, TypeError):
             self.similarity_threshold = 0.0
 
-    def set_preview_mode(self, mode: Literal["medium_ico", "detail_list"]) -> None:
+    def set_preview_mode(self, mode: Literal["medium_ico", "detail_info"]) -> None:
         tab = self.app.view.search_tab
         results = tab.preview_view.get_show_results()
         current_selection = tab.preview_view.selection()
