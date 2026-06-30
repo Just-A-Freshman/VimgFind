@@ -16,7 +16,7 @@ from .index_manager import VectorIndexManager, NameIndexManager
 from .multimodal_encoder import MultiModalEncoder
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
-from utils.exclude_rules import compile_rules
+import utils.exclude_rules as exclude_rules
 
 
 class SearchStatus(str, Enum):
@@ -180,7 +180,7 @@ class SearchTool(object):
 
     def get_excluded_files(self, rules: list[str], search_dirs: list[str]) -> list[str]:
         self.__init_event.wait()
-        rules_obj = compile_rules(rules)
+        rules_obj = exclude_rules.compile_rules(rules)
         if not rules_obj:
             return []
 
