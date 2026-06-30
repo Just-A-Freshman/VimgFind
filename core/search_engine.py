@@ -51,20 +51,21 @@ class SearchTool(object):
 
     def __async_init(self, setting: Setting) -> None:
         cfg = setting.model
+        model_dir = setting.models_dir / self.__model_id
         self.__vec_idx_mgr = VectorIndexManager(
-            cfg.vector_index_path,
+            str(model_dir / cfg.vector_index_path),
             cfg.index_capacity,
             cfg.index_space,
             cfg.index_dim
         )
         self.__name_idx_mgr = NameIndexManager(
-            Path(cfg.name_index_path),
-            cfg.max_match_count
+            model_dir / cfg.name_index_path,
+            setting.app.max_match_count
         )
         self.__multimodal_encoder = MultiModalEncoder(
-            Path(cfg.vocab_path),
-            Path(cfg.image_encoder_path),
-            Path(cfg.text_encoder_path),
+            model_dir / cfg.vocab_path,
+            model_dir / cfg.image_encoder_path,
+            model_dir / cfg.text_encoder_path,
             np.array(cfg.mean, dtype=np.float32)[:, None, None],
             np.array(cfg.std, dtype=np.float32)[:, None, None],
             cfg.normalization,
