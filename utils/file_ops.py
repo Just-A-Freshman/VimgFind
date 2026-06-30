@@ -1,4 +1,5 @@
 import ctypes
+import hashlib
 import logging
 import os
 import shutil
@@ -163,22 +164,11 @@ def save_to_dir(*src_paths: str | Path, dest_dir: str | Path, is_binary: bool = 
     return all_finish
 
 
-def clear_folder_all(target_dir: str | Path) -> None:
-    target_dir = Path(target_dir)
-    if not target_dir.exists() or not target_dir.is_dir():
-        return
-    for item_path in target_dir.glob("*"):
-        try:
-            if item_path.is_file() or item_path.is_symlink():
-                os.remove(item_path)
-            elif item_path.is_dir():
-                shutil.rmtree(item_path)
-        except PermissionError:
-            logging.error(f"权限不足，无法删除：{item_path}")
-        except FileNotFoundError:
-            return
-        except Exception as e:
-            logging.error(f"删除失败 {item_path}：{str(e)}")
+def rmtree(target_dir: str | Path) -> None:
+    try:
+        shutil.rmtree(target_dir)
+    except Exception as e:
+        logging.error(f"删除失败：{str(target_dir)}，原因：{str(e)}")
 
 
 def truncate_filename(filename: str, target_width: int = 16) -> str:
@@ -281,4 +271,19 @@ def get_folder_size(folder_path: str | Path) -> int:
     except (PermissionError, OSError):
         pass
     return total_size
+
+
+def merge_dirs(src: Path, dst: Path, skip_names: set[str] | None = None) -> None:
+    if skip_names is None:
+        skip_names = set()
+    dst.mkdir(parents=True, exist_ok=True)
+    for item in src.iterdir():
+        if item.name in skip_names:
+            continue
+        target = dst / item.name
+        if item.is_dir():
+            target.mkdir(parents=True, exist_ok=True)
+            merge_dirs(item, target, skip_names)
+        else:
+            item.replace(target)
 
