@@ -10,9 +10,9 @@ import onnxruntime as ort
 class MultiModalEncoder:
     def __init__(
             self,
-            vocab_path: Path,
-            image_encoder_path: Path,
-            text_encoder_path: Path,
+            vocab_path: Path | None,
+            image_encoder_path: Path | None,
+            text_encoder_path: Path | None,
             mean: np.ndarray,
             std: np.ndarray,
             normalization: bool,
@@ -25,7 +25,7 @@ class MultiModalEncoder:
         self.__std = std
         self.__normalization = normalization
         self.__context_length = context_length
-        self.__tokenizer = FullTokenizer(vocab_path) if vocab_path.exists() else None
+        self.__tokenizer = FullTokenizer(vocab_path) if vocab_path else None
         self.image_session = self._init_onnx_session(image_encoder_path)
         self.text_session = self._init_onnx_session(text_encoder_path)
 

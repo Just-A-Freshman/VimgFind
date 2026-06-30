@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent
 @dataclass
 class AppSettings:
     max_work_thread: int = 10
+    max_match_count: int = 10
     preview_mode: Literal["medium_ico", "detail_info"] = "medium_ico"
     auto_update_index: bool = True
     ui_style: str = "superhero"
@@ -45,7 +46,6 @@ class ModelConfig:
     vocab_path: str = ""
 
     # --- index_config section ---
-    max_match_count: int = 100
     vector_index_path: str = ""
     name_index_path: str = ""
     index_capacity: int = 1000000
@@ -63,7 +63,7 @@ class ModelConfig:
         "image_encoder_path", "text_encoder_path", "vocab_path",
     })
     _index_keys = frozenset({
-        "max_match_count", "vector_index_path", "name_index_path",
+        "vector_index_path", "name_index_path",
         "index_capacity", "index_dim", "index_space",
         "search_dir", "exclude_rules",
     })
