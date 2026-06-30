@@ -27,10 +27,12 @@ class ModelConfig:
     # --- meta_info section ---
     id: str = ""
     name: str = ""
-    version: str = ""
+    label: str = ""
+    model_type: Literal["Image", "Text", "Image-Text", "Unknown"] = "Unknown"
     description: str = ""
     download_url: str = ""
     checksum_sha256: str = ""
+    size: int = 0
 
     # --- model_config section ---
     image_size: int = 224
@@ -53,7 +55,8 @@ class ModelConfig:
     exclude_rules: list[str] = field(default_factory=list)
 
     _meta_keys = frozenset({
-        "id", "name", "version", "description", "download_url", "checksum_sha256",
+        "id", "name", "label", "model_type", "description", 
+        "download_url", "checksum_sha256", "size"
     })
     _model_keys = frozenset({
         "image_size", "context_length", "mean", "std", "normalization",
