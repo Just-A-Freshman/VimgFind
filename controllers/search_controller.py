@@ -229,7 +229,7 @@ class SearchController(object):
 
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
-        self.app.setting.model.max_match_count = min(max_match_count, 100)
+        self.app.setting.app.max_match_count = min(max_match_count, 100)
         self.app.search_tools.update_max_match_count(max_match_count)
         self.resend_last_search()
 
