@@ -1,18 +1,22 @@
 from tkinter.ttk import Notebook
 from tkinterdnd2 import TkinterDnD
+from ttkbootstrap import Button
+from ttkbootstrap.constants import LINK
 from ctypes import windll
+import tkinter as tk
 
 from settings import WinInfo
 from .search_page import SearchFrame
-from .settings_page import SettingFrame
+from .index_page import IndexFrame
 from .model_page import ModelFrame
 
 
 class WinGUI(TkinterDnD.Tk):
     search_tab: SearchFrame
-    setting_tab: SettingFrame
+    index_tab: IndexFrame
     model_tab: ModelFrame
     switch_tab: Notebook
+    common_setting_btn: Button
 
     def __init__(self) -> None:
         self._set_dpi_awareness()
@@ -43,9 +47,12 @@ class WinGUI(TkinterDnD.Tk):
         notebook = Notebook(parent)
         self.search_tab = SearchFrame(notebook)
         notebook.add(self.search_tab, text="  检索  ")
-        self.setting_tab = SettingFrame(notebook)
-        notebook.add(self.setting_tab, text="  设置  ")
+        self.index_tab = IndexFrame(notebook)
+        notebook.add(self.index_tab, text="  索引  ")
         self.model_tab = ModelFrame(notebook)
         notebook.add(self.model_tab, text="  模型  ")
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        self.common_setting_btn = Button(parent, text="通用设置", style=LINK, cursor="hand2")
+        self.common_setting_btn.place(relx=1.0, x=-5, y=3, anchor=tk.NE)
         return notebook
