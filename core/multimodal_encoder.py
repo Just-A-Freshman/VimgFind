@@ -51,7 +51,9 @@ class MultiModalEncoder:
             result[i, :len(tokens)] = tokens
         return result
 
-    def _init_onnx_session(self, model_path) -> ort.InferenceSession | None:
+    def _init_onnx_session(self, model_path: Path | None) -> ort.InferenceSession | None:
+        if model_path is None:
+            return None
         try:
             session = ort.InferenceSession(
                 str(model_path),
@@ -60,7 +62,7 @@ class MultiModalEncoder:
             )
             return session
         except Exception as e:
-            logging.error(f"加载ONNX模型失败 {model_path}: {e}")
+            logging.error(f"加载ONNX模型[{model_path}]失败: {e}")
             return None
 
     def _normalization(self, fv: np.ndarray) -> None:
@@ -86,10 +88,7 @@ class MultiModalEncoder:
         return img_array
 
     def encode_image(self, image_obj: Image.Image) -> np.ndarray | None:
-        if self.image_session is None:
-            logging.error("图像编码器未加载，跳过图像编码")
-            return None
-
+        assert self.image_session is not None, "该模型不是图片模型，无法进行以图搜图"
         processed_image = self._preprocess_image(image_obj)
         if processed_image is None:
             return None
@@ -104,8 +103,7 @@ class MultiModalEncoder:
         return image_features
 
     def encode_text(self, input_text: str) -> np.ndarray | None:
-        if self.text_session is None or self.__tokenizer is None:
-            return None
+        assert self.text_session is not None and self.__tokenizer is not None, "该模型不是文字模型，无法进行以文搜图" 
         try:
             text = self.tokenize(input_text)
             text_features_list = []
