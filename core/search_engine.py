@@ -344,6 +344,16 @@ class SearchTool(object):
     def continue_update_index(self) -> None:
         self.__search_event.set()
 
-    def destroy(self) -> None:
-        self.__search_event.set()
-        self.__init_event.set()
+    def destroy(self, wait: bool = False) -> None:
+        if not wait:
+            self.__search_event.set()
+            self.__init_event.set()
+        else:
+            self.__search_event.wait()
+            self.__init_event.wait()
+        encoder: MultiModalEncoder | None = getattr(self, '_SearchTool__multimodal_encoder', None)
+        if encoder is not None:
+            encoder.close()
+        vec_idx_mgr: VectorIndexManager | None = getattr(self, '_SearchTool__vec_idx_mgr', None)
+        if vec_idx_mgr is not None:
+            vec_idx_mgr.close()
