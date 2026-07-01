@@ -117,3 +117,8 @@ class MultiModalEncoder:
         except Exception as e:
             logging.error(f"编码文字时出现错误: {e}")
             return None
+
+    def close(self) -> None:
+        self.image_session = None
+        self.text_session = None
+        self.__tokenizer = None

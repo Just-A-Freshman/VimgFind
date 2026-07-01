@@ -8,10 +8,10 @@ import hnswlib
 
 import utils.file_ops as file_ops
 
-L2_TEMPERATURE_SCALE = 3000       # L2 距离 tanh 变换的温度参数
-HNSW_EF_CONSTRUCTION = 200        # HNSW 索引构建时的动态范围
-HNSW_M = 32                       # HNSW 每个节点的最大连接数
-HNSW_MIN_EF = 100                 # HNSW 搜索时的最小 ef 参数
+L2_TEMPERATURE_SCALE = 3000
+HNSW_EF_CONSTRUCTION = 200
+HNSW_M = 32
+HNSW_MIN_EF = 100
 
 
 class VectorIndexManager:
@@ -26,6 +26,7 @@ class VectorIndexManager:
         self.__index_capacity: int = index_capacity
         self.__space: Literal["l2", "cosine"] = space
         self.__dim: int = dim
+        self.__hnsw_index: hnswlib.Index | None = None
         self.match: Callable = lambda: None
         self.__init_index()
         self.__init_match_function()
@@ -55,18 +56,22 @@ class VectorIndexManager:
         self.__init_index()
 
     def save_index(self) -> None:
+        assert self.__hnsw_index is not None
         self.__hnsw_index.save_index(self.__index_path)
 
     def add_vector(self, fv: np.ndarray, idx: int) -> None:
+        assert self.__hnsw_index is not None
         self.__hnsw_index.add_items(fv, idx)
 
     def delete_vector(self, idx: int) -> None:
         try:
+            assert self.__hnsw_index is not None
             self.__hnsw_index.mark_deleted(idx)
         except Exception as e:
             logging.error(f"删除向量时出错: {e}")
 
     def match_with_cosine(self, fv, nc=5):
+        assert self.__hnsw_index is not None
         self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 2))
         labels, distances = self.__hnsw_index.knn_query(fv, k=nc)
         cos_similarities = 1.0 - distances[0]
@@ -74,10 +79,14 @@ class VectorIndexManager:
         return logits_per_image, labels[0]
 
     def match_with_l2(self, fv, nc=5):
+        assert self.__hnsw_index is not None
         self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 2))
         query = self.__hnsw_index.knn_query(fv, k=nc)
         similarity = (1 - np.tanh(query[1][0] / L2_TEMPERATURE_SCALE)) * 100
         return similarity, query[0][0]
+    
+    def close(self):
+        self.__hnsw_index = None
 
 
 class NameIndexManager(object):
