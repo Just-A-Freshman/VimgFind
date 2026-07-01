@@ -9,14 +9,13 @@ class IndexFrame(Frame):
     index_dataset_table: Treeview
     index_setting_frame: LabelFrame
     scan_setting_frame: LabelFrame
+    switch_model_combobox: Combobox
     add_index_button: Button
-    exclude_button: Button
-    clean_excluded_button: Button
     update_index_button: Button
     delete_index_button: Button
     rebuild_index_button: Button
-    auto_update_btn: Checkbutton
-    update_threads_count_scale: Scale
+    exclude_button: Button
+    clean_excluded_button: Button
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
