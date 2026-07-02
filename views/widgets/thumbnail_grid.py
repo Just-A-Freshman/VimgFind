@@ -10,15 +10,15 @@ from .image_loader import ImageLoader
 
 
 class ThumbnailGridView(BasicImagePreviewView):
-    MARGIN: int = WinInfo.TkS(10)
-    FONT_HEIGHT: int = WinInfo.TkS(32)
+    MARGIN: int = 20
+    FONT_HEIGHT: int = 64
     PRELOAD_ROWS: int = 3
 
     def __init__(self, parent: tk.Widget, thumbnail_size: int = 110) -> None:
         super().__init__(parent)
         self._create_canvas()
         self.parent.after(50, self._create_scrollbar)
-        self._thumbnail_size = WinInfo.TkS(thumbnail_size)
+        self._thumbnail_size = thumbnail_size
         self._characters_size = int(thumbnail_size / 6.875)
 
         self._image_loader = ImageLoader()
