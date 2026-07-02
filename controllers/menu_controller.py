@@ -72,19 +72,26 @@ class MenuController(object):
         frame1 = tab.preview_frame1
         menu = tk.Menu(tearoff=0, activeborderwidth=self.ACTIVE_BORDER_WIDTH)
         menu.add_command(label="详情模式", command=lambda: self.app.search_controller.set_preview_mode("detail_info"))
-        menu.add_command(label="图标模式", command=lambda: self.app.search_controller.set_preview_mode("medium_ico"))
+        menu.add_command(label="中等图标", command=lambda: self.app.search_controller.set_preview_mode("medium_ico"))
+        menu.add_command(label="大图标", command=lambda: self.app.search_controller.set_preview_mode("big_ico"))
+        menu.add_command(label="超大图标", command=lambda: self.app.search_controller.set_preview_mode("huge_ico"))
         menu.add_separator()
         menu.add_command(label="结果数: 10", command=lambda: self.app.search_controller.set_preview_result_count(10))
         menu.add_command(label="结果数: 30", command=lambda: self.app.search_controller.set_preview_result_count(30))
         menu.add_command(label="结果数: 50", command=lambda: self.app.search_controller.set_preview_result_count(50))
         menu.add_command(label="结果数: 100", command=lambda: self.app.search_controller.set_preview_result_count(100))
+        menu.add_separator()
+        model_menu = tk.Menu(menu)
+        for model in self.app.model_controller.get_downloaded_models():
+            model_menu.add_command(label=f"模型：{model.name}", command=lambda: self.app.model_controller.switch_model(model.id))
+        menu.add_cascade(label='切换模型', menu=model_menu)
 
         frame1_right = frame1.winfo_rootx() + frame1.winfo_width()
         menu_font = tkfont.Font(font=menu.cget("font"))
-        menu_width = int(menu_font.measure("结果数: 100") * 1.75)
+        menu_width = int(menu_font.measure("-") * 24.5)
         menu.post(
             frame1_right - menu_width,
-            btn.winfo_rooty() + WinInfo.TkS(25)
+            btn.winfo_rooty() + 50
         )
         menu.bind("<Unmap>", lambda e: menu.destroy())
 
