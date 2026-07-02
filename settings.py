@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent
 class AppSettings:
     max_work_thread: int = 10
     max_match_count: int = 10
-    preview_mode: Literal["detail_info", "medium_ico", "huge_ico"] = "medium_ico"
+    preview_mode: Literal["detail_info", "medium_ico", "big_ico", "huge_ico"] = "medium_ico"
     auto_update_index: bool = True
     update_index_range: Literal["current", "all"] = "current"
     ui_style: str = "superhero"
