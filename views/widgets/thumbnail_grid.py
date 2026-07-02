@@ -10,15 +10,15 @@ from .image_loader import ImageLoader
 
 
 class ThumbnailGridView(BasicImagePreviewView):
-    THUMBNAIL_SIZE: int = WinInfo.TkS(110)
     MARGIN: int = WinInfo.TkS(10)
     FONT_HEIGHT: int = WinInfo.TkS(32)
     PRELOAD_ROWS: int = 3
 
-    def __init__(self, parent: tk.Widget) -> None:
+    def __init__(self, parent: tk.Widget, thumbnail_size: int = WinInfo.TkS(110)) -> None:
         super().__init__(parent)
         self._create_canvas()
         self.parent.after(50, self._create_scrollbar)
+        self.thumbnail_size = thumbnail_size
 
         self._image_loader = ImageLoader()
         self._loading_tasks: set[str] = set()
@@ -154,7 +154,7 @@ class ThumbnailGridView(BasicImagePreviewView):
     def _scroll_to_item(self, item: str, event: tk.Event) -> None:
         _, y = self._get_item_position(item)
         item_y1 = y
-        item_y2 = y + self.THUMBNAIL_SIZE + self.FONT_HEIGHT
+        item_y2 = y + self.thumbnail_size + self.FONT_HEIGHT
         canvas_y1 = self._canvas.canvasy(0)
         canvas_y2 = canvas_y1 + self._canvas.winfo_height()
         total_height = self._canvas.bbox(tk.ALL)[3] if self._canvas.bbox(tk.ALL) else 1
@@ -259,12 +259,12 @@ class ThumbnailGridView(BasicImagePreviewView):
         filename = os.path.basename(self._results[item][0])
         display_name = file_ops.truncate_filename(filename)
         placeholder_id = self._canvas.create_text(
-            x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE // 2,
+            x + self.thumbnail_size // 2, y + self.thumbnail_size // 2,
             text="图片加载中...", fill=self.theme_color.fg
         )
         image_info_id = self._canvas.create_text(
-            x + self.THUMBNAIL_SIZE // 2,
-            y + self.THUMBNAIL_SIZE + self.MARGIN // 2 + self.FONT_HEIGHT // 2,
+            x + self.thumbnail_size // 2,
+            y + self.thumbnail_size + self.MARGIN // 2 + self.FONT_HEIGHT // 2,
             text=display_name, fill=self.theme_color.fg
         )
         self._canvas_items[item] = {
@@ -287,8 +287,8 @@ class ThumbnailGridView(BasicImagePreviewView):
             self._canvas.itemconfig(canvas_item["image_info_id"], text=tip_info)
             if "image_id" not in canvas_item:
                 image_id = self._canvas.create_image(
-                    x + self.THUMBNAIL_SIZE // 2,
-                    y + self.THUMBNAIL_SIZE // 2,
+                    x + self.thumbnail_size // 2,
+                    y + self.thumbnail_size // 2,
                     image=image_data['photo']
                 )
                 canvas_item["image_id"] = image_id
@@ -310,7 +310,7 @@ class ThumbnailGridView(BasicImagePreviewView):
             return
         x, y = self._get_item_position(item)
         border_id = self._canvas.create_rectangle(
-            x - 4, y - 4, x + self.THUMBNAIL_SIZE + 4, y + self.THUMBNAIL_SIZE + 4,
+            x - 4, y - 4, x + self.thumbnail_size + 4, y + self.thumbnail_size + 4,
             fill=self.theme_color.selectbg
         )
         canvas_item["border_id"] = border_id
@@ -320,7 +320,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         canvas_width = self._canvas.winfo_width()
         canvas_height = self._canvas.winfo_height()
         old_cols = self._cols
-        item_width = self.THUMBNAIL_SIZE + self.MARGIN
+        item_width = self.thumbnail_size + self.MARGIN
         self._cols = max(1, (canvas_width - self.MARGIN * 2) // item_width)
 
         if old_cols != self._cols and old_cols != 0:
@@ -328,15 +328,15 @@ class ThumbnailGridView(BasicImagePreviewView):
                 x, y = self._get_item_position(item)
                 image_id = canvas_item.get("image_id", "")
                 if image_id:
-                    self._canvas.coords(image_id, x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE // 2)
+                    self._canvas.coords(image_id, x + self.thumbnail_size // 2, y + self.thumbnail_size // 2)
                 border_id = canvas_item.get("border_id", "")
                 if border_id:
-                    self._canvas.coords(border_id, x - 4, y - 4, x + self.THUMBNAIL_SIZE + 4, y + self.THUMBNAIL_SIZE + 4)
-                self._canvas.coords(canvas_item["placeholder_id"], x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE // 2)
-                self._canvas.coords(canvas_item["image_info_id"], x + self.THUMBNAIL_SIZE // 2, y + self.THUMBNAIL_SIZE + self.MARGIN // 2 + self.FONT_HEIGHT // 2)
+                    self._canvas.coords(border_id, x - 4, y - 4, x + self.thumbnail_size + 4, y + self.thumbnail_size + 4)
+                self._canvas.coords(canvas_item["placeholder_id"], x + self.thumbnail_size // 2, y + self.thumbnail_size // 2)
+                self._canvas.coords(canvas_item["image_info_id"], x + self.thumbnail_size // 2, y + self.thumbnail_size + self.MARGIN // 2 + self.FONT_HEIGHT // 2)
 
         rows = math.ceil(len(self._results) / self._cols) if self._cols > 0 else 0
-        item_height = self.THUMBNAIL_SIZE + self.MARGIN + self.FONT_HEIGHT
+        item_height = self.thumbnail_size + self.MARGIN + self.FONT_HEIGHT
         total_height = rows * item_height + self.MARGIN * 2 if rows > 0 else 0
         if total_height > canvas_height:
             self._canvas.configure(scrollregion=(0, 0, canvas_width, total_height))
@@ -350,8 +350,8 @@ class ThumbnailGridView(BasicImagePreviewView):
         index = self._get_item_index(item)
         row = index // self._cols
         col = index % self._cols
-        item_width = self.THUMBNAIL_SIZE + self.MARGIN
-        item_height = self.THUMBNAIL_SIZE + self.MARGIN + self.FONT_HEIGHT
+        item_width = self.thumbnail_size + self.MARGIN
+        item_height = self.thumbnail_size + self.MARGIN + self.FONT_HEIGHT
         x = col * item_width + self.MARGIN + self.MARGIN // 2
         y = row * item_height + self.MARGIN + self.MARGIN // 2
         return (x, y)
@@ -361,7 +361,7 @@ class ThumbnailGridView(BasicImagePreviewView):
             return
         canvas_y1 = self._canvas.canvasy(0)
         canvas_y2 = canvas_y1 + self._canvas.winfo_height()
-        item_height = self.THUMBNAIL_SIZE + self.MARGIN + 30
+        item_height = self.thumbnail_size + self.MARGIN + 30
 
         start_row = max(0, canvas_y1 // item_height - self.PRELOAD_ROWS)
         end_row = min(math.ceil(len(self._results) / self._cols), canvas_y2 // item_height + self.PRELOAD_ROWS)
@@ -375,7 +375,7 @@ class ThumbnailGridView(BasicImagePreviewView):
             if (item not in self._visible_image_data and item not in self._loading_tasks):
                 self._loading_tasks.add(item)
                 image_path = self._results[item][0]
-                self._image_loader.add_task(item, image_path, self.THUMBNAIL_SIZE)
+                self._image_loader.add_task(item, image_path, self.thumbnail_size)
         self._visible_items = new_visible_items
 
     def append_result(self, image_path: str, *extra_info: str | int) -> str:
@@ -423,8 +423,8 @@ class ThumbnailGridView(BasicImagePreviewView):
         clicked_item = ""
         for item in self._results:
             item_x, item_y = self._get_item_position(item)
-            if (item_x <= x <= item_x + self.THUMBNAIL_SIZE and
-                item_y <= y <= item_y + self.THUMBNAIL_SIZE):
+            if (item_x <= x <= item_x + self.thumbnail_size and
+                item_y <= y <= item_y + self.thumbnail_size):
                 clicked_item = item
                 break
         return clicked_item
