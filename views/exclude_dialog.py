@@ -1,233 +1,124 @@
-"""Exclude rules management dialog — pure UI. Events wired externally via callbacks."""
-
-from typing import Callable
-from ttkbootstrap import Button, Style
+from ttkbootstrap import Button, LabelFrame, Entry, Label, Treeview, Scrollbar
 from ttkbootstrap.constants import LINK
-from tkinter.ttk import LabelFrame, Entry, Label, Treeview, Scrollbar
-from tkinter import filedialog
 import tkinter as tk
 
 from settings import WinInfo
 
 
 class ExcludeDialog(tk.Toplevel):
-    on_rules_changed: Callable[[], None] | None = None
-    on_preview_requested: Callable[[], None] | None = None
+    add_rule_btn: Button
+    del_rule_btn: Button
+    help_btn: Button
+    rules_tree: Treeview
+    preview_path_entry: Entry
+    browse_btn: Button
+    preview_status_label: Label
+    stop_btn: Button
+    preview_tree: Treeview
 
     def __init__(self, parent, setting) -> None:
         super().__init__(parent)
-        self.withdraw()
+        self.parent = parent
         self.setting = setting
+        self.__win()
+        edit_rules_frame = self.__set_edit_rules_frame()
+        button_frame = self.__set_edit_frame(edit_rules_frame)
+        self.add_rule_btn = self.__set_add_rule_btn(button_frame)
+        self.del_rule_btn = self.__set_del_rule_btn(button_frame)
+        self.help_btn = self.__set_help_btn(button_frame)
+        self.rules_tree = self.__set_rules_tree(edit_rules_frame)
+        
+        preview_rules_frame = self.__set_preview_rules_frame()
+        path_frame = self.__set_edit_frame(preview_rules_frame)
+        self.preview_path_entry = self.__set_preview_path_entry(path_frame)
+        self.browse_btn = self.__set_browse_btn(path_frame)
+        self.status_frame = self.__set_edit_frame(preview_rules_frame)
+        self.preview_status_label = self.__set_preview_status_label(self.status_frame)
+        self.stop_btn = self.__set_stop_btn(self.status_frame)
+        self.preview_tree = self.__set_preview_tree(preview_rules_frame)
 
+    def __win(self) -> None:
+        self.withdraw()
         self.title("排除设置")
         self.iconbitmap(WinInfo.ico_path)
         win_w = 1240
         win_h = 1040
         self._ipady = max(4, win_h // 81)
         self._ipadx = max(4, win_h // 56)
-        x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
-        y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
+        x = self.parent.winfo_rootx() + (self.parent.winfo_width() - win_w) // 2
+        y = self.parent.winfo_rooty() + (self.parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.minsize(500, 400)
-        self.transient(parent)
+        self.transient(self.parent)
         self.grab_set()
-        self._build_upper()
-        self._build_lower()
-
         self.deiconify()
 
-    def collect_rules(self) -> list[str]:
-        rules: list[str] = []
-        for child in self.rules_tree.get_children():
-            text = self.rules_tree.item(child, "values")[0].strip()
-            if text:
-                rules.append(text)
-        return rules
-
-    def clear_preview_tree(self) -> None:
-        self.preview_tree.delete(*self.preview_tree.get_children())
-
-    def set_status(self, text: str) -> None:
-        self.preview_status_var.set(text)
-
-    def set_status_foreground(self, color: str) -> None:
-        self.preview_status_label.configure(foreground=color)
-
-    def reset_status_foreground(self) -> None:
-        self.preview_status_label.configure(foreground="")
-
-    def show_stop_button(self) -> None:
-        self.stop_btn.pack(side=tk.RIGHT, padx=(10, 0))
-
-    def hide_stop_button(self) -> None:
-        self.stop_btn.pack_forget()
-
-    def _build_upper(self) -> None:
+    def __set_edit_rules_frame(self) -> LabelFrame:
         frame = LabelFrame(self, text="排除规则")
         frame.place(relx=0.04, rely=0.03, relwidth=0.92, relheight=0.40)
+        return frame
 
-        btn_frame = tk.Frame(frame)
-        btn_frame.pack(fill=tk.X, padx=4, pady=(6, 10))
-        Button(
-            btn_frame, text="新建规则", command=self._on_add_name,
-            takefocus=False, cursor="hand2"
-        ).pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
-        Button(
-            btn_frame, text="删除规则", command=self._on_delete_selected,
-            takefocus=False, cursor="hand2"
-        ).pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
-        self.help_btn = Button(
-            btn_frame, text="帮助文档", command=lambda: None,
-            takefocus=False, cursor="hand2", style=LINK
-        )
-        self.help_btn.pack(side=tk.RIGHT, padx=(15, 0))
+    def __set_edit_frame(self, parent) -> tk.Frame:
+        btn_frame = tk.Frame(parent)
+        btn_frame.pack(fill=tk.X, padx=4, pady=(3, 10))
+        return btn_frame
 
-        tree_frame = tk.Frame(frame)
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=(4, 4))
-        tree_frame.grid_rowconfigure(0, weight=1)
-        tree_frame.grid_columnconfigure(0, weight=1)
+    def __set_rules_tree(self, parent) -> Treeview:
+        rules_tree = Treeview(parent, columns=("name",), show="", selectmode="browse", cursor="hand2")
+        rules_tree.column("name", stretch=True)
+        rules_tree.pack(fill=tk.BOTH, expand=True, padx=4, pady=(0, 3))
+        scroll = Scrollbar(rules_tree, orient=tk.VERTICAL, command=rules_tree.yview)
+        scroll.pack(fill=tk.Y, side=tk.RIGHT, padx=2, pady=2)
+        rules_tree.configure(yscrollcommand=scroll.set)
+        return rules_tree
 
-        self.rules_tree = Treeview(
-            tree_frame, columns=("name",), show="",
-            selectmode="browse", cursor="hand2"
-        )
-        self.rules_tree.column("name", stretch=True)
-        self.rules_tree.grid(row=0, column=0, sticky=tk.NSEW)
-        self.rules_tree.bind("<Double-Button-1>", self._on_item_double_click)
+    def __set_add_rule_btn(self, parent: tk.Frame) -> Button:
+        add_rule_btn = Button(parent, text="新建规则", takefocus=False, cursor="hand2")
+        add_rule_btn.pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
+        return add_rule_btn
 
-        scroll = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.rules_tree.yview)
-        scroll.grid(row=0, column=1, sticky=tk.NS)
-        self.rules_tree.configure(yscrollcommand=scroll.set)
+    def __set_del_rule_btn(self, parent: tk.Frame) -> Button:
+        del_rule_btn = Button(parent, text="删除规则", takefocus=False, cursor="hand2")
+        del_rule_btn.pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
+        return del_rule_btn
 
-    def _build_lower(self) -> None:
+    def __set_help_btn(self, parent: tk.Frame) -> Button:
+        help_btn = Button(parent, text="帮助文档", takefocus=False, cursor="hand2", style=LINK)
+        help_btn.pack(side=tk.RIGHT, padx=(15, 0))
+        return help_btn
+
+    def __set_preview_rules_frame(self) -> LabelFrame:
         frame = LabelFrame(self, text="选择任意文件夹预览排除效果")
         frame.place(relx=0.04, rely=0.46, relwidth=0.92, relheight=0.53)
+        return frame
 
-        path_frame = tk.Frame(frame)
-        path_frame.pack(fill=tk.X, padx=4, pady=(0, 10))
-        self.preview_path_var = tk.StringVar()
-        self.preview_path_entry = Entry(path_frame, textvariable=self.preview_path_var)
-        self.preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4), ipady=self._ipady)
-        self.browse_btn = Button(
-            path_frame, text="浏览", command=self._on_browse_preview,
-            takefocus=False, cursor="hand2"
-        )
-        self.browse_btn.pack(side=tk.RIGHT, ipadx=self._ipadx * 2, ipady=self._ipady)
+    def __set_preview_path_entry(self, parent: tk.Frame) -> Entry:
+        preview_path_entry = Entry(parent)
+        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4), ipady=self._ipady)
+        return preview_path_entry
 
-        status_frame = tk.Frame(frame)
-        status_frame.pack(fill=tk.X, padx=4, pady=(0, 2))
-        self.preview_status_var = tk.StringVar()
-        self.preview_status_label = Label(status_frame, textvariable=self.preview_status_var, anchor=tk.W)
-        self.preview_status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.stop_btn = Button(
-            status_frame, text="停止", style=LINK, cursor="hand2", command=lambda: None
-        )
+    def __set_browse_btn(self, parent: tk.Frame) -> Button:
+        browse_btn = Button(parent, text="浏览", takefocus=False, cursor="hand2")
+        browse_btn.pack(side=tk.RIGHT, ipadx=self._ipadx * 2, ipady=self._ipady)
+        return browse_btn
 
-        tree_frame = tk.Frame(frame)
-        tree_frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=0)
-        tree_frame.grid_rowconfigure(0, weight=1)
-        tree_frame.grid_columnconfigure(0, weight=1)
+    def __set_preview_status_label(self, parent: tk.Frame) -> Label:
+        preview_status_label = Label(parent, anchor=tk.W)
+        preview_status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        return preview_status_label
 
-        self.preview_tree = Treeview(tree_frame, columns=("path",), show="", cursor="hand2")
-        self.preview_tree.column("path", stretch=False, width=3000)
-        self.preview_tree.grid(row=0, column=0, sticky=tk.NSEW)
+    def __set_stop_btn(self, parent: tk.Frame) -> Button:
+        stop_btn = Button(parent, text="停止", style=LINK, cursor="hand2")
+        return stop_btn
 
-        preview_scroll_v = Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.preview_tree.yview)
-        preview_scroll_v.grid(row=0, column=1, sticky=tk.NS)
-        preview_scroll_h = Scrollbar(tree_frame, orient=tk.HORIZONTAL, command=self.preview_tree.xview)
-        preview_scroll_h.grid(row=1, column=0, columnspan=2, sticky=tk.EW)
-        self.preview_tree.configure(
-            yscrollcommand=preview_scroll_v.set,
-            xscrollcommand=preview_scroll_h.set
-        )
+    def __set_preview_tree(self, parent: LabelFrame) -> Treeview:
+        preview_tree = Treeview(parent, columns=("path",), show="", cursor="hand2")
+        preview_tree.column("path", stretch=False, width=3000)
+        preview_tree.pack(fill=tk.BOTH, expand=True, padx=4)
 
-    def _edit_item(self, iid: str, initial_text: str = "") -> None:
-        if hasattr(self, '_rule_entry') and self._rule_entry and self._rule_entry.winfo_exists():
-            self._rule_entry.destroy()
-
-        tree = self.rules_tree
-        tree.selection_remove(*tree.selection())
-        parent = tree.master
-
-        tree.update_idletasks()
-        item_bbox = tree.bbox(iid, column="name")
-        if item_bbox:
-            ix, iy, _, ih = item_bbox
-            entry_x = tree.winfo_x() + ix
-            entry_y = tree.winfo_y() + iy
-            entry_h = ih
-        else:
-            row_height = 50
-            children = tree.get_children()
-            row_idx = children.index(iid)
-            entry_x = 2
-            entry_y = row_idx * row_height + 2
-            entry_h = row_height
-
-        entry_w = tree.winfo_width()
-        tv_font = Style().lookup("Treeview", "font") or "TkDefaultFont"
-
-        entry = tk.Entry(parent, font=tv_font, bd=0, highlightthickness=1)
-        entry.insert(0, initial_text)
-        entry.select_range(0, tk.END)
-        entry.icursor(tk.END)
-        self._rule_entry = entry
-
-        _confirming = False
-        def on_confirm(event=None):
-            nonlocal _confirming
-            if _confirming:
-                return
-            _confirming = True
-            text = entry.get().strip()
-            if text:
-                tree.item(iid, values=(text,))
-                tree.selection_set(iid)
-                tree.focus(iid)
-                if self.on_rules_changed:
-                    self.on_rules_changed()
-            elif not initial_text:
-                tree.delete(iid)
-            entry.master.after_idle(entry.destroy)
-
-        def on_cancel(event=None):
-            nonlocal _confirming
-            if _confirming:
-                return
-            _confirming = True
-            if not initial_text:
-                tree.delete(iid)
-            entry.master.after_idle(entry.destroy)
-
-        entry.place(x=entry_x, y=entry_y, width=entry_w, height=entry_h)
-        entry.focus_set()
-        entry.bind("<Return>", on_confirm)
-        entry.bind("<FocusOut>", on_confirm)
-        entry.bind("<Escape>", on_cancel)
-
-    def _on_add_name(self) -> None:
-        iid = self.rules_tree.insert("", tk.END, values=("",))
-        self.rules_tree.yview_moveto(1.0)
-        self._edit_item(iid, "")
-
-    def _on_item_double_click(self, event: tk.Event) -> None:
-        iid = self.rules_tree.identify_row(event.y)
-        if not iid:
-            return
-        text = self.rules_tree.item(iid, "values")[0]
-        self._edit_item(iid, text)
-
-    def _on_delete_selected(self) -> None:
-        selected = self.rules_tree.selection()
-        if selected:
-            self.rules_tree.delete(*selected)
-            if self.on_rules_changed:
-                self.on_rules_changed()
-
-    def _on_browse_preview(self) -> None:
-        dir_path = filedialog.askdirectory(title="选择要预览的目录")
-        if dir_path:
-            self.preview_path_var.set(dir_path)
-            if self.on_preview_requested:
-                self.on_preview_requested()
-
+        preview_scroll_v = Scrollbar(preview_tree, orient=tk.VERTICAL, command=preview_tree.yview)
+        preview_scroll_v.pack(fill=tk.Y, side=tk.RIGHT, padx=2, pady=2)
+        preview_scroll_h = Scrollbar(preview_tree, orient=tk.HORIZONTAL, command=preview_tree.xview)
+        preview_scroll_h.pack(fill=tk.X, side=tk.BOTTOM, padx=(2, 0), pady=2)
+        preview_tree.configure(yscrollcommand=preview_scroll_v.set, xscrollcommand=preview_scroll_h.set)
+        return preview_tree
