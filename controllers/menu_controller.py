@@ -10,7 +10,6 @@ from tkinter.ttk import Treeview
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 from views.widgets import BasicImagePreviewView
-from settings import WinInfo
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -83,7 +82,7 @@ class MenuController(object):
         menu.add_separator()
         model_menu = tk.Menu(menu)
         for model in self.app.model_controller.get_downloaded_models():
-            model_menu.add_command(label=model.name, command=lambda: self.app.model_controller.switch_model(model.id))
+            model_menu.add_command(label=model.name, command=lambda model=model: self.app.model_controller.switch_model(model.id))
         menu.add_cascade(label='切换模型', menu=model_menu)
 
         frame1_right = frame1.winfo_rootx() + frame1.winfo_width()
