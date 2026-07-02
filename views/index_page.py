@@ -112,7 +112,9 @@ class IndexFrame(Frame):
     def __set_update_range_combobox(self) -> Combobox:
         tip = Label(self.scan_setting_frame, text="索引更新范围", anchor=tk.W)
         tip.grid(row=1, column=1, padx=(5, 10), sticky=tk.E)
-        combobox = Combobox(self.scan_setting_frame, values=("当前模型", "全部模型"), width=10)
+        combobox = Combobox(
+            self.scan_setting_frame, values=("当前模型", "全部模型"), width=10, state="readonly"
+        )
         combobox.grid(row=1, column=2, padx=(0, 5), sticky=tk.EW)
         return combobox
 
