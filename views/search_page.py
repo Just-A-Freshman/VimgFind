@@ -22,61 +22,63 @@ class FilterPanel(LabelFrame):
         self.place_forget()
         self._setup_grid()
 
-        self.__set_similarity_row()
-        self.__set_file_type_row()
-        self.__set_file_size_row()
-        self.__set_folder_selection_row()
-        self.__set_action_buttons()
+        self.sim_scale, self.sim_value = self.__set_similarity_row()
+        self.ext_combo = self.__set_file_type_row()
+        self.size_min, self.size_min_unit, self.size_max, self.size_max_unit = self.__set_file_size_row()
+        self.folder_select_all, self.folder_listbox = self.__set_folder_selection_row()
+        self.confirm_btn, self.cancel_btn = self.__set_action_buttons()
 
     def _setup_grid(self) -> None:
         for col, weight in enumerate([0, 1, 0, 0, 1, 0, 0]):
             self.grid_columnconfigure(col, weight=weight)
         self.grid_columnconfigure(6, minsize=12)
 
-    def __set_similarity_row(self) -> None:
+    def __set_similarity_row(self) -> tuple[Scale, Label]:
         Label(self, text="相似度阈值", width=10, anchor=tk.W).grid(
             row=0, column=0, sticky=tk.W, padx=(12, 0), pady=(20, 10)
         )
-        self.sim_scale = Scale(self, from_=0, to=100, orient=tk.HORIZONTAL)
-        self.sim_scale.grid(row=0, column=1, columnspan=4, sticky=tk.EW, padx=(8, 4), pady=(20, 10))
-        self.sim_value = Label(self, text="0%", width=5)
-        self.sim_value.grid(row=0, column=5, sticky=tk.E, pady=(20, 10))
+        sim_scale = Scale(self, from_=0, to=100, orient=tk.HORIZONTAL)
+        sim_scale.grid(row=0, column=1, columnspan=4, sticky=tk.EW, padx=(8, 4), pady=(20, 10))
+        sim_value = Label(self, text="0%", width=5)
+        sim_value.grid(row=0, column=5, sticky=tk.E, pady=(20, 10))
+        return sim_scale, sim_value
 
-    def __set_file_type_row(self) -> None:
+    def __set_file_type_row(self) -> Combobox:
         Label(self, text="文件类型", width=10, anchor=tk.W).grid(
             row=1, column=0, sticky=tk.W, padx=(12, 0), pady=(10, 10)
         )
-        self.ext_combo = Combobox(
+        ext_combo = Combobox(
             self,
             values=["所有图片文件", "PNG", "JPG/JPEG", "WebP", "GIF", "BMP", "TIFF"],
             state="readonly",
         )
-        self.ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(8, 0), pady=(10, 10))
-        self.ext_combo.current(0)
+        ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(8, 0), pady=(10, 10))
+        ext_combo.current(0)
+        return ext_combo
 
-    def __set_file_size_row(self) -> None:
+    def __set_file_size_row(self) -> tuple[Entry, Combobox, Entry, Combobox]:
         Label(self, text="文件大小", width=10, anchor=tk.W).grid(
             row=2, column=0, sticky=tk.W, padx=(12, 0), pady=(10, 10)
         )
-        self.size_min = Entry(self, width=6)
-        self.size_min.grid(row=2, column=1, sticky=tk.EW, padx=(8, 2), pady=(10, 10))
-        self.size_min_unit = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
-        self.size_min_unit.grid(row=2, column=2, sticky=tk.EW, padx=(0, 4), pady=(10, 10))
-        self.size_min_unit.current(1)
+        size_min = Entry(self, width=6)
+        size_min.grid(row=2, column=1, sticky=tk.EW, padx=(8, 2), pady=(10, 10))
+        size_min_unit = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
+        size_min_unit.grid(row=2, column=2, sticky=tk.EW, padx=(0, 4), pady=(10, 10))
+        size_min_unit.current(1)
         Label(self, text="到").grid(row=2, column=3, pady=(10, 10))
-        self.size_max = Entry(self, width=6)
-        self.size_max.grid(row=2, column=4, sticky=tk.EW, padx=(4, 2), pady=(10, 10))
-        self.size_max_unit = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
-        self.size_max_unit.grid(row=2, column=5, sticky=tk.EW, padx=(0, 0), pady=(10, 10))
-        self.size_max_unit.current(1)
+        size_max = Entry(self, width=6)
+        size_max.grid(row=2, column=4, sticky=tk.EW, padx=(4, 2), pady=(10, 10))
+        size_max_unit = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
+        size_max_unit.grid(row=2, column=5, sticky=tk.EW, padx=(0, 0), pady=(10, 10))
+        size_max_unit.current(1)
+        return size_min, size_min_unit, size_max, size_max_unit
 
-    def __set_folder_selection_row(self) -> None:
+    def __set_folder_selection_row(self) -> tuple[Checkbutton, tk.Listbox]:
         left_frame = Frame(self)
-        left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(12, 0), pady=(10, 2))
         Label(left_frame, text="所属文件夹", width=10, anchor=tk.W).pack(anchor=tk.W)
-        self.folder_select_all = Checkbutton(left_frame, text="全选", style="round-toggle")
-        self.folder_select_all.pack(anchor=tk.W, pady=(22, 0))
-
+        folder_select_all = Checkbutton(left_frame, text="全选")
+        folder_select_all.pack(anchor=tk.W, pady=(22, 0))
+        left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(12, 0), pady=(10, 2))
         lbox_frame = Frame(self)
         lbox_frame.grid(
             row=3, column=1, columnspan=5, sticky=tk.N+tk.E+tk.W,
@@ -84,23 +86,25 @@ class FilterPanel(LabelFrame):
         )
         lbox_frame.grid_columnconfigure(0, weight=1)
         lbox_frame.grid_rowconfigure(0, weight=1)
-        self.folder_listbox = tk.Listbox(
+        folder_listbox = tk.Listbox(
             lbox_frame, selectmode=tk.MULTIPLE,
             height=5, width=1, activestyle='none',
             exportselection=False, justify=tk.LEFT
         )
-        self.folder_listbox.grid(row=0, column=0, sticky=tk.EW)
-        folder_scroll_h = Scrollbar(lbox_frame, orient=tk.HORIZONTAL, command=self.folder_listbox.xview)
+        folder_listbox.grid(row=0, column=0, sticky=tk.EW)
+        folder_scroll_h = Scrollbar(lbox_frame, orient=tk.HORIZONTAL, command=folder_listbox.xview)
         folder_scroll_h.grid(row=1, column=0, sticky=tk.EW)
-        self.folder_listbox.configure(xscrollcommand=folder_scroll_h.set)
+        folder_listbox.configure(xscrollcommand=folder_scroll_h.set)
+        return folder_select_all, folder_listbox
 
-    def __set_action_buttons(self) -> None:
+    def __set_action_buttons(self) -> tuple[Button, Button]:
         btn_frame = Frame(self)
         btn_frame.grid(row=4, column=0, columnspan=7, pady=(14, 30))
-        self.confirm_btn = Button(btn_frame, text="确定", takefocus=False, cursor="hand2", padding=(20, 8))
-        self.confirm_btn.grid(row=1, column=1, padx=(0, 50))
-        self.cancel_btn = Button(btn_frame, text="取消", takefocus=False, cursor="hand2", padding=(20, 8), style="secondary")
-        self.cancel_btn.grid(row=1, column=2)
+        confirm_btn = Button(btn_frame, text="确定", takefocus=False, cursor="hand2", padding=(20, 8))
+        confirm_btn.grid(row=1, column=1, padx=(0, 50))
+        cancel_btn = Button(btn_frame, text="取消", takefocus=False, cursor="hand2", padding=(20, 8), style="secondary")
+        cancel_btn.grid(row=1, column=2)
+        return confirm_btn, cancel_btn
 
 
 class SearchFrame(Frame):
