@@ -186,19 +186,10 @@ class Setting(object):
 class WinInfo(object):
     version = "2.5.1"
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
-    scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
     ico_path = Setting.config_path / "favicon.ico"
     title = "Vimgfind"
-    width = 830
-    height = 560
-
-    @staticmethod
-    def TkS(value: int | float, restore: bool = False) -> int:
-        if not restore:
-            return int(round(value * WinInfo.scale_factor, 0))
-        else:
-            return int(round(value / WinInfo.scale_factor, 0))
-
+    width = 1660
+    height = 1120
 
 
 logging.basicConfig(
