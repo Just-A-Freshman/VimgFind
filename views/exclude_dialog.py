@@ -21,8 +21,8 @@ class ExcludeDialog(tk.Toplevel):
 
         self.title("排除设置")
         self.iconbitmap(WinInfo.ico_path)
-        win_w = WinInfo.TkS(620)
-        win_h = WinInfo.TkS(520)
+        win_w = 1240
+        win_h = 1040
         self._ipady = max(4, win_h // 81)
         self._ipadx = max(4, win_h // 56)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2

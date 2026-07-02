@@ -145,8 +145,8 @@ class SearchFrame(Frame):
         btn = tk.Label(self, text="▼", cursor="hand2", bd=0, highlightthickness=0, relief=tk.FLAT)
         btn.place(
             in_=self.search_entry, relx=1.0, rely=0.1, anchor=tk.NE,
-            x=WinInfo.TkS(-3), y=WinInfo.TkS(3),
-            width=WinInfo.TkS(28), height=WinInfo.TkS(26)
+            x=-6, y=6,
+            width=56, height=52
         )
         return btn
 
@@ -162,7 +162,7 @@ class SearchFrame(Frame):
 
     def __set_more_options_button(self) -> Button:
         button = Button(self, text="• • •", takefocus=False, style="link", cursor="hand2")
-        button.place(relx=1, rely=0.0192, width=WinInfo.TkS(50), x=WinInfo.TkS(-50))
+        button.place(relx=1, rely=0.0192, width=100, x=-100)
         return button
 
     def __set_preview_results_frame(self) -> Frame:
@@ -201,7 +201,7 @@ class SearchFrame(Frame):
     def set_nav_visible(self, show: bool) -> None:
         if show:
             self.nav_frame.grid(
-                row=1, column=0, sticky='ew', padx=(2, WinInfo.TkS(12.5)), pady=(0, 3)
+                row=1, column=0, sticky='ew', padx=(2, 25), pady=(0, 3)
             )
             self.nav_frame.lift()
         else:
