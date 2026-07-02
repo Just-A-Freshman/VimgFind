@@ -40,7 +40,7 @@ class IndexFrame(Frame):
         self.clean_excluded_button = self.__set_clean_excluded_button()
 
     def __set_index_tip_label(self) -> Label:
-        label = Label(self, text="当前索引的图库(~张图片)", anchor=tk.NW, font=("微软雅黑", 14))
+        label = Label(self, text="当前索引的图库(~张图片)", anchor=tk.NW)
         label.place(relx=0.0081, rely=0.04, relwidth=1, relheight=0.0575)
         return label
 
@@ -66,9 +66,8 @@ class IndexFrame(Frame):
     def __set_switch_model_combobox(self) -> Combobox:
         container = Frame(self.index_setting_frame)
         container.grid(row=0, column=0, columnspan=2, sticky=tk.EW, pady=5)
-        container.option_add("*TCombobox*Listbox.font", "微软雅黑 12")
         Label(container, text="当前模型：").pack(side=tk.LEFT, padx=10)
-        combobox = Combobox(container, state="readonly", font=("微软雅黑", 12))
+        combobox = Combobox(container, state="readonly")
         combobox.pack(side=tk.LEFT, padx=(10, 10), expand=True, fill=tk.BOTH)
         return combobox
 

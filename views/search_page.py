@@ -1,8 +1,6 @@
-from ttkbootstrap import Button, Entry, Checkbutton, Scale
-from tkinter.ttk import Frame, Label, LabelFrame, Combobox, Scrollbar
+from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, LabelFrame, Combobox, Scrollbar
 import tkinter as tk
 
-from settings import WinInfo
 from .widgets import BasicImagePreviewView, PreviewCanvasView
 
 
@@ -182,9 +180,7 @@ class SearchFrame(Frame):
 
     def __set_nav_buttons(self) -> None:
         self.nav_frame = tk.Frame(self.preview_container, bg="#6c757d", borderwidth=12)
-        self.nav_page_label = tk.Label(
-            self.nav_frame, text="0 / 0", bg="#6c757d", fg="white", font=("", 10)
-        )
+        self.nav_page_label = tk.Label(self.nav_frame, text="0 / 0", bg="#6c757d", fg="white")
         self.nav_page_label.pack(side=tk.LEFT, padx=(30, 0))
         self.nav_prev = Button(
             self.nav_frame, text="◀", takefocus=False,
