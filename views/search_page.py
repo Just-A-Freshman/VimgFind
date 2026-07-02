@@ -149,11 +149,7 @@ class SearchFrame(Frame):
 
     def __set_filter_btn(self) -> tk.Label:
         btn = tk.Label(self, text="▼", cursor="hand2", bd=0, highlightthickness=0, relief=tk.FLAT)
-        btn.place(
-            in_=self.search_entry, relx=1.0, rely=0.1, anchor=tk.NE,
-            x=-6, y=6,
-            width=56, height=52
-        )
+        btn.pack(in_=self.search_entry, side=tk.RIGHT, fill=tk.Y, ipadx=20, pady=5, padx=2)
         return btn
 
     def __set_search_by_browser_button(self) -> Button:
