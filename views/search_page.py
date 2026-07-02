@@ -20,14 +20,20 @@ class FilterPanel(LabelFrame):
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, text="过滤设置", **kwargs)
         self.place_forget()
-        self._build()
+        self._setup_grid()
 
-    def _build(self) -> None:
+        self.__set_similarity_row()
+        self.__set_file_type_row()
+        self.__set_file_size_row()
+        self.__set_folder_selection_row()
+        self.__set_action_buttons()
+
+    def _setup_grid(self) -> None:
         for col, weight in enumerate([0, 1, 0, 0, 1, 0, 0]):
             self.grid_columnconfigure(col, weight=weight)
         self.grid_columnconfigure(6, minsize=12)
 
-        # 第 0 行：相似度阈值
+    def __set_similarity_row(self) -> None:
         Label(self, text="相似度阈值", width=10, anchor=tk.W).grid(
             row=0, column=0, sticky=tk.W, padx=(12, 0), pady=(20, 10)
         )
@@ -36,7 +42,7 @@ class FilterPanel(LabelFrame):
         self.sim_value = Label(self, text="0%", width=5)
         self.sim_value.grid(row=0, column=5, sticky=tk.E, pady=(20, 10))
 
-        # 第 1 行：文件类型
+    def __set_file_type_row(self) -> None:
         Label(self, text="文件类型", width=10, anchor=tk.W).grid(
             row=1, column=0, sticky=tk.W, padx=(12, 0), pady=(10, 10)
         )
@@ -48,7 +54,7 @@ class FilterPanel(LabelFrame):
         self.ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(8, 0), pady=(10, 10))
         self.ext_combo.current(0)
 
-        # 第 2 行：文件大小
+    def __set_file_size_row(self) -> None:
         Label(self, text="文件大小", width=10, anchor=tk.W).grid(
             row=2, column=0, sticky=tk.W, padx=(12, 0), pady=(10, 10)
         )
@@ -64,11 +70,11 @@ class FilterPanel(LabelFrame):
         self.size_max_unit.grid(row=2, column=5, sticky=tk.EW, padx=(0, 0), pady=(10, 10))
         self.size_max_unit.current(1)
 
-        # 第 3 行：所属文件夹标签 + 全选 + 多选列表
+    def __set_folder_selection_row(self) -> None:
         left_frame = Frame(self)
         left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(12, 0), pady=(10, 2))
         Label(left_frame, text="所属文件夹", width=10, anchor=tk.W).pack(anchor=tk.W)
-        self.folder_select_all = Checkbutton(left_frame, text="全选", style="square-toggle")
+        self.folder_select_all = Checkbutton(left_frame, text="全选", style="round-toggle")
         self.folder_select_all.pack(anchor=tk.W, pady=(22, 0))
 
         lbox_frame = Frame(self)
@@ -88,15 +94,13 @@ class FilterPanel(LabelFrame):
         folder_scroll_h.grid(row=1, column=0, sticky=tk.EW)
         self.folder_listbox.configure(xscrollcommand=folder_scroll_h.set)
 
-        # 底部按钮
+    def __set_action_buttons(self) -> None:
         btn_frame = Frame(self)
         btn_frame.grid(row=4, column=0, columnspan=7, pady=(14, 30))
-        btn_center = Frame(btn_frame)
-        btn_center.pack(anchor=tk.CENTER)
-        self.confirm_btn = Button(btn_center, text="确定", takefocus=False, cursor="hand2", padding=(20, 8))
-        self.confirm_btn.pack(side=tk.LEFT, padx=(0, 50))
-        self.cancel_btn = Button(btn_center, text="取消", takefocus=False, cursor="hand2", padding=(20, 8), style="secondary")
-        self.cancel_btn.pack(side=tk.LEFT)
+        self.confirm_btn = Button(btn_frame, text="确定", takefocus=False, cursor="hand2", padding=(20, 8))
+        self.confirm_btn.grid(row=1, column=1, padx=(0, 50))
+        self.cancel_btn = Button(btn_frame, text="取消", takefocus=False, cursor="hand2", padding=(20, 8), style="secondary")
+        self.cancel_btn.grid(row=1, column=2)
 
 
 class SearchFrame(Frame):
