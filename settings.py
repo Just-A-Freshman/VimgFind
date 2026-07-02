@@ -16,13 +16,21 @@ ROOT = Path(__file__).resolve().parent
 class AppSettings:
     max_work_thread: int = 10
     max_match_count: int = 10
-    preview_mode: Literal["medium_ico", "detail_info"] = "medium_ico"
+    preview_mode: Literal["detail_info", "medium_ico", "huge_ico"] = "medium_ico"
     auto_update_index: bool = True
+    update_index_range: Literal["current", "all"] = "current"
     ui_style: str = "superhero"
     similarity_threshold: int = 48
     current_model: str = "chinese-clip"
     remote_manifest_url: str = "https://raw.githubusercontent.com/Just-A-Freshman/VimgFind/main/models.json"
     cache_ttl: int = 3600
+    maximize_window: bool = False
+    schedule_index_save_interval: int = 600000
+
+    @classmethod
+    def from_dict(cls, data: dict) -> AppSettings:
+        valid = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in data.items() if k in valid})
 
 
 @dataclass
@@ -80,6 +88,7 @@ class ModelConfig:
         return cls(**{k: v for k, v in merged.items() if k in valid})
 
 
+
 class Setting(object):
     config_path = ROOT / "config"
     temp_image_path = ROOT / "temp"
@@ -88,11 +97,10 @@ class Setting(object):
     temp_multi_search_queue = temp_image_path / "multi_search_queue.txt"
     error_log = config_path / "error.log"
     accepted_exts = {'.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.webp'}
-    schedule_save_interval = 600000
 
     def __init__(self) -> None:
         Path.mkdir(Setting.temp_image_path, exist_ok=True)
-        self._app = AppSettings()
+        self._app = self.load_app_config()
         self._model_cache: dict[str, ModelConfig] = {}
 
     @property
@@ -103,20 +111,48 @@ class Setting(object):
     def model(self) -> ModelConfig:
         model_id = self._app.current_model
         if model_id not in self._model_cache:
-            self._model_cache[model_id] = self._load_model_config(model_id)
+            self._model_cache[model_id] = self.load_model_config(model_id)
         return self._model_cache[model_id]
 
     def use_model(self, model_id: str) -> None:
         self._app.current_model = model_id
         if model_id not in self._model_cache:
-            self._model_cache[model_id] = self._load_model_config(model_id)
+            self._model_cache[model_id] = self.load_model_config(model_id)
 
-    def _load_model_config(self, model_id: str) -> ModelConfig:
+    def load_app_config(self) -> AppSettings:
+        if Setting.setting_path.exists():
+            with open(Setting.setting_path, "r", encoding="utf-8") as f:
+                return AppSettings.from_dict(json.load(f))
+        return AppSettings()
+
+    def load_model_config(self, model_id: str) -> ModelConfig:
         model_path = self.models_dir / model_id / "model.json"
         if model_path.exists():
             with open(model_path, "r", encoding="utf-8") as f:
                 return ModelConfig.from_dict(json.load(f))
         return ModelConfig()
+
+    def clean_log(self) -> None:
+        with open(Setting.error_log, "r", encoding="utf-8") as f:
+            content = f.readlines()
+        with open(Setting.error_log, "w", encoding="utf-8") as f:
+            for line in content:
+                try:
+                    target_date = datetime.fromisoformat(line.split(" ")[0])
+                    current_date = datetime.today()
+                    delta_days = (current_date - target_date).days
+                    if delta_days < 7:
+                        f.write(line)
+                except (ValueError, IndexError):
+                    pass
+
+    def get_model_list(self) -> list[str]:
+        if not self.models_dir.exists():
+            return []
+        return sorted([
+            d.name for d in self.models_dir.iterdir()
+            if d.is_dir() and (d / "model.json").exists()
+        ])
 
     def save(self) -> None:
         with open(Setting.setting_path, "w", encoding="utf-8") as f:
@@ -145,34 +181,13 @@ class Setting(object):
                     f, indent=4, ensure_ascii=False,
                 )
 
-    def clean_log(self) -> None:
-        with open(Setting.error_log, "r", encoding="utf-8") as f:
-            content = f.readlines()
-        with open(Setting.error_log, "w", encoding="utf-8") as f:
-            for line in content:
-                try:
-                    target_date = datetime.fromisoformat(line.split(" ")[0])
-                    current_date = datetime.today()
-                    delta_days = (current_date - target_date).days
-                    if delta_days < 7:
-                        f.write(line)
-                except (ValueError, IndexError):
-                    pass
-
-    def get_model_list(self) -> list[str]:
-        if not self.models_dir.exists():
-            return []
-        return sorted([
-            d.name for d in self.models_dir.iterdir()
-            if d.is_dir() and (d / "model.json").exists()
-        ])
 
 
 class WinInfo(object):
     version = "2.5.1"
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
-    ico_path = "config/favicon.ico"
+    ico_path = Setting.config_path / "favicon.ico"
     title = "Vimgfind"
     width = 830
     height = 560
@@ -183,6 +198,7 @@ class WinInfo(object):
             return int(round(value * WinInfo.scale_factor, 0))
         else:
             return int(round(value / WinInfo.scale_factor, 0))
+
 
 
 logging.basicConfig(
