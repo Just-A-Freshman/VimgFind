@@ -1,4 +1,4 @@
-from ttkbootstrap import Button, LabelFrame, Entry, Label, Treeview, Scrollbar
+from ttkbootstrap import Button, LabelFrame, Frame, Entry, Label, Treeview, Scrollbar
 from ttkbootstrap.constants import LINK
 import tkinter as tk
 
@@ -58,8 +58,8 @@ class ExcludeDialog(tk.Toplevel):
         frame.place(relx=0.04, rely=0.03, relwidth=0.92, relheight=0.40)
         return frame
 
-    def __set_edit_frame(self, parent) -> tk.Frame:
-        btn_frame = tk.Frame(parent)
+    def __set_edit_frame(self, parent) -> Frame:
+        btn_frame = Frame(parent)
         btn_frame.pack(fill=tk.X, padx=4, pady=(3, 10))
         return btn_frame
 
@@ -72,17 +72,17 @@ class ExcludeDialog(tk.Toplevel):
         rules_tree.configure(yscrollcommand=scroll.set)
         return rules_tree
 
-    def __set_add_rule_btn(self, parent: tk.Frame) -> Button:
+    def __set_add_rule_btn(self, parent: Frame) -> Button:
         add_rule_btn = Button(parent, text="新建规则", takefocus=False, cursor="hand2")
         add_rule_btn.pack(side=tk.LEFT, padx=(0, 10), ipadx=self._ipadx, ipady=self._ipady)
         return add_rule_btn
 
-    def __set_del_rule_btn(self, parent: tk.Frame) -> Button:
+    def __set_del_rule_btn(self, parent: Frame) -> Button:
         del_rule_btn = Button(parent, text="删除规则", takefocus=False, cursor="hand2")
         del_rule_btn.pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
         return del_rule_btn
 
-    def __set_help_btn(self, parent: tk.Frame) -> Button:
+    def __set_help_btn(self, parent: Frame) -> Button:
         help_btn = Button(parent, text="帮助文档", takefocus=False, cursor="hand2", style=LINK)
         help_btn.pack(side=tk.RIGHT, padx=(15, 0))
         return help_btn
@@ -92,22 +92,22 @@ class ExcludeDialog(tk.Toplevel):
         frame.place(relx=0.04, rely=0.46, relwidth=0.92, relheight=0.53)
         return frame
 
-    def __set_preview_path_entry(self, parent: tk.Frame) -> Entry:
+    def __set_preview_path_entry(self, parent: Frame) -> Entry:
         preview_path_entry = Entry(parent)
         preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4), ipady=self._ipady)
         return preview_path_entry
 
-    def __set_browse_btn(self, parent: tk.Frame) -> Button:
+    def __set_browse_btn(self, parent: Frame) -> Button:
         browse_btn = Button(parent, text="浏览", takefocus=False, cursor="hand2")
         browse_btn.pack(side=tk.RIGHT, ipadx=self._ipadx * 2, ipady=self._ipady)
         return browse_btn
 
-    def __set_preview_status_label(self, parent: tk.Frame) -> Label:
+    def __set_preview_status_label(self, parent: Frame) -> Label:
         preview_status_label = Label(parent, anchor=tk.W)
         preview_status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         return preview_status_label
 
-    def __set_stop_btn(self, parent: tk.Frame) -> Button:
+    def __set_stop_btn(self, parent: Frame) -> Button:
         stop_btn = Button(parent, text="停止", style=LINK, cursor="hand2")
         return stop_btn
 
