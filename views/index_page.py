@@ -14,6 +14,9 @@ class IndexFrame(Frame):
     update_index_button: Button
     delete_index_button: Button
     rebuild_index_button: Button
+    auto_update_checkbutton: Checkbutton
+    update_range_combobox: Combobox
+    update_threads_count_scale: Scale
     exclude_button: Button
     clean_excluded_button: Button
 
@@ -30,7 +33,8 @@ class IndexFrame(Frame):
         self.update_index_button = self.__set_update_index_button()
         self.delete_index_button = self.__set_delete_index_button()
         self.rebuild_index_button = self.__set_rebuild_index_button()
-        self.auto_update_btn = self.__set_auto_update_checkbutton()
+        self.auto_update_checkbutton = self.__set_auto_update_checkbutton()
+        self.update_range_combobox = self.__set_update_range_combobox()
         self.update_threads_count_scale = self.__set_update_threads_count_scale()
         self.exclude_button = self.__set_exclude_button()
         self.clean_excluded_button = self.__set_clean_excluded_button()
@@ -52,7 +56,7 @@ class IndexFrame(Frame):
 
     def __set_index_setting_frame(self) -> LabelFrame:
         frame = LabelFrame(self, text="目录管理")
-        frame.place(relx=0.7181, rely=0.095, relwidth=0.2719, relheight=0.59)
+        frame.place(relx=0.7181, rely=0.095, relwidth=0.2719, relheight=0.54)
         for i in range(5):
             frame.grid_rowconfigure(i, weight=1)
         frame.grid_columnconfigure(0, weight=2)
@@ -62,8 +66,9 @@ class IndexFrame(Frame):
     def __set_switch_model_combobox(self) -> Combobox:
         container = Frame(self.index_setting_frame)
         container.grid(row=0, column=0, columnspan=2, sticky=tk.EW, pady=5)
+        container.option_add("*TCombobox*Listbox.font", "微软雅黑 12")
         Label(container, text="当前模型：").pack(side=tk.LEFT, padx=10)
-        combobox = Combobox(container, state="readonly")
+        combobox = Combobox(container, state="readonly", font=("微软雅黑", 12))
         combobox.pack(side=tk.LEFT, padx=(10, 10), expand=True, fill=tk.BOTH)
         return combobox
 
@@ -89,8 +94,8 @@ class IndexFrame(Frame):
 
     def __set_scan_setting_frame(self) -> LabelFrame:
         frame = LabelFrame(self, text="扫描设置")
-        frame.place(relx=0.7181, rely=0.69, relwidth=0.2719, relheight=0.31)
-        for i in range(3):
+        frame.place(relx=0.7181, rely=0.64, relwidth=0.2719, relheight=0.36)
+        for i in range(4):
             frame.grid_rowconfigure(i, weight=1)
         frame.grid_columnconfigure(0, weight=1, uniform='space')
         frame.grid_columnconfigure(1, weight=1, uniform='labels')
@@ -99,17 +104,24 @@ class IndexFrame(Frame):
         return frame
 
     def __set_auto_update_checkbutton(self) -> Checkbutton:
-        tip = Label(self.scan_setting_frame, text="自动更新索引", anchor=tk.W)
+        tip = Label(self.scan_setting_frame, text="索引自动更新", anchor=tk.W)
         tip.grid(row=0, column=1, padx=(5, 10), sticky=tk.E)
         checkbtn = Checkbutton(self.scan_setting_frame, style="round-toggle")
         checkbtn.grid(row=0, column=2, padx=(0, 5), sticky=tk.EW)
         return checkbtn
+    
+    def __set_update_range_combobox(self) -> Combobox:
+        tip = Label(self.scan_setting_frame, text="索引更新范围", anchor=tk.W)
+        tip.grid(row=1, column=1, padx=(5, 10), sticky=tk.E)
+        combobox = Combobox(self.scan_setting_frame, values=("当前模型", "全部模型"), width=10)
+        combobox.grid(row=1, column=2, padx=(0, 5), sticky=tk.EW)
+        return combobox
 
     def __set_update_threads_count_scale(self) -> Scale:
         tip = Label(self.scan_setting_frame, text="更新线程：8", anchor=tk.W)
-        tip.grid(row=1, column=1, padx=(5, 10), sticky=tk.E)
+        tip.grid(row=2, column=1, padx=(5, 10), sticky=tk.E)
         scale = Scale(self.scan_setting_frame, from_=4, to=20, orient=tk.HORIZONTAL)
-        scale.grid(row=1, column=2, padx=(0, 5), sticky=tk.EW)
+        scale.grid(row=2, column=2, padx=(0, 5), sticky=tk.EW)
         scale.config(command=lambda value: tip.config(text=f"更新线程:  {int(float(value)):0>2}"))
         return scale
 
@@ -118,7 +130,7 @@ class IndexFrame(Frame):
             self.scan_setting_frame, text="管理排除规则",
             takefocus=False, cursor="hand2", style=LINK
         )
-        manage_btn.grid(row=2, column=1, padx=(15, 0), sticky=tk.E)
+        manage_btn.grid(row=3, column=1, padx=(15, 0), sticky=tk.E)
         return manage_btn
 
     def __set_clean_excluded_button(self) -> Button:
@@ -126,6 +138,6 @@ class IndexFrame(Frame):
             self.scan_setting_frame, text="清理排除图片",
             takefocus=False, cursor="hand2", style=LINK
         )
-        btn.grid(row=2, column=2, padx=(5, 0), sticky=tk.W)
+        btn.grid(row=3, column=2, padx=(5, 0), sticky=tk.W)
         return btn
 
