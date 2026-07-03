@@ -3,7 +3,6 @@ from tkinter.font import nametofont
 from ttkbootstrap import Style
 from tkinterdnd2 import DND_FILES
 import tkinter as tk
-import webbrowser
 
 from views import WinGUI, SettingDialog
 from settings import Setting, WinInfo
@@ -22,10 +21,9 @@ from .model_controller import ModelController
 
 class AppController:
     def __init__(self) -> None:
-        self.view = WinGUI()
         self.setting = Setting()
+        self.view = WinGUI(self.setting.app.maximize_window)
         self.search_tools: SearchTool | None = None
-
         self.filter_controller = FilterController(self)
         self.search_controller = SearchController(self)
         self.index_controller = IndexController(self)
@@ -72,6 +70,9 @@ class AppController:
         index_tab.index_dataset_table.bind("<B1-Motion>", self.index_controller.drag_motion)
         index_tab.index_dataset_table.bind("<ButtonRelease-1>", self.index_controller.drag_end)
         index_tab.switch_model_combobox.bind("<<ComboboxSelected>>", self.index_controller.switch_model)
+        index_tab.switch_model_combobox.bind("<MouseWheel>", lambda _: "break")
+        index_tab.switch_model_combobox.bind("<ButtonPress-4>", lambda _: "break")
+        index_tab.switch_model_combobox.bind("<ButtonPress-5>", lambda _: "break")
         
         index_tab.add_index_button.config(command=self.index_controller.add_search_dir)
         index_tab.exclude_button.config(command=self.index_controller.open_exclude_dialog)
@@ -105,7 +106,7 @@ class AppController:
         downloaded_models = self.model_controller.get_downloaded_models()
         self.view.index_tab.switch_model_combobox.config(values=[i.name for i in downloaded_models])
         self.view.index_tab.switch_model_combobox.set(next((i.name for i in downloaded_models if i.id == self.setting.app.current_model), ""))
-        self.view.index_tab.update_range_combobox.set(self.setting.app.update_index_range)
+        self.view.index_tab.update_range_combobox.set("当前模型" if self.setting.app.update_index_range == "current" else "所有模型" )
 
     def change_theme(self, target_theme: str = "") -> None:
         style = Style()
@@ -173,6 +174,7 @@ class AppController:
             self.setting.app.auto_update_index = self.view.index_tab.auto_update_checkbutton.instate(['selected'])
             self.setting.app.max_work_thread = int(float(self.view.index_tab.update_threads_count_scale.get()))
             self.setting.app.similarity_threshold = int(float(self.view.search_tab.filter_panel.sim_scale.get()))
+            self.setting.app.update_index_range = "current" if self.view.index_tab.update_range_combobox.get() == "当前模型" else "all" 
             self.setting.save()
             self.setting.clean_log()
             if self.search_tools:

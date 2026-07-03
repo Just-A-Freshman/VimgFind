@@ -87,7 +87,7 @@ class MenuController(object):
 
         frame1_right = frame1.winfo_rootx() + frame1.winfo_width()
         menu_font = tkfont.Font(font=menu.cget("font"))
-        menu_width = int(menu_font.measure("-") * 24.5)
+        menu_width = int(menu_font.measure("-") * 23)
         menu.post(
             frame1_right - menu_width,
             btn.winfo_rooty() + 50
