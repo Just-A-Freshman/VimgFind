@@ -209,7 +209,7 @@ def get_available_models(setting: Setting) -> list[ModelConfig]:
     result: list[ModelConfig] = []
 
     for mid in installed_ids:
-        cfg = setting._load_model_config(mid)
+        cfg = setting.load_model_config(mid)
         local_map[mid] = cfg
         result.append(cfg)
 
