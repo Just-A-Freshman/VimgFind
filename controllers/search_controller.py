@@ -185,7 +185,7 @@ class SearchController(object):
                     tab.preview_view.append_result(img_path, *extra_info)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
-            messagebox.showerror("搜索失败", f"搜索过程发生异常：{e}\n请查看 error.log 获取详细信息。")
+            messagebox.showerror("错误", f"搜索过程发生异常：{e}")
         finally:
             self._is_finish_search = True
 
@@ -240,19 +240,17 @@ class SearchController(object):
         except (ValueError, TypeError):
             self.similarity_threshold = 0.0
 
-    def set_preview_mode(self, mode: Literal["medium_ico", "detail_info"]) -> None:
+    def set_preview_mode(self, mode: Literal["detail_info", "medium_ico", "big_ico", "huge_ico"]) -> None:
         tab = self.app.view.search_tab
         results = tab.preview_view.get_show_results()
         current_selection = tab.preview_view.selection()
         tab.preview_view.destroy()
         self.app.setting.app.preview_mode = mode
         if mode == "detail_info":
-            tab.preview_view = DetailListView(
-                tab.preview_container,
-                {"大小": 100, "修改时间": 160, "相似度": 100}
-            )
+            tab.preview_view = DetailListView(tab.preview_container, {"大小": 100, "修改时间": 160, "相似度": 100})
         else:
-            tab.preview_view = ThumbnailGridView(tab.preview_container)
+            ico_size = {"medium_ico": 220, "big_ico": 300, "huge_ico": 460}
+            tab.preview_view = ThumbnailGridView(tab.preview_container, ico_size.get(mode, 110))
         if self._queue_total > 0:
             tab.set_nav_visible(True)
         self.app.bind_event()
