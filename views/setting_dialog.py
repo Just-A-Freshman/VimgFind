@@ -26,7 +26,7 @@ class SettingDialog(tk.Toplevel):
         self.iconbitmap(WinInfo.ico_path)
         self.transient(parent)
         self.update_idletasks()
-        win_w = 350
+        win_w = 400
         win_h = 250
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
