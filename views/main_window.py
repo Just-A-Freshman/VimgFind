@@ -43,6 +43,7 @@ class WinGUI(TkinterDnD.Tk):
         self.geometry(geometry)
         self.iconbitmap(WinInfo.ico_path)
         self.option_add("*TCombobox*Listbox.font", (WinInfo.default_font_family, WinInfo.default_font_size))
+        self.option_add('*Menu.font', (WinInfo.default_font_family, WinInfo.default_font_size))
 
     def __set_notebook(self, parent) -> Notebook:
         notebook = Notebook(parent)
