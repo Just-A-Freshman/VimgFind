@@ -64,13 +64,17 @@ class FilterPanel(LabelFrame):
         )
         size_min = Entry(self, width=6)
         size_min.grid(row=2, column=1, sticky=tk.EW, padx=(8, 2), pady=(10, 10))
-        size_min_unit = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
+        size_min_unit = Combobox(
+            self, values=["KB", "MB"], state="readonly", width=4, font=(WinInfo.default_font_family, WinInfo.default_font_size)
+        )
         size_min_unit.grid(row=2, column=2, sticky=tk.EW, padx=(0, 4), pady=(10, 10))
         size_min_unit.current(1)
         Label(self, text="到").grid(row=2, column=3, pady=(10, 10))
         size_max = Entry(self, width=6)
         size_max.grid(row=2, column=4, sticky=tk.EW, padx=(4, 2), pady=(10, 10))
-        size_max_unit = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
+        size_max_unit = Combobox(
+            self, values=["KB", "MB"], state="readonly", width=4, font=(WinInfo.default_font_family, WinInfo.default_font_size)
+        )
         size_max_unit.grid(row=2, column=5, sticky=tk.EW, padx=(0, 0), pady=(10, 10))
         size_max_unit.current(1)
         return size_min, size_min_unit, size_max, size_max_unit
