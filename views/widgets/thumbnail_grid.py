@@ -13,7 +13,7 @@ class ThumbnailGridView(BasicImagePreviewView):
     FONT_HEIGHT: int = 64
     PRELOAD_ROWS: int = 3
 
-    def __init__(self, parent: tk.Widget, thumbnail_size: int = 110) -> None:
+    def __init__(self, parent: tk.Widget, thumbnail_size: int = 220) -> None:
         super().__init__(parent)
         self._create_canvas()
         self.parent.after(50, self._create_scrollbar)
