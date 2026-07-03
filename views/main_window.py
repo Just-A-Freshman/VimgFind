@@ -1,8 +1,7 @@
-from tkinter.ttk import Notebook
 from tkinterdnd2 import TkinterDnD
-from ttkbootstrap import Button
+from ttkbootstrap import Button, Notebook
 from ttkbootstrap.constants import LINK
-from ctypes import windll
+from ttkbootstrap.utility import enable_high_dpi_awareness
 import tkinter as tk
 
 from settings import WinInfo
@@ -19,19 +18,10 @@ class WinGUI(TkinterDnD.Tk):
     common_setting_btn: Button
 
     def __init__(self) -> None:
-        self._set_dpi_awareness()
+        enable_high_dpi_awareness()
         super().__init__()
         self.__win()
         self.switch_tab = self.__set_notebook(self)
-
-    def _set_dpi_awareness(self) -> None:
-        try:
-            windll.shcore.SetProcessDpiAwareness(2)
-        except Exception:
-            try:
-                windll.shcore.SetProcessDpiAwareness(1)
-            except Exception:
-                pass
 
     def __win(self) -> None:
         self.title(WinInfo.title)
