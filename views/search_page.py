@@ -149,7 +149,7 @@ class SearchFrame(Frame):
         self.__set_nav_buttons()
 
     def __set_search_entry(self) -> Entry:
-        ipt = Entry(self)
+        ipt = Entry(self, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         ipt.place(relx=0.01, rely=0.02, relwidth=0.395, relheight=0.0690)
         return ipt
 
