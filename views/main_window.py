@@ -25,6 +25,7 @@ class WinGUI(TkinterDnD.Tk):
 
     def __win(self) -> None:
         self.title(WinInfo.title)
+        self.tk.call('tk', 'scaling', 3)
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         width = WinInfo.width
