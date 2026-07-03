@@ -17,15 +17,17 @@ class WinGUI(TkinterDnD.Tk):
     switch_tab: Notebook
     common_setting_btn: Button
 
-    def __init__(self) -> None:
+    def __init__(self, full_screen: bool = False) -> None:
         enable_high_dpi_awareness()
         super().__init__()
-        self.__win()
+        self.__win(full_screen)
         self.switch_tab = self.__set_notebook(self)
 
-    def __win(self) -> None:
+    def __win(self, full_screen) -> None:
         self.title(WinInfo.title)
         self.tk.call('tk', 'scaling', 3)
+        if full_screen:
+            self.state("zoom")
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         width = WinInfo.width
