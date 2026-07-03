@@ -8,7 +8,6 @@ from settings import WinInfo
 
 class SettingDialog(tk.Toplevel):
     theme_combobox: Combobox
-    maximize_var: tk.BooleanVar
     maximize_checkbutton: Checkbutton
     open_settings_file_btn: Button
     check_update_btn: Button
@@ -17,7 +16,7 @@ class SettingDialog(tk.Toplevel):
         super().__init__(parent)
         self.__win(parent)
         self.theme_combobox = self.__set_theme_combobox()
-        self.maximize_var, self.maximize_checkbutton = self.__set_maximize_checkbutton()
+        self.maximize_checkbutton = self.__set_maximize_checkbutton()
         self.open_settings_file_btn = self.__set_open_settings_file_btn()
         self.check_update_btn = self.__set_check_update_btn()
 
@@ -39,15 +38,14 @@ class SettingDialog(tk.Toplevel):
         theme_setting_frame = Frame(self)
         theme_setting_frame.grid(row=1, column=1, columnspan=2, padx=(30, 30), pady=20, sticky=tk.W)
         Label(theme_setting_frame, text="界面主题：").pack(side=tk.LEFT)
-        combo = Combobox(theme_setting_frame, state="readonly", width=10)
+        combo = Combobox(theme_setting_frame, state="readonly", width=10, font=("微软雅黑", -24))
         combo.pack(side=tk.LEFT)
         return combo
 
-    def __set_maximize_checkbutton(self) -> tuple[tk.BooleanVar, Checkbutton]:
-        var = tk.BooleanVar(value=False)
-        check_btn = Checkbutton(self, text="  启动时最大化窗口", variable=var)
+    def __set_maximize_checkbutton(self) -> Checkbutton:
+        check_btn = Checkbutton(self, text="  启动时最大化窗口")
         check_btn.grid(row=2, column=1, columnspan=2, pady=20, padx=(40, 30), sticky=tk.EW)
-        return var, check_btn
+        return check_btn
 
     def __set_check_update_btn(self) -> Button:
         check_update_btn = Button(self, text="检查更新", takefocus=True, style=LINK, cursor="hand2")
