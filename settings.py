@@ -6,7 +6,6 @@ from datetime import datetime
 from dataclasses import dataclass, field, fields
 from typing import Literal
 import logging
-import ctypes
 
 
 ROOT = Path(__file__).resolve().parent
@@ -188,6 +187,8 @@ class WinInfo(object):
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     ico_path = Setting.config_path / "favicon.ico"
     title = "Vimgfind"
+    default_font_family = "微软雅黑"
+    default_font_size = -24
     width = 1660
     height = 1120
 
