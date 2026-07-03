@@ -188,7 +188,7 @@ class WinInfo(object):
     ico_path = Setting.config_path / "favicon.ico"
     title = "Vimgfind"
     default_font_family = "微软雅黑"
-    default_font_size = -24
+    default_font_size = -28
     width = 1660
     height = 1120
 
