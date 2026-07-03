@@ -18,7 +18,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._create_canvas()
         self.parent.after(50, self._create_scrollbar)
         self._thumbnail_size = thumbnail_size
-        self._characters_size = int(thumbnail_size / 13.75)
+        self._characters_size = int(thumbnail_size / 16)
 
         self._image_loader = ImageLoader()
         self._loading_tasks: set[str] = set()
