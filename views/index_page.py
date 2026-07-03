@@ -3,6 +3,8 @@ from ttkbootstrap.constants import LINK
 from tkinter.ttk import Frame, Treeview, Label, Combobox, LabelFrame
 import tkinter as tk
 
+from settings import WinInfo
+
 
 class IndexFrame(Frame):
     index_tip_label: Label
@@ -67,7 +69,7 @@ class IndexFrame(Frame):
         container = Frame(self.index_setting_frame)
         container.grid(row=0, column=0, columnspan=2, sticky=tk.EW, pady=5)
         Label(container, text="当前模型：").pack(side=tk.LEFT, padx=10)
-        combobox = Combobox(container, state="readonly")
+        combobox = Combobox(container, state="readonly", font=(WinInfo.default_font_family, WinInfo.default_font_size))
         combobox.pack(side=tk.LEFT, padx=(10, 10), expand=True, fill=tk.BOTH)
         return combobox
 
@@ -113,7 +115,9 @@ class IndexFrame(Frame):
         tip = Label(self.scan_setting_frame, text="索引更新范围", anchor=tk.W)
         tip.grid(row=1, column=1, padx=(5, 10), sticky=tk.E)
         combobox = Combobox(
-            self.scan_setting_frame, values=("当前模型", "全部模型"), width=10, state="readonly"
+            self.scan_setting_frame,
+            values=("当前模型", "全部模型"), 
+            width=10, state="readonly", font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )
         combobox.grid(row=1, column=2, padx=(0, 5), sticky=tk.EW)
         return combobox

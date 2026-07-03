@@ -42,7 +42,7 @@ class WinGUI(TkinterDnD.Tk):
         geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) // 2, (screenheight - height) // 2)
         self.geometry(geometry)
         self.iconbitmap(WinInfo.ico_path)
-        self.option_add("*TCombobox*Listbox.font", ("微软雅黑", -24))
+        self.option_add("*TCombobox*Listbox.font", (WinInfo.default_font_family, WinInfo.default_font_size))
 
     def __set_notebook(self, parent) -> Notebook:
         notebook = Notebook(parent)

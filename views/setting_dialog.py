@@ -38,7 +38,7 @@ class SettingDialog(tk.Toplevel):
         theme_setting_frame = Frame(self)
         theme_setting_frame.grid(row=1, column=1, columnspan=2, padx=(30, 30), pady=20, sticky=tk.W)
         Label(theme_setting_frame, text="界面主题：").pack(side=tk.LEFT)
-        combo = Combobox(theme_setting_frame, state="readonly", width=10, font=("微软雅黑", -24))
+        combo = Combobox(theme_setting_frame, state="readonly", width=10, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         combo.pack(side=tk.LEFT)
         return combo
 

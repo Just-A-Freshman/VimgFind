@@ -2,6 +2,7 @@ from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, LabelF
 import tkinter as tk
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
+from settings import WinInfo
 
 
 class FilterPanel(LabelFrame):
@@ -51,6 +52,7 @@ class FilterPanel(LabelFrame):
             self,
             values=["所有图片文件", "PNG", "JPG/JPEG", "WebP", "GIF", "BMP", "TIFF"],
             state="readonly",
+            font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )
         ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(8, 0), pady=(10, 10))
         ext_combo.current(0)

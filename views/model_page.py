@@ -1,5 +1,4 @@
-from ttkbootstrap import Button
-from tkinter.ttk import Frame, LabelFrame, Treeview, Scrollbar
+from ttkbootstrap import Button, Frame, LabelFrame, Treeview, Scrollbar
 import tkinter as tk
 from typing import Literal
 
@@ -11,6 +10,7 @@ class ModelFrame(Frame):
     use_btn: Button
     uninstall_btn: Button
     download_btn: Button
+    download_progress: tk.Label
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
@@ -42,10 +42,7 @@ class ModelFrame(Frame):
         return frame
 
     def __set_detail_text(self) -> tk.Text:
-        text = tk.Text(
-            self.detail_frame, wrap=tk.WORD, relief=tk.FLAT,
-            state=tk.DISABLED, font=("微软雅黑", 10),
-        )
+        text = tk.Text(self.detail_frame, wrap=tk.WORD, relief=tk.FLAT, state=tk.DISABLED)
         text.pack(fill=tk.BOTH, expand=True, padx=8, pady=(8, 4))
         return text
 
@@ -63,12 +60,14 @@ class ModelFrame(Frame):
         uninstall_btn.pack(side=tk.LEFT, padx=(0, 16))
         download_btn = Button(center, text="下载模型", takefocus=False, cursor="hand2", padding=(16, 6))
         download_btn.pack(side=tk.LEFT)
+        self.download_progress = tk.Label(center, text="", fg="gray")
+        self.download_progress.pack(side=tk.LEFT, padx=(8, 0))
         for b in (use_btn, uninstall_btn, download_btn):
             b.pack_forget()
         return use_btn, uninstall_btn, download_btn
 
     def set_model_data(self, data: list[tuple[str, str, str, str, str]]) -> None:
-        self.clear_tree()
+        self.model_tree.delete(*self.model_tree.get_children())
         for item in data:
             self.model_tree.insert("", tk.END, values=item)
 
@@ -81,10 +80,12 @@ class ModelFrame(Frame):
             b.pack_forget()
         if status == "using":
             self.use_btn.config(state=tk.DISABLED)
+            self.uninstall_btn.config(state=tk.DISABLED)
             self.use_btn.pack(side=tk.LEFT, padx=(0, 16))
             self.uninstall_btn.pack(side=tk.LEFT)
         elif status == "downloaded":
             self.use_btn.config(state=tk.NORMAL)
+            self.uninstall_btn.config(state=tk.NORMAL)
             self.use_btn.pack(side=tk.LEFT, padx=(0, 16))
             self.uninstall_btn.pack(side=tk.LEFT)
         else:
@@ -97,10 +98,13 @@ class ModelFrame(Frame):
         self.detail_text.config(state=tk.DISABLED)
         for b in (self.use_btn, self.uninstall_btn, self.download_btn):
             b.pack_forget()
+        self.download_progress.config(text="")
 
-    def get_selected(self) -> str:
-        sel = self.model_tree.selection()
-        return sel[0] if sel else ""
+    def set_download_progress(self, text: str) -> None:
+        self.download_progress.config(text=text)
 
-    def clear_tree(self) -> None:
-        self.model_tree.delete(*self.model_tree.get_children())
+    def set_action_buttons_enabled(self, enabled: bool) -> None:
+        state = tk.NORMAL if enabled else tk.DISABLED
+        for b in (self.use_btn, self.uninstall_btn, self.download_btn):
+            b.config(state=state)
+
