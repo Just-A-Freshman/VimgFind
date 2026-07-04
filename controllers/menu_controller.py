@@ -9,6 +9,7 @@ from tkinter.ttk import Treeview
 
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
+from settings import TkS
 from views.widgets import BasicImagePreviewView
 
 if TYPE_CHECKING:
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class MenuController(object):
-    ACTIVE_BORDER_WIDTH = 6
+    ACTIVE_BORDER_WIDTH = TkS(3)
 
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
@@ -87,10 +88,10 @@ class MenuController(object):
 
         frame1_right = frame1.winfo_rootx() + frame1.winfo_width()
         menu_font = tkfont.Font(font=menu.cget("font"))
-        menu_width = int(menu_font.measure("-") * 23)
+        menu_width = int(menu_font.measure("-") * 21)
         menu.post(
             frame1_right - menu_width,
-            btn.winfo_rooty() + 50
+            btn.winfo_rooty() + TkS(25)
         )
         menu.bind("<Unmap>", lambda e: menu.destroy())
 

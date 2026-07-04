@@ -5,7 +5,7 @@ from tkinterdnd2 import DND_FILES
 import tkinter as tk
 
 from views import WinGUI, SettingDialog
-from settings import Setting, WinInfo
+from settings import Setting, WinInfo, TkS
 import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.update_checker as update_checker
@@ -86,6 +86,7 @@ class AppController:
         model_tab.use_btn.config(command=self.model_controller.switch_model)
         model_tab.uninstall_btn.config(command=self.model_controller.uninstall_model)
         model_tab.download_btn.config(command=self.model_controller.download_model)
+        model_tab.detail_name_entry.bind("<FocusOut>", self.model_controller.on_name_edited)
 
         self.view.drop_target_register(DND_FILES)
         self.view.dnd_bind('<<Drop>>', self.__on_drop)
@@ -114,11 +115,11 @@ class AppController:
         self.setting.app.ui_style = target_theme if target_theme in valid_theme_names else "superhero"
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family=WinInfo.default_font_family, size=WinInfo.default_font_size)
-        self.view.index_tab.index_tip_label.config(font=(WinInfo.default_font_family, -36))
-        self.view.search_tab.nav_page_label.config(font=("", -32))
+        self.view.index_tab.index_tip_label.config(font=(WinInfo.default_font_family, TkS(-18)))
+        self.view.search_tab.nav_page_label.config(font=("", TkS(-18)))
         style.theme_use(self.setting.app.ui_style)
-        style.configure('TNotebook.Tab', font=(WinInfo.default_font_family, -36))
-        style.configure("Treeview", rowheight=60)
+        style.configure('TNotebook.Tab', font=(WinInfo.default_font_family, TkS(-18)))
+        style.configure("Treeview", rowheight=TkS(30))
         self.filter_controller._sync_filter_btn_style()
 
     def open_setting_dialog(self) -> None:

@@ -6,6 +6,7 @@ from pathlib import Path
 import tkinter as tk
 
 import utils.decorators as decorators
+from settings import TkS
 from views import ExcludeDialog
 from .exclude_controller import ExcludePreviewController
 
@@ -205,16 +206,16 @@ class IndexController(object):
         ghost.overrideredirect(True)
         ghost.attributes("-alpha", 0.75, "-topmost", True)
 
-        label = tk.Label(ghost, text=str(dir_path), anchor=tk.W, padx=12, pady=6)
+        label = tk.Label(ghost, text=str(dir_path), anchor=tk.W, padx=TkS(12), pady=TkS(3))
         label.pack()
 
         ghost.update_idletasks()
-        ghost.geometry(f"+{event.x_root + 20}+{event.y_root - 10}")
+        ghost.geometry(f"+{event.x_root + TkS(10)}+{event.y_root - TkS(5)}")
         self._drag_ghost = ghost
 
     def _move_drag_ghost(self, event: tk.Event) -> None:
         if self._drag_ghost:
-            self._drag_ghost.geometry(f"+{event.x_root + 20}+{event.y_root - 10}")
+            self._drag_ghost.geometry(f"+{event.x_root + TkS(10)}+{event.y_root - TkS(5)}")
 
     def _drag_clear_state(self) -> None:
         self._drag_source = None

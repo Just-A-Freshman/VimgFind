@@ -48,5 +48,5 @@ class WinGUI(TkinterDnD.Tk):
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.common_setting_btn = Button(parent, text="通用设置", style=LINK, cursor="hand2")
-        self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=WinInfo.PX_1, anchor=tk.NE)
+        self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=TkS(1), anchor=tk.NE)
         return notebook

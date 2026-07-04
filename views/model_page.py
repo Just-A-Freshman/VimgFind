@@ -35,13 +35,13 @@ class ModelFrame(Frame):
         self.name_tip_label = Label(self.name_edit_frame, text="名称：")
         self.detail_name_entry = Entry(self.name_edit_frame)
         self.detail_desc_text = tk.Text(detail_frame, wrap='char')
-        self.use_btn = Button(detail_frame, text="使用模型", takefocus=False, padding=(WinInfo.PX_15, WinInfo.PX_5))
-        self.uninstall_btn = Button(detail_frame, text="卸载模型", takefocus=False, padding=(WinInfo.PX_15, WinInfo.PX_5), style="secondary")
-        self.download_btn = Button(detail_frame, text="下载模型", takefocus=False, padding=(WinInfo.PX_15, WinInfo.PX_5))
+        self.use_btn = Button(detail_frame, text="使用模型", takefocus=False, padding=(TkS(15), TkS(5)))
+        self.uninstall_btn = Button(detail_frame, text="卸载模型", takefocus=False, padding=(TkS(15), TkS(5)), style="secondary")
+        self.download_btn = Button(detail_frame, text="下载模型", takefocus=False, padding=(TkS(15), TkS(5)))
         self.download_progressbar = Progressbar(detail_frame, orient=tk.HORIZONTAL, mode="determinate", maximum=100)
         self.download_progress_label = Label(detail_frame, text="")
 
-        self.local_share_btn = Button(parent, text="分享模型到 GitHub Issue", cursor="hand2", padding=(TkS(10), WinInfo.PX_4), style="LINK")
+        self.local_share_btn = Button(parent, text="分享模型到 GitHub Issue", cursor="hand2", padding=(TkS(10), TkS(4)), style="LINK")
         self.local_path_entry, self.local_browse_btn = self.__set_local_path_section(local_model_frame)
         self.local_parse_btn = self.__set_local_parse_button(local_model_frame)
         
@@ -54,19 +54,19 @@ class ModelFrame(Frame):
 
     def __set_search_entry(self, parent) -> Entry:
         entry = Entry(parent, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        entry.pack(side=tk.TOP, fill=tk.X, pady=(WinInfo.PX_5, WinInfo.PX_5), padx=WinInfo.PX_5, ipady=WinInfo.PX_5)
+        entry.pack(side=tk.TOP, fill=tk.X, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5))
         return entry
 
     def __set_model_tree(self, parent) -> Treeview:
         columns = ["名称", "标签", "类型", "大小", "状态"]
         tree = Treeview(parent, show="headings", columns=columns)
-        tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=WinInfo.PX_5)
+        tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True, padx=TkS(5))
         col_widths = {"名称": TkS(40), "标签": TkS(30), "类型": TkS(30), "大小": TkS(30), "状态": TkS(30)}
         for col in columns:
             tree.heading(col, text=col, anchor=tk.CENTER)
             tree.column(col, anchor=tk.CENTER, width=col_widths[col], stretch=True)
         scrollbar = Scrollbar(tree, orient=tk.VERTICAL, cursor="hand2")
-        scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=(WinInfo.PX_1, WinInfo.PX_1), padx=WinInfo.PX_1)
+        scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=(TkS(1), TkS(1)), padx=TkS(1))
         scrollbar.config(command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
         return tree
@@ -83,11 +83,11 @@ class ModelFrame(Frame):
 
     def __set_local_path_section(self, parent) -> tuple[Entry, Button]:
         container = Frame(parent)
-        container.pack(fill=tk.X, padx=WinInfo.PX_5, pady=(WinInfo.PX_5, WinInfo.PX_2))
+        container.pack(fill=tk.X, padx=TkS(5), pady=(TkS(5), TkS(2)))
         path_entry = Entry(container)
-        path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, WinInfo.PX_4), ipady=WinInfo.PX_5)
+        path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(4)), ipady=TkS(5))
         browse_btn = Button(container, text="浏览")
-        browse_btn.pack(side=tk.LEFT, ipadx=WinInfo.PX_15, ipady=WinInfo.PX_5)
+        browse_btn.pack(side=tk.LEFT, ipadx=TkS(15), ipady=TkS(5))
         return path_entry, browse_btn
 
     def __set_local_parse_button(self, parent) -> Button:
@@ -105,7 +105,7 @@ class ModelFrame(Frame):
         name = self.model_tree.item(selection[0], "values")[0] if selection else ""
         status = self.model_tree.item(selection[0], "values")[-1] if selection else ""
 
-        self.name_edit_frame.place(relx=0.01, y=WinInfo.PX_5, height=TkS(35), relwidth=0.98)
+        self.name_edit_frame.place(relx=0.01, y=TkS(5), height=TkS(35), relwidth=0.98)
         self.name_tip_label.config(text="名称：")
         self.name_tip_label.pack(side=tk.LEFT)
         self.detail_name_entry.delete(0, tk.END)

@@ -93,9 +93,8 @@ class FilterController:
             fp.place_forget()
         else:
             self.save_filter_state()
-            fp.place(relx=0.01, rely=0.096, relwidth=0.395)
             fp.update_idletasks()
-            fp.place(relx=0.01, rely=0.096, relwidth=0.395, height=fp.winfo_reqheight())
+            fp.place(relx=0.005, rely=0.094, relwidth=0.4, height=fp.winfo_reqheight())
             fp.lift()
 
     def confirm_filter(self) -> None:

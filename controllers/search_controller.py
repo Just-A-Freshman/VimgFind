@@ -249,7 +249,7 @@ class SearchController(object):
         if mode == "detail_info":
             tab.preview_view = DetailListView(tab.preview_container, {"大小": 100, "修改时间": 160, "相似度": 100})
         else:
-            thumbnail_size = {"medium_ico": 220, "big_ico": 300, "huge_ico": 460}.get(mode, 220)
+            thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 220)
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
         if self._queue_total > 0:
             tab.set_nav_visible(True)

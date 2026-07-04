@@ -36,7 +36,7 @@ class SettingDialog(tk.Toplevel):
 
     def __set_theme_combobox(self) -> Combobox:
         theme_setting_frame = Frame(self)
-        theme_setting_frame.grid(row=1, column=1, columnspan=2, padx=(WinInfo.PX_15, WinInfo.PX_15), pady=TkS(10), sticky=tk.W)
+        theme_setting_frame.grid(row=1, column=1, columnspan=2, padx=(TkS(15), TkS(15)), pady=TkS(10), sticky=tk.W)
         Label(theme_setting_frame, text="界面主题：").pack(side=tk.LEFT)
         combo = Combobox(theme_setting_frame, state="readonly", width=10, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         combo.pack(side=tk.LEFT)
@@ -44,17 +44,17 @@ class SettingDialog(tk.Toplevel):
 
     def __set_maximize_checkbutton(self) -> Checkbutton:
         check_btn = Checkbutton(self, text="  启动时最大化窗口")
-        check_btn.grid(row=2, column=1, columnspan=2, pady=TkS(10), padx=(TkS(20), WinInfo.PX_15), sticky=tk.EW)
+        check_btn.grid(row=2, column=1, columnspan=2, pady=TkS(10), padx=(TkS(20), TkS(15)), sticky=tk.EW)
         return check_btn
 
     def __set_check_update_btn(self) -> Button:
         check_update_btn = Button(self, text="检查更新", takefocus=True, style=LINK, cursor="hand2")
-        check_update_btn.grid(row=3, column=1, pady=TkS(10), padx=WinInfo.PX_15, sticky=tk.W)
+        check_update_btn.grid(row=3, column=1, pady=TkS(10), padx=TkS(15), sticky=tk.W)
         return check_update_btn
 
     def __set_open_settings_file_btn(self) -> Button:
         open_settings_file_btn = Button(self, text="配置文件", takefocus=True, style=LINK, cursor="hand2")
-        open_settings_file_btn.grid(row=3, column=2, pady=TkS(10), padx=WinInfo.PX_15)
+        open_settings_file_btn.grid(row=3, column=2, pady=TkS(10), padx=TkS(15))
         return open_settings_file_btn
 
     def destroy(self) -> None:

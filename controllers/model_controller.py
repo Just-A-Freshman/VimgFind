@@ -80,9 +80,26 @@ class ModelController:
         if cfg is None:
             view.show_default()
             return
-        status = self._get_model_status(cfg.id or iid)
-        view.set_detail(cfg.description, status)
+        view.set_detail(cfg)
         view.set_download_progress("")
+
+    def on_name_edited(self, event: tk.Event) -> None:
+        view = self.app.view.model_tab
+        new_name = event.widget.get().strip()
+        if not new_name:
+            return
+
+        selection = view.model_tree.selection()
+        if not selection:
+            return
+        iid = selection[0]
+        values = list(view.model_tree.item(iid, "values"))
+        values[0] = new_name
+        view.model_tree.item(iid, values=values)
+        cfg = self._model_cache.get(iid)
+        if cfg is not None:
+            cfg.name = new_name
+        
 
     def _get_model_status(self, model_id: str) -> Literal["using", "downloaded", "not download"]:
         if model_id == self.app.setting.app.current_model:
