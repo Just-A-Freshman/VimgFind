@@ -59,21 +59,21 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_edit_frame(self, parent) -> Frame:
         btn_frame = Frame(parent)
-        btn_frame.pack(fill=tk.X, padx=WinInfo.PX_2, pady=(WinInfo.PX_1, WinInfo.PX_5))
+        btn_frame.pack(fill=tk.X, padx=TkS(2), pady=(TkS(1), TkS(5)))
         return btn_frame
 
     def __set_rules_tree(self, parent) -> Treeview:
         rules_tree = Treeview(parent, columns=("name",), show="", selectmode="browse", cursor="hand2")
         rules_tree.column("name", stretch=True)
-        rules_tree.pack(fill=tk.BOTH, expand=True, padx=WinInfo.PX_2, pady=(0, WinInfo.PX_1))
+        rules_tree.pack(fill=tk.BOTH, expand=True, padx=TkS(2), pady=(0, TkS(1)))
         scroll = Scrollbar(rules_tree, orient=tk.VERTICAL, command=rules_tree.yview)
-        scroll.pack(fill=tk.Y, side=tk.RIGHT, padx=WinInfo.PX_1, pady=WinInfo.PX_1)
+        scroll.pack(fill=tk.Y, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
         rules_tree.configure(yscrollcommand=scroll.set)
         return rules_tree
 
     def __set_add_rule_btn(self, parent: Frame) -> Button:
         add_rule_btn = Button(parent, text="新建规则", takefocus=False, cursor="hand2")
-        add_rule_btn.pack(side=tk.LEFT, padx=(0, WinInfo.PX_5), ipadx=self._ipadx, ipady=self._ipady)
+        add_rule_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=self._ipadx, ipady=self._ipady)
         return add_rule_btn
 
     def __set_del_rule_btn(self, parent: Frame) -> Button:
@@ -93,7 +93,7 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_preview_path_entry(self, parent: Frame) -> Entry:
         preview_path_entry = Entry(parent, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, WinInfo.PX_2), ipady=self._ipady)
+        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(2)), ipady=self._ipady)
         return preview_path_entry
 
     def __set_browse_btn(self, parent: Frame) -> Button:
@@ -113,11 +113,11 @@ class ExcludeDialog(tk.Toplevel):
     def __set_preview_tree(self, parent: LabelFrame) -> Treeview:
         preview_tree = Treeview(parent, columns=("path",), show="", cursor="hand2")
         preview_tree.column("path", stretch=False, width=TkS(1500))
-        preview_tree.pack(fill=tk.BOTH, expand=True, padx=WinInfo.PX_2)
+        preview_tree.pack(fill=tk.BOTH, expand=True, padx=TkS(2))
 
         preview_scroll_v = Scrollbar(preview_tree, orient=tk.VERTICAL, command=preview_tree.yview)
-        preview_scroll_v.pack(fill=tk.Y, side=tk.RIGHT, padx=WinInfo.PX_1, pady=WinInfo.PX_1)
+        preview_scroll_v.pack(fill=tk.Y, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
         preview_scroll_h = Scrollbar(preview_tree, orient=tk.HORIZONTAL, command=preview_tree.xview)
-        preview_scroll_h.pack(fill=tk.X, side=tk.BOTTOM, padx=(WinInfo.PX_1, 0), pady=WinInfo.PX_1)
+        preview_scroll_h.pack(fill=tk.X, side=tk.BOTTOM, padx=(TkS(1), 0), pady=TkS(1))
         preview_tree.configure(yscrollcommand=preview_scroll_v.set, xscrollcommand=preview_scroll_h.set)
         return preview_tree
