@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 import tkinter as tk
-from ttkbootstrap import Style
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -32,7 +31,6 @@ class FilterController:
                 self.app.search_controller.set_similarity_threshold(float(value))
             )
         )
-        self._sync_filter_btn_style()
         self.refresh_folder_filter()
         fp.folder_select_all.config(variable=self._folder_all_var, command=self._on_folder_select_all)
         fp.folder_listbox.bind("<<ListboxSelect>>", self._on_folder_listbox_select)
@@ -80,12 +78,6 @@ class FilterController:
         lb = self.app.view.search_tab.filter_panel.folder_listbox
         all_selected = len(lb.curselection()) == lb.size()
         self._folder_all_var.set(all_selected)
-
-    def _sync_filter_btn_style(self) -> None:
-        style = Style()
-        entry_bg = style.lookup('TEntry', 'fieldbackground')
-        entry_fg = style.lookup('TEntry', 'foreground')
-        self.app.view.search_tab.filter_btn.config(bg=entry_bg, fg=entry_fg)
 
     def toggle_filter_panel(self) -> None:
         fp = self.app.view.search_tab.filter_panel

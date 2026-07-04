@@ -1,6 +1,5 @@
 from tkinter import messagebox
 from tkinter.font import nametofont
-from ttkbootstrap import Style
 from tkinterdnd2 import DND_FILES
 import tkinter as tk
 
@@ -86,7 +85,6 @@ class AppController:
         model_tab.use_btn.config(command=self.model_controller.switch_model)
         model_tab.uninstall_btn.config(command=self.model_controller.uninstall_model)
         model_tab.download_btn.config(command=self.model_controller.download_model)
-        model_tab.detail_name_entry.bind("<FocusOut>", self.model_controller.on_name_edited)
 
         self.view.drop_target_register(DND_FILES)
         self.view.dnd_bind('<<Drop>>', self.__on_drop)
@@ -110,17 +108,19 @@ class AppController:
         self.view.index_tab.update_range_combobox.set("当前模型" if self.setting.app.update_index_range == "current" else "所有模型" )
 
     def change_theme(self, target_theme: str = "") -> None:
-        style = Style()
+        style = self.view.style
         valid_theme_names = style.theme_names()
         self.setting.app.ui_style = target_theme if target_theme in valid_theme_names else "superhero"
+        style.theme_use(self.setting.app.ui_style)
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family=WinInfo.default_font_family, size=WinInfo.default_font_size)
-        self.view.index_tab.index_tip_label.config(font=(WinInfo.default_font_family, TkS(-18)))
+        self.view.search_tab.filter_btn.config(bg=style.colors.get("inputbg"), fg=style.colors.get("inputfg"))   # type: ignore
+        self.view.model_tab.detail_desc_text.config(bg=style.colors.get('bg'), fg=style.colors.get('fg'))        # type:ignore
         self.view.search_tab.nav_page_label.config(font=("", TkS(-18)))
-        style.theme_use(self.setting.app.ui_style)
+        self.view.index_tab.index_tip_label.config(font=(WinInfo.default_font_family, TkS(-18)))
         style.configure('TNotebook.Tab', font=(WinInfo.default_font_family, TkS(-18)))
         style.configure("Treeview", rowheight=TkS(30))
-        self.filter_controller._sync_filter_btn_style()
+
 
     def open_setting_dialog(self) -> None:
         @decorators.send_task
@@ -140,8 +140,7 @@ class AppController:
                 messagebox.showinfo("检查更新", f"当前版本：v{WinInfo.version}\n你使用的已是最新版本！\n\n仓库地址：{WinInfo.repo_url}")
         
         dialog = SettingDialog(self.view)
-        style = Style()
-        dialog.theme_combobox.config(values=style.theme_names())
+        dialog.theme_combobox.config(values=self.view.style.theme_names())
         dialog.theme_combobox.set(self.setting.app.ui_style)
         dialog.theme_combobox.bind("<<ComboboxSelected>>", lambda e: self.change_theme(e.widget.get()))
         if self.setting.app.maximize_window:
