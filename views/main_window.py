@@ -1,5 +1,5 @@
 from tkinterdnd2 import TkinterDnD
-from ttkbootstrap import Button, Notebook
+from ttkbootstrap import Button, Notebook, Window
 from ttkbootstrap.constants import LINK
 from ttkbootstrap.utility import enable_high_dpi_awareness
 import tkinter as tk
@@ -10,23 +10,26 @@ from .index_page import IndexFrame
 from .model_page import ModelFrame
 
 
-class WinGUI(TkinterDnD.Tk):
+class WinGUI(Window, TkinterDnD.Tk):
     search_tab: SearchFrame
     index_tab: IndexFrame
     model_tab: ModelFrame
     switch_tab: Notebook
     common_setting_btn: Button
 
-    def __init__(self, full_screen: bool = False) -> None:
+    def __init__(self, full_screen: bool = False, topmost: bool = False) -> None:
         enable_high_dpi_awareness()
         super().__init__()
-        self.__win(full_screen)
+        self.__win(full_screen, topmost)
         self.switch_tab = self.__set_notebook(self)
 
-    def __win(self, full_screen) -> None:
+    def __win(self, full_screen: bool, topmost: bool) -> None:
         self.title(WinInfo.title)
         if full_screen:
             self.state("zoom")
+        if topmost:
+            self.attributes("-topmost", True)
+            self.attributes("")
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         width = WinInfo.width
