@@ -199,11 +199,6 @@ class WinInfo(object):
     default_font_size = TkS(-14)
     width = TkS(830)
     height = TkS(560)
-    PX_1 = TkS(1)
-    PX_2 = TkS(2)
-    PX_4 = TkS(4)
-    PX_5 = TkS(5)
-    PX_15 = TkS(15)
 
 
 
