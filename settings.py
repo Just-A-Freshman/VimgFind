@@ -10,6 +10,13 @@ import logging
 
 
 ROOT = Path(__file__).resolve().parent
+SCALE_FACTOR = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+def TkS(value: int | float, restore: bool = False) -> int:
+    if not restore:
+        return int(round(value * SCALE_FACTOR, 0))
+    else:
+        return int(round(value / SCALE_FACTOR, 0))
+
 
 
 @dataclass
@@ -188,19 +195,16 @@ class WinInfo(object):
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     ico_path = Setting.config_path / "favicon.ico"
     title = "Vimgfind"
-    scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
     default_font_family = "微软雅黑"
-    default_font_size = int(round(-14 * scale_factor, 0))
-    width = int(round(930 * scale_factor, 0))
-    height = int(round(560 * scale_factor, 0))
+    default_font_size = TkS(-14)
+    width = TkS(830)
+    height = TkS(560)
+    PX_1 = TkS(1)
+    PX_2 = TkS(2)
+    PX_4 = TkS(4)
+    PX_5 = TkS(5)
+    PX_15 = TkS(15)
 
-    @staticmethod
-    def TkS(value: int | float, restore: bool = False) -> int:
-        if not restore:
-            return int(round(value * WinInfo.scale_factor, 0))
-        else:
-            return int(round(value / WinInfo.scale_factor, 0))
-   
 
 
 logging.basicConfig(
