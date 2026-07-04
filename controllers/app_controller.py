@@ -146,7 +146,13 @@ class AppController:
         dialog.theme_combobox.bind("<<ComboboxSelected>>", lambda e: self.change_theme(e.widget.get()))
         if self.setting.app.maximize_window:
             dialog.maximize_checkbutton.invoke()
+        if self.setting.app.topmost_window:
+            dialog.topmost_checkbutton.invoke()
         dialog.maximize_checkbutton.config(command=lambda: setattr(self.setting.app, 'maximize_window', dialog.maximize_checkbutton.instate(['selected'])))
+        dialog.topmost_checkbutton.config(
+                command=lambda: ((sel := dialog.topmost_checkbutton.instate(['selected'])),
+                setattr(self.setting.app, "topmost_window", sel), self.view.attributes('-topmost', sel), dialog.attributes('-topmost', sel))
+        )
         dialog.open_settings_file_btn.config(command=lambda: file_ops.open_file(Setting.setting_path))
         dialog.check_update_btn.config(command=check_for_update)
 
