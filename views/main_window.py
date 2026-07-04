@@ -4,7 +4,7 @@ from ttkbootstrap.constants import LINK
 from ttkbootstrap.utility import enable_high_dpi_awareness
 import tkinter as tk
 
-from settings import WinInfo
+from settings import WinInfo, TkS
 from .search_page import SearchFrame
 from .index_page import IndexFrame
 from .model_page import ModelFrame
@@ -49,5 +49,5 @@ class WinGUI(TkinterDnD.Tk):
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.common_setting_btn = Button(parent, text="通用设置", style=LINK, cursor="hand2")
-        self.common_setting_btn.place(relx=1.0, x=-5, y=3, anchor=tk.NE)
+        self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=WinInfo.PX_1, anchor=tk.NE)
         return notebook

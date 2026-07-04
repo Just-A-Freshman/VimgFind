@@ -6,14 +6,15 @@ import os
 import utils.file_ops as file_ops
 from .base import BasicImagePreviewView
 from .image_loader import ImageLoader
+from settings import WinInfo, TkS
 
 
 class ThumbnailGridView(BasicImagePreviewView):
-    MARGIN: int = 20
-    FONT_HEIGHT: int = 64
+    MARGIN: int = TkS(10)
+    FONT_HEIGHT: int = TkS(32)
     PRELOAD_ROWS: int = 3
 
-    def __init__(self, parent: tk.Widget, thumbnail_size: int = 220) -> None:
+    def __init__(self, parent: tk.Widget, thumbnail_size: int = TkS(110)) -> None:
         super().__init__(parent)
         self._create_canvas()
         self.parent.after(50, self._create_scrollbar)
@@ -49,7 +50,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._canvas.configure(
             takefocus=1,
             background=self.theme_color.inputbg,
-            highlightthickness=1,
+            highlightthickness=WinInfo.PX_1,
             highlightbackground=self.theme_color.primary,
             highlightcolor=self.theme_color.primary
         )
@@ -57,7 +58,7 @@ class ThumbnailGridView(BasicImagePreviewView):
 
     def _create_scrollbar(self) -> None:
         self._scrollbar = Scrollbar(self._canvas, orient=tk.VERTICAL, cursor="hand2")
-        self._scrollbar.grid(row=0, column=1, sticky=tk.NS, padx=2, pady=2)
+        self._scrollbar.grid(row=0, column=1, sticky=tk.NS, padx=WinInfo.PX_1, pady=WinInfo.PX_1)
         self._canvas.configure(yscrollcommand=self._scrollbar.set)
         self._scrollbar.config(command=self._on_scrollbar_scroll)
         self._scrollbar.bind("<B1-Motion>", self._on_scrollbar_drag)
@@ -73,8 +74,8 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._canvas.bind("<<ThemeChanged>>", lambda e: self._change_theme())
         self._canvas.bind("<Enter>", lambda e: self._canvas.config(highlightbackground=self.theme_color.primary))
         self._canvas.bind("<Leave>", lambda e: self._canvas.config(highlightbackground=self.theme_color.selectbg))
-        self._canvas.bind("<FocusIn>", lambda e: self._canvas.config(highlightthickness=2))
-        self._canvas.bind("<FocusOut>", lambda e: self._canvas.config(highlightthickness=1))
+        self._canvas.bind("<FocusIn>", lambda e: self._canvas.config(highlightthickness=WinInfo.PX_1))
+        self._canvas.bind("<FocusOut>", lambda e: self._canvas.config(highlightthickness=WinInfo.PX_1))
 
     def _change_theme(self) -> None:
         super()._change_theme()
@@ -87,7 +88,7 @@ class ThumbnailGridView(BasicImagePreviewView):
             background=self.theme_color.inputbg,
             highlightbackground=self.theme_color.primary,
             highlightcolor=self.theme_color.primary,
-            highlightthickness=1
+            highlightthickness=WinInfo.PX_1
         )
 
     def _on_scrollbar_scroll(self, *args) -> None:
