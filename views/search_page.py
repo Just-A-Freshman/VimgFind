@@ -150,7 +150,7 @@ class SearchFrame(Frame):
 
     def __set_search_entry(self) -> Entry:
         ipt = Entry(self, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        ipt.place(relx=0.005, rely=0.02, relwidth=0.395, relheight=0.0690)
+        ipt.place(relx=0.005, rely=0.02, relwidth=0.4, relheight=0.0690)
         return ipt
 
     def __set_filter_btn(self) -> tk.Label:
@@ -175,7 +175,7 @@ class SearchFrame(Frame):
 
     def __set_preview_results_frame(self) -> Frame:
         frame = Frame(self)
-        frame.place(relx=0.005, rely=0.1111, relwidth=0.6170, relheight=0.888)
+        frame.place(relx=0.005, rely=0.1111, relwidth=0.622, relheight=0.888)
         return frame
 
     def __set_preview_frame1(self) -> LabelFrame:

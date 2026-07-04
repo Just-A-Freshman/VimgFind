@@ -25,7 +25,6 @@ class WinGUI(TkinterDnD.Tk):
 
     def __win(self, full_screen) -> None:
         self.title(WinInfo.title)
-        self.tk.call('tk', 'scaling', 3)
         if full_screen:
             self.state("zoom")
         screenwidth = self.winfo_screenwidth()
