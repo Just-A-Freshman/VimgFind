@@ -12,10 +12,23 @@ class SettingDialog(tk.Toplevel):
     topmost_checkbutton: Checkbutton
     open_settings_file_btn: Button
     check_update_btn: Button
+    _instance = None
+
+    def __new__(cls, parent=None):
+        if cls._instance is not None and cls._instance.winfo_exists():
+            cls._instance.lift()
+            cls._instance.focus_force()
+            return cls._instance
+        instance = super().__new__(cls)
+        cls._instance = instance
+        return instance
     
     def __init__(self, parent) -> None:
+        if hasattr(self, '_initialized'):
+            return
         super().__init__(parent)
         self.__win(parent)
+        self._initialized = True
         self.theme_combobox = self.__set_theme_combobox()
         self.maximize_checkbutton = self.__set_maximize_checkbutton()
         self.topmost_checkbutton = self.__set_topmost_checkbutton()
