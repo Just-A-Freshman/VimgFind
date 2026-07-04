@@ -16,6 +16,19 @@ def TkS(value: int | float, restore: bool = False) -> int:
         return int(round(value * SCALE_FACTOR, 0))
     else:
         return int(round(value / SCALE_FACTOR, 0))
+    
+STATUS_LABEL = {
+    "using": "正在使用",
+    "downloaded": "已下载",
+    "not download": "未下载",
+}
+
+TYPE_LABEL = {
+    "Image-Text": "图文模型",
+    "Image": "纯图片模型",
+    "Text": "文本模型",
+    "Unknown": "未知",
+}
 
 
 
