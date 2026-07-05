@@ -1,4 +1,4 @@
-from ttkbootstrap import Button, LabelFrame, Frame, Entry, Label, Treeview, Scrollbar
+from ttkbootstrap import Button, Labelframe, Frame, Entry, Label, Treeview, Scrollbar
 from ttkbootstrap.constants import LINK
 import tkinter as tk
 
@@ -52,8 +52,8 @@ class ExcludeDialog(tk.Toplevel):
         self.grab_set()
         self.deiconify()
 
-    def __set_edit_rules_frame(self) -> LabelFrame:
-        frame = LabelFrame(self, text="排除规则")
+    def __set_edit_rules_frame(self) -> Labelframe:
+        frame = Labelframe(self, text="排除规则")
         frame.place(relx=0.04, rely=0.03, relwidth=0.92, relheight=0.40)
         return frame
 
@@ -86,8 +86,8 @@ class ExcludeDialog(tk.Toplevel):
         help_btn.pack(side=tk.RIGHT, padx=(TkS(7), 0))
         return help_btn
 
-    def __set_preview_rules_frame(self) -> LabelFrame:
-        frame = LabelFrame(self, text="选择任意文件夹预览排除效果")
+    def __set_preview_rules_frame(self) -> Labelframe:
+        frame = Labelframe(self, text="选择任意文件夹预览排除效果")
         frame.place(relx=0.04, rely=0.46, relwidth=0.92, relheight=0.53)
         return frame
 
@@ -110,7 +110,7 @@ class ExcludeDialog(tk.Toplevel):
         stop_btn = Button(parent, text="停止", style=LINK, cursor="hand2")
         return stop_btn
 
-    def __set_preview_tree(self, parent: LabelFrame) -> Treeview:
+    def __set_preview_tree(self, parent: Labelframe) -> Treeview:
         preview_tree = Treeview(parent, columns=("path",), show="", cursor="hand2")
         preview_tree.column("path", stretch=False, width=TkS(1500))
         preview_tree.pack(fill=tk.BOTH, expand=True, padx=TkS(2))

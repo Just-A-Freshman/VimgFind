@@ -1,4 +1,4 @@
-from ttkbootstrap import Button, Entry, Frame, Label, LabelFrame, Progressbar, Treeview, Scrollbar, Text
+from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
 import tkinter as tk
 
 from settings import WinInfo, ModelConfig, TkS, STATUS_LABEL
@@ -7,8 +7,8 @@ from settings import WinInfo, ModelConfig, TkS, STATUS_LABEL
 class ModelFrame(Frame):
     load_local_model_entry: Entry
     model_tree: Treeview
-    detail_frame: LabelFrame
-    local_model_frame: LabelFrame
+    detail_frame: Labelframe
+    local_model_frame: Labelframe
     detail_desc_text: Text
     use_btn: Button
     uninstall_btn: Button
@@ -44,8 +44,8 @@ class ModelFrame(Frame):
         
         self.show_default()
 
-    def __set_model_list_frame(self) -> LabelFrame:
-        frame = LabelFrame(self, text="模型列表")
+    def __set_model_list_frame(self) -> Labelframe:
+        frame = Labelframe(self, text="模型列表")
         frame.place(relx=0.01, rely=0.02, relwidth=0.57, relheight=0.98)
         frame.grid_rowconfigure(0, weight=0)
         frame.grid_rowconfigure(1, weight=1)
@@ -77,8 +77,8 @@ class ModelFrame(Frame):
         tree.configure(yscrollcommand=scrollbar.set)
         return tree
 
-    def __set_detail_frame(self) -> LabelFrame:
-        frame = LabelFrame(self, text="模型详情")
+    def __set_detail_frame(self) -> Labelframe:
+        frame = Labelframe(self, text="模型详情")
         frame.place(relx=0.59, rely=0.02, relwidth=0.40, relheight=0.98)
         return frame
 

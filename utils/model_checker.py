@@ -150,7 +150,6 @@ class MultiThreadDownloader:
                         if not chunk:
                             break
                         outfile.write(chunk)
-        # 合并完成后回调 100%
         if self.progress_callback:
             self.progress_callback(self.file_size, self.file_size)
 

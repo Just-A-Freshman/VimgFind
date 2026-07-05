@@ -1,11 +1,11 @@
-from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, LabelFrame, Combobox, Scrollbar
+from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
 import tkinter as tk
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
 from settings import WinInfo, TkS
 
 
-class FilterPanel(LabelFrame):
+class FilterPanel(Labelframe):
     sim_scale: Scale
     sim_value: Label
     ext_combo: Combobox
@@ -122,8 +122,8 @@ class SearchFrame(Frame):
     filter_panel: FilterPanel
     preview_container: Frame
     preview_view: BasicImagePreviewView
-    preview_frame1: LabelFrame
-    preview_frame2: LabelFrame
+    preview_frame1: Labelframe
+    preview_frame2: Labelframe
     preview_canvas1: PreviewCanvasView
     preview_canvas2: PreviewCanvasView
     nav_frame: tk.Frame
@@ -178,13 +178,13 @@ class SearchFrame(Frame):
         frame.place(relx=0.005, rely=0.1111, relwidth=0.622, relheight=0.888)
         return frame
 
-    def __set_preview_frame1(self) -> LabelFrame:
-        frame = LabelFrame(self, text="源图片")
+    def __set_preview_frame1(self) -> Labelframe:
+        frame = Labelframe(self, text="源图片")
         frame.place(relx=0.63, rely=0.095, relwidth=0.365, relheight=0.4444)
         return frame
 
-    def __set_preview_frame2(self) -> LabelFrame:
-        frame = LabelFrame(self, text="匹配图片")
+    def __set_preview_frame2(self) -> Labelframe:
+        frame = Labelframe(self, text="匹配图片")
         frame.place(relx=0.63, rely=0.5555, relwidth=0.365, relheight=0.4444)
         return frame
 
