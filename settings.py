@@ -19,14 +19,13 @@ def TkS(value: int | float, restore: bool = False) -> int:
     
 STATUS_LABEL = {
     "using": "正在使用",
-    "downloaded": "已下载",
-    "not download": "未下载",
+    "downloaded": "可用",
+    "not download": "不可用",
 }
 
 TYPE_LABEL = {
     "Image-Text": "图文模型",
     "Image": "纯图片模型",
-    "Text": "文本模型",
     "Unknown": "未知",
 }
 
@@ -60,7 +59,7 @@ class ModelConfig:
     id: str = ""
     name: str = ""
     label: str = ""
-    model_type: Literal["Image", "Text", "Image-Text", "Unknown"] = "Unknown"
+    model_type: Literal["Image", "Image-Text", "Unknown"] = "Unknown"
     description: str = ""
     download_url: str = ""
     checksum_sha256: str = ""
@@ -68,6 +67,7 @@ class ModelConfig:
 
     # --- model_config section ---
     image_size: int = 224
+    preprocess_type: Literal["resize", "resize_crop", "resize_pad"] = "resize_crop"
     context_length: int = 52
     mean: tuple[float, float, float] = (0.48145466, 0.4578275, 0.40821073)
     std: tuple[float, float, float] = (0.26862954, 0.26130258, 0.27577711)
@@ -90,7 +90,7 @@ class ModelConfig:
         "download_url", "checksum_sha256", "size"
     })
     _model_keys = frozenset({
-        "image_size", "context_length", "mean", "std", "normalization",
+        "image_size", "preprocess_type", "context_length", "mean", "std", "normalization",
         "image_encoder_path", "text_encoder_path", "vocab_path",
     })
     _index_keys = frozenset({
@@ -207,7 +207,9 @@ class Setting(object):
             app_dict = {f.name: getattr(self._app, f.name) for f in fields(AppSettings)}
             json.dump(app_dict, f, indent=4, ensure_ascii=False)
         for mid, cfg in self._model_cache.items():
-            self.write_model_json(self.models_dir / mid, cfg)
+            model_dir = self.models_dir / mid
+            if model_dir.exists():
+                self.write_model_json(model_dir, cfg)
 
 
 
