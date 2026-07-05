@@ -21,7 +21,7 @@ from .model_controller import ModelController
 class AppController:
     def __init__(self) -> None:
         self.setting = Setting()
-        self.view = WinGUI(self.setting.app.maximize_window)
+        self.view = WinGUI(self.setting.app.maximize_window, self.setting.app.topmost_window)
         self.search_tools: SearchTool | None = None
         self.filter_controller = FilterController(self)
         self.search_controller = SearchController(self)
@@ -33,13 +33,12 @@ class AppController:
         self.search_controller.set_preview_mode(self.setting.app.preview_mode)
         self.search_controller.set_similarity_threshold(self.setting.app.similarity_threshold)
         self.bind_event(first_time=True)
-        self.view.after(0, self.__env_init)
+        self.view.after(10, self.__env_init)
         self.view.protocol("WM_DELETE_WINDOW", self.destroy)
 
     def bind_event(self, first_time=False) -> None:
         search_tab = self.view.search_tab
         index_tab = self.view.index_tab
-
         self.view.common_setting_btn.config(command=self.open_setting_dialog)
         search_tab.preview_view.bind("<<ItemviewSelect>>", self.search_controller.preview_found_image)
         search_tab.preview_view.bind("<Control-a>", lambda e: search_tab.preview_view.selection_set(tk.ALL))
@@ -82,6 +81,8 @@ class AppController:
 
         model_tab = self.view.model_tab
         model_tab.model_tree.bind("<<TreeviewSelect>>", self.model_controller.on_model_select)
+        model_tab.model_tree.bind("<Double-Button-1>", self.model_controller.on_model_double_click)
+        model_tab.name_edit_entry.bind("<FocusOut>", self.model_controller.on_name_edited)
         model_tab.use_btn.config(command=self.model_controller.switch_model)
         model_tab.uninstall_btn.config(command=self.model_controller.uninstall_model)
         model_tab.download_btn.config(command=self.model_controller.download_model)
@@ -115,12 +116,11 @@ class AppController:
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family=WinInfo.default_font_family, size=WinInfo.default_font_size)
         self.view.search_tab.filter_btn.config(bg=style.colors.get("inputbg"), fg=style.colors.get("inputfg"))   # type: ignore
-        self.view.model_tab.detail_desc_text.config(bg=style.colors.get('bg'), fg=style.colors.get('fg'))        # type:ignore
+        self.view.model_tab.detail_desc_text.config(bg=style.colors.get('bg'), fg=style.colors.get('fg'),selectbackground=style.colors.get('selectbg'))  # type:ignore
         self.view.search_tab.nav_page_label.config(font=("", TkS(-18)))
         self.view.index_tab.index_tip_label.config(font=(WinInfo.default_font_family, TkS(-18)))
         style.configure('TNotebook.Tab', font=(WinInfo.default_font_family, TkS(-18)))
         style.configure("Treeview", rowheight=TkS(30))
-
 
     def open_setting_dialog(self) -> None:
         @decorators.send_task
@@ -143,9 +143,9 @@ class AppController:
         dialog.theme_combobox.config(values=self.view.style.theme_names())
         dialog.theme_combobox.set(self.setting.app.ui_style)
         dialog.theme_combobox.bind("<<ComboboxSelected>>", lambda e: self.change_theme(e.widget.get()))
-        if self.setting.app.maximize_window:
+        if self.setting.app.maximize_window and not dialog.maximize_checkbutton.instate(['selected']):
             dialog.maximize_checkbutton.invoke()
-        if self.setting.app.topmost_window:
+        if self.setting.app.topmost_window and not dialog.topmost_checkbutton.instate(['selected']):
             dialog.topmost_checkbutton.invoke()
         dialog.maximize_checkbutton.config(command=lambda: setattr(self.setting.app, 'maximize_window', dialog.maximize_checkbutton.instate(['selected'])))
         dialog.topmost_checkbutton.config(

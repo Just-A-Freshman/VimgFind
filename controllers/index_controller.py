@@ -33,9 +33,12 @@ class IndexController(object):
         self._is_updating = False
 
     def switch_model(self, event) -> None:
-        model = next((i for i in self.app.model_controller.get_downloaded_models() if i.name == event.widget.get()), None)
-        if model:
-            self.app.model_controller.switch_model(model.id)
+        idx = event.widget.current()
+        if idx < 0:
+            return
+        models = self.app.model_controller.get_downloaded_models()
+        if idx < len(models):
+            self.app.model_controller.switch_model(models[idx].id)
 
     def add_search_dir(self, dir_path: str = "") -> None:
         if dir_path != "" and not Path(dir_path).is_dir():
