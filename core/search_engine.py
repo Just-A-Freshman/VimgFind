@@ -13,7 +13,7 @@ from PIL import Image
 
 from settings import Setting
 from .index_manager import VectorIndexManager, NameIndexManager
-from .multimodal_encoder import MultiModalEncoder
+from .multimodal_encoder import MultiModalEncoder, ImagePreprocess
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.exclude_rules as exclude_rules
@@ -62,14 +62,18 @@ class SearchTool(object):
             rel_base / cfg.name_index_path,
             setting.app.max_match_count
         )
+        preprocess = ImagePreprocess(
+            image_size=cfg.image_size,
+            preprocess_type=cfg.preprocess_type,
+            mean=cfg.mean,
+            std=cfg.std,
+        )
         self.__multimodal_encoder = MultiModalEncoder(
             (rel_base / cfg.vocab_path) if cfg.vocab_path else None,
             (rel_base / cfg.image_encoder_path) if cfg.image_encoder_path else None,
             (rel_base / cfg.text_encoder_path) if cfg.text_encoder_path else None,
-            np.array(cfg.mean, dtype=np.float32)[:, None, None],
-            np.array(cfg.std, dtype=np.float32)[:, None, None],
+            preprocess,
             cfg.normalization,
-            cfg.image_size,
             cfg.context_length
         )
         self.__init_event.set()
