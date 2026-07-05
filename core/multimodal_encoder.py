@@ -1,10 +1,96 @@
 from pathlib import Path
 import logging
+from typing import Callable, Literal
 
 from .tokenizer import FullTokenizer
 from PIL import Image
 import numpy as np
 import onnxruntime as ort
+
+
+
+class ImagePreprocess:
+    VALID_TYPES = frozenset({"resize", "resize_crop", "resize_pad"})
+
+    def __init__(
+        self,
+        image_size: int,
+        preprocess_type: Literal["resize", "resize_crop", "resize_pad"] = "resize_crop",
+        mean: tuple[float, float, float] | np.ndarray | None = None,
+        std: tuple[float, float, float] | np.ndarray | None = None,
+        fill_color: tuple[int, int, int] | None = None,
+    ) -> None:
+        if preprocess_type not in self.VALID_TYPES:
+            raise ValueError(f"未知的 preprocess_type: {preprocess_type!r}")
+
+        self.__image_size = image_size
+        self.__mean = np.array(mean, dtype=np.float32).ravel()[:, None, None] if mean is not None else None
+        self.__std = np.array(std, dtype=np.float32).ravel()[:, None, None] if std is not None else None
+
+        if fill_color is not None:
+            self.__fill_color = fill_color
+        elif self.__mean is not None:
+            self.__fill_color = tuple(
+                max(0, min(255, int(round(float(m) * 255))))
+                for m in self.__mean.ravel().tolist()
+            )
+        else:
+            self.__fill_color = (0, 0, 0)
+
+        _geo_map: dict[str, Callable[[Image.Image], Image.Image]] = {
+            "resize": self.__apply_resize,
+            "resize_crop": self.__apply_resize_crop,
+            "resize_pad": self.__apply_resize_pad,
+        }
+        self.__apply_geometry = _geo_map[preprocess_type]
+
+    def __call__(self, img: Image.Image) -> np.ndarray:
+        img = self._ensure_rgb(img)
+        img = self.__apply_geometry(img)
+        arr = np.asarray(img, dtype=np.float32).transpose(2, 0, 1)
+        if self.__mean is not None and self.__std is not None:
+            arr = (arr / 255.0 - self.__mean) / self.__std
+        return np.expand_dims(arr, axis=0)
+
+    @staticmethod
+    def _ensure_rgb(img: Image.Image) -> Image.Image:
+        if img.mode in ('P', 'PA', '1', 'L', 'LA'):
+            img = img.convert('RGBA')
+        if img.mode == 'RGBA':
+            background = Image.new('RGB', img.size)
+            background.paste(img, mask=img.split()[-1])
+            img = background
+        else:
+            img = img.convert("RGB")
+        return img
+
+    def __apply_resize(self, img: Image.Image) -> Image.Image:
+        return img.resize((self.__image_size, self.__image_size), Image.Resampling.BICUBIC)
+
+    def __apply_resize_crop(self, img: Image.Image) -> Image.Image:
+        w, h = img.size
+        if w < h:
+            new_w = self.__image_size
+            new_h = int(h * self.__image_size / w)
+        else:
+            new_h = self.__image_size
+            new_w = int(w * self.__image_size / h)
+        img = img.resize((new_w, new_h), Image.Resampling.BICUBIC)
+        left = (new_w - self.__image_size) // 2
+        top = (new_h - self.__image_size) // 2
+        return img.crop((left, top, left + self.__image_size, top + self.__image_size))
+
+    def __apply_resize_pad(self, img: Image.Image) -> Image.Image:
+        w, h = img.size
+        scale = self.__image_size / max(w, h)
+        new_w = int(round(w * scale))
+        new_h = int(round(h * scale))
+        img = img.resize((new_w, new_h), Image.Resampling.BICUBIC)
+        canvas = Image.new("RGB", (self.__image_size, self.__image_size), self.__fill_color)   # type:ignore
+        left = (self.__image_size - new_w) // 2
+        top = (self.__image_size - new_h) // 2
+        canvas.paste(img, (left, top))
+        return canvas
 
 
 class MultiModalEncoder:
@@ -13,16 +99,12 @@ class MultiModalEncoder:
             vocab_path: Path | None,
             image_encoder_path: Path | None,
             text_encoder_path: Path | None,
-            mean: np.ndarray,
-            std: np.ndarray,
+            preprocess: ImagePreprocess,
             normalization: bool,
-            image_size: int,
             context_length: int
         ) -> None:
 
-        self.__image_size = image_size
-        self.__mean = mean
-        self.__std = std
+        self.__preprocess = preprocess
         self.__normalization = normalization
         self.__context_length = context_length
         self.__tokenizer = FullTokenizer(vocab_path) if vocab_path else None
@@ -71,25 +153,9 @@ class MultiModalEncoder:
             norm[norm == 0] = 1.0
             fv /= norm
 
-    def _preprocess_image(self, img: Image.Image) -> np.ndarray | None:
-        if img.mode in ('P', 'PA', '1', 'L', 'LA'):
-            img = img.convert('RGBA')
-
-        if img.mode == 'RGBA':
-            background = Image.new('RGB', img.size)
-            background.paste(img, mask=img.split()[-1])
-            img = background
-        else:
-            img = img.convert("RGB")
-        img = img.resize((self.__image_size, self.__image_size), Image.Resampling.BICUBIC)
-        img_array = np.asarray(img, dtype=np.float32).transpose(2, 0, 1)
-        img_array = (img_array / 255.0 - self.__mean) / self.__std
-        img_array = np.expand_dims(img_array, axis=0)
-        return img_array
-
     def encode_image(self, image_obj: Image.Image) -> np.ndarray | None:
         assert self.image_session is not None, "该模型不是图片模型，无法进行以图搜图"
-        processed_image = self._preprocess_image(image_obj)
+        processed_image = self.__preprocess(image_obj)
         if processed_image is None:
             return None
         try:
@@ -122,3 +188,4 @@ class MultiModalEncoder:
         self.image_session = None
         self.text_session = None
         self.__tokenizer = None
+
