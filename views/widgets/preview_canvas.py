@@ -6,11 +6,18 @@ from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 from .base import BasicImagePreviewView
 
 
+class TransientToolTip(tooltip.ToolTip):
+    def show_tip(self, *_) -> None:
+        super().show_tip(*_)
+        if self.toplevel:
+            self.toplevel.attributes('-topmost', True)
+
+
 class PreviewCanvasView(BasicImagePreviewView):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self._canvas = self._create_canvas(parent)
-        self._tooltip = tooltip.ToolTip(self._canvas, text="没有文件", delay=500)
+        self._tooltip = TransientToolTip(self._canvas, text="没有文件", delay=500)
 
     def _create_canvas(self, parent) -> tk.Canvas:
         canvas = tk.Canvas(parent, highlightthickness=0, cursor="hand2")
