@@ -175,32 +175,39 @@ class Setting(object):
             if d.is_dir() and (d / "model.json").exists()
         ])
 
+    def write_model_json(self, model_dir: Path, cfg: ModelConfig) -> None:
+        meta_part: dict = {}
+        model_part: dict = {}
+        index_part: dict = {}
+        for f in fields(ModelConfig):
+            val = getattr(cfg, f.name)
+            if f.name in ModelConfig._meta_keys:
+                meta_part[f.name] = val
+            elif f.name in ModelConfig._model_keys:
+                model_part[f.name] = val
+            elif f.name in ModelConfig._index_keys:
+                index_part[f.name] = val
+        model_path = model_dir / "model.json"
+        with open(model_path, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "meta_info": meta_part,
+                    "model_config": model_part,
+                    "index_config": index_part,
+                },
+                f, indent=4, ensure_ascii=False,
+            )
+
+    def save_model_config(self, model_id: str, cfg: ModelConfig) -> None:
+        self._model_cache[model_id] = cfg
+        self.write_model_json(self.models_dir / model_id, cfg)
+
     def save(self) -> None:
         with open(Setting.setting_path, "w", encoding="utf-8") as f:
             app_dict = {f.name: getattr(self._app, f.name) for f in fields(AppSettings)}
             json.dump(app_dict, f, indent=4, ensure_ascii=False)
         for mid, cfg in self._model_cache.items():
-            meta_part: dict = {}
-            model_part: dict = {}
-            index_part: dict = {}
-            for f in fields(ModelConfig):
-                val = getattr(cfg, f.name)
-                if f.name in ModelConfig._meta_keys:
-                    meta_part[f.name] = val
-                elif f.name in ModelConfig._model_keys:
-                    model_part[f.name] = val
-                elif f.name in ModelConfig._index_keys:
-                    index_part[f.name] = val
-            model_path = self.models_dir / mid / "model.json"
-            with open(model_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    {
-                        "meta_info": meta_part,
-                        "model_config": model_part,
-                        "index_config": index_part,
-                    },
-                    f, indent=4, ensure_ascii=False,
-                )
+            self.write_model_json(self.models_dir / mid, cfg)
 
 
 
