@@ -50,6 +50,6 @@ class WinGUI(Window, TkinterDnD.Tk):
         notebook.add(self.model_tab, text="  模型  ")
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        self.common_setting_btn = Button(parent, text="通用设置", style=LINK, cursor="hand2")
+        self.common_setting_btn = Button(parent, text="通用设置", style=LINK, cursor="hand2", takefocus=False)
         self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=TkS(1), anchor=tk.NE)
         return notebook
