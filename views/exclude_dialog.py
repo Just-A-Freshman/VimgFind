@@ -2,7 +2,7 @@ from ttkbootstrap import Button, Labelframe, Frame, Entry, Label, Treeview, Scro
 from ttkbootstrap.constants import LINK
 import tkinter as tk
 
-from settings import WinInfo, TkS
+from config.settings import WinInfo, TkS
 
 
 class ExcludeDialog(tk.Toplevel):

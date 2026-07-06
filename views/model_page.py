@@ -1,7 +1,8 @@
 from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
 import tkinter as tk
 
-from settings import WinInfo, ModelConfig, TkS, STATUS_LABEL
+from config.types import ModelConfig
+from config.settings import WinInfo, TkS, STATUS_LABEL
 
 
 class ModelFrame(Frame):
@@ -104,7 +105,7 @@ class ModelFrame(Frame):
         self.name_edit_entry.place(x=TkS(50), y=TkS(5), height=TkS(35), relwidth=0.8)
         self.detail_desc_text.config(state=tk.NORMAL)
         self.detail_desc_text.delete('1.0', tk.END)
-        text = f"描述：{model_config.description}\n\n下载地址：{model_config.download_url}"
+        text = f"描述：{model_config.meta.description}\n\n下载地址：{model_config.meta.download_url}"
         self.detail_desc_text.insert(tk.END, text)
         self.detail_desc_text.place(relx=0.01, y=TkS(70), relwidth=0.98, relheight=0.7)
         self.detail_desc_text.config(state=tk.DISABLED)

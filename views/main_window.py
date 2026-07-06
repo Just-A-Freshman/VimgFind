@@ -4,7 +4,7 @@ from ttkbootstrap.constants import LINK
 from ttkbootstrap.utility import enable_high_dpi_awareness
 import tkinter as tk
 
-from settings import WinInfo, TkS
+from config.settings import WinInfo, TkS
 from .search_page import SearchFrame
 from .index_page import IndexFrame
 from .model_page import ModelFrame

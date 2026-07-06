@@ -3,7 +3,7 @@ from tkinter.ttk import Treeview, Scrollbar
 import os
 
 from .base import BasicImagePreviewView
-from settings import TkS
+from config.settings import TkS
 
 
 class DetailListView(BasicImagePreviewView):

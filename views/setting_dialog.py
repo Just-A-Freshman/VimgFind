@@ -3,7 +3,7 @@ from ttkbootstrap.constants import LINK
 from ttkbootstrap.publisher import Publisher
 import tkinter as tk
 
-from settings import WinInfo, TkS
+from config.settings import WinInfo, TkS
 
 
 class SettingDialog(tk.Toplevel):

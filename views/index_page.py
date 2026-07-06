@@ -3,7 +3,7 @@ from ttkbootstrap.constants import LINK
 from tkinter.ttk import Frame, Treeview, Label, Combobox, LabelFrame
 import tkinter as tk
 
-from settings import WinInfo, TkS
+from config.settings import WinInfo, TkS
 
 
 class IndexFrame(Frame):

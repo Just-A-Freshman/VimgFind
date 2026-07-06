@@ -6,7 +6,7 @@ import os
 import utils.file_ops as file_ops
 from .base import BasicImagePreviewView
 from .image_loader import ImageLoader
-from settings import TkS
+from config.settings import TkS
 
 
 class ThumbnailGridView(BasicImagePreviewView):

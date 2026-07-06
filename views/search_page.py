@@ -2,7 +2,7 @@ from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelf
 import tkinter as tk
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
-from settings import WinInfo, TkS
+from config.settings import WinInfo, TkS
 
 
 class FilterPanel(Labelframe):
