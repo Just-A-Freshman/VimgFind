@@ -1,7 +1,7 @@
 import pathspec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
-from settings import Setting
+from config.settings import Setting
 
 
 def _has_wildcard(pattern: str) -> bool:

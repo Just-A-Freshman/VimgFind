@@ -8,8 +8,8 @@ import win32con
 from PIL import Image, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
 
-from settings import Setting
-from . import file_ops
+from config.settings import Setting
+import file_ops
 
 
 def parse_image_from_clipboard_bytes() -> None | ImageFile:
@@ -21,7 +21,7 @@ def parse_image_from_clipboard_bytes() -> None | ImageFile:
         if not win32clipboard.IsClipboardFormatAvailable(win32con.CF_DIB):
             return None
         dib_data = win32clipboard.GetClipboardData(win32con.CF_DIB)
-        return Image.open(io.BytesIO(dib_data))
+        return Image.open(io.BytesIO(dib_data))   # type:ignore
     except Exception:
         return None
     finally:
@@ -30,7 +30,7 @@ def parse_image_from_clipboard_bytes() -> None | ImageFile:
 
 def parse_image_from_path(image_path: str | Path) -> ImageFile | None:
     try:
-        return Image.open(image_path)
+        return Image.open(image_path)  # type:ignore
     except (UnidentifiedImageError, OSError, FileNotFoundError) as e:
         return
 

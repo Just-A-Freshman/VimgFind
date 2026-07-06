@@ -12,8 +12,9 @@ from urllib.error import URLError
 import urllib.request as request
 import urllib.error
 
-from settings import Setting, ModelConfig
-from utils import file_ops
+from config.types import ModelConfig
+from config.settings import Setting
+import file_ops
 
 
 
@@ -260,10 +261,10 @@ def get_available_models(setting: Setting) -> list[ModelConfig]:
             continue
         if mid in local_map:
             disk_cfg = local_map[mid]
-            if not disk_cfg.download_url:
-                disk_cfg.download_url = meta.get("download_url", "")
-            if not disk_cfg.checksum_sha256:
-                disk_cfg.checksum_sha256 = meta.get("checksum_sha256", "")
+            if not disk_cfg.meta.download_url:
+                disk_cfg.meta.download_url = meta.get("download_url", "")
+            if not disk_cfg.meta.checksum_sha256:
+                disk_cfg.meta.checksum_sha256 = meta.get("checksum_sha256", "")
         else:
             result.append(ModelConfig.from_dict(entry))
 

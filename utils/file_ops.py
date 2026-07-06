@@ -1,5 +1,4 @@
 import ctypes
-import hashlib
 import logging
 import os
 import shutil
@@ -12,7 +11,7 @@ from typing import Iterator
 
 import win32clipboard
 
-import utils.exclude_rules as exclude_rules
+import exclude_rules
 
 
 class DROPFILES(ctypes.Structure):
