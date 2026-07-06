@@ -24,8 +24,8 @@ STATUS_LABEL = {
 }
 
 TYPE_LABEL = {
-    "Image-Text": "图文模型",
-    "Image": "纯图片模型",
+    "Image-Text": "多模态模型",
+    "Image": "图像模型",
     "Unknown": "未知",
 }
 
