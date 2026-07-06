@@ -58,7 +58,7 @@ class MultiThreadDownloader:
 
         if not self.accept_ranges or self.file_size < self.chunk_size * 2:
             self.num_threads = 1
-        # 限制最大线程数：不超过分块数，上限 64
+            
         max_possible = max(1, self.file_size // self.chunk_size)
         self.num_threads = min(self.num_threads, max_possible, 64)
 
@@ -114,7 +114,6 @@ class MultiThreadDownloader:
         self._get_file_info()
         ranges = self._get_ranges()
 
-        # 重置状态（支持重复调用）
         self.threads.clear()
         self.part_files.clear()
         self.downloaded = 0
