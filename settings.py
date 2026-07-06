@@ -68,10 +68,12 @@ class ModelConfig:
     # --- model_config section ---
     image_size: int = 224
     preprocess_type: Literal["resize", "resize_crop", "resize_pad"] = "resize_crop"
+    fill_color: tuple[int, int, int] | None = None
     context_length: int = 52
     mean: tuple[float, float, float] = (0.48145466, 0.4578275, 0.40821073)
     std: tuple[float, float, float] = (0.26862954, 0.26130258, 0.27577711)
     normalization: bool = True
+    output_index: int = 0
     image_encoder_path: str = ""
     text_encoder_path: str = ""
     vocab_path: str = ""
@@ -90,7 +92,8 @@ class ModelConfig:
         "download_url", "checksum_sha256", "size"
     })
     _model_keys = frozenset({
-        "image_size", "preprocess_type", "context_length", "mean", "std", "normalization",
+        "image_size", "preprocess_type", "fill_color", "output_index",
+        "context_length", "mean", "std", "normalization",
         "image_encoder_path", "text_encoder_path", "vocab_path",
     })
     _index_keys = frozenset({
