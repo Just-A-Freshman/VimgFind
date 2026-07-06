@@ -203,5 +203,47 @@
             "search_dir": [],
             "exclude_rules": []
         }
+    },
+    {
+        "meta_info": {
+            "id": "osnet",
+            "name": "Osnet",
+            "label": "同类匹配",
+            "model_type": "Image",
+            "description": "OSNet 设计之初就是为了“分辨谁是谁”的，这决定了它极其擅长区分细节相似但不同的目标。如果你用来做同款商品匹配（比如找同款鞋子、包包）、特定车辆检索，或者跨摄像头人物识别，它的表现会非常好。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/osnet.zip",
+            "checksum_sha256": "sha256:14a60cadd7b789ce0dd0ed209de2560ba1d1461c9b4e58b31025ceb8b6c97b82",
+            "size": 8761813
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize",
+            "fill_color": null,
+            "context_length": null,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": true,
+            "output_index": 0,
+            "image_encoder_path": "model.onnx",
+            "text_encoder_path": null,
+            "vocab_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 512,
+            "index_space": "cosine",
+            "search_dir": [],
+            "exclude_rules": []
+        }
     }
 ]
