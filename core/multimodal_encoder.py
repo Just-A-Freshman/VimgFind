@@ -18,7 +18,7 @@ class ImagePreprocess:
         preprocess_type: Literal["resize", "resize_crop", "resize_pad"] = "resize_crop",
         mean: tuple[float, float, float] | np.ndarray | None = None,
         std: tuple[float, float, float] | np.ndarray | None = None,
-        fill_color: tuple[int, int, int] | None = None,
+        fill_color: tuple[int, int, int] | None = None
     ) -> None:
         if preprocess_type not in self.VALID_TYPES:
             raise ValueError(f"未知的 preprocess_type: {preprocess_type!r}")
@@ -101,11 +101,13 @@ class MultiModalEncoder:
             text_encoder_path: Path | None,
             preprocess: ImagePreprocess,
             normalization: bool,
+            output_index: int,
             context_length: int
         ) -> None:
 
         self.__preprocess = preprocess
         self.__normalization = normalization
+        self.__output_index = output_index
         self.__context_length = context_length
         self.__tokenizer = FullTokenizer(vocab_path) if vocab_path else None
         self.image_session = self._init_onnx_session(image_encoder_path)
@@ -161,7 +163,7 @@ class MultiModalEncoder:
         try:
             input_name = self.image_session.get_inputs()[0].name
             result = self.image_session.run([], {input_name: processed_image})
-            image_features = result[0][0]
+            image_features = result[self.__output_index][0]
             self._normalization(image_features)
         except Exception as e:
             logging.error(f"编码图像时出现错误: {e}")
@@ -188,4 +190,3 @@ class MultiModalEncoder:
         self.image_session = None
         self.text_session = None
         self.__tokenizer = None
-

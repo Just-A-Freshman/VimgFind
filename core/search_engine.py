@@ -67,6 +67,7 @@ class SearchTool(object):
             preprocess_type=cfg.preprocess_type,
             mean=cfg.mean,
             std=cfg.std,
+            fill_color=cfg.fill_color
         )
         self.__multimodal_encoder = MultiModalEncoder(
             (rel_base / cfg.vocab_path) if cfg.vocab_path else None,
@@ -74,6 +75,7 @@ class SearchTool(object):
             (rel_base / cfg.text_encoder_path) if cfg.text_encoder_path else None,
             preprocess,
             cfg.normalization,
+            cfg.output_index,
             cfg.context_length
         )
         self.__init_event.set()
