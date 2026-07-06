@@ -6,6 +6,9 @@ from pathlib import Path
 import tkinter as tk
 
 import utils.decorators as decorators
+from settings import TkS
+from views import ExcludeDialog
+from .exclude_controller import ExcludePreviewController
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -23,11 +26,19 @@ class IndexController(object):
 
     def update_index_tip(self) -> None:
         assert self.app.search_tools
-        tab = self.app.view.setting_tab
+        tab = self.app.view.index_tab
         tab.index_tip_label.config(
             text=f"当前索引图库({self.app.search_tools.valid_index_count}张图片)"
         )
         self._is_updating = False
+
+    def switch_model(self, event) -> None:
+        idx = event.widget.current()
+        if idx < 0:
+            return
+        models = self.app.model_controller.get_downloaded_models()
+        if idx < len(models):
+            self.app.model_controller.switch_model(models[idx].id)
 
     def add_search_dir(self, dir_path: str = "") -> None:
         if dir_path != "" and not Path(dir_path).is_dir():
@@ -60,7 +71,7 @@ class IndexController(object):
         self.sync_index()
 
     def refresh_index_dataset_table(self) -> None:
-        tb = self.app.view.setting_tab.index_dataset_table
+        tb = self.app.view.index_tab.index_dataset_table
         for item in tb.get_children():
             tb.delete(item)
         search_dirs = self.app.setting.model.search_dir
@@ -68,8 +79,23 @@ class IndexController(object):
             tb.insert("", tk.END, values=(index, dir_path))
         self.app.filter_controller.refresh_folder_filter()
 
+    def open_exclude_dialog(self) -> None:
+        dialog = ExcludeDialog(self.app.view, self.app.setting)
+        controller = ExcludePreviewController(dialog, self.app.setting)
+        dialog.help_btn.config(command=controller.open_help_doc)
+        dialog.stop_btn.config(command=controller.stop_scan)
+        dialog.add_rule_btn.config(command=controller.on_add_name)
+        dialog.del_rule_btn.config(command=controller.on_delete_selected)
+        dialog.browse_btn.config(command=controller.on_browse)
+        dialog.preview_path_entry.bind("<Return>", lambda e: controller.trigger_preview())
+        dialog.rules_tree.bind("<<TreeviewSelect>>", controller.on_rule_select)
+        dialog.rules_tree.bind("<Double-Button-1>", controller.on_item_double_click)
+        dialog.preview_tree.bind("<Double-Button-1>", controller.on_preview_double_click)
+        dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
+        controller.load_rules_into_view()
+
     def drag_start(self, event: tk.Event) -> None:
-        tb = self.app.view.setting_tab.index_dataset_table
+        tb = self.app.view.index_tab.index_dataset_table
         item = tb.identify_row(event.y)
         if not item:
             self._drag_source = None
@@ -90,7 +116,7 @@ class IndexController(object):
 
         self._move_drag_ghost(event)
 
-        tb = self.app.view.setting_tab.index_dataset_table
+        tb = self.app.view.index_tab.index_dataset_table
         target = tb.identify_row(event.y)
 
         if not target:
@@ -141,7 +167,7 @@ class IndexController(object):
             return
 
         try:
-            tb = self.app.view.setting_tab.index_dataset_table
+            tb = self.app.view.index_tab.index_dataset_table
             items = list(tb.get_children())
             source_idx = items.index(self._drag_source)
 
@@ -175,7 +201,7 @@ class IndexController(object):
         source = self._drag_source
         if source is None:
             return
-        tb = self.app.view.setting_tab.index_dataset_table
+        tb = self.app.view.index_tab.index_dataset_table
         values = tb.item(source, "values")
         dir_path = values[1] if len(values) > 1 else ""
 
@@ -183,16 +209,16 @@ class IndexController(object):
         ghost.overrideredirect(True)
         ghost.attributes("-alpha", 0.75, "-topmost", True)
 
-        label = tk.Label(ghost, text=str(dir_path), anchor=tk.W, padx=12, pady=6)
+        label = tk.Label(ghost, text=str(dir_path), anchor=tk.W, padx=TkS(12), pady=TkS(3))
         label.pack()
 
         ghost.update_idletasks()
-        ghost.geometry(f"+{event.x_root + 20}+{event.y_root - 10}")
+        ghost.geometry(f"+{event.x_root + TkS(10)}+{event.y_root - TkS(5)}")
         self._drag_ghost = ghost
 
     def _move_drag_ghost(self, event: tk.Event) -> None:
         if self._drag_ghost:
-            self._drag_ghost.geometry(f"+{event.x_root + 20}+{event.y_root - 10}")
+            self._drag_ghost.geometry(f"+{event.x_root + TkS(10)}+{event.y_root - TkS(5)}")
 
     def _drag_clear_state(self) -> None:
         self._drag_source = None
@@ -205,7 +231,7 @@ class IndexController(object):
     @decorators.redirect_output
     def sync_index(self, show_message: bool = True) -> None:
         assert self.app.search_tools
-        tab = self.app.view.setting_tab
+        tab = self.app.view.index_tab
         tab.delete_index_button.config(state=tk.DISABLED)
         tab.rebuild_index_button.config(state=tk.DISABLED)
         tab.update_index_button.config(
@@ -241,7 +267,7 @@ class IndexController(object):
     @decorators.redirect_output
     def delete_search_dir(self) -> None:
         assert self.app.search_tools
-        selected = self.app.view.setting_tab.index_dataset_table.selection()
+        selected = self.app.view.index_tab.index_dataset_table.selection()
         if not selected:
             return
         answer = messagebox.askyesno("提示", "你确定要删除选中目录吗？")
@@ -252,10 +278,10 @@ class IndexController(object):
         dirs_to_delete = []
         search_dir: list = self.app.setting.model.search_dir
         for item in selected:
-            delete_search_dir = self.app.view.setting_tab.index_dataset_table.item(item, 'values')[1]
+            delete_search_dir = self.app.view.index_tab.index_dataset_table.item(item, 'values')[1]
             dirs_to_delete.append(delete_search_dir)
             search_dir.remove(delete_search_dir)
-            self.app.view.setting_tab.index_dataset_table.delete(item)
+            self.app.view.index_tab.index_dataset_table.delete(item)
         self.refresh_index_dataset_table()
         remaining_dirs = [d for d in self.app.setting.model.search_dir]
         for dir_path in dirs_to_delete:
@@ -297,7 +323,7 @@ class IndexController(object):
         try:
             while True:
                 message = decorators.progress_queue.get_nowait()
-                self.app.view.setting_tab.index_tip_label.config(text=message)
+                self.app.view.index_tab.index_tip_label.config(text=message)
         except Exception:
             pass
         if self._is_updating:

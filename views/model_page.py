@@ -1,110 +1,130 @@
-from ttkbootstrap import Button, Frame, LabelFrame, Treeview, Scrollbar
+from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
 import tkinter as tk
-from typing import Literal
+
+from settings import WinInfo, ModelConfig, TkS, STATUS_LABEL
 
 
 class ModelFrame(Frame):
+    load_local_model_entry: Entry
     model_tree: Treeview
-    detail_frame: LabelFrame
-    detail_text: tk.Text
+    detail_frame: Labelframe
+    local_model_frame: Labelframe
+    detail_desc_text: Text
     use_btn: Button
     uninstall_btn: Button
     download_btn: Button
-    download_progress: tk.Label
+    download_progressbar: Progressbar
+    download_progress_label: Label
+    local_path_entry: Entry
+    local_browse_btn: Button
+    local_parse_btn: Button
+    local_share_btn: Button
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
-        self.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        self.model_tree = self.__set_model_tree()
-        self.detail_frame = self.__set_detail_frame()
-        self.detail_text = self.__set_detail_text()
-        self.use_btn, self.uninstall_btn, self.download_btn = self.__set_action_buttons()
+        model_list_frame = self.__set_model_list_frame()
+        detail_frame = self.__set_detail_frame()
+
+        self.load_local_model_entry = self.__set_load_local_model_entry(model_list_frame)
+        self.broswer_button = self.__set_broswer_button(model_list_frame)
+        self.model_tree = self.__set_model_tree(model_list_frame)
+        self.name_tip_label = Label(detail_frame)
+        self.detail_desc_text = Text(
+            detail_frame, wrap='char', relief=tk.FLAT, autostyle=False,    # type:ignore
+            font=(WinInfo.default_font_family, WinInfo.default_font_size)
+        )
+        self.name_edit_entry = Entry(detail_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        self.use_btn = Button(detail_frame, text="使用模型", takefocus=False, padding=(TkS(15), TkS(5)))
+        self.uninstall_btn = Button(detail_frame, text="卸载模型", takefocus=False, padding=(TkS(15), TkS(5)), style="secondary")
+        self.download_btn = Button(detail_frame, text="下载模型", takefocus=False, padding=(TkS(15), TkS(5)))
+        self.download_progressbar = Progressbar(detail_frame, orient=tk.HORIZONTAL, mode="determinate", maximum=100)
+        self.download_progress_label = Label(detail_frame, text="")
+        self.local_share_btn = Button(parent, text="分享模型到 GitHub Issue", cursor="hand2", padding=(TkS(10), TkS(4)), style="LINK")
+        
         self.show_default()
 
-    def __set_model_tree(self) -> Treeview:
+    def __set_model_list_frame(self) -> Labelframe:
+        frame = Labelframe(self, text="模型列表")
+        frame.place(relx=0.01, rely=0.02, relwidth=0.57, relheight=0.98)
+        frame.grid_rowconfigure(0, weight=0)
+        frame.grid_rowconfigure(1, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+        frame.grid_columnconfigure(1, weight=0)
+        return frame
+
+    def __set_load_local_model_entry(self, parent) -> Entry:
+        entry = Entry(parent, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        entry.grid(row=0, column=0, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
+        return entry
+
+    def __set_broswer_button(self, parent) -> Button:
+        broswer_button = Button(parent, text="加载本地模型", takefocus=False)
+        broswer_button.grid(row=0, column=1, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
+        return broswer_button
+
+    def __set_model_tree(self, parent) -> Treeview:
         columns = ["名称", "标签", "类型", "大小", "状态"]
-        tree = Treeview(self, show="headings", columns=columns)
-        tree.place(relx=0.01, rely=0.02, relwidth=0.54, relheight=0.96)
-        col_widths = {"名称": 60, "标签": 60, "类型": 60, "大小": 60, "状态": 80}
+        tree = Treeview(parent, show="headings", columns=columns)
+        tree.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5))
+        col_widths = {"名称": TkS(40), "标签": TkS(30), "类型": TkS(30), "大小": TkS(30), "状态": TkS(30)}
         for col in columns:
             tree.heading(col, text=col, anchor=tk.CENTER)
             tree.column(col, anchor=tk.CENTER, width=col_widths[col], stretch=True)
         scrollbar = Scrollbar(tree, orient=tk.VERTICAL, cursor="hand2")
-        scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=(2, 2), padx=2)
+        scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=(TkS(1), TkS(1)), padx=TkS(1))
         scrollbar.config(command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
         return tree
 
-    def __set_detail_frame(self) -> LabelFrame:
-        frame = LabelFrame(self, text="模型详情")
-        frame.place(relx=0.56, rely=0.02, relwidth=0.43, relheight=0.96)
+    def __set_detail_frame(self) -> Labelframe:
+        frame = Labelframe(self, text="模型详情")
+        frame.place(relx=0.59, rely=0.02, relwidth=0.40, relheight=0.98)
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
         return frame
 
-    def __set_detail_text(self) -> tk.Text:
-        text = tk.Text(self.detail_frame, wrap=tk.WORD, relief=tk.FLAT, state=tk.DISABLED)
-        text.pack(fill=tk.BOTH, expand=True, padx=8, pady=(8, 4))
-        return text
+    def show_detail(self, model_config: ModelConfig) -> None:
+        for w in (
+            self.detail_desc_text, self.use_btn, self.uninstall_btn,
+            self.download_btn, self.download_progress_label, self.download_progressbar
+        ):
+            w.place_forget()
 
-    def __set_action_buttons(self) -> tuple[Button, Button, Button]:
-        btn_frame = Frame(self.detail_frame)
-        btn_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(4, 12))
-        center = Frame(btn_frame)
-        center.pack(anchor=tk.CENTER)
-        use_btn = Button(center, text="使用模型", takefocus=False, cursor="hand2", padding=(16, 6))
-        use_btn.pack(side=tk.LEFT, padx=(0, 16))
-        uninstall_btn = Button(
-            center, text="卸载模型", takefocus=False,
-            cursor="hand2", padding=(16, 6), style="secondary",
-        )
-        uninstall_btn.pack(side=tk.LEFT, padx=(0, 16))
-        download_btn = Button(center, text="下载模型", takefocus=False, cursor="hand2", padding=(16, 6))
-        download_btn.pack(side=tk.LEFT)
-        self.download_progress = tk.Label(center, text="", fg="gray")
-        self.download_progress.pack(side=tk.LEFT, padx=(8, 0))
-        for b in (use_btn, uninstall_btn, download_btn):
-            b.pack_forget()
-        return use_btn, uninstall_btn, download_btn
+        selection = self.model_tree.selection()
+        name = self.model_tree.item(selection[0], "values")[0] if selection else ""
+        status = self.model_tree.item(selection[0], "values")[-1] if selection else ""
 
-    def set_model_data(self, data: list[tuple[str, str, str, str, str]]) -> None:
-        self.model_tree.delete(*self.model_tree.get_children())
-        for item in data:
-            self.model_tree.insert("", tk.END, values=item)
+        self.name_tip_label.config(text="名称：")
+        self.name_tip_label.grid_forget()
+        self.name_tip_label.place(x=TkS(5), y=TkS(13))
+        self.name_edit_entry.config(state=tk.NORMAL)
+        self.name_edit_entry.delete(0, tk.END)
+        self.name_edit_entry.insert(0, name)
+        self.name_edit_entry.place(x=TkS(50), y=TkS(5), height=TkS(35), relwidth=0.8)
+        self.detail_desc_text.config(state=tk.NORMAL)
+        self.detail_desc_text.delete('1.0', tk.END)
+        text = f"描述：{model_config.description}\n\n下载地址：{model_config.download_url}"
+        self.detail_desc_text.insert(tk.END, text)
+        self.detail_desc_text.place(relx=0.01, y=TkS(70), relwidth=0.98, relheight=0.7)
+        self.detail_desc_text.config(state=tk.DISABLED)
 
-    def set_detail(self, description: str, status: Literal["using", "downloaded", "not download"]) -> None:
-        self.detail_text.config(state=tk.NORMAL)
-        self.detail_text.delete("1.0", tk.END)
-        self.detail_text.insert("1.0", description)
-        self.detail_text.config(state=tk.DISABLED)
-        for b in (self.use_btn, self.uninstall_btn, self.download_btn):
-            b.pack_forget()
-        if status == "using":
-            self.use_btn.config(state=tk.DISABLED)
-            self.uninstall_btn.config(state=tk.DISABLED)
-            self.use_btn.pack(side=tk.LEFT, padx=(0, 16))
-            self.uninstall_btn.pack(side=tk.LEFT)
-        elif status == "downloaded":
-            self.use_btn.config(state=tk.NORMAL)
-            self.uninstall_btn.config(state=tk.NORMAL)
-            self.use_btn.pack(side=tk.LEFT, padx=(0, 16))
-            self.uninstall_btn.pack(side=tk.LEFT)
+        if status == STATUS_LABEL["not download"]:
+            self.name_edit_entry.config(state=tk.DISABLED)
+            self.download_btn.place(relx=0.5, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
         else:
-            self.download_btn.pack(side=tk.LEFT)
+            self.use_btn.place(relx=0.32, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
+            self.uninstall_btn.place(relx=0.68, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
+            self.use_btn.config(state=tk.DISABLED if status == STATUS_LABEL["using"] else tk.NORMAL)
+            self.uninstall_btn.config(state=tk.DISABLED if status == STATUS_LABEL["using"] else tk.NORMAL)
 
     def show_default(self) -> None:
-        self.detail_text.config(state=tk.NORMAL)
-        self.detail_text.delete("1.0", tk.END)
-        self.detail_text.insert("1.0", "选择模型查看详细信息")
-        self.detail_text.config(state=tk.DISABLED)
-        for b in (self.use_btn, self.uninstall_btn, self.download_btn):
-            b.pack_forget()
-        self.download_progress.config(text="")
-
-    def set_download_progress(self, text: str) -> None:
-        self.download_progress.config(text=text)
-
-    def set_action_buttons_enabled(self, enabled: bool) -> None:
-        state = tk.NORMAL if enabled else tk.DISABLED
-        for b in (self.use_btn, self.uninstall_btn, self.download_btn):
-            b.config(state=state)
+        for w in (
+            self.name_edit_entry, self.detail_desc_text, self.use_btn, self.uninstall_btn,
+            self.download_btn, self.download_progressbar, self.download_progress_label
+        ):
+            w.place_forget()
+        self.name_tip_label.config(text="选择模型查看详细信息")
+        self.name_tip_label.grid(row=0, column=0)
+        self.local_share_btn.grid_forget()
 

@@ -3,6 +3,7 @@ from tkinter.ttk import Treeview, Scrollbar
 import os
 
 from .base import BasicImagePreviewView
+from settings import TkS
 
 
 class DetailListView(BasicImagePreviewView):
@@ -12,8 +13,8 @@ class DetailListView(BasicImagePreviewView):
         self.parent.after(50, self._create_scrollbar)
 
     def _create_treeview(self, extra_columns: dict[str, int]) -> None:
-        columns = {"名称": 160, **extra_columns}
-        self.__treeview = Treeview(self.parent, show="headings", columns=list(columns), padding=1)
+        columns = {"名称": TkS(80), **extra_columns}
+        self.__treeview = Treeview(self.parent, show="headings", columns=list(columns), padding=TkS(1))
         for text, width in columns.items():
             self.__treeview.heading(text, text=text, anchor=tk.CENTER)
             self.__treeview.column(text, anchor=tk.CENTER, width=width, stretch=True)
@@ -27,7 +28,7 @@ class DetailListView(BasicImagePreviewView):
 
     def _create_scrollbar(self) -> None:
         self.__scrollbar = Scrollbar(self.__treeview, orient=tk.VERTICAL, cursor="hand2")
-        self.__scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=2, pady=2)
+        self.__scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
         self.__scrollbar.config(command=self.__treeview.yview)
         self.__treeview.configure(yscrollcommand=self.__scrollbar.set)
 

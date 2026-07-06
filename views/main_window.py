@@ -1,40 +1,35 @@
-from tkinter.ttk import Notebook
 from tkinterdnd2 import TkinterDnD
-from ttkbootstrap import Button
+from ttkbootstrap import Button, Notebook, Window
 from ttkbootstrap.constants import LINK
-from ctypes import windll
+from ttkbootstrap.utility import enable_high_dpi_awareness
 import tkinter as tk
 
-from settings import WinInfo
+from settings import WinInfo, TkS
 from .search_page import SearchFrame
 from .index_page import IndexFrame
 from .model_page import ModelFrame
 
 
-class WinGUI(TkinterDnD.Tk):
+class WinGUI(Window, TkinterDnD.Tk):
     search_tab: SearchFrame
     index_tab: IndexFrame
     model_tab: ModelFrame
     switch_tab: Notebook
     common_setting_btn: Button
 
-    def __init__(self) -> None:
-        self._set_dpi_awareness()
+    def __init__(self, full_screen: bool = False, topmost: bool = False) -> None:
+        enable_high_dpi_awareness()
         super().__init__()
-        self.__win()
+        self.__win(full_screen, topmost)
         self.switch_tab = self.__set_notebook(self)
 
-    def _set_dpi_awareness(self) -> None:
-        try:
-            windll.shcore.SetProcessDpiAwareness(2)
-        except Exception:
-            try:
-                windll.shcore.SetProcessDpiAwareness(1)
-            except Exception:
-                pass
-
-    def __win(self) -> None:
+    def __win(self, full_screen: bool, topmost: bool) -> None:
         self.title(WinInfo.title)
+        if full_screen:
+            self.state("zoom")
+        if topmost:
+            self.attributes("-topmost", True)
+            self.attributes("")
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         width = WinInfo.width
@@ -43,6 +38,7 @@ class WinGUI(TkinterDnD.Tk):
         self.geometry(geometry)
         self.iconbitmap(WinInfo.ico_path)
         self.option_add("*TCombobox*Listbox.font", (WinInfo.default_font_family, WinInfo.default_font_size))
+        self.option_add('*Menu.font', (WinInfo.default_font_family, WinInfo.default_font_size))
 
     def __set_notebook(self, parent) -> Notebook:
         notebook = Notebook(parent)
@@ -54,6 +50,6 @@ class WinGUI(TkinterDnD.Tk):
         notebook.add(self.model_tab, text="  模型  ")
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        self.common_setting_btn = Button(parent, text="通用设置", style=LINK, cursor="hand2")
-        self.common_setting_btn.place(relx=1.0, x=-5, y=3, anchor=tk.NE)
+        self.common_setting_btn = Button(parent, text="通用设置", style=LINK, cursor="hand2", takefocus=False)
+        self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=TkS(1), anchor=tk.NE)
         return notebook

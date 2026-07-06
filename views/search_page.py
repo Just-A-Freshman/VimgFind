@@ -1,11 +1,11 @@
-from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, LabelFrame, Combobox, Scrollbar
+from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
 import tkinter as tk
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
-from settings import WinInfo
+from settings import WinInfo, TkS
 
 
-class FilterPanel(LabelFrame):
+class FilterPanel(Labelframe):
     sim_scale: Scale
     sim_value: Label
     ext_combo: Combobox
@@ -32,21 +32,21 @@ class FilterPanel(LabelFrame):
     def _setup_grid(self) -> None:
         for col, weight in enumerate([0, 1, 0, 0, 1, 0, 0]):
             self.grid_columnconfigure(col, weight=weight)
-        self.grid_columnconfigure(6, minsize=12)
+        self.grid_columnconfigure(6, minsize=TkS(6))
 
     def __set_similarity_row(self) -> tuple[Scale, Label]:
         Label(self, text="相似度阈值", width=10, anchor=tk.W).grid(
-            row=0, column=0, sticky=tk.W, padx=(12, 0), pady=(20, 10)
+            row=0, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(10), TkS(5))
         )
         sim_scale = Scale(self, from_=0, to=100, orient=tk.HORIZONTAL)
-        sim_scale.grid(row=0, column=1, columnspan=4, sticky=tk.EW, padx=(8, 4), pady=(20, 10))
+        sim_scale.grid(row=0, column=1, columnspan=4, sticky=tk.EW, padx=(TkS(4), TkS(2)), pady=(TkS(10), TkS(5)))
         sim_value = Label(self, text="0%", width=5)
-        sim_value.grid(row=0, column=5, sticky=tk.E, pady=(20, 10))
+        sim_value.grid(row=0, column=5, sticky=tk.E, pady=(TkS(10), TkS(5)))
         return sim_scale, sim_value
 
     def __set_file_type_row(self) -> Combobox:
         Label(self, text="文件类型", width=10, anchor=tk.W).grid(
-            row=1, column=0, sticky=tk.W, padx=(12, 0), pady=(10, 10)
+            row=1, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5))
         )
         ext_combo = Combobox(
             self,
@@ -54,28 +54,28 @@ class FilterPanel(LabelFrame):
             state="readonly",
             font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )
-        ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(8, 0), pady=(10, 10))
+        ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(TkS(4), 0), pady=(TkS(5), TkS(5)))
         ext_combo.current(0)
         return ext_combo
 
     def __set_file_size_row(self) -> tuple[Entry, Combobox, Entry, Combobox]:
         Label(self, text="文件大小", width=10, anchor=tk.W).grid(
-            row=2, column=0, sticky=tk.W, padx=(12, 0), pady=(10, 10)
+            row=2, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5))
         )
         size_min = Entry(self, width=6)
-        size_min.grid(row=2, column=1, sticky=tk.EW, padx=(8, 2), pady=(10, 10))
+        size_min.grid(row=2, column=1, sticky=tk.EW, padx=(TkS(4), TkS(1)), pady=(TkS(5), TkS(5)))
         size_min_unit = Combobox(
             self, values=["KB", "MB"], state="readonly", width=4, font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )
-        size_min_unit.grid(row=2, column=2, sticky=tk.EW, padx=(0, 4), pady=(10, 10))
+        size_min_unit.grid(row=2, column=2, sticky=tk.EW, padx=(0, TkS(1)), pady=(TkS(5), TkS(5)))
         size_min_unit.current(1)
-        Label(self, text="到").grid(row=2, column=3, pady=(10, 10))
+        Label(self, text="到").grid(row=2, column=3, pady=(TkS(5), TkS(5)))
         size_max = Entry(self, width=6)
-        size_max.grid(row=2, column=4, sticky=tk.EW, padx=(4, 2), pady=(10, 10))
+        size_max.grid(row=2, column=4, sticky=tk.EW, padx=(TkS(2), TkS(1)), pady=(TkS(5), TkS(5)))
         size_max_unit = Combobox(
             self, values=["KB", "MB"], state="readonly", width=4, font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )
-        size_max_unit.grid(row=2, column=5, sticky=tk.EW, padx=(0, 0), pady=(10, 10))
+        size_max_unit.grid(row=2, column=5, sticky=tk.EW, padx=(0, 0), pady=(TkS(5), TkS(5)))
         size_max_unit.current(1)
         return size_min, size_min_unit, size_max, size_max_unit
 
@@ -83,12 +83,12 @@ class FilterPanel(LabelFrame):
         left_frame = Frame(self)
         Label(left_frame, text="所属文件夹", width=10, anchor=tk.W).pack(anchor=tk.W)
         folder_select_all = Checkbutton(left_frame, text="全选")
-        folder_select_all.pack(anchor=tk.W, pady=(22, 0))
-        left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(12, 0), pady=(10, 2))
+        folder_select_all.pack(anchor=tk.W, pady=(TkS(11), 0))
+        left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(TkS(6), 0), pady=(TkS(5), TkS(1)))
         lbox_frame = Frame(self)
         lbox_frame.grid(
             row=3, column=1, columnspan=5, sticky=tk.N+tk.E+tk.W,
-            padx=(8, 0), pady=(10, 2)
+            padx=(TkS(4), 0), pady=(TkS(5), TkS(1))
         )
         lbox_frame.grid_columnconfigure(0, weight=1)
         lbox_frame.grid_rowconfigure(0, weight=1)
@@ -105,10 +105,10 @@ class FilterPanel(LabelFrame):
 
     def __set_action_buttons(self) -> tuple[Button, Button]:
         btn_frame = Frame(self)
-        btn_frame.grid(row=4, column=0, columnspan=7, pady=(14, 30))
-        confirm_btn = Button(btn_frame, text="确定", takefocus=False, cursor="hand2", padding=(20, 8))
-        confirm_btn.grid(row=1, column=1, padx=(0, 50))
-        cancel_btn = Button(btn_frame, text="取消", takefocus=False, cursor="hand2", padding=(20, 8), style="secondary")
+        btn_frame.grid(row=4, column=0, columnspan=7, pady=(TkS(7), TkS(15)))
+        confirm_btn = Button(btn_frame, text="确定", takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)))
+        confirm_btn.grid(row=1, column=1, padx=(0, TkS(25)))
+        cancel_btn = Button(btn_frame, text="取消", takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)), style="secondary")
         cancel_btn.grid(row=1, column=2)
         return confirm_btn, cancel_btn
 
@@ -122,8 +122,8 @@ class SearchFrame(Frame):
     filter_panel: FilterPanel
     preview_container: Frame
     preview_view: BasicImagePreviewView
-    preview_frame1: LabelFrame
-    preview_frame2: LabelFrame
+    preview_frame1: Labelframe
+    preview_frame2: Labelframe
     preview_canvas1: PreviewCanvasView
     preview_canvas2: PreviewCanvasView
     nav_frame: tk.Frame
@@ -149,13 +149,13 @@ class SearchFrame(Frame):
         self.__set_nav_buttons()
 
     def __set_search_entry(self) -> Entry:
-        ipt = Entry(self)
-        ipt.place(relx=0.01, rely=0.02, relwidth=0.395, relheight=0.0690)
+        ipt = Entry(self, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        ipt.place(relx=0.005, rely=0.02, relwidth=0.4, relheight=0.0690)
         return ipt
 
     def __set_filter_btn(self) -> tk.Label:
         btn = tk.Label(self, text="▼", cursor="hand2", bd=0, highlightthickness=0, relief=tk.FLAT)
-        btn.pack(in_=self.search_entry, side=tk.RIGHT, fill=tk.Y, ipadx=20, pady=5, padx=2)
+        btn.pack(in_=self.search_entry, side=tk.RIGHT, fill=tk.Y, ipadx=TkS(7), pady=TkS(2), padx=TkS(2))
         return btn
 
     def __set_search_by_browser_button(self) -> Button:
@@ -170,44 +170,44 @@ class SearchFrame(Frame):
 
     def __set_more_options_button(self) -> Button:
         button = Button(self, text="• • •", takefocus=False, style="link", cursor="hand2")
-        button.place(relx=1, rely=0.0192, width=100, x=-100)
+        button.place(relx=1, rely=0.0192, width=TkS(50), x=TkS(-50))
         return button
 
     def __set_preview_results_frame(self) -> Frame:
         frame = Frame(self)
-        frame.place(relx=0.01, rely=0.1111, relwidth=0.6170, relheight=0.888)
+        frame.place(relx=0.005, rely=0.1111, relwidth=0.622, relheight=0.888)
         return frame
 
-    def __set_preview_frame1(self) -> LabelFrame:
-        frame = LabelFrame(self, text="源图片")
+    def __set_preview_frame1(self) -> Labelframe:
+        frame = Labelframe(self, text="源图片")
         frame.place(relx=0.63, rely=0.095, relwidth=0.365, relheight=0.4444)
         return frame
 
-    def __set_preview_frame2(self) -> LabelFrame:
-        frame = LabelFrame(self, text="匹配图片")
+    def __set_preview_frame2(self) -> Labelframe:
+        frame = Labelframe(self, text="匹配图片")
         frame.place(relx=0.63, rely=0.5555, relwidth=0.365, relheight=0.4444)
         return frame
 
     def __set_nav_buttons(self) -> None:
-        self.nav_frame = tk.Frame(self.preview_container, bg="#6c757d", borderwidth=12)
+        self.nav_frame = tk.Frame(self.preview_container, bg="#6c757d", borderwidth=TkS(6))
         self.nav_page_label = tk.Label(self.nav_frame, text="0 / 0", bg="#6c757d", fg="white")
-        self.nav_page_label.pack(side=tk.LEFT, padx=(30, 0))
+        self.nav_page_label.pack(side=tk.LEFT, padx=(TkS(15), 0))
         self.nav_prev = Button(
             self.nav_frame, text="◀", takefocus=False,
-            cursor="hand2", padding=(8, 2), width=3
+            cursor="hand2", padding=(TkS(4), TkS(1)), width=3
         )
         self.nav_next = Button(
             self.nav_frame, text="▶", takefocus=False,
-            cursor="hand2", padding=(8, 2), width=3
+            cursor="hand2", padding=(TkS(4), TkS(1)), width=3
         )
-        self.nav_next.pack(side=tk.RIGHT, padx=(0, 10))
-        self.nav_prev.pack(side=tk.RIGHT, padx=(0, 10))
+        self.nav_next.pack(side=tk.RIGHT, padx=(0, TkS(5)))
+        self.nav_prev.pack(side=tk.RIGHT, padx=(0, TkS(5)))
         self.nav_frame.pack_forget()
 
     def set_nav_visible(self, show: bool) -> None:
         if show:
             self.nav_frame.grid(
-                row=1, column=0, sticky='ew', padx=(2, 25), pady=(0, 3)
+                row=1, column=0, sticky='ew', padx=(TkS(1), TkS(12)), pady=(0, TkS(1))
             )
             self.nav_frame.lift()
         else:

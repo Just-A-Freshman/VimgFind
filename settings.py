@@ -5,10 +5,30 @@ from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, field, fields
 from typing import Literal
+import ctypes
 import logging
 
 
 ROOT = Path(__file__).resolve().parent
+SCALE_FACTOR = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+def TkS(value: int | float, restore: bool = False) -> int:
+    if not restore:
+        return int(round(value * SCALE_FACTOR, 0))
+    else:
+        return int(round(value / SCALE_FACTOR, 0))
+    
+STATUS_LABEL = {
+    "using": "正在使用",
+    "downloaded": "可用",
+    "not download": "不可用",
+}
+
+TYPE_LABEL = {
+    "Image-Text": "多模态模型",
+    "Image": "图像模型",
+    "Unknown": "未知",
+}
+
 
 
 @dataclass
@@ -24,6 +44,7 @@ class AppSettings:
     remote_manifest_url: str = "https://raw.githubusercontent.com/Just-A-Freshman/VimgFind/main/models.json"
     cache_ttl: int = 3600
     maximize_window: bool = False
+    topmost_window: bool = False
     schedule_index_save_interval: int = 600000
 
     @classmethod
@@ -38,7 +59,7 @@ class ModelConfig:
     id: str = ""
     name: str = ""
     label: str = ""
-    model_type: Literal["Image", "Text", "Image-Text", "Unknown"] = "Unknown"
+    model_type: Literal["Image", "Image-Text", "Unknown"] = "Unknown"
     description: str = ""
     download_url: str = ""
     checksum_sha256: str = ""
@@ -46,10 +67,13 @@ class ModelConfig:
 
     # --- model_config section ---
     image_size: int = 224
+    preprocess_type: Literal["resize", "resize_crop", "resize_pad"] = "resize_crop"
+    fill_color: tuple[int, int, int] | None = None
     context_length: int = 52
     mean: tuple[float, float, float] = (0.48145466, 0.4578275, 0.40821073)
     std: tuple[float, float, float] = (0.26862954, 0.26130258, 0.27577711)
     normalization: bool = True
+    output_index: int = 0
     image_encoder_path: str = ""
     text_encoder_path: str = ""
     vocab_path: str = ""
@@ -68,7 +92,8 @@ class ModelConfig:
         "download_url", "checksum_sha256", "size"
     })
     _model_keys = frozenset({
-        "image_size", "context_length", "mean", "std", "normalization",
+        "image_size", "preprocess_type", "fill_color", "output_index",
+        "context_length", "mean", "std", "normalization",
         "image_encoder_path", "text_encoder_path", "vocab_path",
     })
     _index_keys = frozenset({
@@ -153,32 +178,41 @@ class Setting(object):
             if d.is_dir() and (d / "model.json").exists()
         ])
 
+    def write_model_json(self, model_dir: Path, cfg: ModelConfig) -> None:
+        meta_part: dict = {}
+        model_part: dict = {}
+        index_part: dict = {}
+        for f in fields(ModelConfig):
+            val = getattr(cfg, f.name)
+            if f.name in ModelConfig._meta_keys:
+                meta_part[f.name] = val
+            elif f.name in ModelConfig._model_keys:
+                model_part[f.name] = val
+            elif f.name in ModelConfig._index_keys:
+                index_part[f.name] = val
+        model_path = model_dir / "model.json"
+        with open(model_path, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "meta_info": meta_part,
+                    "model_config": model_part,
+                    "index_config": index_part,
+                },
+                f, indent=4, ensure_ascii=False,
+            )
+
+    def save_model_config(self, model_id: str, cfg: ModelConfig) -> None:
+        self._model_cache[model_id] = cfg
+        self.write_model_json(self.models_dir / model_id, cfg)
+
     def save(self) -> None:
         with open(Setting.setting_path, "w", encoding="utf-8") as f:
             app_dict = {f.name: getattr(self._app, f.name) for f in fields(AppSettings)}
             json.dump(app_dict, f, indent=4, ensure_ascii=False)
         for mid, cfg in self._model_cache.items():
-            meta_part: dict = {}
-            model_part: dict = {}
-            index_part: dict = {}
-            for f in fields(ModelConfig):
-                val = getattr(cfg, f.name)
-                if f.name in ModelConfig._meta_keys:
-                    meta_part[f.name] = val
-                elif f.name in ModelConfig._model_keys:
-                    model_part[f.name] = val
-                elif f.name in ModelConfig._index_keys:
-                    index_part[f.name] = val
-            model_path = self.models_dir / mid / "model.json"
-            with open(model_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    {
-                        "meta_info": meta_part,
-                        "model_config": model_part,
-                        "index_config": index_part,
-                    },
-                    f, indent=4, ensure_ascii=False,
-                )
+            model_dir = self.models_dir / mid
+            if model_dir.exists():
+                self.write_model_json(model_dir, cfg)
 
 
 
@@ -188,9 +222,10 @@ class WinInfo(object):
     ico_path = Setting.config_path / "favicon.ico"
     title = "Vimgfind"
     default_font_family = "微软雅黑"
-    default_font_size = -24
-    width = 1660
-    height = 1120
+    default_font_size = TkS(-14)
+    width = TkS(830)
+    height = TkS(560)
+
 
 
 logging.basicConfig(

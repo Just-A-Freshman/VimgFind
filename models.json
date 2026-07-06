@@ -1,0 +1,249 @@
+[
+    {
+        "meta_info": {
+            "id": "chinese-clip",
+            "name": "Chinese-CLIP",
+            "label": "通用",
+            "model_type": "Image-Text",
+            "description": "Chinese CLIP 是中文多模态领域的基石模型，它解决了 OpenAI 原版 CLIP 几乎不理解中文的问题，让“以文搜图”“零样本分类”等能力在中文场景下真正可用。Chinese CLIP 在多个中文图文检索基准上取得了当时的最优水平，且远超原版 CLIP 直接用于中文的效果。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/chinese-clip.zip",
+            "checksum_sha256": "sha256:0ed17fd21c7eb6dc13d158bc8c3943c4a333d286f42fdb5b986f5bc1234d2a74",
+            "size": 755771016
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize",
+            "fill_color": null,
+            "context_length": 52,
+            "mean": [
+                0.48145466,
+                0.4578275,
+                0.40821073
+            ],
+            "std": [
+                0.26862954,
+                0.26130258,
+                0.27577711
+            ],
+            "normalization": true,
+            "image_encoder_path": "image_model.onnx",
+            "text_encoder_path": "text_model.onnx",
+            "vocab_path": "vocab.txt"
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 512,
+            "index_space": "cosine",
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "EfficientNet-b0",
+            "name": "EfficientNet-b0",
+            "label": "通用",
+            "model_type": "Image",
+            "description": "EfficientNet 在当时霸榜了 ImageNet，并且显著提高了推理效率。一个关键指标是 准确率-计算量曲线 显著优于之前的模型（如 ResNet、ResNeXt、SENet、GPipe 等）。即使放到现在，B0~B3 依然是移动端和边缘设备上精度/速度的极佳折中选择。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/EfficientNet-b0.zip",
+            "checksum_sha256": "sha256:d028830d906f8ead533bb751d816ce594bd7c4a310cd199cf88475a862e64db9",
+            "size": 33702488
+        },
+        "model_config": {
+            "image_size": 260,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": false,
+            "image_encoder_path": "imagenet-b2-opti.onnx",
+            "text_encoder_path": null,
+            "vocab_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 1000,
+            "index_space": "l2",
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "mobilenet",
+            "name": "mobilenet",
+            "label": "通用",
+            "model_type": "Image",
+            "description": "MobileNet 模型适合在计算机资源非常有限的情况下使用，其分类准确度非常有限，但速度极快，可以使用在图片去重等对准确度要求不高的工作。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/mobilenet.zip",
+            "checksum_sha256": "sha256:9fb4ba86a2c257710847ccf68c567bfb2850bf4f67cef898b939571198e9ffc0",
+            "size": 17698313
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize_crop",
+            "fill_color": null,
+            "context_length": null,
+            "output_index": 0,
+            "mean": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "std": [
+                0.5,
+                0.5,
+                0.5
+            ],
+            "normalization": true,
+            "image_encoder_path": "model.onnx",
+            "text_encoder_path": null,
+            "vocab_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 1280,
+            "index_space": "cosine",
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "dinov2-base",
+            "name": "Dinov2-Base",
+            "label": "通用",
+            "model_type": "Image",
+            "description": "DINOv2 是 Meta AI 在 2023 年开源的一套自监督视觉模型，基于 Vision Transformer（ViT）架构。DINOv2 发布时，在一系列标准视觉基准上取得了当时自监督方法的最优结果，甚至在许多任务上接近或超越了同结构下的有监督模型。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/dinov2-base.zip",
+            "checksum_sha256": "sha256:1cdcc5280e25eceedbeefab33df150ff2322930faadf16c641de481ff132ae0f",
+            "size": 689384571
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize_crop",
+            "fill_color": null,
+            "context_length": null,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": true,
+            "output_index": 0,
+            "image_encoder_path": "model.onnx",
+            "text_encoder_path": null,
+            "vocab_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 768,
+            "index_space": "cosine",
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "resnet50",
+            "name": "Resnet50",
+            "label": "通用",
+            "model_type": "Image",
+            "description": "ResNet-50 是深度学习视觉领域最经典的模型之一，出自何恺明等人在 2015 年提出的 深度残差网络（ResNet）。名字里的 “50” 表示它有 50 层可学习参数的层（卷积层+全连接层）。虽然如今视觉模型已经迭代了很多代，Resnet50的精度已被 EfficientNet、ConvNeXt、ViT 等超越，但它依然是工业界和学术界的“万金油”骨干网络。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/resnet50.zip",
+            "checksum_sha256": "sha256:72157277c1a1c2639a46db5351dccf7a8c4e2b71b4901c43c6dc7238d8c5aef8",
+            "size": 93958728
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize",
+            "fill_color": null,
+            "context_length": null,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": true,
+            "output_index": 0,
+            "image_encoder_path": "model.onnx",
+            "text_encoder_path": null,
+            "vocab_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 2048,
+            "index_space": "cosine",
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "osnet",
+            "name": "Osnet",
+            "label": "同类匹配",
+            "model_type": "Image",
+            "description": "OSNet 设计之初就是为了“分辨谁是谁”的，这决定了它极其擅长区分细节相似但不同的目标。如果你用来做同款商品匹配（比如找同款鞋子、包包）、特定车辆检索，或者跨摄像头人物识别，它的表现会非常好。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/osnet.zip",
+            "checksum_sha256": "sha256:14a60cadd7b789ce0dd0ed209de2560ba1d1461c9b4e58b31025ceb8b6c97b82",
+            "size": 8761813
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize",
+            "fill_color": null,
+            "context_length": null,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": true,
+            "output_index": 0,
+            "image_encoder_path": "model.onnx",
+            "text_encoder_path": null,
+            "vocab_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 512,
+            "index_space": "cosine",
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    }
+]

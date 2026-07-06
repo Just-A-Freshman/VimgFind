@@ -38,8 +38,11 @@ class MultiThreadDownloader:
         self.accept_ranges = False
         self.downloaded = 0
         self.lock = threading.Lock()
+        self.error_lock = threading.Lock()
         self.threads = []
         self.part_files = []
+        self._has_error = False
+        self._error_msg = ""
 
     def _get_file_info(self) -> None:
         req = request.Request(self.url, method='HEAD')
@@ -53,9 +56,11 @@ class MultiThreadDownloader:
         if self.file_size == 0:
             raise RuntimeError("无法获取文件大小，下载取消")
 
-        if not self.accept_ranges or self.file_size < self.chunk_size:
+        if not self.accept_ranges or self.file_size < self.chunk_size * 2:
             self.num_threads = 1
-        self.num_threads = min(self.num_threads, self.file_size)
+            
+        max_possible = max(1, self.file_size // self.chunk_size)
+        self.num_threads = min(self.num_threads, max_possible, 64)
 
     def _get_ranges(self):
         part_size = self.file_size // self.num_threads
@@ -67,31 +72,38 @@ class MultiThreadDownloader:
         return ranges
 
     def _download_part(self, part_index, start, end) -> None:
+        if self._has_error:
+            return
         part_file = f"{self.save_path}.part{part_index}"
-        self.part_files.append(part_file)
+        with self.lock:
+            self.part_files.append(part_file)
 
         headers = {'Range': f'bytes={start}-{end}'}
         req = request.Request(self.url, headers=headers)
-        downloaded_in_part = 0
         try:
             with request.urlopen(req, timeout=60) as resp:
                 with open(part_file, 'wb') as f:
                     while True:
+                        if self._has_error:
+                            return
                         chunk = resp.read(self.chunk_size)
                         if not chunk:
                             break
                         f.write(chunk)
-                        chunk_len = len(chunk)
-                        downloaded_in_part += chunk_len
-
                         with self.lock:
-                            self.downloaded += chunk_len
+                            self.downloaded += len(chunk)
                             if self.progress_callback:
                                 self.progress_callback(self.downloaded, self.file_size)
         except Exception as e:
+            with self.error_lock:
+                if not self._has_error:
+                    self._has_error = True
+                    self._error_msg = f"线程 {part_index} 下载失败: {e}"
             if os.path.exists(part_file):
-                os.remove(part_file)
-            raise RuntimeError(f"线程 {part_index} 下载失败: {e}")
+                try:
+                    os.remove(part_file)
+                except OSError:
+                    pass
 
     def _cleanup(self) -> None:
         for part_file in self.part_files:
@@ -101,6 +113,13 @@ class MultiThreadDownloader:
     def download(self) -> None:
         self._get_file_info()
         ranges = self._get_ranges()
+
+        self.threads.clear()
+        self.part_files.clear()
+        self.downloaded = 0
+        self._has_error = False
+        self._error_msg = ""
+
         for i, (start, end) in enumerate(ranges):
             t = threading.Thread(
                 target=self._download_part,
@@ -113,8 +132,13 @@ class MultiThreadDownloader:
         for t in self.threads:
             t.join()
 
+        if self._has_error:
+            self._cleanup()
+            raise RuntimeError(self._error_msg)
+
         self._merge_files()
         self._cleanup()
+        self._verify_checksum()
 
     def _merge_files(self) -> None:
         with open(self.save_path, 'wb') as outfile:
@@ -125,13 +149,23 @@ class MultiThreadDownloader:
                         if not chunk:
                             break
                         outfile.write(chunk)
+        if self.progress_callback:
+            self.progress_callback(self.file_size, self.file_size)
 
     def _verify_checksum(self):
-        if self.checksum == "":
+        if not self.checksum:
             return
-        algo, expected_hash = self.checksum
+        try:
+            algo, expected_hash = self.checksum.split(":", 1)
+        except ValueError:
+            logging.warning(f"校验和格式无效: {self.checksum}，跳过校验")
+            return
         expected_hash = expected_hash.lower()
-        hash_func = hashlib.new(algo)
+        try:
+            hash_func = hashlib.new(algo)
+        except ValueError:
+            logging.warning(f"不支持的哈希算法: {algo}，跳过校验")
+            return
         with open(self.save_path, 'rb') as f:
             while True:
                 data = f.read(self.chunk_size)
@@ -140,7 +174,6 @@ class MultiThreadDownloader:
                 hash_func.update(data)
         actual_hash = hash_func.hexdigest()
         if actual_hash != expected_hash:
-            self._cleanup()
             if os.path.exists(self.save_path):
                 os.remove(self.save_path)
             raise RuntimeError(
@@ -209,7 +242,7 @@ def get_available_models(setting: Setting) -> list[ModelConfig]:
     result: list[ModelConfig] = []
 
     for mid in installed_ids:
-        cfg = setting._load_model_config(mid)
+        cfg = setting.load_model_config(mid)
         local_map[mid] = cfg
         result.append(cfg)
 

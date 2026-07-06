@@ -12,7 +12,7 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 import utils.file_ops as file_ops
 import utils.exclude_rules as exclude_rules
 from views.exclude_dialog import ExcludeDialog
-from settings import Setting
+from settings import Setting, TkS
 
 
 MAX_PREVIEW_ITEMS = 100000
@@ -101,8 +101,8 @@ class ExcludePreviewController:
         else:
             children = tree.get_children()
             row_idx = children.index(iid)
-            entry_x, entry_y = 2, row_idx * row_height
-            entry_w, entry_h = content_w - 2, row_height
+            entry_x, entry_y = TkS(1), row_idx * row_height
+            entry_w, entry_h = content_w - TkS(1), row_height
 
         entry = tk.Entry(tree, bd=0, highlightthickness=1)
         entry.insert(0, initial_text)
@@ -146,7 +146,7 @@ class ExcludePreviewController:
 
     def trigger_preview(self) -> None:
         self._cancel_scan = True
-        self.dialog.stop_btn.pack(side=tk.RIGHT, padx=(10, 0))
+        self.dialog.stop_btn.pack(side=tk.RIGHT, padx=(TkS(10), 0))
         self._preview_cache.clear()
         self._scan_cache.clear()
         self._preview_total = 0
