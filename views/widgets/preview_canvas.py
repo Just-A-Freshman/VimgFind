@@ -24,7 +24,7 @@ class PreviewCanvasView(BasicImagePreviewView):
         x = canvas_width // 2
         y = canvas_height // 2
         try:
-            img: Image.Image = ImageOps.exif_transpose(image_obj)
+            img: Image.Image = ImageOps.exif_transpose(image_obj)    # type:ignore
             img.thumbnail((canvas_width, canvas_height), Image.Resampling.BICUBIC)
             imgtk = ImageTk.PhotoImage(img)
         except UnidentifiedImageError:
