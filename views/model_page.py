@@ -80,11 +80,15 @@ class ModelFrame(Frame):
     def __set_detail_frame(self) -> Labelframe:
         frame = Labelframe(self, text="模型详情")
         frame.place(relx=0.59, rely=0.02, relwidth=0.40, relheight=0.98)
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
         return frame
 
-    def set_detail(self, model_config: ModelConfig) -> None:
-        for w in (self.detail_desc_text, self.use_btn, self.uninstall_btn,
-                  self.download_btn, self.download_progress_label, self.download_progressbar):
+    def show_detail(self, model_config: ModelConfig) -> None:
+        for w in (
+            self.detail_desc_text, self.use_btn, self.uninstall_btn,
+            self.download_btn, self.download_progress_label, self.download_progressbar
+        ):
             w.place_forget()
 
         selection = self.model_tree.selection()
@@ -92,7 +96,7 @@ class ModelFrame(Frame):
         status = self.model_tree.item(selection[0], "values")[-1] if selection else ""
 
         self.name_tip_label.config(text="名称：")
-        self.name_tip_label.place_forget()
+        self.name_tip_label.grid_forget()
         self.name_tip_label.place(x=TkS(5), y=TkS(13))
         self.name_edit_entry.config(state=tk.NORMAL)
         self.name_edit_entry.delete(0, tk.END)
@@ -100,9 +104,9 @@ class ModelFrame(Frame):
         self.name_edit_entry.place(x=TkS(50), y=TkS(5), height=TkS(35), relwidth=0.8)
         self.detail_desc_text.config(state=tk.NORMAL)
         self.detail_desc_text.delete('1.0', tk.END)
-        text = f"详细描述：\n{model_config.description}\n\n下载地址：\n{model_config.download_url}"
+        text = f"描述：{model_config.description}\n\n下载地址：{model_config.download_url}"
         self.detail_desc_text.insert(tk.END, text)
-        self.detail_desc_text.place(relx=0.01, y=TkS(48), relwidth=0.98, relheight=0.7)
+        self.detail_desc_text.place(relx=0.01, y=TkS(70), relwidth=0.98, relheight=0.7)
         self.detail_desc_text.config(state=tk.DISABLED)
 
         if status == STATUS_LABEL["not download"]:
@@ -121,6 +125,6 @@ class ModelFrame(Frame):
         ):
             w.place_forget()
         self.name_tip_label.config(text="选择模型查看详细信息")
-        self.name_tip_label.place(relx=0.3, rely=0.4)
+        self.name_tip_label.grid(row=0, column=0)
         self.local_share_btn.grid_forget()
 

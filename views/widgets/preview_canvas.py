@@ -1,5 +1,5 @@
+from ttkbootstrap import tooltip, Toplevel, Label
 import tkinter as tk
-from ttkbootstrap import tooltip
 
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 
@@ -7,10 +7,26 @@ from .base import BasicImagePreviewView
 
 
 class TransientToolTip(tooltip.ToolTip):
-    def show_tip(self, *_) -> None:
-        super().show_tip(*_)
+    def show_tip(self, *_):
         if self.toplevel:
-            self.toplevel.attributes('-topmost', True)
+            return
+        x = self.widget.winfo_pointerx() + 25
+        y = self.widget.winfo_pointery() + 10
+        self.toplevel = Toplevel(**self.toplevel_kwargs)
+        self.toplevel.attributes('-topmost', True)
+        self.toplevel.geometry(f"+{x}+{y}")
+        lbl = Label(
+            master=self.toplevel,
+            text=self.text,
+            justify=tk.LEFT,
+            wraplength=self.wraplength,   # type:ignore
+            padding=10,
+        )
+        lbl.pack(fill=tk.BOTH, expand=True)
+        if self.bootstyle:
+            lbl.configure(style=self.bootstyle)
+        else:
+            lbl.configure(style="tooltip.TLabel")
 
 
 class PreviewCanvasView(BasicImagePreviewView):
@@ -31,7 +47,7 @@ class PreviewCanvasView(BasicImagePreviewView):
         x = canvas_width // 2
         y = canvas_height // 2
         try:
-            img: Image.Image = ImageOps.exif_transpose(image_obj)
+            img: Image.Image = ImageOps.exif_transpose(image_obj) # type: ignore
             img.thumbnail((canvas_width, canvas_height), Image.Resampling.BICUBIC)
             imgtk = ImageTk.PhotoImage(img)
         except UnidentifiedImageError:
