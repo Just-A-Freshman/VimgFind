@@ -88,7 +88,7 @@ class ModelController:
             view.show_default()
             return
         self._editing_model_id = iid
-        view.set_detail(cfg)
+        view.show_detail(cfg)
 
         if iid == self._downloading_model_id:
             view.download_btn.place_forget()
@@ -215,6 +215,12 @@ class ModelController:
 
         view.model_tree.delete(iid)
         self._model_cache.pop(iid, None)
+        self.app.setting._model_cache.pop(iid, None)
+        combobox = self.app.view.index_tab.switch_model_combobox
+        values = list(combobox.cget("values"))
+        if cfg.name in values:
+            values.remove(cfg.name)
+            combobox.config(values=values)
         view.show_default()
 
     @decorators.send_task
