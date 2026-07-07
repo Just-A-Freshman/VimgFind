@@ -112,7 +112,7 @@ class SearchController(object):
     def __search_image(self, input_data: Image.Image | str | None = None) -> None:
         assert self.app.search_tools
         if not self.app.setting.model.index.search_dir:
-            messagebox.showinfo("提示", "请在设置选项卡索引至少一个目录！")
+            messagebox.showinfo("提示", "请在索引选项卡索引至少一个目录！")
             return
         if not self._is_finish_search:
             return
