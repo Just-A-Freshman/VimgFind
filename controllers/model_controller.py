@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import shutil
 import time
 from tkinter import messagebox
 from ttkbootstrap import Entry
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Callable, Literal, cast
 import tkinter as tk
 
 from config.types import ModelConfig
@@ -12,12 +11,11 @@ from config.settings import STATUS_LABEL, TYPE_LABEL
 from core import SearchTool
 import utils.file_ops as file_ops
 import utils.model_checker as model_checker
-import utils.decorators as decorators
+from utils.model_checker import DownloadState, DownloadTask
 
 if TYPE_CHECKING:
     from .app_controller import AppController
     from views.model_page import ModelFrame
-
 
 
 
@@ -46,10 +44,7 @@ class ModelController:
         self.app = app_controller
         self._model_cache: dict[str, ModelConfig] = {}
         self._editing_model_id: str | None = None
-        self._downloading_model_id: str | None = None
-        self._dl_downloaded: int = 0
-        self._dl_total: int = 0
-        self._dl_speed: float = 0.0
+        self._current_download: DownloadTask | None = None
 
     def load_model_list(self):
         view = self.app.view.model_tab
@@ -91,11 +86,15 @@ class ModelController:
         self._editing_model_id = iid
         view.show_detail(cfg)
 
-        if iid == self._downloading_model_id:
+        if self._current_download and self._current_download.model_id == iid:
             view.download_btn.place_forget()
             self._show_download_progress(view)
-            if self._dl_total > 0:
-                self._update_download_progress(view, self._dl_downloaded, self._dl_total, self._dl_speed)
+            self._update_download_progress(
+                view,
+                self._current_download.downloaded_bytes,
+                self._current_download.total_bytes,
+                self._current_download.speed,
+            )
 
     def on_name_edited(self, event: tk.Event) -> None:
         name_entry = cast(Entry, event.widget)
@@ -124,35 +123,6 @@ class ModelController:
             combobox.config(values=values)
             if combobox.get() == old_name:
                 combobox.set(new_name)
-
-    def _show_download_progress(self, view: ModelFrame) -> None:
-        view.download_btn.place_forget()
-        view.download_progress_label.config(text="准备下载...")
-        view.download_progressbar.config(value=0)
-        view.download_progress_label.place(relx=0.02, rely=0.82, relwidth=0.96, anchor=tk.W)
-        view.download_progressbar.place(relx=0.5, rely=0.92, relwidth=0.9, anchor=tk.CENTER)
-
-    def _update_download_progress(self, view: ModelFrame, downloaded: int, total: int, speed: float) -> None:
-        self._dl_downloaded = downloaded
-        self._dl_total = total
-        self._dl_speed = speed
-        if total > 0:
-            view.download_progressbar.config(value=int(downloaded * 100 / total))
-        view.download_progress_label.config(
-            text=f"{_format_speed(speed)} - {_format_size(downloaded)}/{_format_size(total)}"
-        )
-
-    def _update_tree_status(self, model_id: str, status: Literal["using", "downloaded", "not download"]) -> None:
-        view = self.app.view.model_tab
-        if model_id in view.model_tree.get_children(""):
-            view.model_tree.set(model_id, "状态", STATUS_LABEL.get(status, status))
-
-    def _get_model_status(self, model_id: str) -> Literal["using", "downloaded", "not download"]:
-        if model_id == self.app.setting.app.current_model:
-            return "using"
-        if model_checker.is_installed(self.app.setting, model_id):
-            return "downloaded"
-        return "not download"
 
     def on_model_double_click(self, event=None) -> None:
         selection = self.app.view.model_tab.model_tree.selection()
@@ -207,13 +177,7 @@ class ModelController:
             return
 
         model_dir = self.app.setting.models_dir / model_id
-        
-        try:
-            shutil.rmtree(model_dir)
-        except Exception as e:
-            messagebox.showerror("卸载失败", str(e))
-            return
-
+        file_ops.rmtree(model_dir)
         view.model_tree.delete(iid)
         self._model_cache.pop(iid, None)
         self.app.setting._model_cache.pop(iid, None)
@@ -224,7 +188,6 @@ class ModelController:
             combobox.config(values=values)
         view.show_default()
 
-    @decorators.send_task
     def download_model(self) -> None:
         view = self.app.view.model_tab
         iid = view.model_tree.selection()[0]
@@ -237,53 +200,128 @@ class ModelController:
             messagebox.showinfo("提示", "该模型没有可用的下载地址。")
             return
 
+        if self._current_download is not None and self._current_download.state in (
+            DownloadState.DOWNLOADING, DownloadState.PAUSED,
+        ):
+            return
+
         model_id = cfg.meta.id or iid
-        self._downloading_model_id = model_id
-        url = cfg.meta.download_url
-        checksum = cfg.meta.checksum_sha256
+        self._current_download = DownloadTask(
+            url=cfg.meta.download_url,
+            dest_dir=self.app.setting.models_dir / model_id,
+            model_id=model_id,
+            checksum=cfg.meta.checksum_sha256,
+        )
+        self._current_download.start(progress_callback=self._make_progress_callback(view))
+        self._show_download_progress(view)
+        self._update_tree_status(model_id, "downloading")
+        self._poll_download(view, model_id)
 
-        # 切换到进度显示（主线程）
-        view.after(0, lambda: self._show_download_progress(view))
-
-        # 进度跟踪状态
+    def _make_progress_callback(self, view) -> Callable:
         _last_ui = [0.0]
-        _speed_state: dict = {"last_dl": 0, "last_time": time.time(), "speed": 0.0}
-
-        def _progress(downloaded: int, total: int) -> None:
+        def callback(downloaded: int, total: int, speed: float) -> None:
             now = time.time()
-            elapsed = now - _speed_state["last_time"]
-            delta = downloaded - _speed_state["last_dl"]
-            if elapsed > 0.1:
-                _speed_state["speed"] = delta / elapsed
-            _speed_state["last_dl"] = downloaded
-            _speed_state["last_time"] = now
-
             if now - _last_ui[0] < 0.1:
                 return
             _last_ui[0] = now
+            view.after(0, lambda: self._update_download_progress(view, downloaded, total, speed))
+        return callback
 
-            view.after(
-                0,
-                lambda d=downloaded, t=total, s=_speed_state["speed"]:
-                self._update_download_progress(view, d, t, s),
-            )
+    def _poll_download(self, view, model_id: str) -> None:
+        task = self._current_download
+        if task is None:
+            return
+        if task.state in (DownloadState.COMPLETED, DownloadState.ERROR, DownloadState.CANCELLED):
+            success = task.state == DownloadState.COMPLETED
+            cancelled = task.state == DownloadState.CANCELLED
+            self._finish_download(success, cancelled, model_id, view)
+            self._current_download = None
+            return
+        view.after(200, lambda: self._poll_download(view, model_id))
 
-        dest_dir = self.app.setting.models_dir / model_id
-        success = model_checker.download_and_extract_zip(
-            url=url,
-            dest_dir=dest_dir,
-            checksum=checksum,
-            progress_callback=_progress,
+    def on_download_control(self) -> None:
+        task = self._current_download
+        if task is None:
+            return
+        btn = self.app.view.model_tab.download_control_btn
+        if task.state == DownloadState.DOWNLOADING:
+            task.pause()
+            btn.config(text="继续")
+        elif task.state == DownloadState.PAUSED:
+            task.resume()
+            btn.config(text="暂停")
+
+    def on_download_cancel(self) -> None:
+        task = self._current_download
+        if task is None:
+            return
+        task.cancel()
+        model_id = task.model_id
+        self._current_download = None
+        view = self.app.view.model_tab
+        self._hide_download_ui(view)
+        model_dir = self.app.setting.models_dir / model_id
+        file_ops.rmtree(model_dir)
+        self.app.setting._model_cache.pop(model_id, None)
+        # 刷新列表 — 模型会以 "not download" 状态重新出现在远程清单中
+        self.load_model_list()
+        # 重新选中该模型，detail 页会显示下载按钮
+        if model_id in view.model_tree.get_children(""):
+            view.model_tree.selection_set(model_id)
+            self.on_model_select()
+
+    def _show_download_progress(self, view: ModelFrame) -> None:
+        view.download_btn.place_forget()
+        view.download_progress_label.config(text="准备下载...")
+        view.download_progressbar.config(value=0)
+        view.download_progress_label.place(relx=0.05, rely=0.87, relwidth=0.50, anchor=tk.W)
+        # 根据实际状态设置按钮文字（切换模型回来时保持暂停/继续状态）
+        is_paused = self._current_download and self._current_download.state == DownloadState.PAUSED
+        view.download_control_btn.config(text="继续" if is_paused else "暂停")
+        view.download_control_btn.place(relx=0.62, rely=0.87, anchor=tk.W)
+        view.download_cancel_btn.place(relx=0.78, rely=0.87, anchor=tk.W)
+        view.download_progressbar.place(relx=0.5, rely=0.92, relwidth=0.9, anchor=tk.CENTER)
+
+    def _update_download_progress(self, view: ModelFrame, downloaded: int, total: int, speed: float) -> None:
+        if total > 0:
+            view.download_progressbar.config(value=int(downloaded * 100 / total))
+        view.download_progress_label.config(
+            text=f"{_format_speed(speed)} - {_format_size(downloaded)}/{_format_size(total)}"
         )
 
-        view.after(0, self._finish_download, success, model_id, view)
-
-    def _finish_download(self, success: bool, model_id: str, view: ModelFrame) -> None:
-        self._downloading_model_id = None
+    def _hide_download_ui(self, view: ModelFrame) -> None:
         view.download_progressbar.place_forget()
         view.download_progress_label.place_forget()
+        view.download_control_btn.place_forget()
+        view.download_cancel_btn.place_forget()
+
+    def _update_tree_status(self, model_id: str, status: Literal["using", "downloading", "downloaded", "not download"]) -> None:
+        view = self.app.view.model_tab
+        if model_id in view.model_tree.get_children(""):
+            view.model_tree.set(model_id, "状态", STATUS_LABEL.get(status, status))
+
+    def _get_model_status(self, model_id: str) -> Literal["using", "downloading", "downloaded", "not download"]:
+        if self._current_download and self._current_download.model_id == model_id:
+            return "downloading"
+        if model_id == self.app.setting.app.current_model:
+            return "using"
+        if model_checker.is_installed(self.app.setting, model_id):
+            return "downloaded"
+        return "not download"
+
+    def _finish_download(self, success: bool, cancelled: bool, model_id: str, view: ModelFrame) -> None:
+        self._hide_download_ui(view)
         view.use_btn.config(state=tk.NORMAL)
         view.uninstall_btn.config(state=tk.NORMAL)
+        if cancelled:
+            model_dir = self.app.setting.models_dir / model_id
+            if model_dir.exists():
+                file_ops.rmtree(model_dir)
+            self._model_cache.pop(model_id, None)
+            self.app.setting._model_cache.pop(model_id, None)
+            view.show_default()
+            self.load_model_list()
+            return
         if success:
             self._update_tree_status(model_id, "downloaded")
             cfg = self._model_cache.get(model_id)
@@ -302,10 +340,6 @@ class ModelController:
             )
             if not is_installed_anyway:
                 model_dir = self.app.setting.models_dir / model_id
-                
-                try:
-                    shutil.rmtree(model_dir)
-                except Exception:
-                    pass
+                file_ops.rmtree(model_dir)
             messagebox.showerror("下载失败", f"模型「{model_id}」下载失败，请检查网络后重试。")
             self.on_model_select()
