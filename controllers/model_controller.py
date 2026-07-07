@@ -183,7 +183,7 @@ class ModelController:
         self.app.view.index_tab.switch_model_combobox.set(self._model_cache[model_id].meta.name)
         self.app.index_controller.refresh_index_dataset_table()
         self.app.view.after(100, self.app.index_controller.update_index_tip)
-
+        self.app.view.title(f"VimgFind - {self._model_cache[model_id].meta.name}")
         self._update_tree_status(old_model_id, "downloaded")
         self._update_tree_status(model_id, "using")
         self.app.view.model_tab.model_tree.selection_set(model_id)
