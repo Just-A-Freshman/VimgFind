@@ -38,7 +38,7 @@ class IndexController(object):
             return
         models = self.app.model_controller.get_downloaded_models()
         if idx < len(models):
-            self.app.model_controller.switch_model(models[idx].id)
+            self.app.model_controller.switch_model(models[idx].meta.id)
 
     def add_search_dir(self, dir_path: str = "") -> None:
         if dir_path != "" and not Path(dir_path).is_dir():
