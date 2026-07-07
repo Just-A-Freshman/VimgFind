@@ -1,23 +1,8 @@
-"""CLIP BPE tokenizer (pure Python).
-
-Mimics OpenAI CLIP/GPT-2 tokenizer behavior:
-  1. bytes → unicode chars (byte_encoder)
-  2. Regex pre-tokenize into "words"
-  3. BPE merge per word
-  4. Map merged pieces → token IDs
-
-No `regex` library dependency; uses `re` + `unicodedata` instead.
-"""
-
 import json
 import re
-import unicodedata
 from .base import BaseTokenizer
 
 
-# ---------------------------------------------------------------------------
-# byte-to-unicode encoder (OpenAI's bytes_to_unicode)
-# ---------------------------------------------------------------------------
 def _bytes_to_unicode() -> tuple[dict[int, str], dict[str, int]]:
     """Map each byte 0-255 to a unique printable unicode char and vice versa."""
     bs: list[int] = (
@@ -37,22 +22,6 @@ def _bytes_to_unicode() -> tuple[dict[int, str], dict[str, int]]:
     return encoder, decoder
 
 
-# ---------------------------------------------------------------------------
-# Pre-tokenization (CLIP-style, without regex library)
-# ---------------------------------------------------------------------------
-
-def _is_unicode_letter(ch: str) -> bool:
-    """Check if character is a Unicode letter (category starts with L)."""
-    if len(ch) != 1:
-        return False
-    return unicodedata.category(ch).startswith("L")
-
-
-# Simplified CLIP pre-tokenizer pattern.
-# Uses `\w` (word chars: letters + digits + underscore) as a practical
-# approximation for `\p{L}` (letters only) + `\p{N}` (numbers).
-# The only difference: underscore `_` gets grouped with letters instead
-# of being treated as punctuation — negligible for CN/EN image search.
 _CLIP_PRETOKENIZE = re.compile(
     r"""'s|'t|'re|'ve|'m|'ll|'d| ?\w+|\d+|[^\s\w\d]+""",
     re.UNICODE,
@@ -84,8 +53,6 @@ class CLIPBpeTokenizer(BaseTokenizer):
         self.byte_encoder, self.byte_decoder = _bytes_to_unicode()
         self.vocab: dict[str, int] = {}
         self.bpe_ranks: dict[tuple[str, str], int] = {}
-
-        # Decoder (id → token), populated after loading
         self._decoder: dict[int, str] = {}
 
         if vocab_file is not None:
@@ -110,7 +77,6 @@ class CLIPBpeTokenizer(BaseTokenizer):
         with open(vocab_file, "r", encoding="utf-8") as f:
             self.vocab = json.load(f)
 
-        # Ensure special tokens exist
         for name, tid in self.SPECIAL_TOKENS.items():
             if name not in self.vocab:
                 self.vocab[name] = tid
@@ -126,7 +92,6 @@ class CLIPBpeTokenizer(BaseTokenizer):
         with open(merges_file, "r", encoding="utf-8") as f:
             lines = f.read().splitlines()
 
-        # Skip version header line if present
         if lines and lines[0].startswith("#version"):
             lines = lines[1:]
 
@@ -136,17 +101,9 @@ class CLIPBpeTokenizer(BaseTokenizer):
                 continue
             self.bpe_ranks[(parts[0], parts[1])] = rank
 
-    # ------------------------------------------------------------------
-    # Pre-tokenization
-    # ------------------------------------------------------------------
-
     def _pretokenize(self, text: str) -> list[str]:
         """Split text into "words" pre-BPE using CLIP-style regex."""
         return _CLIP_PRETOKENIZE.findall(text)
-
-    # ------------------------------------------------------------------
-    # BPE merge
-    # ------------------------------------------------------------------
 
     def _get_pairs(self, word: list[str]) -> set[tuple[str, str]]:
         """Return set of adjacent symbol pairs in a word."""
@@ -161,7 +118,6 @@ class CLIPBpeTokenizer(BaseTokenizer):
             if not pairs:
                 break
 
-            # Find pair with lowest rank (highest merge priority)
             best_pair = None
             best_rank = float("inf")
             for pair in pairs:
@@ -173,7 +129,6 @@ class CLIPBpeTokenizer(BaseTokenizer):
             if best_pair is None or best_rank == float("inf"):
                 break
 
-            # Merge ALL occurrences of best_pair
             first, second = best_pair
             new_word: list[str] = []
             i = 0
@@ -191,10 +146,6 @@ class CLIPBpeTokenizer(BaseTokenizer):
             word = new_word
 
         return word
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     def _encode_word(self, word: str) -> str:
         """Byte-encode a word: UTF-8 bytes → unicode chars via byte_encoder."""
@@ -231,11 +182,9 @@ class CLIPBpeTokenizer(BaseTokenizer):
             token = self._decoder.get(i, "")
             if skip_special and token in self.SPECIAL_TOKENS:
                 continue
-            # Special tokens are literal strings in the vocab (not byte-encoded)
             if token in self.SPECIAL_TOKENS:
                 tokens.append(token)
                 continue
-            # Regular tokens: byte-encoded, convert back to bytes then utf-8
             byte_chars = []
             for ch in token:
                 byte_chars.append(self.byte_decoder.get(ch, 0))

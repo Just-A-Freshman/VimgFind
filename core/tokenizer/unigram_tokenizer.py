@@ -1,19 +1,6 @@
-"""Unigram tokenizer (pure Python, minimal protobuf parser + Viterbi DP).
-
-Loads SentencePiece .model files and decodes using the Unigram
-language model: Viterbi algorithm finds the highest-probability
-segmentation path.
-
-No protobuf library dependency — uses a minimal wire format parser.
-"""
-
 import struct
 from .base import BaseTokenizer
 
-
-# ---------------------------------------------------------------------------
-# Minimal protobuf wire format reader
-# ---------------------------------------------------------------------------
 
 class _ProtoReader:
     """Read protobuf fields from a bytes buffer."""
@@ -93,9 +80,6 @@ class _ProtoReader:
         return struct.unpack("<f", raw)[0]
 
 
-# ---------------------------------------------------------------------------
-# Trie for fast prefix matching
-# ---------------------------------------------------------------------------
 
 class _TrieNode:
     __slots__ = ("children", "score", "token_id", "token_type")
@@ -139,10 +123,6 @@ class _UnigramTrie:
         return results
 
 
-# ---------------------------------------------------------------------------
-# SentencePiece normalization helpers
-# ---------------------------------------------------------------------------
-
 def _sentencepiece_normalize(text: str, add_dummy_prefix: bool,
                                remove_extra_whitespaces: bool,
                                escape_whitespaces: bool) -> str:
@@ -158,10 +138,6 @@ def _sentencepiece_normalize(text: str, add_dummy_prefix: bool,
     return text
 
 
-# ---------------------------------------------------------------------------
-# Byte-piece handling for SentencePiece
-# ---------------------------------------------------------------------------
-
 def _is_byte_piece(piece: str) -> bool:
     """Check if piece is a byte piece like '<0xXX>'."""
     return piece.startswith("<0x") and piece.endswith(">") and len(piece) == 6
@@ -172,10 +148,6 @@ def _byte_piece_to_char(piece: str) -> str:
     byte_val = int(piece[3:5], 16)
     return chr(byte_val)
 
-
-# ---------------------------------------------------------------------------
-# Main UnigramTokenizer
-# ---------------------------------------------------------------------------
 
 class UnigramTokenizer(BaseTokenizer):
     """Unigram tokenizer loaded from SentencePiece .model file.
@@ -189,12 +161,10 @@ class UnigramTokenizer(BaseTokenizer):
         self._decoder: dict[int, str] = {}
         self._scores: dict[int, float] = {}
 
-        # Normalization config (from model)
         self._add_dummy_prefix = True
         self._remove_extra_whitespaces = True
         self._escape_whitespaces = True
 
-        # Special piece info
         self._control_tokens: set[int] = set()
         self._byte_tokens: set[int] = set()
         self._unk_token = "<unk>"
@@ -211,11 +181,9 @@ class UnigramTokenizer(BaseTokenizer):
         with open(model_file, "rb") as f:
             data = f.read()
 
-        # The model file starts with a varint length for the outer message
         reader = _ProtoReader(data)
-        _ = reader._read_varint()  # outer message length
+        _ = reader._read_varint()
 
-        # Parse top-level SentencePieceModel
         outer_reader = _ProtoReader(data[reader.pos:])
 
         for field_number, wire_type, raw in outer_reader.read_message():
@@ -292,18 +260,12 @@ class UnigramTokenizer(BaseTokenizer):
         self._decoder[token_id] = piece_str
         self._scores[token_id] = score
 
-        # Insert into Trie (for unk/control/byte pieces, score is irrelevant)
         self.trie.insert(actual_piece, token_id, score, ptype)
 
-        # Also handle byte pieces in the trie by their actual character
         if _is_byte_piece(piece_str):
             byte_char = _byte_piece_to_char(piece_str)
             if byte_char != actual_piece:
                 self.trie.insert(byte_char, token_id, score, ptype)
-
-    # ------------------------------------------------------------------
-    # Viterbi decoding
-    # ------------------------------------------------------------------
 
     def _viterbi(self, text: str) -> list[int]:
         """Run Viterbi algorithm to find optimal segmentation.
@@ -314,8 +276,6 @@ class UnigramTokenizer(BaseTokenizer):
         if n == 0:
             return []
 
-        # dp[i] = best log prob up to position i
-        # back[i] = (start_j, token_id) for the best token ending at i
         neg_inf = -float("inf")
         dp = [neg_inf] * (n + 1)
         dp[0] = 0.0
@@ -325,17 +285,13 @@ class UnigramTokenizer(BaseTokenizer):
             if dp[i] == neg_inf:
                 continue
 
-            # Find all tokens starting at position i
             for end_pos, token_id, score in self.trie.prefixes(text, i):
-                # Score is the SentencePiece unigram log probability
                 candidate = dp[i] + score
                 if candidate > dp[end_pos]:
                     dp[end_pos] = candidate
                     back[end_pos] = (i, token_id)
 
-            # Also try single character as fallback (UNK)
             if back[i + 1] is None:
-                # Check if the single char is a known token (byte fallback)
                 ch = text[i]
                 if ch in self.vocab:
                     tid = self.vocab[ch]
@@ -346,7 +302,6 @@ class UnigramTokenizer(BaseTokenizer):
                     dp[i + 1] = dp[i] + self._scores.get(self._unk_id, -10.0)
                     back[i + 1] = (i, self._unk_id)
 
-        # Backtrack
         ids: list[int] = []
         pos = n
         while pos > 0:
@@ -359,10 +314,6 @@ class UnigramTokenizer(BaseTokenizer):
 
         ids.reverse()
         return ids
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
 
     def tokenize(self, text: str) -> list[str]:
         """Tokenize text into subword tokens."""
@@ -404,17 +355,12 @@ class UnigramTokenizer(BaseTokenizer):
         text = "".join(tokens)
         if self._escape_whitespaces:
             text = text.replace("▁", " ")
-        # Collapse the dummy prefix space (but keep actual spaces)
         if self._add_dummy_prefix and text.startswith(" "):
             text = text[1:]
         return text.strip()
 
     def vocab_size(self) -> int:
         return len(self.vocab)
-
-    # ------------------------------------------------------------------
-    # Special token IDs (overridable via instance attributes)
-    # ------------------------------------------------------------------
 
     @property
     def bos_token_id(self) -> int | None:
@@ -427,10 +373,6 @@ class UnigramTokenizer(BaseTokenizer):
     @property
     def pad_token_id(self) -> int:
         return self._pad_token_id
-
-    # ------------------------------------------------------------------
-    # Alternative constructor: load from HuggingFace tokenizer.json
-    # ------------------------------------------------------------------
 
     @classmethod
     def from_tokenizer_json(cls, path: str) -> "UnigramTokenizer":
@@ -454,7 +396,6 @@ class UnigramTokenizer(BaseTokenizer):
         tok._decoder = {}
         tok._scores = {}
 
-        # Normalization config (Metaspace)
         tok._add_dummy_prefix = True
         tok._remove_extra_whitespaces = True
         tok._escape_whitespaces = True
@@ -467,7 +408,6 @@ class UnigramTokenizer(BaseTokenizer):
         tok._eos_token_id = None
         tok._pad_token_id = 0
 
-        # Parse vocabulary: list of [piece, score] pairs
         for item in model.get("vocab", []):
             if isinstance(item, list) and len(item) >= 2:
                 piece = item[0]
@@ -484,7 +424,6 @@ class UnigramTokenizer(BaseTokenizer):
             tok._scores[token_id] = score
             tok.trie.insert(piece, token_id, score, 1)  # NORMAL type
 
-        # Special tokens from added_tokens
         for at in data.get("added_tokens", []):
             if not at.get("special"):
                 continue

@@ -1,17 +1,8 @@
-"""Base tokenizer abstract class."""
-
 from abc import ABC, abstractmethod
 
 
 class BaseTokenizer(ABC):
-    """Common interface for all tokenizers.
-
-    Subclasses must implement:
-      - vocab (dict[str, int])
-      - tokenize(text) -> list[str]
-      - convert_tokens_to_ids(tokens) -> list[int]
-      - vocab_size() -> int
-    """
+    vocab: dict[str, int]
 
     @abstractmethod
     def tokenize(self, text: str) -> list[str]:

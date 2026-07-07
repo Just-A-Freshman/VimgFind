@@ -1,5 +1,3 @@
-"""BERT WordPiece tokenizer (pure Python, Trie-based)."""
-
 from .base import BaseTokenizer
 
 
@@ -13,19 +11,6 @@ class _TrieNode:
 
 
 class BertWordPieceTokenizer(BaseTokenizer):
-    """WordPiece tokenizer for BERT-style models.
-
-    Loads from a HuggingFace vocab.txt file.
-    Tokenizes using greedy longest-match first (maximum matching).
-
-    Special token IDs (standard BERT):
-        [PAD]  = 0
-        [UNK]  = 100
-        [CLS]  = 101
-        [SEP]  = 102
-        [MASK] = 103
-    """
-
     SPECIAL_TOKENS = {
         "[PAD]": 0,
         "[UNK]": 100,
@@ -62,7 +47,6 @@ class BertWordPieceTokenizer(BaseTokenizer):
                 self.vocab[token] = idx
                 self._add_to_trie(token, idx)
 
-        # Ensure special tokens exist
         for name, tid in self.SPECIAL_TOKENS.items():
             if name not in self.vocab:
                 self.vocab[name] = tid
@@ -92,7 +76,6 @@ class BertWordPieceTokenizer(BaseTokenizer):
             return []
 
         text = self._clean_text(text)
-        # Split on whitespace first, then process each word
         words = text.split()
         tokens = []
         for word in words:
@@ -143,14 +126,12 @@ class BertWordPieceTokenizer(BaseTokenizer):
         if not word:
             return []
 
-        # Quick win: the whole word exists in vocab
         if self._has_token(word):
             return [word]
 
         tokens = []
         remaining = word
         while remaining:
-            # Try to find the longest prefix match
             longest_match = None
             longest_len = 0
             node = self.root
@@ -162,7 +143,6 @@ class BertWordPieceTokenizer(BaseTokenizer):
                     longest_match = remaining[: i + 1]
                     longest_len = i + 1
 
-            # If no full-word match found, try subword matches
             if longest_match is None:
                 node = self.root
                 for i, ch in enumerate(remaining):
@@ -172,27 +152,20 @@ class BertWordPieceTokenizer(BaseTokenizer):
                     if node.token_id is not None:
                         token_str = remaining[: i + 1]
                         if i == 0 or remaining[0] in self.vocab:
-                            # first char match as full word or char
                             pass
                         if not token_str.startswith("##"):
-                            # For the first piece, subword tokens that don't
-                            # start with ## are actually full-word tokens
                             if i + 1 >= longest_len:
                                 longest_match = token_str
                                 longest_len = i + 1
 
             if longest_match is None:
-                # Process char by char for subword matching
                 for i in range(len(remaining)):
                     prefix = remaining[: i + 1]
                     subword_prefix = "##" + remaining[: i + 1]
-
-                    # Check if the prefix itself is in vocab (for single chars)
                     if prefix in self.vocab and i == 0:
                         longest_match = prefix
                         longest_len = i + 1
                         break
-                    # Check ## prefixed subword
                     if subword_prefix in self.vocab:
                         longest_match = subword_prefix
                         longest_len = i + 1
