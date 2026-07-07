@@ -46,7 +46,6 @@ class SearchTool(object):
         self.__init_event = Event()
         self.__force_stop_update = False
         self._checkout_status: SearchStatus = SearchStatus.OK
-        self.__model_id = model_id or setting.app.current_model
         Thread(target=self.__async_init, args=(setting, ), daemon=True).start()
 
     def __async_init(self, setting: Setting) -> None:
