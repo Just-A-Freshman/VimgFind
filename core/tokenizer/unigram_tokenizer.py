@@ -7,7 +7,6 @@ segmentation path.
 No protobuf library dependency — uses a minimal wire format parser.
 """
 
-import math
 import struct
 from .base import BaseTokenizer
 
@@ -200,6 +199,9 @@ class UnigramTokenizer(BaseTokenizer):
         self._byte_tokens: set[int] = set()
         self._unk_token = "<unk>"
         self._unk_id = 0
+        self._bos_token_id: int | None = None
+        self._eos_token_id: int | None = None
+        self._pad_token_id: int = 0
 
         if model_file is not None:
             self._load(model_file)
@@ -409,3 +411,92 @@ class UnigramTokenizer(BaseTokenizer):
 
     def vocab_size(self) -> int:
         return len(self.vocab)
+
+    # ------------------------------------------------------------------
+    # Special token IDs (overridable via instance attributes)
+    # ------------------------------------------------------------------
+
+    @property
+    def bos_token_id(self) -> int | None:
+        return self._bos_token_id
+
+    @property
+    def eos_token_id(self) -> int | None:
+        return self._eos_token_id
+
+    @property
+    def pad_token_id(self) -> int:
+        return self._pad_token_id
+
+    # ------------------------------------------------------------------
+    # Alternative constructor: load from HuggingFace tokenizer.json
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_tokenizer_json(cls, path: str) -> "UnigramTokenizer":
+        """Load Unigram tokenizer from HuggingFace tokenizer.json.
+
+        Handles the format where vocab is a list of [piece, score] pairs
+        with Metaspace pre-tokenizer (used by UForm and other Unigram models).
+        """
+        import json
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        model = data.get("model", {})
+        if model.get("type") != "Unigram":
+            raise ValueError(f"Expected Unigram model, got {model.get('type')}")
+
+        tok = cls.__new__(cls)
+        tok.vocab = {}
+        tok.trie = _UnigramTrie()
+        tok._decoder = {}
+        tok._scores = {}
+
+        # Normalization config (Metaspace)
+        tok._add_dummy_prefix = True
+        tok._remove_extra_whitespaces = True
+        tok._escape_whitespaces = True
+
+        tok._control_tokens = set()
+        tok._byte_tokens = set()
+        tok._unk_token = "<unk>"
+        tok._unk_id = 0
+        tok._bos_token_id = None
+        tok._eos_token_id = None
+        tok._pad_token_id = 0
+
+        # Parse vocabulary: list of [piece, score] pairs
+        for item in model.get("vocab", []):
+            if isinstance(item, list) and len(item) >= 2:
+                piece = item[0]
+                score = item[1]
+            elif isinstance(item, dict):
+                piece = item.get("piece", "")
+                score = item.get("score", 0.0)
+            else:
+                continue
+
+            token_id = len(tok.vocab)
+            tok.vocab[piece] = token_id
+            tok._decoder[token_id] = piece
+            tok._scores[token_id] = score
+            tok.trie.insert(piece, token_id, score, 1)  # NORMAL type
+
+        # Special tokens from added_tokens
+        for at in data.get("added_tokens", []):
+            if not at.get("special"):
+                continue
+            content = at.get("content", "")
+            tid = at.get("id", -1)
+            if content == "<unk>" or content == "<UNK>":
+                tok._unk_id = tid
+            elif content in ("<s>", "<bos>"):
+                tok._bos_token_id = tid
+            elif content in ("</s>", "<eos>"):
+                tok._eos_token_id = tid
+            elif content in ("<pad>", "<padding>"):
+                tok._pad_token_id = tid
+
+        return tok

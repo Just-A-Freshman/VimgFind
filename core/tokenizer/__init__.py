@@ -56,9 +56,18 @@ def create_tokenizer(model_dir: str) -> BaseTokenizer | None:
     if model_files:
         return UnigramTokenizer(str(model_files[0]))
 
-    # tokenizer.json (HuggingFace BPE)
+    # tokenizer.json (HuggingFace) — check Unigram before BPE
     tok_json = path / "tokenizer.json"
     if tok_json.exists():
+        try:
+            import json as _json
+            with open(str(tok_json), "r", encoding="utf-8") as f:
+                _tok_data = _json.load(f)
+            _model_type = _tok_data.get("model", {}).get("type")
+            if _model_type == "Unigram":
+                return UnigramTokenizer.from_tokenizer_json(str(tok_json))
+        except Exception:
+            pass
         return _create_from_tokenizer_json(str(tok_json))
 
     return None
@@ -88,7 +97,7 @@ def _create_from_tokenizer_json(path: str) -> CLIPBpeTokenizer | None:
             return None
 
         # Write temporary files and load
-        import tempfile, os
+        import tempfile
         tmpdir = tempfile.mkdtemp()
         vpath = os.path.join(tmpdir, "vocab.json")
         mpath = os.path.join(tmpdir, "merges.txt")
