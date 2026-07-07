@@ -16,9 +16,8 @@ class ModelFrame(Frame):
     download_btn: Button
     download_progressbar: Progressbar
     download_progress_label: Label
-    local_path_entry: Entry
-    local_browse_btn: Button
-    local_parse_btn: Button
+    download_control_btn: Button
+    download_cancel_btn: Button
     local_share_btn: Button
 
     def __init__(self, parent, **kwargs) -> None:
@@ -41,8 +40,9 @@ class ModelFrame(Frame):
         self.download_btn = Button(detail_frame, text="下载模型", takefocus=False, padding=(TkS(15), TkS(5)))
         self.download_progressbar = Progressbar(detail_frame, orient=tk.HORIZONTAL, mode="determinate", maximum=100)
         self.download_progress_label = Label(detail_frame, text="")
+        self.download_control_btn = Button(detail_frame, style="link", takefocus=False, text="暂停")
+        self.download_cancel_btn = Button(detail_frame, style="link", takefocus=False, text="取消")
         self.local_share_btn = Button(parent, text="分享模型到 GitHub Issue", cursor="hand2", padding=(TkS(10), TkS(4)), style="LINK")
-        
         self.show_default()
 
     def __set_model_list_frame(self) -> Labelframe:
@@ -88,7 +88,8 @@ class ModelFrame(Frame):
     def show_detail(self, model_config: ModelConfig) -> None:
         for w in (
             self.detail_desc_text, self.use_btn, self.uninstall_btn,
-            self.download_btn, self.download_progress_label, self.download_progressbar
+            self.download_btn, self.download_progress_label, self.download_progressbar,
+            self.download_control_btn, self.download_cancel_btn,
         ):
             w.place_forget()
 
@@ -113,6 +114,8 @@ class ModelFrame(Frame):
         if status == STATUS_LABEL["not download"]:
             self.name_edit_entry.config(state=tk.DISABLED)
             self.download_btn.place(relx=0.5, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
+        elif status == STATUS_LABEL["downloading"]:
+            self.name_edit_entry.config(state=tk.DISABLED)
         else:
             self.use_btn.place(relx=0.32, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
             self.uninstall_btn.place(relx=0.68, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
@@ -122,7 +125,8 @@ class ModelFrame(Frame):
     def show_default(self) -> None:
         for w in (
             self.name_edit_entry, self.detail_desc_text, self.use_btn, self.uninstall_btn,
-            self.download_btn, self.download_progressbar, self.download_progress_label
+            self.download_btn, self.download_progressbar, self.download_progress_label,
+            self.download_control_btn, self.download_cancel_btn,
         ):
             w.place_forget()
         self.name_tip_label.config(text="选择模型查看详细信息")
