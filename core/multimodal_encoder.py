@@ -1,8 +1,8 @@
-from pathlib import Path
 import logging
 from typing import Callable, Literal
 
-from .tokenizer import FullTokenizer
+from config.types import EncoderConfig
+from .tokenizer import create_tokenizer
 from PIL import Image
 import numpy as np
 import onnxruntime as ort
@@ -94,24 +94,20 @@ class ImagePreprocess:
 
 
 class MultiModalEncoder:
-    def __init__(
-            self,
-            vocab_path: Path | None,
-            image_encoder_path: Path | None,
-            text_encoder_path: Path | None,
-            preprocess: ImagePreprocess,
-            normalization: bool,
-            output_index: int,
-            context_length: int
-        ) -> None:
-
-        self.__preprocess = preprocess
-        self.__normalization = normalization
-        self.__output_index = output_index
-        self.__context_length = context_length
-        self.__tokenizer = FullTokenizer(vocab_path) if vocab_path else None
-        self.image_session = self._init_onnx_session(image_encoder_path)
-        self.text_session = self._init_onnx_session(text_encoder_path)
+    def __init__(self, config: EncoderConfig) -> None:
+        self.__preprocess = ImagePreprocess(
+            image_size=config.image_size,
+            preprocess_type=config.preprocess_type,
+            mean=config.mean,
+            std=config.std,
+            fill_color=config.fill_color,
+        )
+        self.__normalization = config.normalization
+        self.__output_index = config.output_index
+        self.__context_length = config.context_length
+        self.__tokenizer = create_tokenizer("./")
+        self.image_session = self._init_onnx_session(config.image_encoder_path)
+        self.text_session = self._init_onnx_session(config.text_encoder_path)
 
     def tokenize(self, texts) -> np.ndarray:
         if self.__tokenizer is None:
@@ -119,28 +115,33 @@ class MultiModalEncoder:
         if isinstance(texts, str):
             texts = [texts]
 
+        bos = getattr(self.__tokenizer, "bos_token_id", None)
+        eos = getattr(self.__tokenizer, "eos_token_id", None)
+        pad = getattr(self.__tokenizer, "pad_token_id", 0)
+        max_len = self.__context_length
+        reserve = (1 if bos is not None else 0) + (1 if eos is not None else 0)
+
         all_tokens = []
         for text in texts:
-            all_tokens.append(
-                [self.__tokenizer.vocab['[CLS]']] +
-                self.__tokenizer.convert_tokens_to_ids(
-                    self.__tokenizer.tokenize(text)
-                )[:self.__context_length - 2] +
-                [self.__tokenizer.vocab['[SEP]']]
-            )
+            ids = self.__tokenizer.encode(text)
+            ids = ids[:max_len - reserve]
+            if bos is not None:
+                ids = [bos] + ids
+            if eos is not None:
+                ids.append(eos)
+            all_tokens.append(ids)
 
-        result = np.zeros((len(all_tokens), self.__context_length), dtype=np.int64)
+        result = np.full((len(all_tokens), max_len), pad, dtype=np.int64)
         for i, tokens in enumerate(all_tokens):
-            assert len(tokens) <= self.__context_length
             result[i, :len(tokens)] = tokens
         return result
 
-    def _init_onnx_session(self, model_path: Path | None) -> ort.InferenceSession | None:
+    def _init_onnx_session(self, model_path: str | None) -> ort.InferenceSession | None:
         if model_path is None:
             return None
         try:
             session = ort.InferenceSession(
-                str(model_path),
+                model_path,
                 providers=['CPUExecutionProvider'],
                 provider_options=[{'intra_op_num_threads': 1, 'inter_op_num_threads': 1}]
             )
@@ -163,7 +164,7 @@ class MultiModalEncoder:
         try:
             input_name = self.image_session.get_inputs()[0].name
             result = self.image_session.run([], {input_name: processed_image})
-            image_features = result[self.__output_index][0]
+            image_features = result[self.__output_index][0] # type: ignore
             self._normalization(image_features)
         except Exception as e:
             logging.error(f"编码图像时出现错误: {e}")
@@ -177,7 +178,7 @@ class MultiModalEncoder:
             text_features_list = []
             for i in range(len(text)):
                 one_text = np.expand_dims(text[i], axis=0)
-                text_feature = self.text_session.run([], {self.text_session.get_inputs()[0].name: one_text})[0].squeeze()
+                text_feature = self.text_session.run([], {self.text_session.get_inputs()[0].name: one_text})[0].squeeze() # type: ignore
                 text_features_list.append(text_feature)
             text_features = np.stack(text_features_list, axis=0)
             self._normalization(text_features)

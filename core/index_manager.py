@@ -91,7 +91,7 @@ class VectorIndexManager:
 
 class NameIndexManager(object):
     NOTEXISTS = 'NOTEXISTS'
-    def __init__(self, name_index_path: Path, max_match_count: int) -> None:
+    def __init__(self, name_index_path: str, max_match_count: int) -> None:
         self.__name_index_path = name_index_path
         self.__max_match_count = max_match_count
         self.__init_index()
@@ -118,7 +118,7 @@ class NameIndexManager(object):
         except json.JSONDecodeError:
             self.__name_index = []
         except FileNotFoundError:
-            Path.mkdir(self.__name_index_path.parent, exist_ok=True)
+            Path(self.__name_index_path).parent.mkdir(exist_ok=True, parents=True)
             self.__name_index = []
         finally:
             self.__valid_index_count = sum(

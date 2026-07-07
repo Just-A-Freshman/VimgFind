@@ -11,9 +11,9 @@ import numpy as np
 from tqdm import tqdm
 from PIL import Image
 
-from settings import Setting
+from config.settings import Setting
 from .index_manager import VectorIndexManager, NameIndexManager
-from .multimodal_encoder import MultiModalEncoder, ImagePreprocess
+from .multimodal_encoder import MultiModalEncoder
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.exclude_rules as exclude_rules
@@ -51,33 +51,17 @@ class SearchTool(object):
 
     def __async_init(self, setting: Setting) -> None:
         cfg = setting.model
-        rel_base = Path("config/models") / self.__model_id
         self.__vec_idx_mgr = VectorIndexManager(
-            str(rel_base / cfg.vector_index_path),
-            cfg.index_capacity,
-            cfg.index_space,
-            cfg.index_dim
+            cfg.index.vector_index_path,
+            cfg.index.index_capacity,
+            cfg.index.index_space,
+            cfg.index.index_dim
         )
         self.__name_idx_mgr = NameIndexManager(
-            rel_base / cfg.name_index_path,
+            cfg.index.name_index_path,
             setting.app.max_match_count
         )
-        preprocess = ImagePreprocess(
-            image_size=cfg.image_size,
-            preprocess_type=cfg.preprocess_type,
-            mean=cfg.mean,
-            std=cfg.std,
-            fill_color=cfg.fill_color
-        )
-        self.__multimodal_encoder = MultiModalEncoder(
-            (rel_base / cfg.vocab_path) if cfg.vocab_path else None,
-            (rel_base / cfg.image_encoder_path) if cfg.image_encoder_path else None,
-            (rel_base / cfg.text_encoder_path) if cfg.text_encoder_path else None,
-            preprocess,
-            cfg.normalization,
-            cfg.output_index,
-            cfg.context_length
-        )
+        self.__multimodal_encoder = MultiModalEncoder(cfg.encoder)
         self.__init_event.set()
 
     @property

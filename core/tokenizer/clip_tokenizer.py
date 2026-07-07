@@ -1,0 +1,246 @@
+"""CLIP BPE tokenizer (pure Python).
+
+Mimics OpenAI CLIP/GPT-2 tokenizer behavior:
+  1. bytes → unicode chars (byte_encoder)
+  2. Regex pre-tokenize into "words"
+  3. BPE merge per word
+  4. Map merged pieces → token IDs
+
+No `regex` library dependency; uses `re` + `unicodedata` instead.
+"""
+
+import json
+import re
+import unicodedata
+from .base import BaseTokenizer
+
+
+# ---------------------------------------------------------------------------
+# byte-to-unicode encoder (OpenAI's bytes_to_unicode)
+# ---------------------------------------------------------------------------
+def _bytes_to_unicode() -> tuple[dict[int, str], dict[str, int]]:
+    """Map each byte 0-255 to a unique printable unicode char and vice versa."""
+    bs: list[int] = (
+        list(range(ord("!"), ord("~") + 1))   # 33-126
+        + list(range(ord("¡"), ord("¬") + 1))  # 161-172
+        + list(range(ord("®"), ord("ÿ") + 1))  # 174-255
+    )
+    cs: list[int] = bs[:]
+    n = 0
+    for b in range(256):
+        if b not in bs:
+            bs.append(b)
+            cs.append(256 + n)
+            n += 1
+    encoder = {b: chr(c) for b, c in zip(bs, cs)}
+    decoder = {chr(c): b for b, c in zip(bs, cs)}
+    return encoder, decoder
+
+
+# ---------------------------------------------------------------------------
+# Pre-tokenization (CLIP-style, without regex library)
+# ---------------------------------------------------------------------------
+
+def _is_unicode_letter(ch: str) -> bool:
+    """Check if character is a Unicode letter (category starts with L)."""
+    if len(ch) != 1:
+        return False
+    return unicodedata.category(ch).startswith("L")
+
+
+# Simplified CLIP pre-tokenizer pattern.
+# Uses `\w` (word chars: letters + digits + underscore) as a practical
+# approximation for `\p{L}` (letters only) + `\p{N}` (numbers).
+# The only difference: underscore `_` gets grouped with letters instead
+# of being treated as punctuation — negligible for CN/EN image search.
+_CLIP_PRETOKENIZE = re.compile(
+    r"""'s|'t|'re|'ve|'m|'ll|'d| ?\w+|\d+|[^\s\w\d]+""",
+    re.UNICODE,
+)
+
+
+class CLIPBpeTokenizer(BaseTokenizer):
+    """BPE tokenizer compatible with OpenAI CLIP / GPT-2.
+
+    Loads from:
+      - vocab.json   (token → id mapping)
+      - merges.txt   (BPE merge operations in priority order)
+
+    Special tokens (CLIP hardcoded):
+      <|startoftext|> = 49406
+      <|endoftext|>   = 49407
+    """
+
+    SPECIAL_TOKENS: dict[str, int] = {
+        "<|startoftext|>": 49406,
+        "<|endoftext|>": 49407,
+    }
+
+    def __init__(
+        self,
+        vocab_file: str | None = None,
+        merges_file: str | None = None,
+    ):
+        self.byte_encoder, self.byte_decoder = _bytes_to_unicode()
+        self.vocab: dict[str, int] = {}
+        self.bpe_ranks: dict[tuple[str, str], int] = {}
+
+        # Decoder (id → token), populated after loading
+        self._decoder: dict[int, str] = {}
+
+        if vocab_file is not None:
+            self._load_vocab(vocab_file)
+        if merges_file is not None:
+            self._load_merges(merges_file)
+
+    @property
+    def bos_token_id(self) -> int:
+        return self.SPECIAL_TOKENS["<|startoftext|>"]
+
+    @property
+    def eos_token_id(self) -> int:
+        return self.SPECIAL_TOKENS["<|endoftext|>"]
+
+    @property
+    def pad_token_id(self) -> int:
+        return self.SPECIAL_TOKENS["<|endoftext|>"]
+
+    def _load_vocab(self, vocab_file: str) -> None:
+        """Load vocab.json."""
+        with open(vocab_file, "r", encoding="utf-8") as f:
+            self.vocab = json.load(f)
+
+        # Ensure special tokens exist
+        for name, tid in self.SPECIAL_TOKENS.items():
+            if name not in self.vocab:
+                self.vocab[name] = tid
+
+        self._decoder = {v: k for k, v in self.vocab.items()}
+
+    def _load_merges(self, merges_file: str) -> None:
+        """Load merges.txt and build bpe_ranks table.
+
+        Each line in merges.txt: "token_a token_b"
+        Line number = rank (lower = merged earlier = higher priority).
+        """
+        with open(merges_file, "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+
+        # Skip version header line if present
+        if lines and lines[0].startswith("#version"):
+            lines = lines[1:]
+
+        for rank, line in enumerate(lines):
+            parts = line.split()
+            if len(parts) != 2:
+                continue
+            self.bpe_ranks[(parts[0], parts[1])] = rank
+
+    # ------------------------------------------------------------------
+    # Pre-tokenization
+    # ------------------------------------------------------------------
+
+    def _pretokenize(self, text: str) -> list[str]:
+        """Split text into "words" pre-BPE using CLIP-style regex."""
+        return _CLIP_PRETOKENIZE.findall(text)
+
+    # ------------------------------------------------------------------
+    # BPE merge
+    # ------------------------------------------------------------------
+
+    def _get_pairs(self, word: list[str]) -> set[tuple[str, str]]:
+        """Return set of adjacent symbol pairs in a word."""
+        return {(word[i], word[i + 1]) for i in range(len(word) - 1)}
+
+    def _bpe_merge(self, token: str) -> list[str]:
+        """Apply BPE merges to a single pre-tokenized string."""
+        word = list(token)
+
+        while len(word) > 1:
+            pairs = self._get_pairs(word)
+            if not pairs:
+                break
+
+            # Find pair with lowest rank (highest merge priority)
+            best_pair = None
+            best_rank = float("inf")
+            for pair in pairs:
+                rank = self.bpe_ranks.get(pair, float("inf"))
+                if rank < best_rank:
+                    best_rank = rank
+                    best_pair = pair
+
+            if best_pair is None or best_rank == float("inf"):
+                break
+
+            # Merge ALL occurrences of best_pair
+            first, second = best_pair
+            new_word: list[str] = []
+            i = 0
+            while i < len(word):
+                if (
+                    i < len(word) - 1
+                    and word[i] == first
+                    and word[i + 1] == second
+                ):
+                    new_word.append(first + second)
+                    i += 2
+                else:
+                    new_word.append(word[i])
+                    i += 1
+            word = new_word
+
+        return word
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def _encode_word(self, word: str) -> str:
+        """Byte-encode a word: UTF-8 bytes → unicode chars via byte_encoder."""
+        return "".join(self.byte_encoder[b] for b in word.encode("utf-8"))
+
+    def tokenize(self, text: str) -> list[str]:
+        """Full tokenize: pretokenize → byte-encode → BPE each word → flatten."""
+        words = self._pretokenize(text)
+        tokens: list[str] = []
+        for word in words:
+            encoded = self._encode_word(word)
+            bpe_tokens = self._bpe_merge(encoded)
+            tokens.extend(bpe_tokens)
+        return tokens
+
+    def encode(self, text: str) -> list[int]:
+        """Encode text to token IDs (including BPE)."""
+        tokens = self.tokenize(text)
+        return self.convert_tokens_to_ids(tokens)
+
+    def convert_tokens_to_ids(self, tokens: list[str]) -> list[int]:
+        unk_id = self.vocab.get("<|endoftext|>", 0)
+        return [self.vocab.get(t, unk_id) for t in tokens]
+
+    def decode(self, ids: list[int], skip_special: bool = False) -> str:
+        """Decode token IDs back to text (inverse of encode).
+
+        Byte-encoded tokens are converted back through byte_decoder,
+        then decoded as UTF-8. Special tokens like <|endoftext|> are
+        returned as-is (or omitted if skip_special=True).
+        """
+        tokens = []
+        for i in ids:
+            token = self._decoder.get(i, "")
+            if skip_special and token in self.SPECIAL_TOKENS:
+                continue
+            # Special tokens are literal strings in the vocab (not byte-encoded)
+            if token in self.SPECIAL_TOKENS:
+                tokens.append(token)
+                continue
+            # Regular tokens: byte-encoded, convert back to bytes then utf-8
+            byte_chars = []
+            for ch in token:
+                byte_chars.append(self.byte_decoder.get(ch, 0))
+            tokens.append(bytes(byte_chars).decode("utf-8", errors="replace"))
+        return "".join(tokens)
+
+    def vocab_size(self) -> int:
+        return len(self.vocab)
