@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Literal, Callable
 import json
 import logging
 
@@ -8,7 +7,7 @@ import hnswlib
 
 import utils.file_ops as file_ops
 
-L2_TEMPERATURE_SCALE = 3000
+
 HNSW_EF_CONSTRUCTION = 200
 HNSW_M = 32
 HNSW_MIN_EF = 100
@@ -19,20 +18,16 @@ class VectorIndexManager:
             self,
             index_path: str,
             index_capacity: int,
-            space: Literal["l2", "cosine"],
             dim: int
         ) -> None:
         self.__index_path: str = index_path
         self.__index_capacity: int = index_capacity
-        self.__space: Literal["l2", "cosine"] = space
         self.__dim: int = dim
         self.__hnsw_index: hnswlib.Index | None = None
-        self.match: Callable = lambda: None
         self.__init_index()
-        self.__init_match_function()
 
     def __init_index(self) -> None:
-        self.__hnsw_index = hnswlib.Index(space=self.__space, dim=self.__dim)
+        self.__hnsw_index = hnswlib.Index(space="cosine", dim=self.__dim)
         if Path(self.__index_path).exists():
             self.__hnsw_index.load_index(self.__index_path, max_elements=self.__index_capacity)
         else:
@@ -42,14 +37,6 @@ class VectorIndexManager:
                 M=HNSW_M,
                 random_seed=42
             )
-
-    def __init_match_function(self) -> None:
-        if self.__space == "cosine":
-            self.match = self.match_with_cosine
-        elif self.__space == "l2":
-            self.match = self.match_with_l2
-        else:
-            self.match = lambda: None
 
     def reset_index(self) -> None:
         file_ops.delete_file(self.__index_path)
@@ -70,20 +57,13 @@ class VectorIndexManager:
         except Exception as e:
             logging.error(f"删除向量时出错: {e}")
 
-    def match_with_cosine(self, fv, nc=5):
+    def match(self, fv, nc=5):
         assert self.__hnsw_index is not None
         self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 2))
         labels, distances = self.__hnsw_index.knn_query(fv, k=nc)
         cos_similarities = 1.0 - distances[0]
         logits_per_image = 100 * cos_similarities
         return logits_per_image, labels[0]
-
-    def match_with_l2(self, fv, nc=5):
-        assert self.__hnsw_index is not None
-        self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 2))
-        query = self.__hnsw_index.knn_query(fv, k=nc)
-        similarity = (1 - np.tanh(query[1][0] / L2_TEMPERATURE_SCALE)) * 100
-        return similarity, query[0][0]
     
     def close(self):
         self.__hnsw_index = None
