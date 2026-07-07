@@ -105,7 +105,7 @@ class MultiModalEncoder:
         self.__normalization = config.normalization
         self.__output_index = config.output_index
         self.__context_length = config.context_length
-        self.__tokenizer = create_tokenizer("./")
+        self.__tokenizer = create_tokenizer(".")
         self.image_session = self._init_onnx_session(config.image_encoder_path)
         self.text_session = self._init_onnx_session(config.text_encoder_path)
 
@@ -172,14 +172,37 @@ class MultiModalEncoder:
         return image_features
 
     def encode_text(self, input_text: str) -> np.ndarray | None:
-        assert self.text_session is not None and self.__tokenizer is not None, "该模型不是文字模型，无法进行以文搜图" 
+        assert self.text_session is not None and self.__tokenizer is not None, "该模型不是文字模型，无法进行以文搜图"
         try:
             text = self.tokenize(input_text)
+            attention_mask = (text != self.__tokenizer.pad_token_id).astype(np.int32)
             text_features_list = []
             for i in range(len(text)):
                 one_text = np.expand_dims(text[i], axis=0)
-                text_feature = self.text_session.run([], {self.text_session.get_inputs()[0].name: one_text})[0].squeeze() # type: ignore
+                one_mask = np.expand_dims(attention_mask[i], axis=0)
+                feed = {}
+                for inp in self.text_session.get_inputs():
+                    if inp.name == "attention_mask":
+                        feed[inp.name] = one_mask.astype(np.int32)
+                    elif inp.name == "input_ids":
+                        dtype = np.int32 if "int32" in inp.type else np.int64
+                        feed[inp.name] = one_text.astype(dtype)
+                    else:
+                        feed[inp.name] = one_text
+
+                results = self.text_session.run(None, feed)
+                text_feature = None
+                for r in results:
+                    if isinstance(r, np.ndarray) and len(r.shape) == 2:
+                        text_feature = r.squeeze()
+                        break
+                if text_feature is None:
+                    if isinstance(results[0], np.ndarray):
+                        text_feature = results[0].squeeze()
+                    else:
+                        raise TypeError("Unexpected sparse output from ONNX model")
                 text_features_list.append(text_feature)
+
             text_features = np.stack(text_features_list, axis=0)
             self._normalization(text_features)
             return text_features
