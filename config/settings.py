@@ -21,6 +21,7 @@ def TkS(value: int | float, restore: bool = False) -> int:
 
 STATUS_LABEL = {
     "using": "使用中",
+    "downloading": "下载中",
     "downloaded": "可用",
     "not download": "不可用",
 }
