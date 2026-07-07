@@ -37,7 +37,7 @@ class FilterController:
         self._on_folder_select_all()
 
     def refresh_folder_filter(self) -> None:
-        dirs = self.app.setting.model.search_dir
+        dirs = self.app.setting.model.index.search_dir
         self._folder_paths = list(dirs)
         lb = self.app.view.search_tab.filter_panel.folder_listbox
         lb.delete(0, tk.END)

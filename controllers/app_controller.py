@@ -4,7 +4,7 @@ from tkinterdnd2 import DND_FILES
 import tkinter as tk
 
 from views import WinGUI, SettingDialog
-from settings import Setting, WinInfo, TkS
+from config.settings import Setting, WinInfo, TkS
 import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.update_checker as update_checker
@@ -104,8 +104,8 @@ class AppController:
         self.view.after(self.setting.app.schedule_index_save_interval, self.__schedule_save)
         self.model_controller.load_model_list()
         downloaded_models = self.model_controller.get_downloaded_models()
-        self.view.index_tab.switch_model_combobox.config(values=[i.name for i in downloaded_models])
-        self.view.index_tab.switch_model_combobox.set(next((i.name for i in downloaded_models if i.id == self.setting.app.current_model), ""))
+        self.view.index_tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
+        self.view.index_tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.setting.app.current_model), ""))
         self.view.index_tab.update_range_combobox.set("当前模型" if self.setting.app.update_index_range == "current" else "所有模型" )
 
     def change_theme(self, target_theme: str = "") -> None:

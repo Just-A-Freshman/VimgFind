@@ -6,7 +6,7 @@ from pathlib import Path
 import tkinter as tk
 
 import utils.decorators as decorators
-from settings import TkS
+from config.settings import TkS
 from views import ExcludeDialog
 from .exclude_controller import ExcludePreviewController
 
@@ -47,7 +47,7 @@ class IndexController(object):
             dir_path = filedialog.askdirectory(title="选择索引文件夹")
             if not dir_path:
                 return
-        search_dirs: list = self.app.setting.model.search_dir
+        search_dirs: list = self.app.setting.model.index.search_dir
         if dir_path in search_dirs:
             messagebox.showinfo("提示", "新索引的目录已包含在当前索引目录中！")
             return
@@ -74,7 +74,7 @@ class IndexController(object):
         tb = self.app.view.index_tab.index_dataset_table
         for item in tb.get_children():
             tb.delete(item)
-        search_dirs = self.app.setting.model.search_dir
+        search_dirs = self.app.setting.model.index.search_dir
         for index, dir_path in enumerate(search_dirs, 1):
             tb.insert("", tk.END, values=(index, dir_path))
         self.app.filter_controller.refresh_folder_filter()
@@ -183,7 +183,7 @@ class IndexController(object):
             if target_idx == source_idx:
                 return
 
-            search_dirs: list = self.app.setting.model.search_dir
+            search_dirs: list = self.app.setting.model.index.search_dir
             dir_to_move = search_dirs.pop(source_idx)
             search_dirs.insert(target_idx, dir_to_move)
 
@@ -243,9 +243,9 @@ class IndexController(object):
         try:
             self.app.search_tools.remove_nonexists()
 
-            exclude_rules: list[str] = self.app.setting.model.exclude_rules or []
+            exclude_rules: list[str] = self.app.setting.model.index.exclude_rules or []
 
-            for image_dir in self.app.setting.model.search_dir:
+            for image_dir in self.app.setting.model.index.search_dir:
                 if Path(image_dir).exists():
                     self.app.search_tools.update_index(
                         image_dir,
@@ -276,14 +276,14 @@ class IndexController(object):
         self._is_updating = True
         self.__check_queue()
         dirs_to_delete = []
-        search_dir: list = self.app.setting.model.search_dir
+        search_dir: list = self.app.setting.model.index.search_dir
         for item in selected:
             delete_search_dir = self.app.view.index_tab.index_dataset_table.item(item, 'values')[1]
             dirs_to_delete.append(delete_search_dir)
             search_dir.remove(delete_search_dir)
             self.app.view.index_tab.index_dataset_table.delete(item)
         self.refresh_index_dataset_table()
-        remaining_dirs = [d for d in self.app.setting.model.search_dir]
+        remaining_dirs = [d for d in self.app.setting.model.index.search_dir]
         for dir_path in dirs_to_delete:
             self.app.search_tools.remove_files_in_directory(dir_path, remaining_dirs)
         self.app.search_tools.remove_nonexists()
@@ -293,8 +293,8 @@ class IndexController(object):
     @decorators.send_task
     def clean_excluded(self) -> None:
         assert self.app.search_tools
-        search_dirs = self.app.setting.model.search_dir
-        rules = self.app.setting.model.exclude_rules or []
+        search_dirs = self.app.setting.model.index.search_dir
+        rules = self.app.setting.model.index.exclude_rules or []
         if not rules:
             messagebox.showinfo("提示", "当前没有设置排除规则。")
             return

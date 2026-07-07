@@ -12,7 +12,7 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 import utils.file_ops as file_ops
 import utils.exclude_rules as exclude_rules
 from views.exclude_dialog import ExcludeDialog
-from settings import Setting, TkS
+from config import Setting, TkS
 
 
 MAX_PREVIEW_ITEMS = 100000
@@ -23,7 +23,7 @@ class ExcludePreviewController:
     def __init__(self, dialog: ExcludeDialog, setting: Setting) -> None:
         self.dialog = dialog
         self.setting = setting
-        self._original_rules: list[str] = (self.setting.model.exclude_rules or [])
+        self._original_rules: list[str] = (self.setting.model.index.exclude_rules or [])
         self._cancel_scan = False
         self._scan_thread: Thread | None = None
         self._preview_cache: list[tuple[str, bool]] = []
@@ -335,7 +335,7 @@ class ExcludePreviewController:
         self._refresh_preview_tree()
 
     def load_rules_into_view(self) -> None:
-        rules = self.setting.model.exclude_rules or []
+        rules = self.setting.model.index.exclude_rules or []
         for rule in rules:
             self.dialog.rules_tree.insert("", tk.END, values=(rule,))
         self.dialog.preview_status_label.config(text="被排除索引的文件夹/文件")
@@ -362,7 +362,7 @@ class ExcludePreviewController:
         self._cancel_scan = True
 
         try:
-            self.setting.model.exclude_rules = self.collect_rules()
+            self.setting.model.index.exclude_rules = self.collect_rules()
             self.setting.save()
             self.dialog.destroy()
         except Exception as e:

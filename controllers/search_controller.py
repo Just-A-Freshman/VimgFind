@@ -11,7 +11,7 @@ import tkinter as tk
 
 from PIL import Image
 
-from settings import Setting
+from config.settings import Setting
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.decorators as decorators
@@ -111,7 +111,7 @@ class SearchController(object):
 
     def __search_image(self, input_data: Image.Image | str | None = None) -> None:
         assert self.app.search_tools
-        if not self.app.setting.model.search_dir:
+        if not self.app.setting.model.index.search_dir:
             messagebox.showinfo("提示", "请在设置选项卡索引至少一个目录！")
             return
         if not self._is_finish_search:
@@ -171,7 +171,7 @@ class SearchController(object):
                 elif status == SearchStatus.NO_RESULTS:
                     messagebox.showinfo("提示", "筛选条件过于严格，没有匹配到任何图像！")
                 else:
-                    messagebox.showerror("错误", "图片搜索失败！\n请查看config/error.log获取错误信息！")
+                    messagebox.showerror("错误", "图片搜索失败！\n请查看config/data/error.log获取错误信息！")
                 return
             first_img_path, first_sim = first_result
             if Path(first_img_path).exists():
