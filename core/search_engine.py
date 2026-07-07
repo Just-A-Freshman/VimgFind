@@ -54,7 +54,6 @@ class SearchTool(object):
         self.__vec_idx_mgr = VectorIndexManager(
             cfg.index.vector_index_path,
             cfg.index.index_capacity,
-            cfg.index.index_space,
             cfg.index.index_dim
         )
         self.__name_idx_mgr = NameIndexManager(
