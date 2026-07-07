@@ -12,6 +12,8 @@ from urllib.error import URLError
 import urllib.request as request
 import urllib.error
 
+from enum import Enum, auto
+
 from config.types import ModelConfig
 from config.settings import Setting
 from . import file_ops
@@ -44,6 +46,9 @@ class MultiThreadDownloader:
         self.part_files = []
         self._has_error = False
         self._error_msg = ""
+        self._pause_event = threading.Event()
+        self._pause_event.set()  # set = running, cleared = paused
+        self._cancel_event = threading.Event()
 
     def _get_file_info(self) -> None:
         req = request.Request(self.url, method='HEAD')
@@ -72,8 +77,20 @@ class MultiThreadDownloader:
             ranges.append((start, end))
         return ranges
 
+    def pause(self) -> None:
+        self._pause_event.clear()
+
+    def resume(self) -> None:
+        self._pause_event.set()
+
+    def cancel(self) -> None:
+        self._cancel_event.set()
+        self._pause_event.set()  # unblock paused threads so they can exit
+
     def _download_part(self, part_index, start, end) -> None:
         if self._has_error:
+            return
+        if self._cancel_event.is_set():
             return
         part_file = f"{self.save_path}.part{part_index}"
         with self.lock:
@@ -86,6 +103,9 @@ class MultiThreadDownloader:
                 with open(part_file, 'wb') as f:
                     while True:
                         if self._has_error:
+                            return
+                        self._pause_event.wait()  # blocks when paused
+                        if self._cancel_event.is_set():
                             return
                         chunk = resp.read(self.chunk_size)
                         if not chunk:
@@ -132,6 +152,10 @@ class MultiThreadDownloader:
 
         for t in self.threads:
             t.join()
+
+        if self._cancel_event.is_set():
+            self._cleanup()
+            raise RuntimeError("下载已取消")
 
         if self._has_error:
             self._cleanup()
@@ -181,6 +205,122 @@ class MultiThreadDownloader:
                 f"校验和不匹配: 预期 {expected_hash}，实际 {actual_hash}"
             )
 
+
+class DownloadState(Enum):
+    IDLE = auto()
+    DOWNLOADING = auto()
+    PAUSED = auto()
+    CANCELLED = auto()
+    COMPLETED = auto()
+    ERROR = auto()
+
+
+class DownloadTask:
+    def __init__(
+        self,
+        url: str,
+        dest_dir: Path,
+        model_id: str,
+        checksum: str = "",
+    ) -> None:
+        self.url = url
+        self.dest_dir = dest_dir
+        self.model_id = model_id
+        self.checksum = checksum
+        self._state = DownloadState.IDLE
+        self._downloader: MultiThreadDownloader | None = None
+        self._error_msg = ""
+        self._thread: threading.Thread | None = None
+        self._lock = threading.Lock()
+        self.downloaded_bytes = 0
+        self.total_bytes = 0
+        self.speed = 0.0
+        self._last_dl = 0
+        self._last_time = time.time()
+
+    def start(self, progress_callback: Callable[[int, int, float], None] | None = None) -> None:
+        self._progress_callback = progress_callback
+        self._state = DownloadState.DOWNLOADING
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _make_progress_wrapper(self) -> Callable[[int, int], None]:
+        def wrapped(downloaded: int, total: int) -> None:
+            now = time.time()
+            elapsed = now - self._last_time
+            delta = downloaded - self._last_dl
+            if elapsed > 0:
+                self.speed = delta / elapsed
+            self._last_dl = downloaded
+            self._last_time = now
+            self.downloaded_bytes = downloaded
+            self.total_bytes = total
+            if self._progress_callback:
+                self._progress_callback(downloaded, total, self.speed)
+        return wrapped
+
+    def _run(self) -> None:
+        temp_dir: Path | None = None
+        try:
+            self.dest_dir.mkdir(parents=True, exist_ok=True)
+            temp_dir = Path(tempfile.mkdtemp(dir=self.dest_dir))
+            zip_path = temp_dir / "model.zip"
+
+            self._downloader = MultiThreadDownloader(
+                url=self.url,
+                save_path=str(zip_path),
+                num_threads=16,
+                checksum=self.checksum,
+                progress_callback=self._make_progress_wrapper(),
+            )
+            self._downloader.download()
+
+            if self._downloader._cancel_event.is_set():
+                self._state = DownloadState.CANCELLED
+                return
+
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(temp_dir)
+            file_ops.merge_dirs(temp_dir, self.dest_dir, skip_names={"model.zip"})
+            self._state = DownloadState.COMPLETED
+        except RuntimeError as e:
+            msg = str(e)
+            if msg == "下载已取消":
+                self._state = DownloadState.CANCELLED
+            else:
+                self._error_msg = msg
+                self._state = DownloadState.ERROR
+            logging.error(f"下载任务失败: {e}")
+        except Exception as e:
+            self._error_msg = str(e)
+            self._state = DownloadState.ERROR
+            logging.error(f"下载任务异常: {e}", exc_info=True)
+        finally:
+            if temp_dir is not None and temp_dir.exists():
+                file_ops.rmtree(temp_dir)
+
+    def pause(self) -> None:
+        with self._lock:
+            if self._state == DownloadState.DOWNLOADING and self._downloader:
+                self._downloader.pause()
+                self._state = DownloadState.PAUSED
+
+    def resume(self) -> None:
+        with self._lock:
+            if self._state == DownloadState.PAUSED and self._downloader:
+                self._downloader.resume()
+                self._state = DownloadState.DOWNLOADING
+
+    def cancel(self) -> None:
+        with self._lock:
+            if self._downloader:
+                self._downloader.cancel()
+            self._state = DownloadState.CANCELLED
+
+    @property
+    def state(self) -> DownloadState:
+        with self._lock:
+            return self._state
 
 
 
