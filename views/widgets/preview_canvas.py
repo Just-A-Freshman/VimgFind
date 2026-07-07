@@ -1,4 +1,4 @@
-from ttkbootstrap import tooltip, Toplevel, Label
+from ttkbootstrap import tooltip
 import tkinter as tk
 
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
@@ -6,34 +6,12 @@ from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 from .base import BasicImagePreviewView
 
 
-class TransientToolTip(tooltip.ToolTip):
-    def show_tip(self, *_):
-        if self.toplevel:
-            return
-        x = self.widget.winfo_pointerx() + 25
-        y = self.widget.winfo_pointery() + 10
-        self.toplevel = Toplevel(**self.toplevel_kwargs)
-        self.toplevel.attributes('-topmost', True)
-        self.toplevel.geometry(f"+{x}+{y}")
-        lbl = Label(
-            master=self.toplevel,
-            text=self.text,
-            justify=tk.LEFT,
-            wraplength=self.wraplength,   # type:ignore
-            padding=10,
-        )
-        lbl.pack(fill=tk.BOTH, expand=True)
-        if self.bootstyle:
-            lbl.configure(style=self.bootstyle)
-        else:
-            lbl.configure(style="tooltip.TLabel")
-
 
 class PreviewCanvasView(BasicImagePreviewView):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self._canvas = self._create_canvas(parent)
-        self._tooltip = TransientToolTip(self._canvas, text="没有文件", delay=500)
+        self._tooltip = tooltip.ToolTip(self._canvas, text="没有文件", delay=500, topmost=True)
 
     def _create_canvas(self, parent) -> tk.Canvas:
         canvas = tk.Canvas(parent, highlightthickness=0, cursor="hand2")
