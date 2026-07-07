@@ -14,7 +14,7 @@ import urllib.error
 
 from config.types import ModelConfig
 from config.settings import Setting
-import file_ops
+from . import file_ops
 
 
 

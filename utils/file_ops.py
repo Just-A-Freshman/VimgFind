@@ -11,7 +11,7 @@ from typing import Iterator
 
 import win32clipboard
 
-import exclude_rules
+from . import exclude_rules
 
 
 class DROPFILES(ctypes.Structure):

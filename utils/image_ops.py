@@ -9,7 +9,7 @@ from PIL import Image, UnidentifiedImageError
 from PIL.ImageFile import ImageFile
 
 from config.settings import Setting
-import file_ops
+from . import file_ops
 
 
 def parse_image_from_clipboard_bytes() -> None | ImageFile:
