@@ -121,7 +121,7 @@ class WinInfo(object):
     version = "2.5.1"
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     ico_path = Setting.config_path / "favicon.ico"
-    title = "Vimgfind"
+    title = "VimgFind"
     default_font_family = "微软雅黑"
     default_font_size = TkS(-14)
     width = TkS(830)
