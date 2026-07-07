@@ -37,7 +37,6 @@ class IndexConfig:
     name_index_path: str = ""
     index_capacity: int = 1000000
     index_dim: int = 512
-    index_space: Literal["l2", "cosine"] = "cosine"
     search_dir: list[str] = field(default_factory=list)
     exclude_rules: list[str] = field(default_factory=list)
 
