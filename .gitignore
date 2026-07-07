@@ -226,6 +226,7 @@ vocab.txt
 *.bin
 
 # weight file
+models/
 *.onnx
 
 # log file
