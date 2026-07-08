@@ -32,6 +32,11 @@ TYPE_LABEL = {
     "Unknown": "未知",
 }
 
+RANGE_LABEL = {
+    "current": "当前模型",
+    "all": "全部模型"
+}
+
 
 class Setting(object):
     config_path = ROOT / "config" / "data"
