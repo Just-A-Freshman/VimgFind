@@ -24,6 +24,10 @@ class IndexController(object):
         self._insert_before: bool | None = None
         self._drag_ghost: tk.Toplevel | None = None
 
+    @property
+    def is_updating(self) -> bool:
+        return self._is_updating
+
     def update_index_tip(self) -> None:
         assert self.app.search_tools
         tab = self.app.view.index_tab
@@ -252,7 +256,6 @@ class IndexController(object):
         tab = self.app.view.index_tab
         tab.delete_index_button.config(state=tk.DISABLED)
         tab.rebuild_index_button.config(state=tk.DISABLED)
-        self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.DISABLED)
         tab.update_index_button.config(
             text="终止索引更新",
             command=lambda: self.app.search_tools.set_force_end_update(True)   # type:ignore
