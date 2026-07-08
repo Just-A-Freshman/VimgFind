@@ -40,9 +40,7 @@ EXT_FILTER_MAP: dict[str, set[str]] = {
 }
 
 class SearchTool(object):
-    def __init__(self, setting: Setting, model_id: str | None = None) -> None:
-        self.__search_event = Event()
-        self.__search_event.set()
+    def __init__(self, setting: Setting) -> None:
         self.__init_event = Event()
         self.__force_stop_update = False
         self._checkout_status: SearchStatus = SearchStatus.OK
@@ -118,7 +116,6 @@ class SearchTool(object):
 
     def update_index(self, image_dir, max_workers: int = 10, exclude_rules: list[str] | None = None) -> None:
         def _process_item(item) -> tuple[int, str, np.ndarray | None]:
-            self.__search_event.wait()
             idx, fpath = item
             if self.__force_stop_update:
                 return idx, fpath, None
@@ -240,29 +237,25 @@ class SearchTool(object):
             self._checkout_status = SearchStatus.EMPTY_INPUT
             return
 
-        self.stop_update_index()
-        try:
-            fv = self.__multimodal_encoder.encode_image(content) if isinstance(content, Image.Image) \
-                 else self.__multimodal_encoder.encode_text(sub(r"[\s,]+", "，", content))
+        fv = self.__multimodal_encoder.encode_image(content) if isinstance(content, Image.Image) \
+             else self.__multimodal_encoder.encode_text(sub(r"[\s,]+", "，", content))
 
-            if fv is None:
-                logging.warning("搜索失败：编码器返回空特征向量，请检查模型文件是否存在")
-                self._checkout_status = SearchStatus.ENCODE_FAILED
-                return
+        if fv is None:
+            logging.warning("搜索失败：编码器返回空特征向量，请检查模型文件是否存在")
+            self._checkout_status = SearchStatus.ENCODE_FAILED
+            return
 
-            sim_list, ids_list = self.__vec_idx_mgr.match(fv, self.__name_idx_mgr.results_count)
-            name_index_len = len(self.__name_idx_mgr.name_index)
-            if len(ids_list) == 0:
-                logging.error("搜索失败：HNSW向量索引为空，请自行添加索引目录并更新")
-                self._checkout_status = SearchStatus.HNSW_EMPTY
-                return
+        sim_list, ids_list = self.__vec_idx_mgr.match(fv, self.__name_idx_mgr.results_count)
+        name_index_len = len(self.__name_idx_mgr.name_index)
+        if len(ids_list) == 0:
+            logging.error("搜索失败：HNSW向量索引为空，请自行添加索引目录并更新")
+            self._checkout_status = SearchStatus.HNSW_EMPTY
+            return
 
-            yield from self._filter_and_yield_results(
-                ids_list, sim_list, threshold, name_index_len,
-                file_ext_label, size_min, size_max, folder_filters
-            )
-        finally:
-            self.continue_update_index()
+        yield from self._filter_and_yield_results(
+            ids_list, sim_list, threshold, name_index_len,
+            file_ext_label, size_min, size_max, folder_filters
+        )
 
     def _filter_and_yield_results(
             self,
@@ -323,21 +316,13 @@ class SearchTool(object):
         except Exception as e:
             logging.error(f"保存索引时出现错误: {e}")
 
-    def stop_update_index(self) -> None:
-        self.__search_event.clear()
-
     def set_force_end_update(self, state: bool) -> None:
         self.__force_stop_update = state
 
-    def continue_update_index(self) -> None:
-        self.__search_event.set()
-
     def destroy(self, wait: bool = False) -> None:
         if not wait:
-            self.__search_event.set()
             self.__init_event.set()
         else:
-            self.__search_event.wait()
             self.__init_event.wait()
         encoder: MultiModalEncoder | None = getattr(self, '_SearchTool__multimodal_encoder', None)
         if encoder is not None:
