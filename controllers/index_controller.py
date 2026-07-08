@@ -30,7 +30,6 @@ class IndexController(object):
         tab.index_tip_label.config(
             text=f"当前索引图库({self.app.search_tools.valid_index_count}张图片)"
         )
-        self._is_updating = False
 
     def switch_model(self, event) -> None:
         idx = event.widget.current()
@@ -64,11 +63,15 @@ class IndexController(object):
         answer = messagebox.askyesno("提示", "重建索引极其耗时，\n您确定要进行重建吗？")
         if not answer:
             return
+        if self.app.setting.app.update_index_range == "all" and len(self.app.model_controller.get_downloaded_models()) > 1:
+            answer = messagebox.askyesno("提示", "您确定要重建全部模型的索引吗？")
+            if not answer:
+                return
         try:
             self.app.search_tools.reset_index()
+            self.sync_index()
         except (FileNotFoundError, KeyError):
             pass
-        self.sync_index()
 
     def refresh_index_dataset_table(self) -> None:
         tb = self.app.view.index_tab.index_dataset_table
@@ -230,21 +233,11 @@ class IndexController(object):
     @decorators.send_task
     @decorators.redirect_output
     def sync_index(self, show_message: bool = True) -> None:
-        assert self.app.search_tools
-        tab = self.app.view.index_tab
-        tab.delete_index_button.config(state=tk.DISABLED)
-        tab.rebuild_index_button.config(state=tk.DISABLED)
-        tab.update_index_button.config(
-            text="终止索引更新",
-            command=lambda: self.app.search_tools.set_force_end_update(True)   #type:ignore
-        )
-        self._is_updating = True
-        self.__check_queue()
-        try:
+        def update_index():
+            assert self.app.search_tools
+            tab.switch_model_combobox.config(state=tk.DISABLED)
             self.app.search_tools.remove_nonexists()
-
             exclude_rules: list[str] = self.app.setting.model.index.exclude_rules or []
-
             for image_dir in self.app.setting.model.index.search_dir:
                 if Path(image_dir).exists():
                     self.app.search_tools.update_index(
@@ -253,11 +246,36 @@ class IndexController(object):
                         exclude_rules
                     )
             self.app.search_tools.remove_duplicate()
+            tab.switch_model_combobox.config(state="readonly")
+        
+        assert self.app.search_tools
+        tab = self.app.view.index_tab
+        tab.delete_index_button.config(state=tk.DISABLED)
+        tab.rebuild_index_button.config(state=tk.DISABLED)
+        self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.DISABLED)
+        tab.update_index_button.config(
+            text="终止索引更新",
+            command=lambda: self.app.search_tools.set_force_end_update(True)   # type:ignore
+        )
+        self._is_updating = True
+        self.__check_queue()
+        try:
+            update_index()
+            if self.app.setting.app.update_index_range == "all":
+                original_id = self.app.setting.app.current_model
+                remaining_models = [cfg for cfg in self.app.model_controller.get_downloaded_models() if cfg.meta.id != original_id]
+                for model in remaining_models:
+                    self.app.model_controller.switch_model(model.meta.id, resend_search=False)
+                    update_index()
+                self.app.model_controller.switch_model(original_id)
             if show_message:
                 messagebox.showinfo("提示", "索引更新完成！")
-            self.app.view.after(1000, self.update_index_tip)
-            self.app.search_tools.set_force_end_update(False)
+        except Exception as e:
+            messagebox.showerror("错误", f"索引更新时遇到错误：{str(e)}")
         finally:
+            self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.NORMAL)
+            self.app.search_tools.set_force_end_update(False)
+            self.app.view.after(1000, self.update_index_tip)
             tab.update_index_button.config(text="更新索引目录", command=self.sync_index)
             tab.delete_index_button.config(state=tk.NORMAL)
             tab.rebuild_index_button.config(state=tk.NORMAL)

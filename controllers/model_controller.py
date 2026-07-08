@@ -137,7 +137,7 @@ class ModelController:
         if model_json_path.exists():
             file_ops.open_file(model_json_path)
 
-    def switch_model(self, model_id: str = "") -> None:
+    def switch_model(self, model_id: str = "", resend_search: bool = True) -> None:
         self.app.setting.save()
         self.app.view.model_tab.use_btn.config(state=tk.DISABLED)
         model_id = model_id if model_id else self.app.view.model_tab.model_tree.selection()[0]
@@ -148,8 +148,9 @@ class ModelController:
             self.app.search_tools.save_index()
             self.app.search_tools.destroy(wait=True)
         self.app.setting.app.current_model = model_id
-        self.app.search_tools = SearchTool(self.app.setting, model_id)
-        self.app.search_controller.resend_last_search()
+        self.app.search_tools = SearchTool(self.app.setting)
+        if resend_search:
+            self.app.search_controller.resend_last_search()
         self.app.view.index_tab.switch_model_combobox.set(self._model_cache[model_id].meta.name)
         self.app.index_controller.refresh_index_dataset_table()
         self.app.view.after(100, self.app.index_controller.update_index_tip)

@@ -77,7 +77,7 @@ class AppController:
 
         index_tab.auto_update_checkbutton.config(command=lambda: setattr(self.setting.app, "auto_update_index",  index_tab.auto_update_checkbutton.instate(['selected'])))
         index_tab.update_range_combobox.bind(
-            "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "auto_update_index", "current" if e.widget.get() == "当前索引" else "all")
+            "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "update_index_range", "current" if e.widget.get() == "当前索引" else "all")
         )
         index_tab.update_threads_count_scale.bind("<ButtonRelease-1>", lambda e: setattr(self.setting.app, "max_work_thread", int(float(e.widget.get()))))
         index_tab.exclude_button.config(command=self.index_controller.open_exclude_dialog)
