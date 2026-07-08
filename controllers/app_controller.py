@@ -4,7 +4,7 @@ from tkinterdnd2 import DND_FILES
 import tkinter as tk
 
 from views import WinGUI, SettingDialog
-from config.settings import Setting, WinInfo, TkS
+from config.settings import Setting, WinInfo, TkS, RANGE_LABEL
 import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.update_checker as update_checker
@@ -77,7 +77,7 @@ class AppController:
 
         index_tab.auto_update_checkbutton.config(command=lambda: setattr(self.setting.app, "auto_update_index",  index_tab.auto_update_checkbutton.instate(['selected'])))
         index_tab.update_range_combobox.bind(
-            "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "update_index_range", "current" if e.widget.get() == "当前索引" else "all")
+            "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "update_index_range", {v: k for k, v in RANGE_LABEL.items()}[e.widget.get()])
         )
         index_tab.update_threads_count_scale.bind("<ButtonRelease-1>", lambda e: setattr(self.setting.app, "max_work_thread", int(float(e.widget.get()))))
         index_tab.exclude_button.config(command=self.index_controller.open_exclude_dialog)
@@ -108,7 +108,7 @@ class AppController:
         downloaded_models = self.model_controller.get_downloaded_models()
         self.view.index_tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
         self.view.index_tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.setting.app.current_model), ""))
-        self.view.index_tab.update_range_combobox.set("当前模型" if self.setting.app.update_index_range == "current" else "所有模型")
+        self.view.index_tab.update_range_combobox.set(RANGE_LABEL[self.setting.app.update_index_range])
 
     def change_theme(self, target_theme: str = "") -> None:
         style = self.view.style
