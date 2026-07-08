@@ -114,12 +114,16 @@ class SearchController(object):
         if not self.app.setting.model.index.search_dir:
             messagebox.showinfo("提示", "请在索引选项卡索引至少一个目录！")
             return
+        if self.app.index_controller.is_updating:
+            answer = messagebox.askyesno("提示", "索引正在更新中，是否终止索引更新？")
+            if not answer:
+                return
+            self.app.search_tools.set_force_end_update(True)
         if not self._is_finish_search:
             return
         self._is_finish_search = False
         try:
             tab = self.app.view.search_tab
-
             if input_data is None and self._queue_total > 0:
                 tab.set_nav_state(
                     has_prev=self._queue_index > 0,
