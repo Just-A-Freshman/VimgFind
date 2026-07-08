@@ -183,7 +183,8 @@ class MultiModalEncoder:
                 feed = {}
                 for inp in self.text_session.get_inputs():
                     if inp.name == "attention_mask":
-                        feed[inp.name] = one_mask.astype(np.int32)
+                        dtype = np.int32 if "int32" in inp.type else np.int64
+                        feed[inp.name] = one_mask.astype(dtype)
                     elif inp.name == "input_ids":
                         dtype = np.int32 if "int32" in inp.type else np.int64
                         feed[inp.name] = one_text.astype(dtype)
