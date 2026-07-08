@@ -31,7 +31,6 @@ class AppController:
 
         self.change_theme(self.setting.app.ui_style)
         self.search_controller.set_preview_mode(self.setting.app.preview_mode)
-        self.search_controller.set_similarity_threshold(self.setting.app.similarity_threshold)
         self.bind_event(first_time=True)
         self.view.after(10, self.__env_init)
         self.view.protocol("WM_DELETE_WINDOW", self.destroy)
@@ -180,7 +179,6 @@ class AppController:
 
     def destroy(self) -> None:
         try:
-            self.setting.app.similarity_threshold = int(float(self.view.search_tab.filter_panel.sim_scale.get()))
             self.setting.save()
             self.setting.clean_log()
             if self.search_tools:
