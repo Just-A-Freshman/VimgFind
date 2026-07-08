@@ -23,7 +23,7 @@ def _bytes_to_unicode() -> tuple[dict[int, str], dict[str, int]]:
 
 
 _CLIP_PRETOKENIZE = re.compile(
-    r"""'s|'t|'re|'ve|'m|'ll|'d| ?\w+|\d+|[^\s\w\d]+""",
+    r"""<\|startoftext\|>|<\|endoftext\|>|'s|'t|'re|'ve|'m|'ll|'d|[\w]+|\d+|[^\s\w\d]+""",
     re.UNICODE,
 )
 
@@ -49,11 +49,13 @@ class CLIPBpeTokenizer(BaseTokenizer):
         self,
         vocab_file: str | None = None,
         merges_file: str | None = None,
+        do_lower_case: bool = False,
     ):
         self.byte_encoder, self.byte_decoder = _bytes_to_unicode()
         self.vocab: dict[str, int] = {}
         self.bpe_ranks: dict[tuple[str, str], int] = {}
         self._decoder: dict[int, str] = {}
+        self.do_lower_case = do_lower_case
 
         if vocab_file is not None:
             self._load_vocab(vocab_file)
@@ -109,9 +111,12 @@ class CLIPBpeTokenizer(BaseTokenizer):
         """Return set of adjacent symbol pairs in a word."""
         return {(word[i], word[i + 1]) for i in range(len(word) - 1)}
 
-    def _bpe_merge(self, token: str) -> list[str]:
-        """Apply BPE merges to a single pre-tokenized string."""
-        word = list(token)
+    def _bpe_merge(self, token: str | list[str]) -> list[str]:
+        """Apply BPE merges to a single pre-tokenized string or list of chars."""
+        if isinstance(token, str):
+            word = list(token)
+        else:
+            word = list(token)  # copy
 
         while len(word) > 1:
             pairs = self._get_pairs(word)
@@ -152,12 +157,23 @@ class CLIPBpeTokenizer(BaseTokenizer):
         return "".join(self.byte_encoder[b] for b in word.encode("utf-8"))
 
     def tokenize(self, text: str) -> list[str]:
-        """Full tokenize: pretokenize → byte-encode → BPE each word → flatten."""
+        """Full tokenize: lowercase → pretokenize → byte-encode → BPE → flatten.
+
+        对每个预分词的 word，将最后一个 byte-encoded 字符添加 </w> 后缀，
+        以标记词边界。不保留前导空格（与 HuggingFace CLIP 实现一致）。
+        """
+        if self.do_lower_case:
+            text = text.lower()
         words = self._pretokenize(text)
         tokens: list[str] = []
         for word in words:
+            if not word:
+                continue
             encoded = self._encode_word(word)
-            bpe_tokens = self._bpe_merge(encoded)
+            # 最后一个字符带上 </w> 词尾标记
+            chars = list(encoded)
+            chars[-1] = chars[-1] + "</w>"
+            bpe_tokens = self._bpe_merge(chars)
             tokens.extend(bpe_tokens)
         return tokens
 

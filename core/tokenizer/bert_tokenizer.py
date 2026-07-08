@@ -19,10 +19,11 @@ class BertWordPieceTokenizer(BaseTokenizer):
         "[MASK]": 103,
     }
 
-    def __init__(self, vocab_file: str | None = None):
+    def __init__(self, vocab_file: str | None = None, do_lower_case: bool = False):
         self.vocab: dict[str, int] = {}
         self.root = _TrieNode()
         self._unk_token = "[UNK]"
+        self.do_lower_case = do_lower_case
 
         if vocab_file is not None:
             self._load(vocab_file)
@@ -74,6 +75,9 @@ class BertWordPieceTokenizer(BaseTokenizer):
         """Tokenize using greedy longest-match first (maximum matching)."""
         if not text:
             return []
+
+        if self.do_lower_case:
+            text = text.lower()
 
         text = self._clean_text(text)
         words = text.split()
