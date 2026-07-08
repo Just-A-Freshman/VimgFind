@@ -69,15 +69,19 @@ class AppController:
         index_tab.index_dataset_table.bind("<ButtonRelease-1>", self.index_controller.drag_end)
         index_tab.switch_model_combobox.bind("<<ComboboxSelected>>", self.index_controller.switch_model)
         index_tab.switch_model_combobox.bind("<MouseWheel>", lambda _: "break")
-        index_tab.switch_model_combobox.bind("<ButtonPress-4>", lambda _: "break")
-        index_tab.switch_model_combobox.bind("<ButtonPress-5>", lambda _: "break")
         
         index_tab.add_index_button.config(command=self.index_controller.add_search_dir)
-        index_tab.exclude_button.config(command=self.index_controller.open_exclude_dialog)
         index_tab.clean_excluded_button.config(command=self.index_controller.clean_excluded)
         index_tab.update_index_button.config(command=self.index_controller.sync_index)
         index_tab.delete_index_button.config(command=self.index_controller.delete_search_dir)
         index_tab.rebuild_index_button.config(command=self.index_controller.rebuild_index)
+
+        index_tab.auto_update_checkbutton.config(command=lambda: setattr(self.setting.app, "auto_update_index",  index_tab.auto_update_checkbutton.instate(['selected'])))
+        index_tab.update_range_combobox.bind(
+            "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "auto_update_index", "current" if e.widget.get() == "当前索引" else "all")
+        )
+        index_tab.update_threads_count_scale.bind("<ButtonRelease-1>", lambda e: setattr(self.setting.app, "max_work_thread", int(float(e.widget.get()))))
+        index_tab.exclude_button.config(command=self.index_controller.open_exclude_dialog)
 
         model_tab = self.view.model_tab
         model_tab.model_tree.bind("<<TreeviewSelect>>", self.model_controller.on_model_select)
@@ -94,21 +98,18 @@ class AppController:
 
     @decorators.send_task
     def __env_init(self) -> None:
-        model_id = self.setting.app.current_model
-        self.search_tools = SearchTool(self.setting, model_id)
+        self.search_tools = SearchTool(self.setting)
         self.index_controller.refresh_index_dataset_table()
         self.view.index_tab.update_threads_count_scale.set(self.setting.app.max_work_thread)
         if self.setting.app.auto_update_index:
             self.view.index_tab.auto_update_checkbutton.invoke()
-            self.index_controller.sync_index(show_message=False)
-        else:
-            self.index_controller.update_index_tip()
+        self.index_controller.update_index_tip()
         self.view.after(self.setting.app.schedule_index_save_interval, self.__schedule_save)
         self.model_controller.load_model_list()
         downloaded_models = self.model_controller.get_downloaded_models()
         self.view.index_tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
         self.view.index_tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.setting.app.current_model), ""))
-        self.view.index_tab.update_range_combobox.set("当前模型" if self.setting.app.update_index_range == "current" else "所有模型" )
+        self.view.index_tab.update_range_combobox.set("当前模型" if self.setting.app.update_index_range == "current" else "所有模型")
 
     def change_theme(self, target_theme: str = "") -> None:
         style = self.view.style
@@ -179,10 +180,7 @@ class AppController:
 
     def destroy(self) -> None:
         try:
-            self.setting.app.auto_update_index = self.view.index_tab.auto_update_checkbutton.instate(['selected'])
-            self.setting.app.max_work_thread = int(float(self.view.index_tab.update_threads_count_scale.get()))
             self.setting.app.similarity_threshold = int(float(self.view.search_tab.filter_panel.sim_scale.get()))
-            self.setting.app.update_index_range = "current" if self.view.index_tab.update_range_combobox.get() == "当前模型" else "all" 
             self.setting.save()
             self.setting.clean_log()
             if self.search_tools:
