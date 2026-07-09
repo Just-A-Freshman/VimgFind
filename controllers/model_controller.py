@@ -40,6 +40,13 @@ def _format_speed(bytes_per_sec: float) -> str:
 
 
 class ModelController:
+    _STATUS_SORT_KEY = {
+        "using": 0,
+        "downloading": 1,
+        "downloaded": 2,
+        "not download": 3,
+    }
+
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self._model_cache: dict[str, ModelConfig] = {}
@@ -179,14 +186,15 @@ class ModelController:
 
         model_dir = self.app.setting.models_dir / model_id
         file_ops.rmtree(model_dir)
-        view.model_tree.delete(iid)
-        self._model_cache.pop(iid, None)
+        self._update_tree_status(model_id, "not download")
         self.app.setting.remove_model_config(iid)
         combobox = self.app.view.index_tab.switch_model_combobox
         values = list(combobox.cget("values"))
         if cfg.meta.name in values:
             values.remove(cfg.meta.name)
             combobox.config(values=values)
+        self._model_cache.pop(iid, None)
+        self.load_model_list()
         view.show_default()
 
     def download_model(self) -> None:
@@ -306,6 +314,17 @@ class ModelController:
         if model_checker.is_installed(self.app.setting, model_id):
             return "downloaded"
         return "not download"
+
+    def _resort_tree(self) -> None:
+        view = self.app.view.model_tab
+        items = list(view.model_tree.get_children(""))
+        def sort_key(iid: str):
+            status = self._get_model_status(iid)
+            name = view.model_tree.set(iid, "名称")
+            return (self._STATUS_SORT_KEY.get(status, 99), name)
+        items.sort(key=sort_key)
+        for iid in items:
+            view.model_tree.move(iid, "", tk.END)
 
     def _finish_download(self, success: bool, cancelled: bool, model_id: str, view: ModelFrame) -> None:
         self._hide_download_ui(view)
