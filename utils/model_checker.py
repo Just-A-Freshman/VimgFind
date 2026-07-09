@@ -330,7 +330,6 @@ def _fetch_remote_manifest(
     cache_ttl: int = 3600,
 ) -> list[dict] | None:
     now = time.time()
-
     if cache_path is not None and cache_path.exists():
         try:
             with open(cache_path, "r", encoding="utf-8") as f:
@@ -339,15 +338,10 @@ def _fetch_remote_manifest(
                 return cache.get("models")
         except (json.JSONDecodeError, IOError):
             pass
-
     try:
-        req = request.Request(
-            url,
-            headers={"User-Agent": "VimgFind/2.5.1", "Accept": "application/json"},
-        )
+        req = request.Request(url, headers={"Accept": "application/json"},)
         with request.urlopen(req, timeout=10) as resp:
-            models: list[dict] = json.loads(resp.read().decode("utf-8"))
-
+            models: list[dict] = json.loads(json.loads(resp.read().decode("utf-8"))["raw_content"])
         if cache_path is not None:
             try:
                 cache_path.parent.mkdir(parents=True, exist_ok=True)
