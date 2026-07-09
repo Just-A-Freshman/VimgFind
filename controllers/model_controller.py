@@ -181,7 +181,7 @@ class ModelController:
         file_ops.rmtree(model_dir)
         view.model_tree.delete(iid)
         self._model_cache.pop(iid, None)
-        self.app.setting._model_cache.pop(iid, None)
+        self.app.setting.remove_model_config(iid)
         combobox = self.app.view.index_tab.switch_model_combobox
         values = list(combobox.cget("values"))
         if cfg.meta.name in values:
@@ -263,10 +263,8 @@ class ModelController:
         self._hide_download_ui(view)
         model_dir = self.app.setting.models_dir / model_id
         file_ops.rmtree(model_dir)
-        self.app.setting._model_cache.pop(model_id, None)
-        # 刷新列表 — 模型会以 "not download" 状态重新出现在远程清单中
+        self.app.setting.remove_model_config(model_id)
         self.load_model_list()
-        # 重新选中该模型，detail 页会显示下载按钮
         if model_id in view.model_tree.get_children(""):
             view.model_tree.selection_set(model_id)
             self.on_model_select()
@@ -276,7 +274,6 @@ class ModelController:
         view.download_progress_label.config(text="准备下载...")
         view.download_progressbar.config(value=0)
         view.download_progress_label.place(relx=0.05, rely=0.87, relwidth=0.50, anchor=tk.W)
-        # 根据实际状态设置按钮文字（切换模型回来时保持暂停/继续状态）
         is_paused = self._current_download and self._current_download.state == DownloadState.PAUSED
         view.download_control_btn.config(text="继续" if is_paused else "暂停")
         view.download_control_btn.place(relx=0.62, rely=0.87, anchor=tk.W)
@@ -319,7 +316,7 @@ class ModelController:
             if model_dir.exists():
                 file_ops.rmtree(model_dir)
             self._model_cache.pop(model_id, None)
-            self.app.setting._model_cache.pop(model_id, None)
+            self.app.setting.remove_model_config(model_id)
             view.show_default()
             self.load_model_list()
             return

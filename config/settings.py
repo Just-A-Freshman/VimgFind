@@ -112,6 +112,9 @@ class Setting(object):
         self._model_cache[model_id] = cfg
         self.write_model_json(self.models_dir / model_id, cfg)
 
+    def remove_model_config(self, model_id: str) -> None:
+        self._model_cache.pop(model_id, None)
+
     def save(self) -> None:
         with open(Setting.setting_path, "w", encoding="utf-8") as f:
             app_dict = {f.name: getattr(self._app, f.name) for f in fields(AppSettings)}
