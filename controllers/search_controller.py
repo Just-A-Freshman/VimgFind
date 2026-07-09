@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 class SearchController(object):
     def __init__(self, app_controller: AppController) -> None:
-        self._last_search_content: Image.Image | str = ""
+        self._last_search_content: tuple[Image.Image, str]  | str = ""
         self._is_finish_search: bool = True
         self._preview_timer: str | None = None
         self.similarity_threshold: float = 0.0
@@ -129,16 +129,16 @@ class SearchController(object):
                 tab.set_nav_visible(False)
             if isinstance(input_data, str):
                 tab.preview_canvas1.clear_results()
+                self._last_search_content = input_data
             elif isinstance(input_data, Image.Image):
                 tab.search_entry.delete(0, tk.END)
-                tab.search_entry.insert(0, source_path if source_path is not None else "")
+                tab.search_entry.insert(0, source_path or "")
                 tab.search_entry.xview_moveto(1.0)
                 if source_path and Path(source_path).is_file():
                     tab.preview_canvas1.append_result(source_path, input_data)
+                self._last_search_content = (input_data, source_path or "")
             else:
                 return
-
-            self._last_search_content = input_data
             tab.preview_view.clear_results()
             ext, size_min, size_max, folder_filters = self.app.filter_controller.get_search_filters()
             results = self.app.search_tools.checkout(input_data, self.similarity_threshold, ext, size_min, size_max, folder_filters)
@@ -206,8 +206,10 @@ class SearchController(object):
         return content
 
     def resend_last_search(self) -> None:
-        if self._last_search_content:
+        if isinstance(self._last_search_content, str):
             self.__search_image(self._last_search_content)
+        else:
+            self.__search_image(*self._last_search_content)
 
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
