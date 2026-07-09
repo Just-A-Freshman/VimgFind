@@ -330,13 +330,6 @@ def _fetch_remote_manifest(
     cache_ttl: int = 3600,
 ) -> list[dict] | None:
     now = time.time()
-    try:
-        local_path = Path(__file__).resolve().parent.parent / "models.json"
-        if local_path.exists():
-            with open(local_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except Exception:
-        pass
 
     if cache_path is not None and cache_path.exists():
         try:
