@@ -49,7 +49,7 @@ class CLIPBpeTokenizer(BaseTokenizer):
         self,
         vocab_file: str | None = None,
         merges_file: str | None = None,
-        do_lower_case: bool = False,
+        do_lower_case: bool = True,
     ):
         self.byte_encoder, self.byte_decoder = _bytes_to_unicode()
         self.vocab: dict[str, int] = {}
