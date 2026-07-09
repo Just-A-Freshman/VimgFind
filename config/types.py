@@ -5,7 +5,7 @@ from typing import Literal
 
 
 
-@dataclass
+@dataclass(slots=True)
 class MetaInfo:
     id: str = ""
     name: str = ""
@@ -17,7 +17,7 @@ class MetaInfo:
     size: int = 0
 
 
-@dataclass
+@dataclass(slots=True)
 class EncoderConfig:
     image_size: int = 0
     preprocess_type: Literal["resize", "resize_crop", "resize_pad"] = "resize"
@@ -31,7 +31,7 @@ class EncoderConfig:
     text_encoder_path: str = ""
 
 
-@dataclass
+@dataclass(slots=True)
 class IndexConfig:
     vector_index_path: str = ""
     name_index_path: str = ""
@@ -41,7 +41,7 @@ class IndexConfig:
     exclude_rules: list[str] = field(default_factory=list)
 
 
-@dataclass
+@dataclass(slots=True)
 class ModelConfig:
     meta: MetaInfo = field(default_factory=MetaInfo)
     encoder: EncoderConfig = field(default_factory=EncoderConfig)
@@ -60,7 +60,7 @@ class ModelConfig:
         )
 
 
-@dataclass
+@dataclass(slots=True)
 class AppSettings:
     max_work_thread: int = 10
     max_match_count: int = 10
