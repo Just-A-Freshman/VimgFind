@@ -49,10 +49,14 @@ class ModelConfig:
 
     @classmethod
     def from_dict(cls, data: dict) -> ModelConfig:
+        def _valid(cls_type, d):
+            valid_keys = {f.name for f in fields(cls_type)}
+            return {k: v for k, v in d.items() if k in valid_keys}
+
         return cls(
-            meta=MetaInfo(**data.get("meta_info", {})),
-            encoder=EncoderConfig(**data.get("model_config", {})),
-            index=IndexConfig(**data.get("index_config", {})),
+            meta=MetaInfo(**_valid(MetaInfo, data.get("meta_info", {}))),
+            encoder=EncoderConfig(**_valid(EncoderConfig, data.get("model_config", {}))),
+            index=IndexConfig(**_valid(IndexConfig, data.get("index_config", {}))),
         )
 
 
