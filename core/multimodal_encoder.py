@@ -149,8 +149,12 @@ class MultiModalEncoder:
         try:
             session = ort.InferenceSession(
                 model_path,
-                providers=['CPUExecutionProvider'],
-                provider_options=[{'intra_op_num_threads': 1, 'inter_op_num_threads': 1}]
+                providers=[('CPUExecutionProvider', {
+                    'arena_extend_strategy': 'kSameAsRequested',
+                    'enable_cpu_mem_arena': False, 
+                    'intra_op_num_threads': 1, 
+                    'inter_op_num_threads': 1
+                })]
             )
             return session
         except Exception as e:
