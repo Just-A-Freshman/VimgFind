@@ -11,6 +11,7 @@ import onnxruntime as ort
 
 class ImagePreprocess:
     VALID_TYPES = frozenset({"resize", "resize_crop", "resize_pad"})
+    __slots__ = ("__image_size", "__mean", "__std", "__fill_color", "__apply_geometry")
 
     def __init__(
         self,
@@ -94,6 +95,12 @@ class ImagePreprocess:
 
 
 class MultiModalEncoder:
+    __slots__ = (
+        "__preprocess", "__normalization", "__output_index",
+        "__context_length", "__tokenizer",
+        "image_session", "text_session",
+    )
+
     def __init__(self, config: EncoderConfig) -> None:
         self.__preprocess = ImagePreprocess(
             image_size=config.image_size,

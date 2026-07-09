@@ -14,6 +14,8 @@ HNSW_MIN_EF = 100
 
 
 class VectorIndexManager:
+    __slots__ = ("__index_path", "__index_capacity", "__dim", "__hnsw_index")
+
     def __init__(
             self,
             index_path: str,
@@ -71,6 +73,8 @@ class VectorIndexManager:
 
 class NameIndexManager(object):
     NOTEXISTS = 'NOTEXISTS'
+    __slots__ = ("__name_index_path", "__max_match_count", "__name_index", "__valid_index_count")
+
     def __init__(self, name_index_path: str, max_match_count: int) -> None:
         self.__name_index_path = name_index_path
         self.__max_match_count = max_match_count

@@ -40,6 +40,11 @@ EXT_FILTER_MAP: dict[str, set[str]] = {
 }
 
 class SearchTool(object):
+    __slots__ = (
+        "__init_event", "__force_stop_update", "_checkout_status",
+        "__vec_idx_mgr", "__name_idx_mgr", "__multimodal_encoder",
+    )
+
     def __init__(self, setting: Setting) -> None:
         self.__init_event = Event()
         self.__force_stop_update = False
