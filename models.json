@@ -5,7 +5,7 @@
             "name": "Chinese-CLIP",
             "label": "语义捕捉",
             "model_type": "Image-Text",
-            "description": "Chinse Clip擅长图文跨模态的语义级搜索，适用于需要理解中文描述来找图的场景，如用“水墨画里的远山”搜素材、电商评论图搜同款、中文新闻图片溯源。它的一大优势是原生中文语义理解，能准确把握中文自然语言中的物体、风格与意境。",
+            "description": "Chinse Clip擅长中文场景下的以文搜图，如用“水墨画里的远山”搜素材、电商评论图搜同款、中文新闻图片溯源。它的一大优势是原生中文语义理解，能准确把握中文自然语言中的物体、风格与意境。",
             "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/chinese-clip.zip",
             "checksum_sha256": "sha256:0ed17fd21c7eb6dc13d158bc8c3943c4a333d286f42fdb5b986f5bc1234d2a74",
             "size": 755771016
@@ -26,46 +26,6 @@
                 0.27577711
             ],
             "normalization": true,
-            "image_encoder_path": "image_model.onnx",
-            "text_encoder_path": "text_model.onnx"
-        },
-        "index_config": {
-            "vector_index_path": "index/vector_index.bin",
-            "name_index_path": "index/name_index.json",
-            "index_capacity": 1000000,
-            "index_dim": 512,
-            "search_dir": [],
-            "exclude_rules": []
-        }
-    },
-    {
-        "meta_info": {
-            "id": "WeCLIP",
-            "name": "WeCLIP",
-            "label": "中英混杂",
-            "model_type": "Image-Text",
-            "description": "WeCLIP是腾讯微信视觉团队专门针对中英混合检索优化的视觉模型，同时支持纯中文、纯英文和混合输入，查询词常含中英文品牌、专有名词时效果特别好。但需要注意，纯中文场景下，其检索效果要略逊于Chinese CLIP。",
-            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/WeCLIP.zip",
-            "checksum_sha256": "sha256:d7c0cb8e12b7523f6dbb86941c219da5b5110a2c5847351e2b01127e939e9f20",
-            "size": 580207876
-        },
-        "model_config": {
-            "image_size": 224,
-            "preprocess_type": "resize_crop",
-            "fill_color": null,
-            "context_length": 77,
-            "mean": [
-                0.48145466,
-                0.4578275,
-                0.40821073
-            ],
-            "std": [
-                0.26862954,
-                0.26130258,
-                0.27577711
-            ],
-            "normalization": true,
-            "output_index": 0,
             "image_encoder_path": "image_model.onnx",
             "text_encoder_path": "text_model.onnx"
         },
