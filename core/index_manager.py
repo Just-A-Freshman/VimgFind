@@ -50,7 +50,7 @@ class VectorIndexManager:
         assert self.__hnsw_index is not None
         if needed < self.__current_max_elements * 0.9:
             return
-        new_cap = min(int(self.__current_max_elements * 2), self.__index_capacity)
+        new_cap = min(self.__current_max_elements * 2, self.__index_capacity)
         if new_cap > self.__current_max_elements:
             self.__hnsw_index.resize_index(new_cap)
             self.__current_max_elements = new_cap
