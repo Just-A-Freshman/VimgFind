@@ -6,7 +6,7 @@
     "update_index_range": "all",
     "ui_style": "superhero",
     "current_model": "osnet",
-    "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/model.json",
+    "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
     "maximize_window": false,
     "topmost_window": false,
