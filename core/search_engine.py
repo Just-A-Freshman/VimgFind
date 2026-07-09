@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from threading import Thread, Event
 from pathlib import Path
 from typing import Iterator
@@ -132,20 +132,35 @@ class SearchTool(object):
             return idx, fpath, fv
         self.__init_event.wait()
         need_to_update = self.__index_target_dir(image_dir, exclude_rules)
+        if not need_to_update:
+            return
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             pbar = tqdm(total=len(need_to_update), ascii=False, ncols=50)
-            futures = [executor.submit(_process_item, item) for item in need_to_update]
-            for future in as_completed(futures):
-                try:
-                    idx, fpath, fv = future.result()
-                except Exception as e:
-                    logging.error(f"索引线程错误: {e}", exc_info=True)
+            need_iter = iter(need_to_update)
+            pending: set = set()
+            window = min(max_workers * 2, len(need_to_update))
+            for _ in range(window):
+                pending.add(executor.submit(_process_item, next(need_iter)))
+
+            while pending:
+                done, pending = wait(pending, return_when=FIRST_COMPLETED)
+                for future in done:
+                    try:
+                        idx, fpath, fv = future.result()
+                    except Exception as e:
+                        logging.error(f"索引线程错误: {e}", exc_info=True)
+                        pbar.update(1)
+                        continue
+                    if fv is not None:
+                        self.__vec_idx_mgr.add_vector(fv, idx)
+                        self.__name_idx_mgr.add_name(fpath, idx)
                     pbar.update(1)
-                    continue
-                if fv is not None:
-                    self.__vec_idx_mgr.add_vector(fv, idx)
-                    self.__name_idx_mgr.add_name(fpath, idx)
-                pbar.update(1)
+
+                for _ in range(len(done)):
+                    try:
+                        pending.add(executor.submit(_process_item, next(need_iter)))
+                    except StopIteration:
+                        break
             pbar.close()
 
     def remove_duplicate(self) -> None:
