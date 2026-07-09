@@ -11,37 +11,53 @@ import utils.file_ops as file_ops
 HNSW_EF_CONSTRUCTION = 200
 HNSW_M = 32
 HNSW_MIN_EF = 100
+INITIAL_CAPCITY = 50000
 
 
 class VectorIndexManager:
-    __slots__ = ("__index_path", "__index_capacity", "__dim", "__hnsw_index")
+    __slots__ = ("__index_path", "__index_capacity", "__dim", "__current_max_elements", "__hnsw_index")
 
     def __init__(
             self,
             index_path: str,
             index_capacity: int,
-            dim: int
+            dim: int,
+            current_max_elements: int
         ) -> None:
         self.__index_path: str = index_path
         self.__index_capacity: int = index_capacity
         self.__dim: int = dim
+        self.__current_max_elements: int = current_max_elements
         self.__hnsw_index: hnswlib.Index | None = None
         self.__init_index()
 
     def __init_index(self) -> None:
         self.__hnsw_index = hnswlib.Index(space="cosine", dim=self.__dim)
         if Path(self.__index_path).exists():
-            self.__hnsw_index.load_index(self.__index_path, max_elements=self.__index_capacity)
+            current_max_element = min(max(self.__current_max_elements * 2, INITIAL_CAPCITY), self.__index_capacity)
+            self.__hnsw_index.load_index(self.__index_path, max_elements=current_max_element)
+            self.__current_max_elements = current_max_element
         else:
             self.__hnsw_index.init_index(
-                max_elements=self.__index_capacity,
+                max_elements=INITIAL_CAPCITY,
                 ef_construction=HNSW_EF_CONSTRUCTION,
                 M=HNSW_M,
                 random_seed=42
             )
+            self.__current_max_elements = INITIAL_CAPCITY
+
+    def _ensure_capacity(self, needed: int) -> None:
+        assert self.__hnsw_index is not None
+        if needed < self.__current_max_elements * 0.9:
+            return
+        new_cap = min(int(self.__current_max_elements * 2), self.__index_capacity)
+        if new_cap > self.__current_max_elements:
+            self.__hnsw_index.resize_index(new_cap)
+            self.__current_max_elements = new_cap
 
     def reset_index(self) -> None:
         file_ops.delete_file(self.__index_path)
+        self.close()
         self.__init_index()
 
     def save_index(self) -> None:
@@ -50,6 +66,7 @@ class VectorIndexManager:
 
     def add_vector(self, fv: np.ndarray, idx: int) -> None:
         assert self.__hnsw_index is not None
+        self._ensure_capacity(self.__hnsw_index.element_count + 1)
         self.__hnsw_index.add_items(fv, idx)
 
     def delete_vector(self, idx: int) -> None:
