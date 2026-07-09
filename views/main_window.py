@@ -16,6 +16,7 @@ class WinGUI(Window, TkinterDnD.Tk):
     model_tab: ModelFrame
     switch_tab: Notebook
     common_setting_btn: Button
+    __slots__ = ("search_tab", "index_tab", "model_tab", "switch_tab", "common_setting_btn")
 
     def __init__(self, full_screen: bool = False, topmost: bool = False) -> None:
         enable_high_dpi_awareness()

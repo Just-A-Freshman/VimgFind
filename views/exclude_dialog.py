@@ -15,6 +15,12 @@ class ExcludeDialog(tk.Toplevel):
     preview_status_label: Label
     stop_btn: Button
     preview_tree: Treeview
+    __slots__ = (
+        "add_rule_btn", "del_rule_btn", "help_btn",
+        "rules_tree", "preview_path_entry", "browse_btn",
+        "preview_status_label", "stop_btn", "preview_tree",
+        "parent", "setting", "_ipady", "_ipadx",
+    )
 
     def __init__(self, parent, setting) -> None:
         super().__init__(parent)

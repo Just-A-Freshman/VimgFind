@@ -13,6 +13,12 @@ class ThumbnailGridView(BasicImagePreviewView):
     MARGIN: int = TkS(10)
     FONT_HEIGHT: int = TkS(32)
     PRELOAD_ROWS: int = 3
+    __slots__ = (
+        "_canvas", "_scrollbar", "_thumbnail_size", "_characters_size",
+        "_image_loader", "_loading_tasks", "_visible_image_data", "_tooltip",
+        "_canvas_items", "_visible_items", "_selected_items", "_scroll_timer",
+        "_scrollbar_drag_timer", "_cols", "_is_destroy", "_is_scrollbar_dragging",
+    )
 
     def __init__(self, parent: tk.Widget, thumbnail_size: int = 110) -> None:
         super().__init__(parent)

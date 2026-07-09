@@ -17,6 +17,12 @@ class FilterPanel(Labelframe):
     folder_listbox: tk.Listbox
     confirm_btn: Button
     cancel_btn: Button
+    __slots__ = (
+        "sim_scale", "sim_value", "ext_combo",
+        "size_min", "size_min_unit", "size_max", "size_max_unit",
+        "folder_select_all", "folder_listbox",
+        "confirm_btn", "cancel_btn",
+    )
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, text="过滤设置", **kwargs)
@@ -129,6 +135,16 @@ class SearchFrame(Frame):
     nav_frame: tk.Frame
     nav_prev: Button
     nav_next: Button
+    __slots__ = (
+        "search_entry", "filter_btn",
+        "search_by_browser_btn", "search_by_clipboard_btn",
+        "more_options_button", "filter_panel",
+        "preview_container", "preview_view",
+        "preview_frame1", "preview_frame2",
+        "preview_canvas1", "preview_canvas2",
+        "nav_frame", "nav_prev", "nav_next",
+        "nav_page_label",
+    )
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)

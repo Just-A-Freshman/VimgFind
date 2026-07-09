@@ -8,6 +8,8 @@ from .base import BasicImagePreviewView
 
 
 class PreviewCanvasView(BasicImagePreviewView):
+    __slots__ = ("_canvas", "_tooltip")
+
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self._canvas = self._create_canvas(parent)

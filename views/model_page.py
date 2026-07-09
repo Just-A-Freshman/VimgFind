@@ -19,6 +19,16 @@ class ModelFrame(Frame):
     download_control_btn: Button
     download_cancel_btn: Button
     local_share_btn: Button
+    __slots__ = (
+        "load_local_model_entry", "model_tree",
+        "detail_frame", "local_model_frame",
+        "detail_desc_text", "use_btn",
+        "uninstall_btn", "download_btn",
+        "download_progressbar", "download_progress_label",
+        "download_control_btn", "download_cancel_btn",
+        "local_share_btn",
+        "name_tip_label", "broswer_button", "name_edit_entry",
+    )
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)

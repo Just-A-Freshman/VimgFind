@@ -7,6 +7,8 @@ from config.settings import TkS
 
 
 class DetailListView(BasicImagePreviewView):
+    __slots__ = ("__treeview", "__scrollbar")
+
     def __init__(self, parent: tk.Widget, extra_columns: dict[str, int]) -> None:
         super().__init__(parent)
         self._create_treeview(extra_columns)

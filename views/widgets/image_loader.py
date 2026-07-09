@@ -11,6 +11,8 @@ LoaderResult = namedtuple("LoaderResult", ["item", "size", "photo", "error"])
 
 
 class ImageLoader:
+    __slots__ = ("task_queue", "result_queue", "threads", "running")
+
     def __init__(self) -> None:
         self.task_queue: queue.Queue[tuple] = queue.Queue()
         self.result_queue: queue.Queue[LoaderResult] = queue.Queue()

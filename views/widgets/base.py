@@ -11,6 +11,8 @@ ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
 
 
 class BasicImagePreviewView(object):
+    __slots__ = ("parent", "_results", "theme_color")
+
     def __init__(self, parent: tk.Widget) -> None:
         self.parent = parent
         self._results: OrderedDict[str, tuple] = OrderedDict(dict())

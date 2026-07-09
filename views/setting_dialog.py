@@ -13,6 +13,11 @@ class SettingDialog(tk.Toplevel):
     open_settings_file_btn: Button
     check_update_btn: Button
     _instance = None
+    __slots__ = (
+        "theme_combobox", "maximize_checkbutton",
+        "topmost_checkbutton", "open_settings_file_btn",
+        "check_update_btn", "_initialized",
+    )
 
     def __new__(cls, parent=None):
         if cls._instance is not None and cls._instance.winfo_exists():

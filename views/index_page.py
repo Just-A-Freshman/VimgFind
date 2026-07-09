@@ -21,6 +21,16 @@ class IndexFrame(Frame):
     update_threads_count_scale: Scale
     exclude_button: Button
     clean_excluded_button: Button
+    __slots__ = (
+        "index_tip_label", "index_dataset_table",
+        "index_setting_frame", "scan_setting_frame",
+        "switch_model_combobox",
+        "add_index_button", "update_index_button",
+        "delete_index_button", "rebuild_index_button",
+        "auto_update_checkbutton", "update_range_combobox",
+        "update_threads_count_scale",
+        "exclude_button", "clean_excluded_button",
+    )
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
