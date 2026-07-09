@@ -34,13 +34,9 @@ class SearchController(object):
         self._nav_debounce_timer: str | None = None
 
     @decorators.send_task
-    def search_by_browser(self, image_paths: str | list[str] | None = None) -> None:
-        if isinstance(image_paths, str):
-            image_paths = [image_paths]
+    def search_by_browser(self, image_paths: list[str] | None = None) -> None:
         if image_paths is None:
-            raw_paths = filedialog.askopenfilenames(
-                filetypes=[("图片文件", "*" + ";*".join(Setting.accepted_exts))]
-            )
+            raw_paths = filedialog.askopenfilenames(filetypes=[("图片文件", "*" + ";*".join(Setting.accepted_exts))])
             if not raw_paths:
                 return
             image_paths = list(raw_paths)
@@ -53,14 +49,11 @@ class SearchController(object):
             image_path = image_paths[0]
             if not Path(image_path).is_file():
                 return
-            tab = self.app.view.search_tab
-            tab.search_entry.delete(0, tk.END)
-            tab.search_entry.insert(0, image_path)
             image_obj = image_ops.parse_image_from_path(image_path)
             if image_obj is None:
                 messagebox.showwarning("警告", "无法识别该图片类型！")
                 return
-            self.__search_image(image_obj)
+            self.__search_image(image_obj, source_path=image_path)
 
     @decorators.send_task
     def search_image_by_clipboard(self) -> None:
@@ -97,11 +90,8 @@ class SearchController(object):
                 Setting.temp_image_path.mkdir(exist_ok=True)
             image_obj.save(image_path)
 
-        tab = self.app.view.search_tab
-        tab.search_entry.delete(0, tk.END)
-        tab.search_entry.insert(0, str(image_path.absolute()))
         self._delete_queue_file()
-        self.__search_image(image_obj)
+        self.__search_image(image_obj, source_path=str(image_path.absolute()))
 
     @decorators.send_task
     def search_image_by_text(self) -> None:
@@ -109,61 +99,49 @@ class SearchController(object):
         self._delete_queue_file()
         self.__search_image(text)
 
-    def __search_image(self, input_data: Image.Image | str | None = None) -> None:
+    def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools
         if not self.app.setting.model.index.search_dir:
             messagebox.showinfo("提示", "请在索引选项卡索引至少一个目录！")
             return
-        if self.app.index_controller.is_updating:
-            answer = messagebox.askyesno("提示", "索引正在更新中，是否终止索引更新？")
-            if not answer:
-                return
-            self.app.search_tools.set_force_end_update(True)
         if not self._is_finish_search:
             return
+        if self.app.index_controller.is_updating:
+            if not messagebox.askyesno("提示", "索引正在更新中，是否终止索引更新？"):
+                return
+            self.app.search_tools.set_force_end_update(True)
         self._is_finish_search = False
         try:
             tab = self.app.view.search_tab
             if input_data is None and self._queue_total > 0:
-                tab.set_nav_state(
-                    has_prev=self._queue_index > 0,
-                    has_next=self._queue_index < self._queue_total - 1
-                )
+                tab.set_nav_state(self._queue_index > 0, self._queue_index < self._queue_total - 1)
                 tab.set_nav_page_label(self._queue_index + 1, self._queue_total)
-                queue_path = linecache.getline(str(Setting.temp_multi_search_queue), self._queue_index + 1).strip()
-                if not queue_path or not Path(queue_path).is_file():
+                source_path = linecache.getline(str(Setting.temp_multi_search_queue), self._queue_index + 1).strip()
+                if not source_path or not Path(source_path).is_file():
                     messagebox.showinfo("提示", f"第 {self._queue_index + 1} 张图片不存在或已被删除！")
                     return
-                tab.search_entry.delete(0, tk.END)
-                tab.search_entry.insert(0, queue_path)
-                image_obj = image_ops.parse_image_from_path(queue_path)
-                if image_obj is None:
+                input_data = image_ops.parse_image_from_path(source_path)
+                if input_data is None:
                     messagebox.showwarning("警告", "无法识别该图片类型！")
                     return
-                tab.preview_canvas1.append_result(queue_path, image_obj)
                 tab.set_nav_visible(True)
-                actual_input = image_obj
             else:
-                if self._queue_total == 0:
-                    tab.set_nav_visible(False)
-                if isinstance(input_data, str):
-                    tab.preview_canvas1.clear_results()
-                    actual_input = input_data
-                elif isinstance(input_data, Image.Image):
-                    source_path = tab.search_entry.get().strip()
-                    if source_path and Path(source_path).is_file():
-                        tab.preview_canvas1.append_result(source_path, input_data)
-                    actual_input = input_data
-                else:
-                    return
+                tab.set_nav_visible(False)
+            if isinstance(input_data, str):
+                tab.preview_canvas1.clear_results()
+            elif isinstance(input_data, Image.Image):
+                tab.search_entry.delete(0, tk.END)
+                tab.search_entry.insert(0, source_path if source_path is not None else "")
+                tab.search_entry.xview_moveto(1.0)
+                if source_path and Path(source_path).is_file():
+                    tab.preview_canvas1.append_result(source_path, input_data)
+            else:
+                return
 
-            self._last_search_content = actual_input
+            self._last_search_content = input_data
             tab.preview_view.clear_results()
             ext, size_min, size_max, folder_filters = self.app.filter_controller.get_search_filters()
-            results = self.app.search_tools.checkout(
-                actual_input, self.similarity_threshold,
-                ext, size_min, size_max, folder_filters
-            )
+            results = self.app.search_tools.checkout(input_data, self.similarity_threshold, ext, size_min, size_max, folder_filters)
             try:
                 first_result = next(results)
             except StopIteration:
