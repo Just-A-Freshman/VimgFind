@@ -109,7 +109,8 @@ class SearchController(object):
         if self.app.index_controller.is_updating:
             if not messagebox.askyesno("提示", "索引正在更新中，是否终止索引更新？"):
                 return
-            self.app.search_tools.set_force_end_update(True)
+            if self.app.index_controller.is_updating:
+                self.app.search_tools.set_force_end_update(True)
         self._is_finish_search = False
         try:
             tab = self.app.view.search_tab
