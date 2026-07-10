@@ -66,6 +66,10 @@ class ModelController:
         self._editing_model_id = iid
         view.show_detail(cfg)
 
+        if self.app.index_controller.is_updating:
+            view.use_btn.config(state=tk.DISABLED)
+            view.uninstall_btn.config(state=tk.DISABLED)
+
         if self._current_download and self._current_download.model_id == iid:
             view.download_btn.place_forget()
             self._show_download_progress(view)

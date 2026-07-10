@@ -261,6 +261,7 @@ class IndexController(object):
             command=lambda: self.app.search_tools.set_force_end_update(True)   # type:ignore
         )
         self._is_updating = True
+        self.app.model_controller.on_model_select()
         self.__check_queue()
         try:
             update_index()
@@ -282,6 +283,7 @@ class IndexController(object):
             tab.update_index_button.config(text="更新索引目录", command=self.sync_index)
             tab.delete_index_button.config(state=tk.NORMAL)
             tab.rebuild_index_button.config(state=tk.NORMAL)
+            self.app.model_controller.on_model_select()
             self._is_updating = False
 
     @decorators.send_task
