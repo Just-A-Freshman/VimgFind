@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 class SearchController(object):
     def __init__(self, app_controller: AppController) -> None:
-        self._last_search_content: tuple[Image.Image, str]  | str = ""
+        self._last_search_content: Path | str = ""
         self._is_finish_search: bool = True
         self._preview_timer: str | None = None
         self.similarity_threshold: float = 0.0
@@ -113,7 +113,7 @@ class SearchController(object):
         self._is_finish_search = False
         try:
             tab = self.app.view.search_tab
-            if input_data is None and self._queue_total > 0:
+            if self._queue_total > 0:
                 tab.set_nav_state(self._queue_index > 0, self._queue_index < self._queue_total - 1)
                 tab.set_nav_page_label(self._queue_index + 1, self._queue_total)
                 source_path = linecache.getline(str(Setting.temp_multi_search_queue), self._queue_index + 1).strip()
@@ -136,7 +136,7 @@ class SearchController(object):
                 tab.search_entry.xview_moveto(1.0)
                 if source_path and Path(source_path).is_file():
                     tab.preview_canvas1.append_result(source_path, input_data)
-                self._last_search_content = (input_data, source_path or "")
+                self._last_search_content = Path(source_path) if source_path is not None else ""
             else:
                 return
             tab.preview_view.clear_results()
@@ -208,8 +208,10 @@ class SearchController(object):
     def resend_last_search(self) -> None:
         if isinstance(self._last_search_content, str):
             self.__search_image(self._last_search_content)
+        elif self._queue_total > 0:
+            self.__search_image()
         else:
-            self.__search_image(*self._last_search_content)
+            self.search_by_browser([str(self._last_search_content)])
 
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
