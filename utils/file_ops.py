@@ -272,6 +272,17 @@ def get_folder_size(folder_path: str | Path) -> int:
     return total_size
 
 
+def format_bytes(value: int | float, *, as_speed: bool = False) -> str:
+    suffix, pg, pm, pk, pb = ("B/s", 2, 2, 1, 1) if as_speed else ("B", 1, 0, 0, 0)
+    if value >= 1024 ** 3:
+        return f"{value / 1024 ** 3:.{pg}f}G{suffix}"
+    if value >= 1024 ** 2:
+        return f"{value / 1024 ** 2:.{pm}f}M{suffix}"
+    if value >= 1024:
+        return f"{value / 1024:.{pk}f}K{suffix}"
+    return f"{value:.{pb}f}{suffix}"
+
+
 def merge_dirs(src: Path, dst: Path, skip_names: set[str] | None = None) -> None:
     if skip_names is None:
         skip_names = set()

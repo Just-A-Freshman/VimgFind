@@ -20,26 +20,6 @@ if TYPE_CHECKING:
 
 
 
-def _format_size(size_bytes: int) -> str:
-    if size_bytes >= 1024 ** 3:
-        return f"{size_bytes / 1024 ** 3:.1f}GB"
-    if size_bytes >= 1024 ** 2:
-        return f"{size_bytes / 1024 ** 2:.0f}MB"
-    if size_bytes >= 1024:
-        return f"{size_bytes / 1024:.0f}KB"
-    return f"{size_bytes}B"
-
-
-def _format_speed(bytes_per_sec: float) -> str:
-    if bytes_per_sec >= 1024 ** 3:
-        return f"{bytes_per_sec / 1024 ** 3:.2f}GB/s"
-    if bytes_per_sec >= 1024 ** 2:
-        return f"{bytes_per_sec / 1024 ** 2:.2f}MB/s"
-    if bytes_per_sec >= 1024:
-        return f"{bytes_per_sec / 1024:.1f}KB/s"
-    return f"{bytes_per_sec:.1f}B/s"
-
-
 class ModelController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
@@ -61,7 +41,7 @@ class ModelController:
                 cfg.meta.name or model_id,
                 cfg.meta.label or "",
                 TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type),
-                _format_size(cfg.meta.size),
+                file_ops.format_bytes(cfg.meta.size),
                 STATUS_LABEL.get(status, status),
             ))
 
@@ -336,7 +316,7 @@ class ModelController:
         if total > 0:
             view.download_progressbar.config(value=int(downloaded * 100 / total))
         view.download_progress_label.config(
-            text=f"{_format_speed(speed)} - {_format_size(downloaded)}/{_format_size(total)}"
+            text=f"{file_ops.format_bytes(speed, as_speed=True)} - {file_ops.format_bytes(downloaded)}/{file_ops.format_bytes(total)}"
         )
 
     def _hide_download_ui(self, view: ModelFrame) -> None:
@@ -368,12 +348,12 @@ class ModelController:
         self.app.view.model_tab.show_default()
 
     def _finish_download(self, success: bool, cancelled: bool, model_id: str, view: ModelFrame) -> None:
-        self._hide_download_ui(view)
-        view.use_btn.config(state=tk.NORMAL)
-        view.uninstall_btn.config(state=tk.NORMAL)
         if cancelled:
             self._remove_model(model_id)
             return
+        self._hide_download_ui(view)
+        view.use_btn.config(state=tk.NORMAL)
+        view.uninstall_btn.config(state=tk.NORMAL)
         if success:
             self._update_tree_status(model_id, "downloaded")
             cfg = self._model_cache.get(model_id)

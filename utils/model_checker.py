@@ -7,7 +7,7 @@ import time
 import zipfile
 import hashlib
 from pathlib import Path
-from typing import Callable, Any
+from typing import Callable
 from urllib.error import URLError
 import urllib.request as request
 import urllib.error
@@ -70,22 +70,17 @@ def validate_unknown_zip(zip_path: Path, model_id: str) -> ModelConfig:
 
 
 
-def read_manifest_cache(cache_path: Path) -> dict[str, Any]:
-    try:
-        with open(cache_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError, FileNotFoundError):
-        return {}
-
-
-
 def fetch_remote_manifest(
     url: str,
     cache_path: Path,
     cache_ttl: int = 3600,
 ) -> list[dict] | None:
     now = time.time()
-    cache = read_manifest_cache(cache_path)
+    try:
+        with open(cache_path, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+    except (json.JSONDecodeError, IOError, FileNotFoundError):
+        cache = {}
     if len(cache) == 0:
         return
     if now - cache.get("timestamp", 0) < cache_ttl:
