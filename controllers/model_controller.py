@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 import zipfile
 from pathlib import Path
 from tkinter import filedialog, messagebox
@@ -279,15 +278,9 @@ class ModelController:
                 file_ops.rmtree(dest_dir)
 
     def _make_progress_callback(self, view) -> Callable:
-        _last_ui = 0.0
-        def callback(downloaded: int, total: int, speed: float) -> None:
-            nonlocal _last_ui
-            now = time.time()
-            if now - _last_ui < 0.1:
-                return
-            _last_ui = now
-            view.after(0, lambda: self._update_download_progress(view, downloaded, total, speed))
-        return callback
+        return lambda downloaded, total, speed: view.after(
+            0, lambda: self._update_download_progress(view, downloaded, total, speed)
+        )
 
     def _poll_download(self, view, model_id: str) -> None:
         task = self._current_download

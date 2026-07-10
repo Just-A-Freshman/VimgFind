@@ -354,7 +354,9 @@ class DownloadTask:
         self._thread.start()
 
     def _make_progress_wrapper(self) -> Callable[[int, int], None]:
+        _last_ui = 0.0
         def wrapped(downloaded: int, total: int) -> None:
+            nonlocal _last_ui
             now = time.time()
             elapsed = now - self._last_time
             delta = downloaded - self._last_dl
@@ -364,7 +366,8 @@ class DownloadTask:
             self._last_time = now
             self.downloaded_bytes = downloaded
             self.total_bytes = total
-            if self._progress_callback:
+            if self._progress_callback and now - _last_ui >= 0.1:
+                _last_ui = now
                 self._progress_callback(downloaded, total, self.speed)
         return wrapped
 
