@@ -26,7 +26,6 @@ class ModelFrame(Frame):
         "uninstall_btn", "download_btn",
         "download_progressbar", "download_progress_label",
         "download_control_btn", "download_cancel_btn",
-        "local_share_btn",
         "name_tip_label", "broswer_button", "name_edit_entry",
     )
 
@@ -52,7 +51,6 @@ class ModelFrame(Frame):
         self.download_progress_label = Label(detail_frame, text="")
         self.download_control_btn = Button(detail_frame, style="link", takefocus=False, text="暂停")
         self.download_cancel_btn = Button(detail_frame, style="link", takefocus=False, text="取消")
-        self.local_share_btn = Button(parent, text="分享模型到 GitHub Issue", cursor="hand2", padding=(TkS(10), TkS(4)), style="LINK")
         self.show_default()
 
     def __set_model_list_frame(self) -> Labelframe:
