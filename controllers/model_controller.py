@@ -13,7 +13,6 @@ from config.settings import STATUS_LABEL, TYPE_LABEL
 from core import SearchTool
 import utils.file_ops as file_ops
 import utils.model_checker as model_checker
-from utils.model_checker import DownloadState, DownloadTask
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -46,7 +45,7 @@ class ModelController:
         self.app = app_controller
         self._model_cache: dict[str, ModelConfig] = {}
         self._editing_model_id: str | None = None
-        self._current_download: DownloadTask | None = None
+        self._current_download: model_checker.DownloadTask | None = None
 
     def load_model_list(self):
         view = self.app.view.model_tab
@@ -200,12 +199,12 @@ class ModelController:
             return
 
         if self._current_download is not None and self._current_download.state in (
-            DownloadState.DOWNLOADING, DownloadState.PAUSED,
+            model_checker.DownloadState.DOWNLOADING, model_checker.DownloadState.PAUSED,
         ):
             return
 
         model_id = cfg.meta.id or iid
-        self._current_download = DownloadTask(
+        self._current_download = model_checker.DownloadTask(
             url=cfg.meta.download_url,
             dest_dir=self.app.setting.models_dir / model_id,
             model_id=model_id,
@@ -221,10 +220,10 @@ class ModelController:
         if task is None:
             return
         btn = self.app.view.model_tab.download_control_btn
-        if task.state == DownloadState.DOWNLOADING:
+        if task.state == model_checker.DownloadState.DOWNLOADING:
             task.pause()
             btn.config(text="继续")
-        elif task.state == DownloadState.PAUSED:
+        elif task.state == model_checker.DownloadState.PAUSED:
             task.resume()
             btn.config(text="暂停")
 
@@ -235,11 +234,7 @@ class ModelController:
         task.cancel()
         model_id = task.model_id
         self._current_download = None
-        self._hide_download_ui(self.app.view.model_tab)
-        self._remove_model(model_id)
-        if model_id in self.app.view.model_tab.model_tree.get_children(""):
-            self.app.view.model_tab.model_tree.selection_set(model_id)
-            self.on_model_select()
+        self._finish_download(False, True, model_id, self.app.view.model_tab)
 
     def load_local_model(self) -> None:
         file_path = filedialog.askopenfilename(
@@ -304,12 +299,13 @@ class ModelController:
                 file_ops.rmtree(dest_dir)
 
     def _make_progress_callback(self, view) -> Callable:
-        _last_ui = [0.0]
+        _last_ui = 0.0
         def callback(downloaded: int, total: int, speed: float) -> None:
+            nonlocal _last_ui
             now = time.time()
-            if now - _last_ui[0] < 0.1:
+            if now - _last_ui < 0.1:
                 return
-            _last_ui[0] = now
+            _last_ui = now
             view.after(0, lambda: self._update_download_progress(view, downloaded, total, speed))
         return callback
 
@@ -317,9 +313,9 @@ class ModelController:
         task = self._current_download
         if task is None:
             return
-        if task.state in (DownloadState.COMPLETED, DownloadState.ERROR, DownloadState.CANCELLED):
-            success = task.state == DownloadState.COMPLETED
-            cancelled = task.state == DownloadState.CANCELLED
+        if task.state in (model_checker.DownloadState.COMPLETED, model_checker.DownloadState.ERROR, model_checker.DownloadState.CANCELLED):
+            success = task.state == model_checker.DownloadState.COMPLETED
+            cancelled = task.state == model_checker.DownloadState.CANCELLED
             self._finish_download(success, cancelled, model_id, view)
             self._current_download = None
             return
@@ -330,7 +326,7 @@ class ModelController:
         view.download_progress_label.config(text="准备下载...")
         view.download_progressbar.config(value=0)
         view.download_progress_label.place(relx=0.05, rely=0.87, relwidth=0.50, anchor=tk.W)
-        is_paused = self._current_download and self._current_download.state == DownloadState.PAUSED
+        is_paused = self._current_download and self._current_download.state == model_checker.DownloadState.PAUSED
         view.download_control_btn.config(text="继续" if is_paused else "暂停")
         view.download_control_btn.place(relx=0.62, rely=0.87, anchor=tk.W)
         view.download_cancel_btn.place(relx=0.78, rely=0.87, anchor=tk.W)

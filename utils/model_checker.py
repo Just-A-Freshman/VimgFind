@@ -58,9 +58,9 @@ def validate_unknown_zip(zip_path: Path, model_id: str) -> ModelConfig:
             text_path = mc.get("text_encoder_path", "") or ""
 
             if image_path and image_path not in namelist:
-                raise AssertionError(f"model.json 中的 image_encoder_path「{image_path}」在 zip 包中不存在。")
+                raise AssertionError(f"校验失败：model.json 中的 image_encoder_path「{image_path}」在 zip 包中不存在。")
             if text_path and text_path not in namelist:
-                raise AssertionError("校验失败", f"model.json 中的 text_encoder_path「{text_path}」在 zip 包中不存在。")
+                raise AssertionError(f"校验失败：model.json 中的 text_encoder_path「{text_path}」在 zip 包中不存在。")
 
             raw["meta_info"] = raw.get("meta_info") or {"id": model_id, "name": model_id}
             return ModelConfig.from_dict(raw)
@@ -345,6 +345,7 @@ class DownloadTask:
         self._error_msg = ""
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
+        self._progress_callback: Callable | None = None
         self.downloaded_bytes = 0
         self.total_bytes = 0
         self.speed = 0.0
