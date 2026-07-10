@@ -271,7 +271,7 @@ def get_folder_size(folder_path: str | Path) -> int:
 
 
 def format_bytes(value: int | float, *, as_speed: bool = False) -> str:
-    suffix, pg, pm, pk, pb = ("B/s", 2, 2, 1, 1) if as_speed else ("B", 1, 0, 0, 0)
+    suffix, pg, pm, pk, pb = ("B/s", 2, 2, 1, 1) if as_speed else ("B", 2, 2, 0, 0)
     if value >= 1024 ** 3:
         return f"{value / 1024 ** 3:.{pg}f}G{suffix}"
     if value >= 1024 ** 2:

@@ -196,10 +196,10 @@ class SearchController(object):
 
     @staticmethod
     def generate_extra_info(image_path: str, similarity: float) -> tuple:
-        image_path_obj = Path(image_path)
-        mtime = datetime.datetime.fromtimestamp(os.path.getmtime(image_path))
+        st = os.stat(image_path)
+        mtime = datetime.datetime.fromtimestamp(st.st_mtime)
         content = (
-            f"{os.path.getsize(image_path_obj) / 1024 / 1024:.2f}MB",
+            f"{st.st_size / 1024 / 1024:.2f}MB",
             mtime.strftime("%Y-%m-%d %H:%M:%S"),
             f"{similarity:.2f}%"
         )
