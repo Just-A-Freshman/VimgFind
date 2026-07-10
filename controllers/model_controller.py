@@ -215,12 +215,11 @@ class ModelController:
         self._current_download = None
         self._finish_download(False, True, model_id, self.app.view.model_tab)
 
-    def load_local_model(self) -> None:
-        file_path = filedialog.askopenfilename(
-            title="选择模型文件", filetypes=[("ZIP files", "*.zip"), ("All files", "*.*")]
-        )
+    def load_local_model(self, file_path: str = "") -> None:
         if not file_path:
-            return
+            file_path = filedialog.askopenfilename(title="选择模型文件", filetypes=[("ZIP files", "*.zip"), ("All files", "*.*")])
+            if not file_path:
+                return
 
         zip_path = Path(file_path)
         model_id = zip_path.stem

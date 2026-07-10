@@ -138,12 +138,11 @@ class AppController:
                 answer = messagebox.askyesno("检查更新", f"发现新版本：v{result.latest_version}\n是否立即更新？")
                 if not answer:
                     return
-                else:
-                    # 实际的更新逻辑
-                    pass
+                from .update_controller import UpdateController
+                update_ctrl = UpdateController(self)
+                self.view.after(0, lambda: update_ctrl.do_update(result.download_url, result.latest_version))
             else:
                 messagebox.showinfo("检查更新", f"当前版本：v{WinInfo.version}\n你使用的已是最新版本！\n\n仓库地址：{WinInfo.repo_url}")
-        
         dialog = SettingDialog(self.view)
         dialog.theme_combobox.config(values=self.view.style.theme_names())
         dialog.theme_combobox.set(self.setting.app.ui_style)
@@ -170,8 +169,7 @@ class AppController:
             for dir_path in file_paths:
                 self.index_controller.add_search_dir(dir_path)
         elif tab_id == 2:
-            # 这里需要一个本地模型解析的逻辑
-            pass
+            self.model_controller.load_local_model(file_paths[0])
         else:
             pass
 
