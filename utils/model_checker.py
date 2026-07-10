@@ -114,7 +114,7 @@ def is_installed(setting: Setting, model_id: str) -> bool:
 
 
 def get_available_models(setting: Setting) -> list[ModelConfig]:
-    cache_path = setting.models_dir / "_manifest_cache.json"
+    cache_path = setting.manifest_cache
     installed_ids = setting.get_model_list()
     local_map: dict[str, ModelConfig] = {}
     result: list[ModelConfig] = []
@@ -256,6 +256,10 @@ class MultiThreadDownloader:
                 except OSError:
                     pass
 
+    @property
+    def is_cancelled(self) -> bool:
+        return self._cancel_event.is_set()
+
     def _cleanup(self) -> None:
         for part_file in self.part_files:
             if os.path.exists(part_file):
@@ -384,7 +388,7 @@ class DownloadTask:
             )
             self._downloader.download()
 
-            if self._downloader._cancel_event.is_set():
+            if self._downloader.is_cancelled:
                 self._state = DownloadState.CANCELLED
                 return
 
@@ -432,37 +436,4 @@ class DownloadTask:
             return self._state
 
 
-
-
-def download_and_extract_zip(
-    url: str,
-    dest_dir: Path,
-    checksum: str = "",
-    progress_callback: Callable[[int, int], None] | None = None,
-) -> bool:
-    temp_dir: Path | None = None
-    try:
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        temp_dir = Path(tempfile.mkdtemp(dir=dest_dir))
-        zip_path = temp_dir / "model.zip"
-        downloader = MultiThreadDownloader(
-            url=url,
-            save_path=str(zip_path),
-            num_threads=16,
-            checksum=checksum,
-            progress_callback=progress_callback,
-        )
-        downloader.download()
-
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(temp_dir)
-
-        file_ops.merge_dirs(temp_dir, dest_dir, skip_names={"model.zip"})
-        return True
-    except Exception as e:
-        logging.error(f"下载或解压失败: {e}")
-        return False
-    finally:
-        if temp_dir is not None and temp_dir.exists():
-            file_ops.rmtree(temp_dir)
 

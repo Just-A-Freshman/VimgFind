@@ -5,7 +5,7 @@ import zipfile
 from pathlib import Path
 from tkinter import filedialog, messagebox
 from ttkbootstrap import Entry
-from typing import TYPE_CHECKING, Callable, Literal, cast
+from typing import TYPE_CHECKING, Callable, cast
 import tkinter as tk
 
 from config.types import ModelConfig
@@ -42,13 +42,6 @@ def _format_speed(bytes_per_sec: float) -> str:
 
 
 class ModelController:
-    _STATUS_SORT_KEY = {
-        "using": 0,
-        "downloading": 1,
-        "downloaded": 2,
-        "not download": 3,
-    }
-
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self._model_cache: dict[str, ModelConfig] = {}
@@ -186,18 +179,13 @@ class ModelController:
         if not answer:
             return
 
-        model_dir = self.app.setting.models_dir / model_id
-        file_ops.rmtree(model_dir)
+        self._remove_model(model_id)
         self._update_tree_status(model_id, "not download")
-        self.app.setting.remove_model_config(iid)
         combobox = self.app.view.index_tab.switch_model_combobox
         values = list(combobox.cget("values"))
         if cfg.meta.name in values:
             values.remove(cfg.meta.name)
             combobox.config(values=values)
-        self._model_cache.pop(iid, None)
-        self.load_model_list()
-        view.show_default()
 
     def download_model(self) -> None:
         view = self.app.view.model_tab
@@ -247,14 +235,10 @@ class ModelController:
         task.cancel()
         model_id = task.model_id
         self._current_download = None
-        view = self.app.view.model_tab
-        self._hide_download_ui(view)
-        model_dir = self.app.setting.models_dir / model_id
-        file_ops.rmtree(model_dir)
-        self.app.setting.remove_model_config(model_id)
-        self.load_model_list()
-        if model_id in view.model_tree.get_children(""):
-            view.model_tree.selection_set(model_id)
+        self._hide_download_ui(self.app.view.model_tab)
+        self._remove_model(model_id)
+        if model_id in self.app.view.model_tab.model_tree.get_children(""):
+            self.app.view.model_tab.model_tree.selection_set(model_id)
             self.on_model_select()
 
     def load_local_model(self) -> None:
@@ -272,16 +256,12 @@ class ModelController:
             if not answer:
                 return
 
-        manifest = model_checker.read_manifest_cache(self.app.setting.manifest_cache).get("models")
-        entry = next((entry for entry in manifest if entry.get("meta_info", {}).get("id") == model_id), None) if manifest else None
-
-        if entry is None:
-            fresh = model_checker.fetch_remote_manifest(
-                url=self.app.setting.app.remote_manifest_url,
-                cache_path=self.app.setting.models_dir / "_manifest_cache.json",
-                cache_ttl=0
-            )
-            entry = next((entry for entry in fresh if entry.get("meta_info", {}).get("id") == model_id), None) if fresh else None
+        fresh = model_checker.fetch_remote_manifest(
+            url=self.app.setting.app.remote_manifest_url,
+            cache_path=self.app.setting.manifest_cache,
+            cache_ttl=0,
+        )
+        entry = next((entry for entry in fresh if entry.get("meta_info", {}).get("id") == model_id), None) if fresh else None
 
         if entry:
             expected_cs = (entry.get("meta_info") or {}).get("checksum_sha256", "")
@@ -369,12 +349,12 @@ class ModelController:
         view.download_control_btn.place_forget()
         view.download_cancel_btn.place_forget()
 
-    def _update_tree_status(self, model_id: str, status: Literal["using", "downloading", "downloaded", "not download"]) -> None:
+    def _update_tree_status(self, model_id: str, status: str) -> None:
         view = self.app.view.model_tab
         if model_id in view.model_tree.get_children(""):
             view.model_tree.set(model_id, "状态", STATUS_LABEL.get(status, status))
 
-    def _get_model_status(self, model_id: str) -> Literal["using", "downloading", "downloaded", "not download"]:
+    def _get_model_status(self, model_id: str) -> str:
         if self._current_download and self._current_download.model_id == model_id:
             return "downloading"
         if model_id == self.app.setting.app.current_model:
@@ -383,29 +363,20 @@ class ModelController:
             return "downloaded"
         return "not download"
 
-    def _resort_tree(self) -> None:
-        view = self.app.view.model_tab
-        items = list(view.model_tree.get_children(""))
-        def sort_key(iid: str):
-            status = self._get_model_status(iid)
-            name = view.model_tree.set(iid, "名称")
-            return (self._STATUS_SORT_KEY.get(status, 99), name)
-        items.sort(key=sort_key)
-        for iid in items:
-            view.model_tree.move(iid, "", tk.END)
+    def _remove_model(self, model_id: str) -> None:
+        model_dir = self.app.setting.models_dir / model_id
+        file_ops.rmtree(model_dir)
+        self._model_cache.pop(model_id, None)
+        self.app.setting.remove_model_config(model_id)
+        self.load_model_list()
+        self.app.view.model_tab.show_default()
 
     def _finish_download(self, success: bool, cancelled: bool, model_id: str, view: ModelFrame) -> None:
         self._hide_download_ui(view)
         view.use_btn.config(state=tk.NORMAL)
         view.uninstall_btn.config(state=tk.NORMAL)
         if cancelled:
-            model_dir = self.app.setting.models_dir / model_id
-            if model_dir.exists():
-                file_ops.rmtree(model_dir)
-            self._model_cache.pop(model_id, None)
-            self.app.setting.remove_model_config(model_id)
-            view.show_default()
-            self.load_model_list()
+            self._remove_model(model_id)
             return
         if success:
             self._update_tree_status(model_id, "downloaded")
@@ -424,7 +395,6 @@ class ModelController:
                 self.app.setting, model_id
             )
             if not is_installed_anyway:
-                model_dir = self.app.setting.models_dir / model_id
-                file_ops.rmtree(model_dir)
+                self._remove_model(model_id)
             messagebox.showerror("下载失败", f"模型「{model_id}」下载失败，请检查网络后重试。")
             self.on_model_select()
