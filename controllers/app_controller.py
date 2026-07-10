@@ -139,6 +139,7 @@ class AppController:
                 if not answer:
                     return
                 from .update_controller import UpdateController
+                dialog.destroy()
                 update_ctrl = UpdateController(self)
                 self.view.after(0, lambda: update_ctrl.do_update(result.download_url, result.latest_version))
             else:

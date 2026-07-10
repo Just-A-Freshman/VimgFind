@@ -7,6 +7,7 @@ from tkinter import messagebox
 
 from utils import file_ops
 from utils.model_checker import MultiThreadDownloader
+from config.settings import ROOT
 from views import UpdateDialog
 
 
@@ -95,10 +96,8 @@ class UpdateController:
                 bat_path = found[0] if found else None
             if not bat_path:
                 raise FileNotFoundError("未找到 update.bat 安装脚本")
-
-            root_dir = str(Path(__file__).resolve().parent.parent)
             subprocess.Popen(
-                [str(bat_path), root_dir],
+                [str(bat_path), ROOT],
                 shell=True,
                 creationflags=subprocess.CREATE_NEW_CONSOLE,
             )
