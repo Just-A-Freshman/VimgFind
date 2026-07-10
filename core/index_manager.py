@@ -133,9 +133,8 @@ class NameIndexManager(object):
         self.__name_index[idx] = [
             file_ops.normalize_path(str(name)),
             file_ops.get_metainfo(name)
-        ]
-        if self.__name_index[idx][0] == NameIndexManager.NOTEXISTS:
-            self.__valid_index_count += 1
+        ] 
+        self.__valid_index_count += 1
 
     def delete_name(self, idx: int) -> None:
         try:
