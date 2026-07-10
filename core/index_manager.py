@@ -149,4 +149,4 @@ class NameIndexManager(object):
 
     def save_index(self) -> None:
         with open(self.__name_index_path, 'w', encoding='utf-8') as f:
-            json.dump(self.__name_index, f, ensure_ascii=False, indent=4)
+            json.dump(self.__name_index, f, ensure_ascii=False)
