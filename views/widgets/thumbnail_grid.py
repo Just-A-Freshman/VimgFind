@@ -427,13 +427,31 @@ class ThumbnailGridView(BasicImagePreviewView):
     def identify_item(self, event: tk.Event) -> str:
         x = self._canvas.canvasx(event.x)
         y = self._canvas.canvasy(event.y)
-        clicked_item = ""
-        for item in self._results:
-            item_x, item_y = self._get_item_position(item)
-            if (item_x <= x <= item_x + self._thumbnail_size and
-                item_y <= y <= item_y + self._thumbnail_size):
-                clicked_item = item
-                break
+
+        if not self._results or self._cols == 0:
+            return ""
+
+        item_width = self._thumbnail_size + self.MARGIN
+        item_height = self._thumbnail_size + self.MARGIN + self.FONT_HEIGHT
+        offset = self.MARGIN + self.MARGIN // 2
+
+        col = int((x - offset) // item_width)
+        row = int((y - offset) // item_height)
+
+        if col < 0 or col >= self._cols or row < 0:
+            return ""
+
+        index = row * self._cols + col
+        if index >= len(self._results):
+            return ""
+
+        cell_x = col * item_width + offset
+        cell_y = row * item_height + offset
+        if not (cell_x <= x <= cell_x + self._thumbnail_size and
+                cell_y <= y <= cell_y + self._thumbnail_size):
+            return ""
+
+        clicked_item = list(self._results)[index]
         return clicked_item
 
     def bind(self, sequence: str, func) -> None:
