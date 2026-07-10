@@ -1,0 +1,53 @@
+from tkinter.ttk import Label, Progressbar
+import tkinter as tk
+
+from config.settings import WinInfo, TkS
+
+
+class UpdateDialog(tk.Toplevel):
+    status_label: Label
+    progressbar: Progressbar
+    hint_label: Label
+    __slots__ = (
+        "status_label", "progressbar", "hint_label",
+        "parent", "download_url", "version",
+    )
+
+    def __init__(self, parent, download_url, version) -> None:
+        super().__init__(parent)
+        self.parent = parent
+        self.download_url = download_url
+        self.version = version
+        self.__win()
+        self.status_label = self.__set_status_label()
+        self.progressbar = self.__set_progressbar()
+        self.hint_label = self.__set_hint_label()
+
+    def __win(self) -> None:
+        self.withdraw()
+        self.title("软件更新")
+        self.iconbitmap(WinInfo.ico_path)
+        self.resizable(False, False)
+        self.transient(self.parent)
+        self.grab_set()
+        win_w = TkS(380)
+        win_h = TkS(130)
+        x = self.parent.winfo_rootx() + (self.parent.winfo_width() - win_w) // 2
+        y = self.parent.winfo_rooty() + (self.parent.winfo_height() - win_h) // 2
+        self.geometry(f"{win_w}x{win_h}+{x}+{y}")
+        self.deiconify()
+
+    def __set_status_label(self) -> Label:
+        label = Label(self, text=f"正在下载更新包 v{self.version}...")
+        label.pack(pady=(TkS(15), TkS(5)))
+        return label
+
+    def __set_progressbar(self) -> Progressbar:
+        bar = Progressbar(self, mode="determinate", length=TkS(300))
+        bar.pack(pady=TkS(5))
+        return bar
+
+    def __set_hint_label(self) -> Label:
+        label = Label(self, text="关闭窗口可取消更新")
+        label.pack(pady=(TkS(5), TkS(10)))
+        return label
