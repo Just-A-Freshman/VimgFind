@@ -26,8 +26,9 @@ class DROPFILES(ctypes.Structure):
 
 def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = None) -> Iterator[str]:
     rules_obj = exclude_rules.compile_rules(exclude_rules_list)
-
-    def _scandir(path: str) -> Iterator[str]:
+    stack = [target_dir]
+    while stack:
+        path = stack.pop()
         try:
             with os.scandir(path) as it:
                 for entry in it:
@@ -36,7 +37,7 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
                         if rules_obj and rules_obj.is_excluded(rel, is_dir=True):
                             if not rules_obj.is_affected_by_negation(rel):
                                 continue
-                        yield from _scandir(entry.path)
+                        stack.append(entry.path)
                     elif entry.is_file(follow_symlinks=False):
                         if not exclude_rules.is_accepted_extension(entry.name):
                             continue
@@ -47,8 +48,6 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
                         yield entry.path
         except PermissionError:
             pass
-
-    return _scandir(target_dir)
 
 
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
