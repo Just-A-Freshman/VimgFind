@@ -299,19 +299,19 @@ class SearchTool(object):
                 continue
 
             file_path = self.__name_idx_mgr.name_index[img_id][0]
+            file_path_obj = Path(file_path)
 
-            if ext_set and Path(file_path).suffix.lower() not in ext_set:
+            if ext_set and file_path_obj.suffix.lower() not in ext_set:
                 continue
 
             if size_min is not None or size_max is not None:
-                file_size_mb = Path(file_path).stat().st_size / (1024 * 1024)
+                file_size_mb = file_path_obj.stat().st_size / (1024 * 1024)
                 if size_min is not None and file_size_mb < size_min:
                     continue
                 if size_max is not None and file_size_mb > size_max:
                     continue
 
             if folder_filters:
-                file_path_obj = Path(file_path)
                 if not any(file_path_obj.is_relative_to(f) for f in folder_filters):
                     continue
 
