@@ -83,7 +83,10 @@ class MenuController(object):
         menu.add_separator()
         model_menu = tk.Menu(menu)
         for model in self.app.model_controller.get_downloaded_models():
-            model_menu.add_command(label=model.meta.name, command=lambda model=model: self.app.model_controller.switch_model(model.meta.id))
+            model_menu.add_command(
+                label=model.meta.name, 
+                command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True)
+            )
         menu.add_cascade(label='切换模型', menu=model_menu)
 
         frame1_right = frame1.winfo_rootx() + frame1.winfo_width()
