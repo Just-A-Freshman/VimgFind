@@ -18,7 +18,6 @@ class ModelFrame(Frame):
     download_progress_label: Label
     download_control_btn: Button
     download_cancel_btn: Button
-    local_share_btn: Button
     __slots__ = (
         "load_local_model_entry", "model_tree",
         "detail_frame", "local_model_frame",
@@ -139,5 +138,4 @@ class ModelFrame(Frame):
             w.place_forget()
         self.name_tip_label.config(text="选择模型查看详细信息")
         self.name_tip_label.grid(row=0, column=0)
-        self.local_share_btn.grid_forget()
 
