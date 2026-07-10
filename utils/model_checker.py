@@ -7,7 +7,7 @@ import time
 import zipfile
 import hashlib
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Any
 from urllib.error import URLError
 import urllib.request as request
 import urllib.error
@@ -17,6 +17,136 @@ from enum import Enum, auto
 from config.types import ModelConfig
 from config.settings import Setting
 from . import file_ops
+
+
+
+def verify_zip_sha256(zip_path: Path, expected: str) -> bool:
+    try:
+        algo, expected_hash = expected.split(":", 1)
+    except ValueError:
+        return False
+    if algo != "sha256":
+        return False
+    sha256 = hashlib.sha256()
+    with open(zip_path, "rb") as f:
+        while True:
+            data = f.read(8192)
+            if not data:
+                break
+            sha256.update(data)
+    return sha256.hexdigest() == expected_hash.lower()
+
+
+
+def validate_unknown_zip(zip_path: Path, model_id: str) -> ModelConfig:
+    try:
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            namelist = zf.namelist()
+
+            onnx_files = [n for n in namelist if n.endswith(".onnx")]
+            if not onnx_files:
+                raise AssertionError("无法识别的模型包：未找到 ONNX 模型文件（.onnx）。")
+
+            if "model.json" not in namelist:
+                raise AssertionError("无法识别的模型包：未找到 model.json 配置文件。")
+
+            with zf.open("model.json") as f:
+                raw = json.loads(f.read().decode("utf-8"))
+
+            mc = raw.get("model_config") or {}
+            image_path = mc.get("image_encoder_path", "") or ""
+            text_path = mc.get("text_encoder_path", "") or ""
+
+            if image_path and image_path not in namelist:
+                raise AssertionError(f"model.json 中的 image_encoder_path「{image_path}」在 zip 包中不存在。")
+            if text_path and text_path not in namelist:
+                raise AssertionError("校验失败", f"model.json 中的 text_encoder_path「{text_path}」在 zip 包中不存在。")
+
+            raw["meta_info"] = raw.get("meta_info") or {"id": model_id, "name": model_id}
+            return ModelConfig.from_dict(raw)
+
+    except (zipfile.BadZipFile, json.JSONDecodeError) as e:
+        raise AssertionError(f"无法读取模型包：{e}")
+
+
+
+def read_manifest_cache(cache_path: Path) -> dict[str, Any]:
+    try:
+        with open(cache_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError, FileNotFoundError):
+        return {}
+
+
+
+def fetch_remote_manifest(
+    url: str,
+    cache_path: Path,
+    cache_ttl: int = 3600,
+) -> list[dict] | None:
+    now = time.time()
+    cache = read_manifest_cache(cache_path)
+    if len(cache) == 0:
+        return
+    if now - cache.get("timestamp", 0) < cache_ttl:
+        return cache.get("models")
+    try:
+        req = request.Request(url, headers={"Accept": "application/json"},)
+        with request.urlopen(req, timeout=10) as resp:
+            models: list[dict] = json.loads(json.loads(resp.read().decode("utf-8"))["raw_content"])
+        try:
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump({"timestamp": now, "models": models}, f, indent=2)
+        except IOError:
+            pass
+        return models
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, OSError) as e:
+        logging.warning(f"获取远程模型清单失败: {e}")
+        return None
+    
+
+
+def is_installed(setting: Setting, model_id: str) -> bool:
+    model_dir = setting.models_dir / model_id
+    return model_dir.is_dir() and (model_dir / "model.json").is_file()
+
+
+
+def get_available_models(setting: Setting) -> list[ModelConfig]:
+    cache_path = setting.models_dir / "_manifest_cache.json"
+    installed_ids = setting.get_model_list()
+    local_map: dict[str, ModelConfig] = {}
+    result: list[ModelConfig] = []
+
+    for mid in installed_ids:
+        cfg = setting.load_model_config(mid)
+        local_map[mid] = cfg
+        result.append(cfg)
+
+    remote_raw = fetch_remote_manifest(
+        url=setting.app.remote_manifest_url,
+        cache_path=cache_path,
+        cache_ttl=setting.app.cache_ttl
+    )
+    if not remote_raw:
+        return result
+    for entry in remote_raw:
+        meta = entry.get("meta_info") or {}
+        mid = meta.get("id")
+        if not mid:
+            continue
+        if mid in local_map:
+            disk_cfg = local_map[mid]
+            if not disk_cfg.meta.download_url:
+                disk_cfg.meta.download_url = meta.get("download_url", "")
+            if not disk_cfg.meta.checksum_sha256:
+                disk_cfg.meta.checksum_sha256 = meta.get("checksum_sha256", "")
+        else:
+            result.append(ModelConfig.from_dict(entry))
+
+    return result
+
 
 
 
@@ -163,7 +293,13 @@ class MultiThreadDownloader:
 
         self._merge_files()
         self._cleanup()
-        self._verify_checksum()
+        
+        if not self.checksum:
+            return
+        if not verify_zip_sha256(self.save_path, self.checksum):
+            if os.path.exists(self.save_path):
+                os.remove(self.save_path)
+            raise RuntimeError(f"校验和不匹配: 预期 {self.checksum}")
 
     def _merge_files(self) -> None:
         with open(self.save_path, 'wb') as outfile:
@@ -177,33 +313,6 @@ class MultiThreadDownloader:
         if self.progress_callback:
             self.progress_callback(self.file_size, self.file_size)
 
-    def _verify_checksum(self):
-        if not self.checksum:
-            return
-        try:
-            algo, expected_hash = self.checksum.split(":", 1)
-        except ValueError:
-            logging.warning(f"校验和格式无效: {self.checksum}，跳过校验")
-            return
-        expected_hash = expected_hash.lower()
-        try:
-            hash_func = hashlib.new(algo)
-        except ValueError:
-            logging.warning(f"不支持的哈希算法: {algo}，跳过校验")
-            return
-        with open(self.save_path, 'rb') as f:
-            while True:
-                data = f.read(self.chunk_size)
-                if not data:
-                    break
-                hash_func.update(data)
-        actual_hash = hash_func.hexdigest()
-        if actual_hash != expected_hash:
-            if os.path.exists(self.save_path):
-                os.remove(self.save_path)
-            raise RuntimeError(
-                f"校验和不匹配: 预期 {expected_hash}，实际 {actual_hash}"
-            )
 
 
 class DownloadState(Enum):
@@ -322,80 +431,6 @@ class DownloadTask:
         with self._lock:
             return self._state
 
-
-
-def _fetch_remote_manifest(
-    url: str = "",
-    cache_path: Path | None = None,
-    cache_ttl: int = 3600,
-) -> list[dict] | None:
-    now = time.time()
-    if cache_path is not None and cache_path.exists():
-        try:
-            with open(cache_path, "r", encoding="utf-8") as f:
-                cache = json.load(f)
-            if now - cache.get("timestamp", 0) < cache_ttl:
-                return cache.get("models")
-        except (json.JSONDecodeError, IOError):
-            pass
-    try:
-        req = request.Request(url, headers={"Accept": "application/json"},)
-        with request.urlopen(req, timeout=10) as resp:
-            models: list[dict] = json.loads(json.loads(resp.read().decode("utf-8"))["raw_content"])
-        if cache_path is not None:
-            try:
-                cache_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(cache_path, "w", encoding="utf-8") as f:
-                    json.dump({"timestamp": now, "models": models}, f, indent=2)
-            except IOError:
-                pass
-
-        return models
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, OSError) as e:
-        logging.warning(f"获取远程模型清单失败: {e}")
-        return None
-
-
-
-def is_installed(setting: Setting, model_id: str) -> bool:
-    model_dir = setting.models_dir / model_id
-    return model_dir.is_dir() and (model_dir / "model.json").is_file()
-
-
-
-def get_available_models(setting: Setting) -> list[ModelConfig]:
-    cache_path = setting.models_dir / "_manifest_cache.json"
-    installed_ids = setting.get_model_list()
-    local_map: dict[str, ModelConfig] = {}
-    result: list[ModelConfig] = []
-
-    for mid in installed_ids:
-        cfg = setting.load_model_config(mid)
-        local_map[mid] = cfg
-        result.append(cfg)
-
-    remote_raw = _fetch_remote_manifest(
-        url=setting.app.remote_manifest_url,
-        cache_path=cache_path,
-        cache_ttl=setting.app.cache_ttl
-    )
-    if not remote_raw:
-        return result
-    for entry in remote_raw:
-        meta = entry.get("meta_info") or {}
-        mid = meta.get("id")
-        if not mid:
-            continue
-        if mid in local_map:
-            disk_cfg = local_map[mid]
-            if not disk_cfg.meta.download_url:
-                disk_cfg.meta.download_url = meta.get("download_url", "")
-            if not disk_cfg.meta.checksum_sha256:
-                disk_cfg.meta.checksum_sha256 = meta.get("checksum_sha256", "")
-        else:
-            result.append(ModelConfig.from_dict(entry))
-
-    return result
 
 
 

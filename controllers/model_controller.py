@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import time
-from tkinter import messagebox
+import zipfile
+from pathlib import Path
+from tkinter import filedialog, messagebox
 from ttkbootstrap import Entry
 from typing import TYPE_CHECKING, Callable, Literal, cast
 import tkinter as tk
@@ -226,28 +228,6 @@ class ModelController:
         self._update_tree_status(model_id, "downloading")
         self._poll_download(view, model_id)
 
-    def _make_progress_callback(self, view) -> Callable:
-        _last_ui = [0.0]
-        def callback(downloaded: int, total: int, speed: float) -> None:
-            now = time.time()
-            if now - _last_ui[0] < 0.1:
-                return
-            _last_ui[0] = now
-            view.after(0, lambda: self._update_download_progress(view, downloaded, total, speed))
-        return callback
-
-    def _poll_download(self, view, model_id: str) -> None:
-        task = self._current_download
-        if task is None:
-            return
-        if task.state in (DownloadState.COMPLETED, DownloadState.ERROR, DownloadState.CANCELLED):
-            success = task.state == DownloadState.COMPLETED
-            cancelled = task.state == DownloadState.CANCELLED
-            self._finish_download(success, cancelled, model_id, view)
-            self._current_download = None
-            return
-        view.after(200, lambda: self._poll_download(view, model_id))
-
     def on_download_control(self) -> None:
         task = self._current_download
         if task is None:
@@ -276,6 +256,94 @@ class ModelController:
         if model_id in view.model_tree.get_children(""):
             view.model_tree.selection_set(model_id)
             self.on_model_select()
+
+    def load_local_model(self) -> None:
+        file_path = filedialog.askopenfilename(
+            title="选择模型文件", filetypes=[("ZIP files", "*.zip"), ("All files", "*.*")]
+        )
+        if not file_path:
+            return
+
+        zip_path = Path(file_path)
+        model_id = zip_path.stem
+
+        if model_checker.is_installed(self.app.setting, model_id):
+            answer = messagebox.askyesno("提示", f"模型「{model_id}」已安装，是否覆盖？")
+            if not answer:
+                return
+
+        manifest = model_checker.read_manifest_cache(self.app.setting.manifest_cache).get("models")
+        entry = next((entry for entry in manifest if entry.get("meta_info", {}).get("id") == model_id), None) if manifest else None
+
+        if entry is None:
+            fresh = model_checker.fetch_remote_manifest(
+                url=self.app.setting.app.remote_manifest_url,
+                cache_path=self.app.setting.models_dir / "_manifest_cache.json",
+                cache_ttl=0
+            )
+            entry = next((entry for entry in fresh if entry.get("meta_info", {}).get("id") == model_id), None) if fresh else None
+
+        if entry:
+            expected_cs = (entry.get("meta_info") or {}).get("checksum_sha256", "")
+            if expected_cs and not model_checker.verify_zip_sha256(zip_path, expected_cs):
+                messagebox.showerror(
+                    "校验失败",
+                    f"校验和不匹配，存在模型 ID 冲突风险！\n\n"
+                    f"文件「{zip_path.name}」的校验和与远程记录不匹配，\n"
+                    f"可能是文件损坏或被篡改，请勿加载。"
+                )
+                return
+            cfg = ModelConfig.from_dict(entry)
+        else:
+            try:
+                cfg = model_checker.validate_unknown_zip(zip_path, model_id)
+                if cfg is None:
+                    return
+            except AssertionError as e:
+                messagebox.showerror("错误", str(e))
+                return
+
+        self._load_model_from_zip(zip_path, model_id, cfg)
+
+    def _load_model_from_zip(self, zip_path: Path, model_id: str, cfg: ModelConfig) -> None:
+        dest_dir = self.app.setting.models_dir / model_id
+        try:
+            if dest_dir.exists():
+                file_ops.rmtree(dest_dir)
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(dest_dir)
+
+            self.app.setting.save_model_config(model_id, cfg)
+            self.load_model_list()
+            messagebox.showinfo("提示", f"模型「{model_id}」加载成功！")
+        except Exception as e:
+            messagebox.showerror("错误", f"加载模型失败：{e}")
+            if dest_dir.exists():
+                file_ops.rmtree(dest_dir)
+
+    def _make_progress_callback(self, view) -> Callable:
+        _last_ui = [0.0]
+        def callback(downloaded: int, total: int, speed: float) -> None:
+            now = time.time()
+            if now - _last_ui[0] < 0.1:
+                return
+            _last_ui[0] = now
+            view.after(0, lambda: self._update_download_progress(view, downloaded, total, speed))
+        return callback
+
+    def _poll_download(self, view, model_id: str) -> None:
+        task = self._current_download
+        if task is None:
+            return
+        if task.state in (DownloadState.COMPLETED, DownloadState.ERROR, DownloadState.CANCELLED):
+            success = task.state == DownloadState.COMPLETED
+            cancelled = task.state == DownloadState.CANCELLED
+            self._finish_download(success, cancelled, model_id, view)
+            self._current_download = None
+            return
+        view.after(200, lambda: self._poll_download(view, model_id))
 
     def _show_download_progress(self, view: ModelFrame) -> None:
         view.download_btn.place_forget()
