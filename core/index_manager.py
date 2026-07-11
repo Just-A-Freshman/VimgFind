@@ -12,6 +12,7 @@ HNSW_EF_CONSTRUCTION = 200
 HNSW_M = 32
 HNSW_MIN_EF = 100
 INITIAL_CAPCITY = 50000
+SAFE_GAP = 100
 
 
 class VectorIndexManager:
@@ -48,7 +49,7 @@ class VectorIndexManager:
 
     def _ensure_capacity(self, needed: int) -> None:
         assert self.__hnsw_index is not None
-        if needed < self.__current_max_elements:
+        if needed < self.__current_max_elements - SAFE_GAP:
             return
         new_cap = min(self.__current_max_elements * 2, self.__index_capacity)
         if new_cap > self.__current_max_elements:
