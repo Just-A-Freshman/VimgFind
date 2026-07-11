@@ -48,7 +48,7 @@ class VectorIndexManager:
 
     def _ensure_capacity(self, needed: int) -> None:
         assert self.__hnsw_index is not None
-        if needed < self.__current_max_elements * 0.9:
+        if needed < self.__current_max_elements:
             return
         new_cap = min(self.__current_max_elements * 2, self.__index_capacity)
         if new_cap > self.__current_max_elements:
