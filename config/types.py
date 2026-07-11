@@ -35,6 +35,7 @@ class EncoderConfig:
 class IndexConfig:
     vector_index_path: str = ""
     name_index_path: str = ""
+    meta_info_path: str = ""
     index_capacity: int = 1000000
     index_dim: int = 512
     search_dir: list[str] = field(default_factory=list)
