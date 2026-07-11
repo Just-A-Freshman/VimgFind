@@ -128,14 +128,13 @@ class NameIndexManager(object):
                 for index_file, _ in self.__name_index
             )
 
-    def add_name(self, name: Path | str, idx: int) -> None:
-        while idx > len(self.__name_index) - 1:
-            self.__name_index.append([NameIndexManager.NOTEXISTS, 0])
-        self.__valid_index_count += self.__name_index[idx][0] == NameIndexManager.NOTEXISTS
-        self.__name_index[idx] = [
+    def add_name(self, name: Path | str) -> int:
+        self.__valid_index_count += 1
+        self.__name_index.append([
             file_ops.normalize_path(str(name)),
             file_ops.get_metainfo(name)
-        ]
+        ])
+        return len(self.__name_index) - 1
 
     def delete_name(self, idx: int) -> None:
         try:

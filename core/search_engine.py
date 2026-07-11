@@ -75,18 +75,18 @@ class SearchTool(object):
     def checkout_status(self) -> SearchStatus:
         return self._checkout_status
 
-    def __get_changed_files_index(self) -> list[tuple[int, str]]:
-        changed_files_index = []
-        for idx, [index_file, old_metainfo] in enumerate(self.__name_idx_mgr.name_index):
+    def __get_changed_files(self) -> list[str]:
+        changed_files = []
+        for index_file, old_metainfo in self.__name_idx_mgr.name_index:
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
             new_metainfo = file_ops.get_metainfo(index_file)
             if old_metainfo != new_metainfo:
-                changed_files_index.append((idx, index_file))
-        return changed_files_index
+                changed_files.append(index_file)
+        return changed_files
 
-    def __get_new_files_index(self, target_dir: str, exclude_rules: list[str] | None = None) -> list[tuple[int, str]]:
-        new_files_index = []
+    def __get_new_files(self, target_dir: str, exclude_rules: list[str] | None = None) -> list[str]:
+        new_files = []
         current_files = file_ops.get_file_iterator(target_dir, exclude_rules)
         existing_files = set(
             file_ops.normalize_path(i[0])
@@ -98,41 +98,20 @@ class SearchTool(object):
                 break
             if file_ops.normalize_path(file) not in existing_files:
                 new_files.append(file)
-
-        if not new_files:
-            return []
-
-        for idx, [index_file, _] in enumerate(self.__name_idx_mgr.name_index):
-            if index_file == NameIndexManager.NOTEXISTS:
-                new_files_index.append((idx, new_files.pop()))
-            if len(new_files) == 0:
-                break
-        for idx, new_file in enumerate(new_files, len(self.__name_idx_mgr.name_index)):
-            new_files_index.append((idx, new_file))
-
-        return new_files_index
-
-    def __index_target_dir(self, target_dir, exclude_rules: list[str] | None = None) -> list[tuple[int, str]]:
-        changed_files_index = self.__get_changed_files_index()
-        new_files_index = self.__get_new_files_index(target_dir, exclude_rules)
-        return changed_files_index + new_files_index
+        return new_files
 
     def update_max_match_count(self, max_match_count: int) -> None:
         self.__name_idx_mgr.update_max_match_count(max_match_count)
 
     def update_index(self, image_dir, max_workers: int = 10, exclude_rules: list[str] | None = None) -> None:
-        def _process_item(item) -> tuple[int, str, np.ndarray | None]:
-            idx, fpath = item
+        def _process_item(item) -> tuple[str, np.ndarray | None]:
             if self.__force_stop_update:
-                return idx, fpath, None
-            image_obj = image_ops.parse_image_from_path(fpath)
-            if image_obj is None:
-                fv = None
-            else:
-                fv = self.__multimodal_encoder.encode_image(image_obj)
-            return idx, fpath, fv
+                return item, None
+            image_obj = image_ops.parse_image_from_path(item)
+            return item, self.__multimodal_encoder.encode_image(image_obj) if image_obj is not None else None
+        
         self.__init_event.wait()
-        need_to_update = self.__index_target_dir(image_dir, exclude_rules)
+        need_to_update = self.__get_changed_files() + self.__get_new_files(image_dir, exclude_rules)
         if not need_to_update:
             return
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -147,14 +126,13 @@ class SearchTool(object):
                 done, pending = wait(pending, return_when=FIRST_COMPLETED)
                 for future in done:
                     try:
-                        idx, fpath, fv = future.result()
+                        file_path, fv = future.result()
                     except Exception as e:
                         logging.error(f"索引线程错误: {e}", exc_info=True)
                         pbar.update(1)
                         continue
                     if fv is not None:
-                        self.__vec_idx_mgr.add_vector(fv, idx)
-                        self.__name_idx_mgr.add_name(fpath, idx)
+                        self.__vec_idx_mgr.add_vector(fv, self.__name_idx_mgr.add_name(file_path))
                     pbar.update(1)
 
                 for _ in range(len(done)):
@@ -204,7 +182,7 @@ class SearchTool(object):
             return False
 
         result: list[str] = []
-        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
+        for index_file, _ in self.__name_idx_mgr.name_index:
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
             for nd in normalized_dirs:
