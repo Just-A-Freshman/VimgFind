@@ -16,28 +16,28 @@ SAFE_GAP = 100
 
 
 class VectorIndexManager:
-    __slots__ = ("__index_path", "__index_capacity", "__dim", "__current_max_elements", "__hnsw_index")
+    __slots__ = ("__index_path", "__index_capacity", "__dim", "__current_capacity", "__hnsw_index")
 
     def __init__(
             self,
             index_path: str,
             index_capacity: int,
             dim: int,
-            current_max_elements: int
+            current_capacity: int
         ) -> None:
         self.__index_path: str = index_path
         self.__index_capacity: int = index_capacity
         self.__dim: int = dim
-        self.__current_max_elements: int = current_max_elements
+        self.__current_capacity: int = current_capacity
         self.__hnsw_index: hnswlib.Index | None = None
         self.__init_index()
 
     def __init_index(self) -> None:
         self.__hnsw_index = hnswlib.Index(space="cosine", dim=self.__dim)
         if Path(self.__index_path).exists():
-            current_max_element = min(max(self.__current_max_elements * 2, INITIAL_CAPCITY), self.__index_capacity)
-            self.__hnsw_index.load_index(self.__index_path, max_elements=current_max_element)
-            self.__current_max_elements = current_max_element
+            current_capacity = min(max(self.__current_capacity * 2, INITIAL_CAPCITY), self.__index_capacity)
+            self.__hnsw_index.load_index(self.__index_path, max_elements=current_capacity)
+            self.__current_capacity = current_capacity
         else:
             self.__hnsw_index.init_index(
                 max_elements=INITIAL_CAPCITY,
@@ -45,16 +45,16 @@ class VectorIndexManager:
                 M=HNSW_M,
                 random_seed=42
             )
-            self.__current_max_elements = INITIAL_CAPCITY
+            self.__current_capacity = INITIAL_CAPCITY
 
     def _ensure_capacity(self, needed: int) -> None:
         assert self.__hnsw_index is not None
-        if needed < self.__current_max_elements - SAFE_GAP:
+        if needed < self.__current_capacity - SAFE_GAP:
             return
-        new_cap = min(self.__current_max_elements * 2, self.__index_capacity)
-        if new_cap > self.__current_max_elements:
+        new_cap = min(self.__current_capacity * 2, self.__index_capacity)
+        if new_cap > self.__current_capacity:
             self.__hnsw_index.resize_index(new_cap)
-            self.__current_max_elements = new_cap
+            self.__current_capacity = new_cap
 
     def reset_index(self) -> None:
         file_ops.delete_file(self.__index_path)
