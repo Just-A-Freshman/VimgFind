@@ -375,7 +375,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         start_index = int(start_row * self._cols)
         end_index = int(min(end_row * self._cols - 1, len(self._results) - 1))
         new_visible_items = set()
-        for index, item in enumerate(self._results):
+        for index, item in enumerate(list(self._results)):
             if index < start_index or index > end_index:
                 continue
             new_visible_items.add(item)
