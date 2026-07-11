@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Iterator
 from re import sub
 from enum import Enum
+import random
 import logging
 import os
 
@@ -41,29 +42,29 @@ EXT_FILTER_MAP: dict[str, set[str]] = {
 
 class SearchTool(object):
     __slots__ = (
-        "__init_event", "__force_stop_update", "_checkout_status",
-        "__vec_idx_mgr", "__name_idx_mgr", "__multimodal_encoder",
+        "__init_event", "__force_stop_update", "__checkout_status",
+        "__vec_idx_mgr", "__name_idx_mgr", "__multimodal_encoder", "__setting",
     )
 
     def __init__(self, setting: Setting) -> None:
         self.__init_event = Event()
         self.__force_stop_update = False
-        self._checkout_status: SearchStatus = SearchStatus.OK
-        Thread(target=self.__async_init, args=(setting, ), daemon=True).start()
+        self.__checkout_status: SearchStatus = SearchStatus.OK
+        self.__setting = setting
+        Thread(target=self.__async_init, daemon=True).start()
 
-    def __async_init(self, setting: Setting) -> None:
-        cfg = setting.model
+    def __async_init(self) -> None:
         self.__name_idx_mgr = NameIndexManager(
-            cfg.index.name_index_path,
-            setting.app.max_match_count
+            self.__setting.model.index.name_index_path,
+            self.__setting.app.max_match_count
         )
         self.__vec_idx_mgr = VectorIndexManager(
-            cfg.index.vector_index_path,
-            cfg.index.index_capacity,
-            cfg.index.index_dim,
+            self.__setting.model.index.vector_index_path,
+            self.__setting.model.index.index_capacity,
+            self.__setting.model.index.index_dim,
             len(self.__name_idx_mgr.name_index)
         )
-        self.__multimodal_encoder = MultiModalEncoder(cfg.encoder)
+        self.__multimodal_encoder = MultiModalEncoder(self.__setting.model.encoder)
         self.__init_event.set()
 
     @property
@@ -73,8 +74,8 @@ class SearchTool(object):
 
     @property
     def checkout_status(self) -> SearchStatus:
-        return self._checkout_status
-
+        return self.__checkout_status
+  
     def __get_changed_files(self) -> list[str]:
         changed_files = []
         for index_file, old_metainfo in self.__name_idx_mgr.name_index:
@@ -99,6 +100,34 @@ class SearchTool(object):
             if file_ops.normalize_path(file) not in existing_files:
                 new_files.append(file)
         return new_files
+
+    def verify_index_match(self, sample_count: int = 3) -> bool:
+        valid_entries = [
+            (idx, fpath) for idx, (fpath, _) in enumerate(self.__name_idx_mgr.name_index)
+            if fpath != NameIndexManager.NOTEXISTS
+        ]
+        if len(valid_entries) < sample_count:
+            return False
+
+        samples = random.sample(valid_entries, sample_count)
+        for idx, fpath in samples:
+            image_obj = image_ops.parse_image_from_path(fpath)
+            if image_obj is None:
+                return False
+            new_fv = self.__multimodal_encoder.encode_image(image_obj)
+            if new_fv is None:
+                return False
+            new_fv = new_fv.astype(np.float32)
+            new_fv /= np.linalg.norm(new_fv)
+            stored_fv = self.__vec_idx_mgr.get_items([idx])[0].astype(np.float32)
+            similarity = float(np.dot(new_fv, stored_fv))
+            if similarity < 1.0 - 1e-6:
+                logging.info(
+                    f"模型校验不匹配：{Path(fpath).name} "
+                    f"cosine_similarity={similarity:.8f}，触发硬重建"
+                )
+                return False
+        return True
 
     def update_max_match_count(self, max_match_count: int) -> None:
         self.__name_idx_mgr.update_max_match_count(max_match_count)
@@ -227,13 +256,13 @@ class SearchTool(object):
             folder_filters: list[str] | None = None
         ) -> Iterator[tuple[str, float]]:
         self.__init_event.wait()
-        self._checkout_status = SearchStatus.OK
+        self.__checkout_status = SearchStatus.OK
 
         if self.__name_idx_mgr.results_count == 0:
-            self._checkout_status = SearchStatus.EMPTY_INDEX
+            self.__checkout_status = SearchStatus.EMPTY_INDEX
             return
         if isinstance(content, str) and content == "":
-            self._checkout_status = SearchStatus.EMPTY_INPUT
+            self.__checkout_status = SearchStatus.EMPTY_INPUT
             return
 
         fv = self.__multimodal_encoder.encode_image(content) if isinstance(content, Image.Image) \
@@ -241,14 +270,14 @@ class SearchTool(object):
 
         if fv is None:
             logging.warning("搜索失败：编码器返回空特征向量，请检查模型文件是否存在")
-            self._checkout_status = SearchStatus.ENCODE_FAILED
+            self.__checkout_status = SearchStatus.ENCODE_FAILED
             return
 
         sim_list, ids_list = self.__vec_idx_mgr.match(fv, self.__name_idx_mgr.results_count)
         name_index_len = len(self.__name_idx_mgr.name_index)
         if len(ids_list) == 0:
             logging.error("搜索失败：HNSW向量索引为空，请自行添加索引目录并更新")
-            self._checkout_status = SearchStatus.HNSW_EMPTY
+            self.__checkout_status = SearchStatus.HNSW_EMPTY
             return
 
         yield from self._filter_and_yield_results(
@@ -297,7 +326,7 @@ class SearchTool(object):
             yield (file_path, similarity)
 
         if yielded_count == 0:
-            self._checkout_status = SearchStatus.NO_RESULTS
+            self.__checkout_status = SearchStatus.NO_RESULTS
 
     def is_empty_index(self) -> bool:
         return self.__name_idx_mgr.results_count == 0
@@ -317,6 +346,40 @@ class SearchTool(object):
 
     def set_force_end_update(self, state: bool) -> None:
         self.__force_stop_update = state
+
+    def rebuild_index(self) -> None:
+        self.__init_event.wait()
+        try:
+            self.remove_nonexists()
+            self.remove_duplicate()
+            if not self.verify_index_match():
+                self.reset_index()
+                return
+
+            valid_ids = [
+                idx for idx, (fpath, _) in enumerate(self.__name_idx_mgr.name_index)
+                if fpath != NameIndexManager.NOTEXISTS
+            ]
+            if not valid_ids:
+                self.reset_index()
+                return
+
+            try:
+                self.__vec_idx_mgr = VectorIndexManager.build_from_vectors(
+                    dim=self.__setting.model.index.index_dim,
+                    ids=valid_ids,
+                    old_mgr=self.__vec_idx_mgr,
+                    index_path=self.__setting.model.index.vector_index_path,
+                    index_capacity=self.__setting.model.index.index_capacity,
+                )
+                self.__name_idx_mgr.compact(valid_ids)
+                self.save_index()
+            except Exception as e:
+                logging.error(f"软重建失败: {e}", exc_info=True)
+                self.reset_index()
+        except Exception as e:
+            logging.exception(f"重建索引过程异常：{e}，执行硬重建")
+            self.reset_index()
 
     def destroy(self, wait: bool = False) -> None:
         if not wait:
