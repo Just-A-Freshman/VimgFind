@@ -242,7 +242,7 @@ class ModelController:
 
         if entry:
             expected_cs = (entry.get("meta_info") or {}).get("checksum_sha256", "")
-            if expected_cs and not model_checker.verify_zip_sha256(zip_path, expected_cs):
+            if expected_cs and not file_ops.verify_file_sha256(zip_path, expected_cs):
                 messagebox.showerror(
                     "校验失败",
                     f"校验和不匹配，存在模型 ID 冲突风险！\n\n"
