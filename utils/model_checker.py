@@ -5,7 +5,6 @@ import tempfile
 import threading
 import time
 import zipfile
-import hashlib
 from pathlib import Path
 from typing import Callable
 from urllib.error import URLError
