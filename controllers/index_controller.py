@@ -63,7 +63,15 @@ class IndexController(object):
         self.app.setting.save()
 
     def rebuild_index(self) -> None:
-        assert self.app.search_tools
+        @decorators.send_task
+        @decorators.redirect_output
+        def rebuild():
+            try:
+                assert self.app.search_tools
+                self.app.search_tools.rebuild_index()
+                self.sync_index()
+            except (FileNotFoundError, KeyError):
+                pass
         answer = messagebox.askyesno("提示", "重建索引极其耗时，\n您确定要进行重建吗？")
         if not answer:
             return
@@ -71,11 +79,7 @@ class IndexController(object):
             answer = messagebox.askyesno("提示", "您确定要重建全部模型的索引吗？")
             if not answer:
                 return
-        try:
-            self.app.search_tools.reset_index()
-            self.sync_index()
-        except (FileNotFoundError, KeyError):
-            pass
+        rebuild()
 
     def refresh_index_dataset_table(self) -> None:
         tb = self.app.view.index_tab.index_dataset_table
