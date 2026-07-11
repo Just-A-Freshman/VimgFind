@@ -2,6 +2,7 @@ import ctypes
 import logging
 import os
 import shutil
+import hashlib
 import subprocess
 import unicodedata
 import uuid
@@ -295,3 +296,19 @@ def merge_dirs(src: Path, dst: Path, skip_names: set[str] | None = None) -> None
         else:
             item.replace(target)
 
+
+def verify_file_sha256(file_path: Path | str, expected: str) -> bool:
+    try:
+        algo, expected_hash = expected.split(":", 1)
+    except ValueError:
+        return False
+    if algo != "sha256":
+        return False
+    sha256 = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        while True:
+            data = f.read(8192)
+            if not data:
+                break
+            sha256.update(data)
+    return sha256.hexdigest() == expected_hash.lower()

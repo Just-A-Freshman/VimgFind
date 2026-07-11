@@ -20,23 +20,6 @@ from . import file_ops
 
 
 
-def verify_zip_sha256(zip_path: Path, expected: str) -> bool:
-    try:
-        algo, expected_hash = expected.split(":", 1)
-    except ValueError:
-        return False
-    if algo != "sha256":
-        return False
-    sha256 = hashlib.sha256()
-    with open(zip_path, "rb") as f:
-        while True:
-            data = f.read(8192)
-            if not data:
-                break
-            sha256.update(data)
-    return sha256.hexdigest() == expected_hash.lower()
-
-
 
 def validate_unknown_zip(zip_path: Path, model_id: str) -> ModelConfig:
     try:
@@ -295,7 +278,7 @@ class MultiThreadDownloader:
         
         if not self.checksum:
             return
-        if not verify_zip_sha256(self.save_path, self.checksum):
+        if not file_ops.verify_file_sha256(self.save_path, self.checksum):
             if os.path.exists(self.save_path):
                 os.remove(self.save_path)
             raise RuntimeError(f"校验和不匹配: 预期 {self.checksum}")
