@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable
 import json
 import logging
 import tempfile
@@ -100,19 +101,20 @@ class VectorIndexManager:
         old_mgr: "VectorIndexManager",
         index_path: str,
         index_capacity: int,
-        progress_bar: tqdm
-    ) -> "VectorIndexManager":
+        progress_bar: tqdm,
+        stop_check: None | Callable = None
+    ) -> "VectorIndexManager | None":
         total = len(ids)
         progress_bar.total += total
         tmp_fd, tmp_path = tempfile.mkstemp(suffix=".npy")
         try:
             with os.fdopen(tmp_fd, "wb") as f:
                 for i in range(0, total, BATCH_SIZE):
+                    if stop_check and stop_check():
+                        return None
                     batch_ids = ids[i:i + BATCH_SIZE]
                     batch_vecs = old_mgr.get_items(batch_ids)
                     f.write(batch_vecs.astype(np.float32).tobytes())
-
-            old_mgr.close()
 
             new_hnsw = hnswlib.Index(space="cosine", dim=dim)
             new_hnsw.init_index(
@@ -123,19 +125,21 @@ class VectorIndexManager:
             )
             with open(tmp_path, "rb") as f:
                 for i in range(0, total, BATCH_SIZE):
+                    if stop_check and stop_check():
+                        return
                     count = min(BATCH_SIZE, total - i)
                     raw = f.read(count * dim * 4)
                     batch_vecs = np.frombuffer(raw, dtype=np.float32).reshape(count, dim)
                     new_hnsw.add_items(batch_vecs, np.arange(i, i + count))
                     progress_bar.update(count)
                     progress_bar.refresh()
+            old_mgr.close()
             new_hnsw.save_index(index_path)
         finally:
             try:
                 os.unlink(tmp_path)
             except OSError:
                 pass
-
         return cls(index_path, index_capacity, dim, total)
 
     def close(self) -> None:

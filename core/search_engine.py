@@ -125,6 +125,11 @@ class SearchTool(object):
             if new_fv is None:
                 return False
             stored_fv = self.__vec_idx_mgr.get_items([idx])[0]
+            if len(new_fv) != len(stored_fv):
+                logging.info(
+                    f"模型维度不匹配: new_dim={len(new_fv)}, stored_dim={len(stored_fv)}，触发硬重建"
+                )
+                return False
             similarity = float(np.dot(new_fv, stored_fv))
             if similarity < 1.0 - 1e-6:
                 logging.info(
@@ -380,14 +385,19 @@ class SearchTool(object):
                 self.reset_index()
             else:
                 try:
-                    self.__vec_idx_mgr = VectorIndexManager.build_from_vectors(
+                    new_mgr = VectorIndexManager.build_from_vectors(
                         dim=self.__setting.model.index.index_dim,
                         ids=valid_ids,
                         old_mgr=self.__vec_idx_mgr,
                         index_path=self.__setting.model.index.vector_index_path,
                         index_capacity=self.__setting.model.index.index_capacity,
-                        progress_bar=progress_bar
+                        progress_bar=progress_bar,
+                        stop_check=lambda: self.force_stop_update
                     )
+                    if new_mgr is None:
+                        return
+                    self.__vec_idx_mgr.close()
+                    self.__vec_idx_mgr = new_mgr
                     self.__name_idx_mgr.compact(valid_ids)
                 except Exception as e:
                     logging.error(f"软重建失败: {e}", exc_info=True)
