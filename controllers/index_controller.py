@@ -40,9 +40,7 @@ class IndexController(object):
             f"无效索引数：{invalid_index_count}\n"
             f"占比：{invalid_index_ratio * 100:.2f}%"
         )
-        if self.app.search_tools.total_index_count > 10000 and invalid_index_ratio > 0.2:
-            messagebox.showinfo("提示", f"当前无效索引占比高达：{invalid_index_ratio * 100:.2f}%\n强烈建议重建索引！")
-        
+
     def switch_model(self, event) -> None:
         idx = event.widget.current()
         if idx < 0:
