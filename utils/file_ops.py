@@ -11,6 +11,7 @@ from tkinter import Tk
 from typing import Iterator
 
 import win32clipboard
+from tqdm import tqdm
 
 from . import exclude_rules
 
@@ -32,7 +33,7 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
         path = stack.pop()
         try:
             with os.scandir(path) as it:
-                for entry in it:
+                for entry in tqdm(it, ascii=False, desc="扫描文件中"):
                     if entry.is_dir(follow_symlinks=False):
                         rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
                         if rules_obj and rules_obj.is_excluded(rel, is_dir=True):
