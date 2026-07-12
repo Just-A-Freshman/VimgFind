@@ -100,8 +100,10 @@ class VectorIndexManager:
         old_mgr: "VectorIndexManager",
         index_path: str,
         index_capacity: int,
+        progress_bar: tqdm
     ) -> "VectorIndexManager":
         total = len(ids)
+        progress_bar.total += total
         tmp_fd, tmp_path = tempfile.mkstemp(suffix=".npy")
         try:
             with os.fdopen(tmp_fd, "wb") as f:
@@ -119,15 +121,14 @@ class VectorIndexManager:
                 M=HNSW_M,
                 random_seed=42,
             )
-            pbar = tqdm(total=total, ascii=False, ncols=50)
             with open(tmp_path, "rb") as f:
                 for i in range(0, total, BATCH_SIZE):
                     count = min(BATCH_SIZE, total - i)
                     raw = f.read(count * dim * 4)
                     batch_vecs = np.frombuffer(raw, dtype=np.float32).reshape(count, dim)
-                    new_hnsw.add_items(batch_vecs, ids[i:i + count])
-                    pbar.update(count)
-            pbar.close()
+                    new_hnsw.add_items(batch_vecs, np.arange(i, i + count))
+                    progress_bar.update(count)
+                    progress_bar.refresh()
             new_hnsw.save_index(index_path)
         finally:
             try:

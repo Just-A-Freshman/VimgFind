@@ -75,11 +75,18 @@ class SearchTool(object):
     @property
     def checkout_status(self) -> SearchStatus:
         return self.__checkout_status
-  
-    def __get_changed_files(self) -> list[str]:
+
+    @property
+    def force_stop_update(self) -> bool:
+        return self.__force_stop_update
+    
+    def __get_changed_files(self, target_dir: str) -> list[str]:
         changed_files = []
+        target_dir = file_ops.normalize_path(target_dir)
         for index_file, old_metainfo in self.__name_idx_mgr.name_index:
             if index_file == NameIndexManager.NOTEXISTS:
+                continue
+            if not file_ops.normalize_path(index_file).startswith(target_dir):
                 continue
             new_metainfo = file_ops.get_metainfo(index_file)
             if old_metainfo != new_metainfo:
@@ -117,9 +124,7 @@ class SearchTool(object):
             new_fv = self.__multimodal_encoder.encode_image(image_obj)
             if new_fv is None:
                 return False
-            new_fv = new_fv.astype(np.float32)
-            new_fv /= np.linalg.norm(new_fv)
-            stored_fv = self.__vec_idx_mgr.get_items([idx])[0].astype(np.float32)
+            stored_fv = self.__vec_idx_mgr.get_items([idx])[0]
             similarity = float(np.dot(new_fv, stored_fv))
             if similarity < 1.0 - 1e-6:
                 logging.info(
@@ -132,44 +137,53 @@ class SearchTool(object):
     def update_max_match_count(self, max_match_count: int) -> None:
         self.__name_idx_mgr.update_max_match_count(max_match_count)
 
-    def update_index(self, image_dir, max_workers: int = 10, exclude_rules: list[str] | None = None) -> None:
-        def _process_item(item) -> tuple[str, np.ndarray | None]:
+    def update_index(
+            self, 
+            image_dirs: list[str], 
+            max_workers: int, 
+            exclude_rules: list[str],
+            progress_bar: tqdm
+        ) -> None:
+        def _process_item(item: str) -> tuple[str, np.ndarray | None]:
             if self.__force_stop_update:
                 return item, None
             image_obj = image_ops.parse_image_from_path(item)
             return item, self.__multimodal_encoder.encode_image(image_obj) if image_obj is not None else None
         
         self.__init_event.wait()
-        need_to_update = self.__get_changed_files() + self.__get_new_files(image_dir, exclude_rules)
-        if not need_to_update:
-            return
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            pbar = tqdm(total=len(need_to_update), ascii=False, ncols=50)
-            need_iter = iter(need_to_update)
-            pending: set = set()
-            window = min(max_workers * 2, len(need_to_update))
-            for _ in range(window):
-                pending.add(executor.submit(_process_item, next(need_iter)))
+        for image_dir in image_dirs:
+            dir_files = self.__get_changed_files(image_dir) + self.__get_new_files(image_dir, exclude_rules)
+            if not dir_files or self.__force_stop_update:
+                continue
 
-            while pending:
-                done, pending = wait(pending, return_when=FIRST_COMPLETED)
-                for future in done:
-                    try:
-                        file_path, fv = future.result()
-                    except Exception as e:
-                        logging.error(f"索引线程错误: {e}", exc_info=True)
-                        pbar.update(1)
-                        continue
-                    if fv is not None:
-                        self.__vec_idx_mgr.add_vector(fv, self.__name_idx_mgr.add_name(file_path))
-                    pbar.update(1)
+            progress_bar.total += len(dir_files)
+            
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                need_iter = iter(dir_files)
+                pending: set = set()
+                window = min(max_workers * 2, len(dir_files))
+                for _ in range(window):
+                    pending.add(executor.submit(_process_item, next(need_iter)))
 
-                for _ in range(len(done)):
-                    try:
-                        pending.add(executor.submit(_process_item, next(need_iter)))
-                    except StopIteration:
-                        break
-            pbar.close()
+                while pending:
+                    done, pending = wait(pending, return_when=FIRST_COMPLETED)
+                    for future in done:
+                        try:
+                            file_path, fv = future.result()
+                        except Exception as e:
+                            logging.error(f"索引线程错误: {e}", exc_info=True)
+                            progress_bar.update(1)
+                            continue
+                        if fv is not None:
+                            self.__vec_idx_mgr.add_vector(fv, self.__name_idx_mgr.add_name(file_path))
+                        progress_bar.update(1)
+
+                    for _ in range(len(done)):
+                        try:
+                            pending.add(executor.submit(_process_item, next(need_iter)))
+                        except StopIteration:
+                            break
+        progress_bar.close()
 
     def remove_duplicate(self) -> None:
         self.__init_event.wait()
@@ -347,14 +361,19 @@ class SearchTool(object):
     def set_force_end_update(self, state: bool) -> None:
         self.__force_stop_update = state
 
-    def rebuild_index(self) -> None:
+    def rebuild_index(
+            self, 
+            image_dirs: list[str], 
+            max_workers: int, 
+            exclude_rules: list[str],
+            progress_bar: tqdm
+        ) -> None:
         self.__init_event.wait()
         try:
             self.remove_nonexists()
             self.remove_duplicate()
             if not self.verify_index_match():
                 self.reset_index()
-                return
 
             valid_ids = [
                 idx for idx, (fpath, _) in enumerate(self.__name_idx_mgr.name_index)
@@ -362,24 +381,26 @@ class SearchTool(object):
             ]
             if not valid_ids:
                 self.reset_index()
-                return
-
-            try:
-                self.__vec_idx_mgr = VectorIndexManager.build_from_vectors(
-                    dim=self.__setting.model.index.index_dim,
-                    ids=valid_ids,
-                    old_mgr=self.__vec_idx_mgr,
-                    index_path=self.__setting.model.index.vector_index_path,
-                    index_capacity=self.__setting.model.index.index_capacity,
-                )
-                self.__name_idx_mgr.compact(valid_ids)
-                self.save_index()
-            except Exception as e:
-                logging.error(f"软重建失败: {e}", exc_info=True)
-                self.reset_index()
+            else:
+                try:
+                    self.__vec_idx_mgr = VectorIndexManager.build_from_vectors(
+                        dim=self.__setting.model.index.index_dim,
+                        ids=valid_ids,
+                        old_mgr=self.__vec_idx_mgr,
+                        index_path=self.__setting.model.index.vector_index_path,
+                        index_capacity=self.__setting.model.index.index_capacity,
+                        progress_bar=progress_bar
+                    )
+                    self.__name_idx_mgr.compact(valid_ids)
+                except Exception as e:
+                    logging.error(f"软重建失败: {e}", exc_info=True)
+                    self.reset_index()
         except Exception as e:
             logging.exception(f"重建索引过程异常：{e}，执行硬重建")
             self.reset_index()
+        finally:
+            self.update_index(image_dirs, max_workers, exclude_rules, progress_bar)
+            self.save_index()
 
     def destroy(self, wait: bool = False) -> None:
         if not wait:
