@@ -42,15 +42,15 @@ EXT_FILTER_MAP: dict[str, set[str]] = {
 
 class SearchTool(object):
     __slots__ = (
-        "__init_event", "__force_stop_update", "__checkout_status",
+        "__init_event", "force_stop_update", "__checkout_status",
         "__vec_idx_mgr", "__name_idx_mgr", "__multimodal_encoder", "__setting",
     )
 
     def __init__(self, setting: Setting) -> None:
         self.__init_event = Event()
-        self.__force_stop_update = False
         self.__checkout_status: SearchStatus = SearchStatus.OK
         self.__setting = setting
+        self.force_stop_update: bool = False
         Thread(target=self.__async_init, daemon=True).start()
 
     def __async_init(self) -> None:
@@ -73,12 +73,12 @@ class SearchTool(object):
         return self.__name_idx_mgr.valid_index_count
 
     @property
+    def total_index_count(self) -> int:
+        return len(self.__name_idx_mgr.name_index)
+    
+    @property
     def checkout_status(self) -> SearchStatus:
         return self.__checkout_status
-
-    @property
-    def force_stop_update(self) -> bool:
-        return self.__force_stop_update
     
     def __get_changed_files(self, target_dir: str) -> list[str]:
         changed_files = []
@@ -102,7 +102,7 @@ class SearchTool(object):
         )
         new_files = []
         for file in current_files:
-            if self.__force_stop_update:
+            if self.force_stop_update:
                 break
             if file_ops.normalize_path(file) not in existing_files:
                 new_files.append(file)
@@ -145,7 +145,7 @@ class SearchTool(object):
             progress_bar: tqdm
         ) -> None:
         def _process_item(item: str) -> tuple[str, np.ndarray | None]:
-            if self.__force_stop_update:
+            if self.force_stop_update:
                 return item, None
             image_obj = image_ops.parse_image_from_path(item)
             return item, self.__multimodal_encoder.encode_image(image_obj) if image_obj is not None else None
@@ -153,7 +153,7 @@ class SearchTool(object):
         self.__init_event.wait()
         for image_dir in image_dirs:
             dir_files = self.__get_changed_files(image_dir) + self.__get_new_files(image_dir, exclude_rules)
-            if not dir_files or self.__force_stop_update:
+            if not dir_files or self.force_stop_update:
                 continue
 
             progress_bar.total += len(dir_files)
@@ -357,9 +357,6 @@ class SearchTool(object):
             self.__name_idx_mgr.save_index()
         except Exception as e:
             logging.error(f"保存索引时出现错误: {e}")
-
-    def set_force_end_update(self, state: bool) -> None:
-        self.__force_stop_update = state
 
     def rebuild_index(
             self, 

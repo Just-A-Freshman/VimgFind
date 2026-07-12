@@ -110,7 +110,7 @@ class SearchController(object):
             if not messagebox.askyesno("提示", "索引正在更新中，是否终止索引更新？"):
                 return
             if self.app.index_controller.is_updating:
-                self.app.search_tools.set_force_end_update(True)
+                self.app.search_tools.force_stop_update = True
         self._is_finish_search = False
         try:
             tab = self.app.view.search_tab
@@ -148,7 +148,7 @@ class SearchController(object):
             except StopIteration:
                 status = self.app.search_tools.checkout_status
                 if status == SearchStatus.EMPTY_INDEX:
-                    messagebox.showinfo("提示", "索引中还没有任何图像，也许\n你还没有添加并更新索引目录？")
+                    messagebox.showinfo("提示", "索引中还没有任何图像，也许\n你还没有点击更新索引目录？")
                 elif status == SearchStatus.EMPTY_INPUT:
                     messagebox.showinfo("提示", "输入内容为空，没有搜索结果哦！")
                 elif status == SearchStatus.NO_RESULTS:

@@ -31,11 +31,18 @@ class IndexController(object):
 
     def update_index_tip(self) -> None:
         assert self.app.search_tools
-        tab = self.app.view.index_tab
-        tab.index_tip_label.config(
-            text=f"当前索引图库({self.app.search_tools.valid_index_count}张图片)"
+        valid_index_count = self.app.search_tools.valid_index_count
+        invalid_index_count = self.app.search_tools.total_index_count - self.app.search_tools.valid_index_count
+        invalid_index_ratio = invalid_index_count / max(self.app.search_tools.total_index_count, 1)
+        self.app.view.index_tab.index_tip_label.config(text=f"当前索引图库({valid_index_count}张图片)")
+        self.app.view.index_tab.index_tooltip.text = (
+            f"总占用槽位：{self.app.search_tools.total_index_count}\n"
+            f"无效索引数：{invalid_index_count}\n"
+            f"占比：{invalid_index_ratio * 100:.2f}%"
         )
-
+        if self.app.search_tools.total_index_count > 10000 and invalid_index_ratio > 0.2:
+            messagebox.showinfo("提示", f"当前无效索引占比高达：{invalid_index_ratio * 100:.2f}%\n强烈建议重建索引！")
+        
     def switch_model(self, event) -> None:
         idx = event.widget.current()
         if idx < 0:
@@ -108,7 +115,7 @@ class IndexController(object):
         tab.rebuild_index_button.config(state=tk.DISABLED)
         tab.update_index_button.config(
             text="终止索引更新",
-            command=lambda: self.app.search_tools.set_force_end_update(True) # type: ignore
+            command=lambda: setattr(self.app.search_tools, "force_stop_update", True)
         )
         self._is_updating = True
         self.app.model_controller.on_model_select()
@@ -137,7 +144,7 @@ class IndexController(object):
         finally:
             tab.switch_model_combobox.config(state="readonly")
             self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.NORMAL)
-            self.app.search_tools.set_force_end_update(False)    # type:ignore
+            setattr(self.app.search_tools, "force_stop_update", False)
             self.app.view.after(1000, self.update_index_tip)
             tab.update_index_button.config(text="更新索引目录", command=self.sync_index)
             tab.delete_index_button.config(state=tk.NORMAL)
@@ -327,6 +334,7 @@ class IndexController(object):
             self.app.search_tools.remove_files_in_directory(dir_path, remaining_dirs)
         self.app.search_tools.remove_nonexists()
         self.app.setting.save()
+        self._is_updating = False
         self.app.view.after(1000, self.update_index_tip)
 
     @decorators.send_task

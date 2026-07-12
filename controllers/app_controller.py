@@ -184,7 +184,7 @@ class AppController:
             self.setting.save()
             self.setting.clean_log()
             if self.search_tools:
-                self.search_tools.set_force_end_update(True)
+                self.search_tools.force_stop_update = True
                 self.search_tools.save_index()
                 self.search_tools.destroy()
             file_ops.rmtree(Setting.temp_image_path)
