@@ -1,9 +1,10 @@
 from __future__ import annotations
-
 from typing import TYPE_CHECKING
 from tkinter import messagebox, filedialog
-from pathlib import Path
 import tkinter as tk
+from pathlib import Path
+
+from tqdm import tqdm
 
 import utils.decorators as decorators
 from config.settings import TkS
@@ -62,16 +63,19 @@ class IndexController(object):
         self.refresh_index_dataset_table()
         self.app.setting.save()
 
+    @decorators.send_task
+    @decorators.redirect_output
     def rebuild_index(self) -> None:
-        @decorators.send_task
-        @decorators.redirect_output
-        def rebuild():
-            try:
-                assert self.app.search_tools
-                self.app.search_tools.rebuild_index()
-                self.sync_index()
-            except (FileNotFoundError, KeyError):
-                pass
+        def rebuild_current_model() -> None:
+            assert self.app.search_tools
+            progress_bar = tqdm(total=0, ascii=False, ncols=50)
+            self.app.search_tools.rebuild_index(
+                [d for d in self.app.setting.model.index.search_dir if Path(d).exists()],
+                int(float(self.app.view.index_tab.update_threads_count_scale.get())),
+                self.app.setting.model.index.exclude_rules or [], 
+                progress_bar
+            )
+
         answer = messagebox.askyesno("提示", "重建索引极其耗时，\n您确定要进行重建吗？")
         if not answer:
             return
@@ -79,7 +83,67 @@ class IndexController(object):
             answer = messagebox.askyesno("提示", "您确定要重建全部模型的索引吗？")
             if not answer:
                 return
-        rebuild()
+        self._run_index_task(rebuild_current_model)
+
+    @decorators.send_task
+    @decorators.redirect_output
+    def sync_index(self, show_message: bool = True) -> None:
+        def sync_current_model() -> None:
+            assert self.app.search_tools
+            self.app.search_tools.remove_nonexists()
+            progress_bar = tqdm(total=0, ascii=False, ncols=50)
+            self.app.search_tools.update_index(
+                [d for d in self.app.setting.model.index.search_dir if Path(d).exists()],
+                int(float(self.app.view.index_tab.update_threads_count_scale.get())),
+                self.app.setting.model.index.exclude_rules or [], 
+                progress_bar
+            )
+            self.app.search_tools.remove_duplicate()
+
+        self._run_index_task(sync_current_model, show_message)
+
+    def _run_index_task(self, model_work, show_message: bool = True) -> None:
+        tab = self.app.view.index_tab
+        tab.delete_index_button.config(state=tk.DISABLED)
+        tab.rebuild_index_button.config(state=tk.DISABLED)
+        tab.update_index_button.config(
+            text="终止索引更新",
+            command=lambda: self.app.search_tools.set_force_end_update(True) # type: ignore
+        )
+        self._is_updating = True
+        self.app.model_controller.on_model_select()
+        self.__check_queue()
+        try:
+            assert self.app.search_tools
+            tab = self.app.view.index_tab
+            tab.switch_model_combobox.config(state=tk.DISABLED)
+            model_work()
+            if self.app.setting.app.update_index_range == "all":
+                original_id = self.app.setting.app.current_model
+                remaining_models = [
+                    cfg for cfg in self.app.model_controller.get_downloaded_models()
+                    if cfg.meta.id != original_id
+                ]
+                for model in remaining_models:
+                    if self.app.search_tools.force_stop_update:
+                        break
+                    self.app.model_controller.switch_model(model.meta.id, resend_search=False)
+                    model_work()
+                self.app.model_controller.switch_model(original_id)
+            if show_message:
+                messagebox.showinfo("提示", "索引更新完成！")
+        except Exception as e:
+            messagebox.showerror("错误", f"索引更新时遇到错误：{str(e)}")
+        finally:
+            tab.switch_model_combobox.config(state="readonly")
+            self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.NORMAL)
+            self.app.search_tools.set_force_end_update(False)    # type:ignore
+            self.app.view.after(1000, self.update_index_tip)
+            tab.update_index_button.config(text="更新索引目录", command=self.sync_index)
+            tab.delete_index_button.config(state=tk.NORMAL)
+            tab.rebuild_index_button.config(state=tk.NORMAL)
+            self.app.model_controller.on_model_select()
+            self._is_updating = False
 
     def refresh_index_dataset_table(self) -> None:
         tb = self.app.view.index_tab.index_dataset_table
@@ -237,58 +301,6 @@ class IndexController(object):
         self._drop_target = None
         self._insert_before = None
         self._drag_ghost = None
-
-    @decorators.send_task
-    @decorators.redirect_output
-    def sync_index(self, show_message: bool = True) -> None:
-        def update_index():
-            assert self.app.search_tools
-            tab.switch_model_combobox.config(state=tk.DISABLED)
-            self.app.search_tools.remove_nonexists()
-            exclude_rules: list[str] = self.app.setting.model.index.exclude_rules or []
-            for image_dir in self.app.setting.model.index.search_dir:
-                if Path(image_dir).exists():
-                    self.app.search_tools.update_index(
-                        image_dir,
-                        int(float(tab.update_threads_count_scale.get())),
-                        exclude_rules
-                    )
-            self.app.search_tools.remove_duplicate()
-            tab.switch_model_combobox.config(state="readonly")
-        
-        assert self.app.search_tools
-        tab = self.app.view.index_tab
-        tab.delete_index_button.config(state=tk.DISABLED)
-        tab.rebuild_index_button.config(state=tk.DISABLED)
-        tab.update_index_button.config(
-            text="终止索引更新",
-            command=lambda: self.app.search_tools.set_force_end_update(True)   # type:ignore
-        )
-        self._is_updating = True
-        self.app.model_controller.on_model_select()
-        self.__check_queue()
-        try:
-            update_index()
-            if self.app.setting.app.update_index_range == "all":
-                original_id = self.app.setting.app.current_model
-                remaining_models = [cfg for cfg in self.app.model_controller.get_downloaded_models() if cfg.meta.id != original_id]
-                for model in remaining_models:
-                    self.app.model_controller.switch_model(model.meta.id, resend_search=False)
-                    update_index()
-                self.app.model_controller.switch_model(original_id)
-            if show_message:
-                messagebox.showinfo("提示", "索引更新完成！")
-        except Exception as e:
-            messagebox.showerror("错误", f"索引更新时遇到错误：{str(e)}")
-        finally:
-            self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.NORMAL)
-            self.app.search_tools.set_force_end_update(False)
-            self.app.view.after(1000, self.update_index_tip)
-            tab.update_index_button.config(text="更新索引目录", command=self.sync_index)
-            tab.delete_index_button.config(state=tk.NORMAL)
-            tab.rebuild_index_button.config(state=tk.NORMAL)
-            self.app.model_controller.on_model_select()
-            self._is_updating = False
 
     @decorators.send_task
     @decorators.redirect_output
