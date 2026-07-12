@@ -1,4 +1,4 @@
-from ttkbootstrap import Button, Checkbutton, Scale
+from ttkbootstrap import Button, Checkbutton, Scale, tooltip
 from ttkbootstrap.constants import LINK
 from tkinter.ttk import Frame, Treeview, Label, Combobox, LabelFrame
 import tkinter as tk
@@ -8,6 +8,7 @@ from config.settings import WinInfo, TkS
 
 class IndexFrame(Frame):
     index_tip_label: Label
+    index_tooltip: tooltip.ToolTip
     index_dataset_table: Treeview
     switch_model_combobox: Combobox
     add_index_button: Button
@@ -20,7 +21,7 @@ class IndexFrame(Frame):
     exclude_button: Button
     clean_excluded_button: Button
     __slot__ = (
-        "index_tip_label", "index_dataset_table", "switch_model_combobox",
+        "index_tip_label", "index_tooltip", "index_dataset_table", "switch_model_combobox",
         "add_index_button", "update_index_button", "delete_index_button", 
         "rebuild_index_button", "auto_update_checkbutton", "update_range_combobox",
         "update_threads_count_scale", "exclude_button", "clean_excluded_button"
@@ -31,6 +32,7 @@ class IndexFrame(Frame):
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.index_tip_label = self.__set_index_tip_label()
+        self.index_tooltip = tooltip.ToolTip(self.index_tip_label)
         self.index_dataset_table = self.__set_index_dataset_table()
         index_setting_frame = self.__set_index_setting_frame()
         scan_setting_frame = self.__set_scan_setting_frame()
