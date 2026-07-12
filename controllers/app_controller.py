@@ -63,9 +63,7 @@ class AppController:
         self.filter_controller.init_filter_panel()
 
         index_tab.index_dataset_table.bind("<Double-Button-1>", self.menu_controller.double_click_open_file)
-        index_tab.index_dataset_table.bind("<ButtonPress-1>", self.index_controller.drag_start)
-        index_tab.index_dataset_table.bind("<B1-Motion>", self.index_controller.drag_motion)
-        index_tab.index_dataset_table.bind("<ButtonRelease-1>", self.index_controller.drag_end)
+        index_tab.index_dataset_table.on_reorder = self.index_controller.on_reorder
         index_tab.switch_model_combobox.bind("<<ComboboxSelected>>", self.index_controller.switch_model)
         index_tab.switch_model_combobox.bind("<MouseWheel>", lambda _: "break")
         

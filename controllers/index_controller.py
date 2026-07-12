@@ -7,7 +7,6 @@ from pathlib import Path
 from tqdm import tqdm
 
 import utils.decorators as decorators
-from config.settings import TkS
 from views import ExcludeDialog
 from .exclude_controller import ExcludePreviewController
 
@@ -19,11 +18,6 @@ class IndexController(object):
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self._is_updating: bool = False
-        self._drag_source: str | None = None
-        self._drag_active: bool = False
-        self._drop_target: str | None = None
-        self._insert_before: bool | None = None
-        self._drag_ghost: tk.Toplevel | None = None
 
     @property
     def is_updating(self) -> bool:
@@ -174,138 +168,11 @@ class IndexController(object):
         dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
         controller.load_rules_into_view()
 
-    def drag_start(self, event: tk.Event) -> None:
-        tb = self.app.view.index_tab.index_dataset_table
-        item = tb.identify_row(event.y)
-        if not item:
-            self._drag_source = None
-            return
-        self._drag_source = item
-        self._drag_active = False
-        self._drop_target = None
-        self._insert_before = None
-        self._drag_ghost = None
-
-    def drag_motion(self, event: tk.Event) -> None:
-        if not self._drag_source:
-            return
-
-        if not self._drag_active:
-            self._drag_active = True
-            self._create_drag_ghost(event)
-
-        self._move_drag_ghost(event)
-
-        tb = self.app.view.index_tab.index_dataset_table
-        target = tb.identify_row(event.y)
-
-        if not target:
-            children = tb.get_children()
-            if children:
-                last_bbox = tb.bbox(children[-1])
-                if last_bbox and event.y > last_bbox[1] + last_bbox[3]:
-                    self._drop_target = None
-                    self._insert_before = False
-                    tb.selection_set(children[-1])
-                    return
-            self._drop_target = None
-            self._insert_before = None
-            tb.selection_set(())
-            return
-
-        if target == self._drag_source:
-            self._drop_target = None
-            self._insert_before = None
-            tb.selection_set(self._drag_source)
-            return
-
-        bbox = tb.bbox(target)
-        if not bbox:
-            return
-
-        children = list(tb.get_children())
-        _, y, _, height = bbox
-        self._insert_before = (event.y - y) < height // 2
-        self._drop_target = target
-
-        if self._insert_before:
-            tb.selection_set(target)
-        else:
-            next_idx = children.index(target) + 1
-            if next_idx < len(children):
-                tb.selection_set(children[next_idx])
-            else:
-                tb.selection_set(())
-
-    def drag_end(self, event: tk.Event) -> None:
-        if self._drag_ghost:
-            self._drag_ghost.destroy()
-            self._drag_ghost = None
-
-        if not self._drag_active or not self._drag_source:
-            self._drag_clear_state()
-            return
-
-        try:
-            tb = self.app.view.index_tab.index_dataset_table
-            items = list(tb.get_children())
-            source_idx = items.index(self._drag_source)
-
-            if self._drop_target is None and self._insert_before is False:
-                target_idx = len(items)
-            elif self._drop_target:
-                target_idx = items.index(self._drop_target)
-                if not self._insert_before:
-                    target_idx += 1
-            else:
-                return
-
-            if target_idx == source_idx:
-                return
-
-            search_dirs: list = self.app.setting.model.index.search_dir
-            dir_to_move = search_dirs.pop(source_idx)
-            search_dirs.insert(target_idx, dir_to_move)
-
-            tb.move(self._drag_source, "", target_idx)
-            for i, item in enumerate(tb.get_children(), 1):
-                _, dir_path = tb.item(item, "values")
-                tb.item(item, values=(i, dir_path))
-
-            tb.selection_set(self._drag_source)
-            self.app.filter_controller.refresh_folder_filter()
-        finally:
-            self._drag_clear_state()
-
-    def _create_drag_ghost(self, event: tk.Event) -> None:
-        source = self._drag_source
-        if source is None:
-            return
-        tb = self.app.view.index_tab.index_dataset_table
-        values = tb.item(source, "values")
-        dir_path = values[1] if len(values) > 1 else ""
-
-        ghost = tk.Toplevel(tb)
-        ghost.overrideredirect(True)
-        ghost.attributes("-alpha", 0.75, "-topmost", True)
-
-        label = tk.Label(ghost, text=str(dir_path), anchor=tk.W, padx=TkS(12), pady=TkS(3))
-        label.pack()
-
-        ghost.update_idletasks()
-        ghost.geometry(f"+{event.x_root + TkS(10)}+{event.y_root - TkS(5)}")
-        self._drag_ghost = ghost
-
-    def _move_drag_ghost(self, event: tk.Event) -> None:
-        if self._drag_ghost:
-            self._drag_ghost.geometry(f"+{event.x_root + TkS(10)}+{event.y_root - TkS(5)}")
-
-    def _drag_clear_state(self) -> None:
-        self._drag_source = None
-        self._drag_active = False
-        self._drop_target = None
-        self._insert_before = None
-        self._drag_ghost = None
+    def on_reorder(self, source_idx: int, target_idx: int) -> None:
+        search_dirs: list = self.app.setting.model.index.search_dir
+        dir_to_move = search_dirs.pop(source_idx)
+        search_dirs.insert(target_idx, dir_to_move)
+        self.app.filter_controller.refresh_folder_filter()
 
     @decorators.send_task
     @decorators.redirect_output

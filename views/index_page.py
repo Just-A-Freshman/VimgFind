@@ -1,15 +1,16 @@
 from ttkbootstrap import Button, Checkbutton, Scale, tooltip
 from ttkbootstrap.constants import LINK
-from tkinter.ttk import Frame, Treeview, Label, Combobox, LabelFrame
+from tkinter.ttk import Frame, Label, Combobox, LabelFrame
 import tkinter as tk
 
 from config.settings import WinInfo, TkS
+from views.widgets import DragReorderTreeview
 
 
 class IndexFrame(Frame):
     index_tip_label: Label
     index_tooltip: tooltip.ToolTip
-    index_dataset_table: Treeview
+    index_dataset_table: DragReorderTreeview
     switch_model_combobox: Combobox
     add_index_button: Button
     update_index_button: Button
@@ -52,9 +53,9 @@ class IndexFrame(Frame):
         label.place(relx=0.0081, rely=0.04, relwidth=1, relheight=0.0575)
         return label
 
-    def __set_index_dataset_table(self) -> Treeview:
+    def __set_index_dataset_table(self) -> DragReorderTreeview:
         columns = [" ", "图库目录"]
-        table = Treeview(self, show="headings", columns=columns)
+        table = DragReorderTreeview(self, show="headings", columns=columns)
         table.heading(0, text=columns[0], anchor=tk.CENTER)
         table.column(0, width=TkS(15), anchor=tk.CENTER, stretch=False)
         table.heading(1, text=columns[1], anchor=tk.CENTER)
