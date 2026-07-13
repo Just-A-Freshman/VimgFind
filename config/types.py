@@ -66,7 +66,7 @@ class AppSettings:
     max_match_count: int = 10
     preview_mode: Literal["detail_info", "medium_ico", "big_ico", "huge_ico"] = "medium_ico"
     auto_update_index: bool = True
-    auto_update_idle_threshold: int = 60
+    auto_update_idle_threshold: int = 300
     update_index_range: Literal["current", "all"] = "current"
     ui_style: str = "superhero"
     current_model: str = "chinese-clip"
