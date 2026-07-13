@@ -79,8 +79,11 @@ class Setting(object):
         return ModelConfig()
 
     def clean_log(self) -> None:
-        with open(Setting.error_log, "r", encoding="utf-8") as f:
-            content = f.readlines()
+        if not Path(Setting.error_log).exists():
+            content = ""
+        else:
+            with open(Setting.error_log, "r", encoding="utf-8") as f:
+                content = f.readlines()
         with open(Setting.error_log, "w", encoding="utf-8") as f:
             for line in content:
                 try:
