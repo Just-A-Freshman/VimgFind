@@ -33,7 +33,7 @@ class IndexFrame(Frame):
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.index_tip_label = self.__set_index_tip_label()
-        self.index_tooltip = tooltip.ToolTip(self.index_tip_label)
+        self.index_tooltip = tooltip.ToolTip(self.index_tip_label, topmost=True)
         self.index_dataset_table = self.__set_index_dataset_table()
         index_setting_frame = self.__set_index_setting_frame()
         scan_setting_frame = self.__set_scan_setting_frame()
