@@ -65,7 +65,8 @@ class FilterController:
         else:
             selected = fp.folder_listbox.curselection()
             folder_filters = [self._folder_paths[i] for i in selected] or None
-        return ext, size_min, size_max, folder_filters
+        dedup = fp.dedup_check.instate(['selected'])
+        return ext, size_min, size_max, folder_filters, dedup
 
     def _on_folder_select_all(self) -> None:
         lb = self.app.view.search_tab.filter_panel.folder_listbox

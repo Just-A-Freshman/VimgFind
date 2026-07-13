@@ -144,8 +144,9 @@ class SearchController(object):
             else:
                 return
             tab.preview_view.clear_results()
-            ext, size_min, size_max, folder_filters = self.app.filter_controller.get_search_filters()
-            results = self.app.search_tools.checkout(input_data, self.similarity_threshold, ext, size_min, size_max, folder_filters)
+            ext, size_min, size_max, folder_filters, dedup = self.app.filter_controller.get_search_filters()
+            results = self.app.search_tools.checkout(
+                input_data, self.similarity_threshold, ext, size_min, size_max, folder_filters, dedup)
             try:
                 first_result = next(results)
             except StopIteration:

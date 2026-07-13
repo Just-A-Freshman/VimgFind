@@ -274,7 +274,8 @@ class SearchTool(object):
             file_ext_label: str = "",
             size_min: float | None = None,
             size_max: float | None = None,
-            folder_filters: list[str] | None = None
+            folder_filters: list[str] | None = None,
+            dedup: bool = False
         ) -> Iterator[tuple[str, float]]:
         self.__init_event.wait()
         self.__checkout_status = SearchStatus.OK
@@ -302,8 +303,8 @@ class SearchTool(object):
             return
 
         yield from self._filter_and_yield_results(
-            ids_list, sim_list, threshold, name_index_len,
-            file_ext_label, size_min, size_max, folder_filters
+            ids_list, sim_list, threshold, name_index_len, file_ext_label, 
+            size_min, size_max, folder_filters, dedup
         )
 
     def _filter_and_yield_results(
@@ -312,11 +313,14 @@ class SearchTool(object):
             threshold: float, name_index_len: int,
             file_ext_label: str,
             size_min: float | None, size_max: float | None,
-            folder_filters: list[str] | None
+            folder_filters: list[str] | None,
+            dedup: bool = False
         ) -> Iterator[tuple[str, float]]:
         ext_set = EXT_FILTER_MAP.get(file_ext_label)
         yielded_count = 0
         threshold -= THRESHOLD_EPSILON
+        prev_similarity: float | None = None
+        prev_size: int | None = None
 
         for img_id, similarity in zip(ids_list, sim_list):
             if similarity < threshold:
@@ -332,8 +336,12 @@ class SearchTool(object):
             if ext_set and file_path_obj.suffix.lower() not in ext_set:
                 continue
 
+            try:
+                st_size = file_path_obj.stat().st_size
+            except OSError:
+                continue
             if size_min is not None or size_max is not None:
-                file_size_mb = file_path_obj.stat().st_size / (1024 * 1024)
+                file_size_mb = st_size / (1024 * 1024)
                 if size_min is not None and file_size_mb < size_min:
                     continue
                 if size_max is not None and file_size_mb > size_max:
@@ -342,6 +350,12 @@ class SearchTool(object):
             if folder_filters:
                 if not any(file_path_obj.is_relative_to(f) for f in folder_filters):
                     continue
+
+            if dedup:
+                if prev_similarity is not None and prev_size is not None and similarity == prev_similarity and st_size == prev_size:
+                    continue
+                prev_similarity = similarity
+                prev_size = st_size
 
             yielded_count += 1
             yield (file_path, similarity)
