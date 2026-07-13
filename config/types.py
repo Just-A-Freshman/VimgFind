@@ -74,7 +74,7 @@ class AppSettings:
     cache_ttl: int = 3600
     maximize_window: bool = False
     topmost_window: bool = False
-    schedule_index_save_interval: int = 600000
+    schedule_index_save_interval: int = 6000
 
     @classmethod
     def from_dict(cls, data: dict) -> AppSettings:
