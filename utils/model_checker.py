@@ -63,8 +63,6 @@ def fetch_remote_manifest(
             cache = json.load(f)
     except (json.JSONDecodeError, IOError, FileNotFoundError):
         cache = {}
-    if len(cache) == 0:
-        return
     if now - cache.get("timestamp", 0) < cache_ttl:
         return cache.get("models")
     try:
