@@ -222,7 +222,7 @@ class IndexController(object):
         self.app.setting.app.auto_update_index = enabled
         if enabled:
             if not hasattr(self, 'idle_tracker'):
-                self.idle_tracker = idle_tracker.IdleTracker(
+                self.idle_tracker = idle_tracker.IdleMonitor(
                     root=self.app.view,
                     threshold=self.app.setting.app.auto_update_idle_threshold,
                     on_idle=lambda: self.sync_index(auto=True),
