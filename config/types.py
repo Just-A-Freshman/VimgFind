@@ -72,9 +72,9 @@ class AppSettings:
     current_model: str = "chinese-clip"
     remote_manifest_url: str = "https://raw.githubusercontent.com/Just-A-Freshman/VimgFind/main/models.json"
     cache_ttl: int = 3600
+    schedule_index_save_interval: int = 600
     maximize_window: bool = False
     topmost_window: bool = False
-    schedule_index_save_interval: int = 6000
 
     @classmethod
     def from_dict(cls, data: dict) -> AppSettings:
