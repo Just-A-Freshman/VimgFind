@@ -29,11 +29,15 @@ class DROPFILES(ctypes.Structure):
 def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = None) -> Iterator[str]:
     rules_obj = exclude_rules.compile_rules(exclude_rules_list)
     stack = [target_dir]
+    scanned_count = 0
     while stack:
         path = stack.pop()
         try:
             with os.scandir(path) as it:
-                for entry in tqdm(it, ascii=False, desc="扫描文件中"):
+                for entry in it:
+                    scanned_count += 1
+                    if scanned_count % 50 == 0:
+                        print(f"正在扫描目录... 已处理 {scanned_count} 项")
                     if entry.is_dir(follow_symlinks=False):
                         rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
                         if rules_obj and rules_obj.is_excluded(rel, is_dir=True):
@@ -50,6 +54,7 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
                         yield entry.path
         except PermissionError:
             pass
+    print(f"目录扫描完成：共处理 {scanned_count} 项")
 
 
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
