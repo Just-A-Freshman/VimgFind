@@ -13,7 +13,7 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 - 模型推理：依托 onnxruntime，保障高效推理性能
 
 界面展示：
-![image-20260713201627284](image/image-20260713201627284.png)
+![image-20260713201627284](https://raw.githubusercontent.com/Just-A-Freshman/image-bed/main/Typora/image-20260713201627284.png)
 
 
 ## 2. 功能特性
