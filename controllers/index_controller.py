@@ -7,6 +7,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 import utils.decorators as decorators
+import utils.idle_tracker as idle_tracker
 from views import ExcludeDialog
 from .exclude_controller import ExcludePreviewController
 
@@ -18,10 +19,15 @@ class IndexController(object):
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self._is_updating: bool = False
+        self._is_auto_updating: bool = False
 
     @property
     def is_updating(self) -> bool:
         return self._is_updating
+
+    @property
+    def is_auto_updating(self) -> bool:
+        return self._is_auto_updating
 
     def update_index_tip(self) -> None:
         assert self.app.search_tools
@@ -82,11 +88,12 @@ class IndexController(object):
             answer = messagebox.askyesno("提示", "您确定要重建全部模型的索引吗？")
             if not answer:
                 return
+        self._is_auto_updating = False
         self._run_index_task(rebuild_current_model)
 
     @decorators.send_task
     @decorators.redirect_output
-    def sync_index(self, show_message: bool = True) -> None:
+    def sync_index(self, show_message: bool = True, auto: bool = False) -> None:
         def sync_current_model() -> None:
             assert self.app.search_tools
             self.app.search_tools.remove_nonexists()
@@ -94,11 +101,18 @@ class IndexController(object):
             self.app.search_tools.update_index(
                 [d for d in self.app.setting.model.index.search_dir if Path(d).exists()],
                 int(float(self.app.view.index_tab.update_threads_count_scale.get())),
-                self.app.setting.model.index.exclude_rules or [], 
+                self.app.setting.model.index.exclude_rules or [],
                 progress_bar
             )
             self.app.search_tools.remove_duplicate()
 
+        if auto:
+            if self._is_updating:
+                return
+            show_message = False
+            self._is_auto_updating = True
+        else:
+            self._is_auto_updating = False        
         self._run_index_task(sync_current_model, show_message)
 
     def _run_index_task(self, model_work, show_message: bool = True) -> None:
@@ -143,6 +157,7 @@ class IndexController(object):
             tab.rebuild_index_button.config(state=tk.NORMAL)
             self.app.model_controller.on_model_select()
             self._is_updating = False
+            self._is_auto_updating = False
 
     def refresh_index_dataset_table(self) -> None:
         tb = self.app.view.index_tab.index_dataset_table
@@ -201,6 +216,24 @@ class IndexController(object):
         self.app.setting.save()
         self._is_updating = False
         self.app.view.after(1000, self.update_index_tip)
+
+    def toggle_auto_update(self) -> None:
+        enabled = self.app.view.index_tab.auto_update_checkbutton.instate(['selected'])
+        self.app.setting.app.auto_update_index = enabled
+        if enabled:
+            if not hasattr(self, 'idle_tracker'):
+                self.idle_tracker = idle_tracker.IdleTracker(
+                    root=self.app.view,
+                    threshold=self.app.setting.app.auto_update_idle_threshold,
+                    on_idle=lambda: self.sync_index(auto=True),
+                )
+                self.idle_tracker.start()
+        else:
+            if hasattr(self, 'idle_tracker'):
+                self.idle_tracker.stop()
+                del self.idle_tracker
+            if self.is_auto_updating and self.app.search_tools:
+                self.app.search_tools.force_stop_update = True
 
     @decorators.send_task
     def clean_excluded(self) -> None:

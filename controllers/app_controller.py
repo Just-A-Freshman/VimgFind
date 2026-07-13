@@ -73,7 +73,7 @@ class AppController:
         index_tab.delete_index_button.config(command=self.index_controller.delete_search_dir)
         index_tab.rebuild_index_button.config(command=self.index_controller.rebuild_index)
 
-        index_tab.auto_update_checkbutton.config(command=lambda: setattr(self.setting.app, "auto_update_index",  index_tab.auto_update_checkbutton.instate(['selected'])))
+        index_tab.auto_update_checkbutton.config(command=self.index_controller.toggle_auto_update)
         index_tab.update_range_combobox.bind(
             "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "update_index_range", {v: k for k, v in RANGE_LABEL.items()}[e.widget.get()])
         )
@@ -102,7 +102,7 @@ class AppController:
         if self.setting.app.auto_update_index:
             self.view.index_tab.auto_update_checkbutton.invoke()
         self.index_controller.update_index_tip()
-        self.view.after(self.setting.app.schedule_index_save_interval, self.__schedule_save)
+        self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
         self.model_controller.load_model_list()
         downloaded_models = self.model_controller.get_downloaded_models()
         self.view.index_tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
@@ -175,10 +175,12 @@ class AppController:
     def __schedule_save(self) -> None:
         if self.search_tools:
             self.search_tools.save_index()
-        self.view.after(self.setting.app.schedule_index_save_interval, self.__schedule_save)
+        self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
 
     def destroy(self) -> None:
         try:
+            if hasattr(self.index_controller, 'idle_tracker'):
+                self.index_controller.idle_tracker.stop()
             self.setting.save()
             self.setting.clean_log()
             if self.search_tools:
