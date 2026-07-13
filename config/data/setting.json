@@ -1,14 +1,15 @@
 {
     "max_work_thread": 10,
-    "max_match_count": 30,
+    "max_match_count": 10,
     "preview_mode": "medium_ico",
     "auto_update_index": true,
-    "update_index_range": "all",
+    "auto_update_idle_threshold": 300,
+    "update_index_range": "current",
     "ui_style": "superhero",
-    "current_model": "osnet",
+    "current_model": "chinese-clip",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
+    "schedule_index_save_interval": 600,
     "maximize_window": false,
-    "topmost_window": false,
-    "schedule_index_save_interval": 600000
+    "topmost_window": false
 }
