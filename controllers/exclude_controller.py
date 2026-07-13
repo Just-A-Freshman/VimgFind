@@ -342,7 +342,7 @@ class ExcludePreviewController:
 
     @staticmethod
     def open_help_doc() -> None:
-        doc_path = Path(__file__).parent.parent / "docs" / "exclude_rules.md"
+        doc_path = Path(__file__).parent.parent / "docs" / "exclude_rules.html"
         file_ops.open_file(doc_path)
 
     def on_preview_double_click(self, event: tk.Event) -> None:
