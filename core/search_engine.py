@@ -83,13 +83,14 @@ class SearchTool(object):
     def __get_changed_files(self, target_dir: str) -> list[str]:
         changed_files = []
         target_dir = file_ops.normalize_path(target_dir)
-        for index_file, old_metainfo in self.__name_idx_mgr.name_index:
+        for idx, (index_file, old_metainfo) in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            if not file_ops.normalize_path(index_file).startswith(target_dir):
+            if not file_ops.is_path_under(index_file, target_dir):
                 continue
             new_metainfo = file_ops.get_metainfo(index_file)
             if old_metainfo != new_metainfo:
+                self.__name_idx_mgr.name_index[idx][1] = new_metainfo
                 changed_files.append(index_file)
         return changed_files
 
@@ -104,7 +105,8 @@ class SearchTool(object):
         for file in current_files:
             if self.force_stop_update:
                 break
-            if file_ops.normalize_path(file) not in existing_files:
+            norm_file = file_ops.normalize_path(file)
+            if norm_file not in existing_files:
                 new_files.append(file)
         return new_files
 
@@ -234,8 +236,8 @@ class SearchTool(object):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
             for nd in normalized_dirs:
-                if index_file.startswith(nd):
-                    rel = index_file[len(nd):].lstrip("\\/")
+                if file_ops.is_path_under(index_file, nd):
+                    rel = os.path.relpath(index_file, nd).replace("\\", "/")
                     if _is_excluded(rel):
                         result.append(index_file)
                     break
