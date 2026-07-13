@@ -11,7 +11,6 @@ from tkinter import Tk
 from typing import Iterator
 
 import win32clipboard
-from tqdm import tqdm
 
 from . import exclude_rules
 
