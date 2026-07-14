@@ -40,22 +40,31 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 
 ## 2.3 其他情况说明
 
-- 2.5版本引入了[多模型 - 多索引]机制，模型和索引是一一对应的。因此，当你切换模型时，索引文件夹也会发生相应的变化。这是正常的，当模型切换回原来的模型，即可看到原来的索引文件夹内容。
+- 2.5版本引入了[多模型 - 多索引]机制，**模型和索引是一一对应的**。因此，当你切换模型时，索引文件夹也会发生相应的变化。这是正常的，当模型切换回原来的模型，即可看到原来的索引文件夹内容。
 - 2.5版本，不再内置Chinese-clip模型，你需要到模型选项卡自行下载；如果程序内置的下载速度过慢，你可以选择复制其中的下载链接进行手动下载。下载完成后，选择加载本地模型即可。
 - 模型列表中，只有**多模态**模型支持以文搜图，目前仅提供Chinese-clip一种（作者尝试了不少其他模型，中文效果都不太好）；
 - 索引重建：2.5版本，切换到[索引]选项卡，鼠标移动到[当前索引的图片数：XX]上方，可以看到当前无效索引的数量及占比。程序不会主动进行索引重建，需要你在无效索引占比较高时（建议在20%以上时）手动点击重建。不过正如前面所说，索引重建进行了高效的实现，你可以放心大胆地点击它。
-- 搜索时，筛选的逻辑是在返回结果中进行的。因此，如果显示筛选条件过严时，优先点击右上角的“...”按钮，将返回结果数调高。
+- 搜索时，筛选的逻辑是在直接返回的n个结果中进行的。因此，如果显示筛选条件过严时，优先点击右上角的“...”按钮，将返回结果数调高。
 
 
 ## 3. 快速上手
 
 ### 3.1. 直接使用
-以下给出2.5版本的下载链接：
+以下给出2.5版本的**完整程序**的下载链接：
 
-- Github的Release页面：https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.1-win64.zip
-- 蓝奏云：https://wwbbm.lanzouv.com/iDfGP3w92ltc
+- Github：[Github下载VimgFind-v2.5.1](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.1-win64.zip)
+- 蓝奏云：[蓝奏云下载VimgFind-v2.5.1](https://wwbbm.lanzouv.com/iDfGP3w92ltc)
 
-增量更新程序将在后续推出。
+
+
+以下给出更新程序的下载链接：
+
+- Github：(Github下载VimgFind-v2.5.1更新包)[https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.1-win64-update.zip]
+- 蓝奏云：(蓝奏云下载VingFind-v2.5.1更新包)[https://wwbbm.lanzouv.com/iwsES3wctdkf]
+
+提示：使用VimgFind 1.2 到 2.4的所有版本的程序，均可使用上述更新程序进行升级。升级方法：点击`更新请点我.hta`，选择目标可执行程序后点击更新即可。更新期间，会弹出黑色的命令行窗口以执行更新脚本。更新脚本在`_update/update.ps1`中，不放心代码执行的可自行查看。
+
+
 
 其他历史版本请自行查看：[Releases · Just-A-Freshman/VimgFind/releases](https://github.com/Just-A-Freshman/VimgFind/releases)
 
