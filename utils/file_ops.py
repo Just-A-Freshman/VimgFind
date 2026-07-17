@@ -11,6 +11,7 @@ from tkinter import Tk
 from typing import Iterator
 
 import win32clipboard
+from send2trash import send2trash
 
 from . import exclude_rules
 
@@ -128,9 +129,9 @@ def copy_filepaths(*file_paths: str | Path, tk: Tk) -> None:
     tk.clipboard_append("\n".join([str(i) for i in file_paths]))
 
 
-def delete_file(file_path: str | Path) -> None:
+def delete_file(file_path: str | Path, hard=True) -> None:
     try:
-        os.remove(file_path)
+        os.remove(file_path) if hard else send2trash(file_path)
     except (FileNotFoundError, OSError) as e:
         logging.error(f"删除文件失败: {file_path}")
 
