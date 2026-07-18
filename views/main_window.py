@@ -1,5 +1,5 @@
 from tkinterdnd2 import TkinterDnD
-from ttkbootstrap import Button, Notebook, Window
+from ttkbootstrap import Button, Notebook, Window, Menu
 from ttkbootstrap.constants import LINK
 from ttkbootstrap.utility import enable_high_dpi_awareness
 import tkinter as tk
@@ -8,6 +8,7 @@ from config.settings import WinInfo, TkS
 from .search_page import SearchFrame
 from .index_page import IndexFrame
 from .model_page import ModelFrame
+from .click_menu import ClickMenuView
 
 
 class WinGUI(Window, TkinterDnD.Tk):
@@ -16,7 +17,8 @@ class WinGUI(Window, TkinterDnD.Tk):
     model_tab: ModelFrame
     switch_tab: Notebook
     common_setting_btn: Button
-    __slots__ = ("search_tab", "index_tab", "model_tab", "switch_tab", "common_setting_btn")
+    click_menu: ClickMenuView
+    __slots__ = ("search_tab", "index_tab", "model_tab", "switch_tab", "click_menu", "common_setting_btn")
 
     def __init__(self, full_screen: bool = False, topmost: bool = False) -> None:
         enable_high_dpi_awareness()
@@ -51,6 +53,7 @@ class WinGUI(Window, TkinterDnD.Tk):
         notebook.add(self.model_tab, text="  模型  ")
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
 
+        self.click_menu = ClickMenuView(parent)   # type:ignore
         self.common_setting_btn = Button(parent, text="通用设置", style=LINK, cursor="hand2", takefocus=False)
         self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=TkS(1), anchor=tk.NE)
         return notebook
