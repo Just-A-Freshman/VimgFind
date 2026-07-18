@@ -5,19 +5,22 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from tkinter import font as tkfont
-from tkinter.ttk import Treeview
+from ttkbootstrap import Treeview
 
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 from config.settings import TkS
-from views.widgets import BasicImagePreviewView
+from views.widgets import BasicImagePreviewView, PreviewCanvasView
+from views.click_menu import ClickMenuView
 
 if TYPE_CHECKING:
     from .app_controller import AppController
 
 
-class MenuController(object):
-    ACTIVE_BORDER_WIDTH = TkS(3)
+class MenuController:
+    app: AppController
+    _click_menu_view: ClickMenuView
+    __slots__ = ("app", "_click_menu_view")
 
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
@@ -42,46 +45,39 @@ class MenuController(object):
             return
         exists_files: list[Path] = [f for f in selected_files if f.exists()]
         if len(selected_files) == 1 and len(exists_files) == 1:
-            file_path = selected_files[0]
-            menu_items = [
-                ("复制图片", lambda: file_ops.copy_files(file_path)),
-                ("复制路径", lambda: file_ops.copy_filepaths(file_path, tk=self.app.view)),
-                ("图片另存为", lambda: image_ops.save_as_image(file_path)),
-                ("打开图片", lambda: file_ops.open_file(file_path)),
-                ("打开文件夹", lambda: file_ops.open_file(file_path, True))
-            ]
+            menu = self.app.view.click_menu.single_file_menu
+            menu.entryconfig(0, command=lambda: file_ops.copy_files(*selected_files))
+            menu.entryconfig(1, command=lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view))
+            menu.entryconfig(2, command=lambda: image_ops.save_as_image(*selected_files))
+            menu.entryconfig(3, command=lambda: self.delete_files(*selected_files, widget=widget))
+            menu.entryconfig(5, command=lambda: file_ops.open_file(selected_files[0]))
+            menu.entryconfig(6, command=lambda: file_ops.open_file(selected_files[0], True))
         elif len(selected_files) > 1 and len(exists_files) != 0:
-            menu_items = [
-                ("复制图片", lambda: file_ops.copy_files(*selected_files)),
-                ("复制路径", lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view)),
-                ("图片另存为", lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
-            ]
+            menu = self.app.view.click_menu.multi_file_menu
+            menu.entryconfig(0, command=lambda: file_ops.copy_files(*selected_files))
+            menu.entryconfig(1, command=lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view))
+            menu.entryconfig(2, command=lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
+            menu.entryconfig(3, command=lambda: self.delete_files(*selected_files, widget=widget))
         else:
             messagebox.showinfo("提示", "选中文件不存在！")
             return
-        menu = tk.Menu(tearoff=0, activeborderwidth=self.ACTIVE_BORDER_WIDTH)
-        for label, cmd in menu_items:
-            menu.add_command(label=label, command=cmd, compound=tk.LEFT)
-
         menu.post(event.x_root, event.y_root)
-        menu.bind("<Unmap>", lambda e: menu.destroy())
 
     def create_preview_setting_menu(self) -> None:
         tab = self.app.view.search_tab
-        btn = tab.more_options_button
-        frame1 = tab.preview_frame1
-        menu = tk.Menu(tearoff=0, activeborderwidth=self.ACTIVE_BORDER_WIDTH)
-        menu.add_command(label="详情模式", command=lambda: self.app.search_controller.set_preview_mode("detail_info"))
-        menu.add_command(label="中等图标", command=lambda: self.app.search_controller.set_preview_mode("medium_ico"))
-        menu.add_command(label="大图标", command=lambda: self.app.search_controller.set_preview_mode("big_ico"))
-        menu.add_command(label="超大图标", command=lambda: self.app.search_controller.set_preview_mode("huge_ico"))
-        menu.add_separator()
-        menu.add_command(label="结果数: 10", command=lambda: self.app.search_controller.set_preview_result_count(10))
-        menu.add_command(label="结果数: 30", command=lambda: self.app.search_controller.set_preview_result_count(30))
-        menu.add_command(label="结果数: 50", command=lambda: self.app.search_controller.set_preview_result_count(50))
-        menu.add_command(label="结果数: 100", command=lambda: self.app.search_controller.set_preview_result_count(100))
-        menu.add_separator()
-        model_menu = tk.Menu(menu, tearoff=0)
+        ctrl = self.app.search_controller
+        menu = self.app.view.click_menu.preview_setting_menu
+        menu.entryconfig(0, command=lambda: ctrl.set_preview_mode("detail_info"))
+        menu.entryconfig(1, command=lambda: ctrl.set_preview_mode("medium_ico"))
+        menu.entryconfig(2, command=lambda: ctrl.set_preview_mode("big_ico"))
+        menu.entryconfig(3, command=lambda: ctrl.set_preview_mode("huge_ico"))
+        menu.entryconfig(5, command=lambda: ctrl.set_preview_result_count(10))
+        menu.entryconfig(6, command=lambda: ctrl.set_preview_result_count(30))
+        menu.entryconfig(7, command=lambda: ctrl.set_preview_result_count(50))
+        menu.entryconfig(8, command=lambda: ctrl.set_preview_result_count(100))
+
+        model_menu = self.app.view.click_menu.model_menu
+        model_menu.delete(0, tk.END)
         if self.app.index_controller.is_updating:
             model_menu.add_command(label="索引更新中，暂不可用", state=tk.DISABLED)
         else:
@@ -90,16 +86,11 @@ class MenuController(object):
                     label=model.meta.name,
                     command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True)
                 )
-        menu.add_cascade(label='切换模型', menu=model_menu)
 
-        frame1_right = frame1.winfo_rootx() + frame1.winfo_width()
+        frame1_right = tab.preview_frame1.winfo_rootx() + tab.preview_frame1.winfo_width()
         menu_font = tkfont.Font(font=menu.cget("font"))
         menu_width = int(menu_font.measure("-") * 21)
-        menu.post(
-            frame1_right - menu_width,
-            btn.winfo_rooty() + TkS(25)
-        )
-        menu.bind("<Unmap>", lambda e: menu.destroy())
+        menu.post(frame1_right - menu_width, tab.more_options_button.winfo_rooty() + TkS(25))
 
     def double_click_open_file(self, event: tk.Event, widget=None) -> None:
         if widget is None:
@@ -118,3 +109,28 @@ class MenuController(object):
             return
         else:
             file_ops.open_file(selected_file)
+
+    def delete_files(self, *file_paths: str | Path, widget: BasicImagePreviewView) -> None:
+        assert self.app.search_tools
+        tab = self.app.view.search_tab
+        answer = messagebox.askokcancel("提示", f"你确定要删除这{len(file_paths)}张图片吗？")
+        if not answer:
+            return
+        
+        selection = widget.selection()
+        if isinstance(widget, PreviewCanvasView):
+            tab.preview_view.delete(*selection)
+            if tab.preview_canvas1.selection() == tab.preview_canvas2.selection():
+                tab.preview_canvas1.clear()
+                tab.preview_canvas2.clear()
+            else:
+                widget.delete(*selection)
+        else:
+            for i in (tab.preview_canvas1, tab.preview_canvas2):
+                if len(i.selection()) != 0 and i.selection()[0] in selection:
+                    i.clear()
+            widget.delete(*selection)
+        
+        for file_path in file_paths:
+            file_ops.delete_file(file_path, hard=False)
+        self.app.search_tools.remove_files(list(map(str, file_paths)))
