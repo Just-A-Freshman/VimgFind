@@ -132,18 +132,18 @@ class SearchController(object):
             else:
                 tab.set_nav_visible(False)
             if isinstance(input_data, str):
-                tab.preview_canvas1.clear_results()
+                tab.preview_canvas1.clear()
                 self._last_search_content = input_data
             elif isinstance(input_data, Image.Image):
                 tab.search_entry.delete(0, tk.END)
                 tab.search_entry.insert(0, source_path or "")
                 tab.search_entry.xview_moveto(1.0)
                 if source_path and Path(source_path).is_file():
-                    tab.preview_canvas1.append_result(source_path, input_data)
+                    tab.preview_canvas1.append(source_path, input_data)
                 self._last_search_content = Path(source_path) if source_path is not None else ""
             else:
                 return
-            tab.preview_view.clear_results()
+            tab.preview_view.clear()
             ext, size_min, size_max, folder_filters, dedup = self.app.filter_controller.get_search_filters()
             results = self.app.search_tools.checkout(
                 input_data, self.similarity_threshold, ext, size_min, size_max, folder_filters, dedup)
@@ -163,13 +163,13 @@ class SearchController(object):
             first_img_path, first_sim = first_result
             if Path(first_img_path).exists():
                 first_extra_info = SearchController.generate_extra_info(first_img_path, first_sim)
-                item = tab.preview_view.append_result(first_img_path, *first_extra_info)
+                item = tab.preview_view.append(first_img_path, *first_extra_info)
                 tab.preview_view.selection_set(item)
 
             for img_path, similarity in results:
                 if Path(img_path).exists():
                     extra_info = SearchController.generate_extra_info(img_path, similarity)
-                    tab.preview_view.append_result(img_path, *extra_info)
+                    tab.preview_view.append(img_path, *extra_info)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror("错误", f"搜索过程发生异常：{e}")
@@ -247,7 +247,7 @@ class SearchController(object):
         self.app.bind_event()
         for result in results:
             img_path, *extra_info = result
-            tab.preview_view.append_result(img_path, *extra_info)
+            tab.preview_view.append(img_path, *extra_info)
         tab.preview_view.selection_set(*current_selection)
 
     def preview_found_image(self, event: tk.Event) -> None:
@@ -258,7 +258,7 @@ class SearchController(object):
                 image_path = self.app.view.search_tab.preview_view.item(first_item)[0]
                 image_obj = image_ops.parse_image_from_path(image_path)
                 if image_obj is not None:
-                    self.app.view.search_tab.preview_canvas2.append_result(image_path, image_obj)
+                    self.app.view.search_tab.preview_canvas2.append(image_path, image_obj)
             except KeyError:
                 return
         selection = self.app.view.search_tab.preview_view.selection()
