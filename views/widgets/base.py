@@ -34,13 +34,16 @@ class BasicImagePreviewView(object):
     def _change_theme(self) -> None:
         self.theme_color = self._get_theme_colors()
 
-    def append_result(self, image_path: str, *extra_info: Any, **kwargs: Any) -> str:
+    def append(self, image_path: str, *extra_info: Any, **kwargs: Any) -> str:
         return self._generate_unique_path_item(image_path)
 
     def get_show_results(self) -> list[tuple]:
         return list(self._results.values())
 
-    def clear_results(self) -> None:
+    def clear(self) -> None:
+        pass
+
+    def delete(self, *items: str) -> None:
         pass
 
     def selection(self) -> tuple[str, ...]:

@@ -48,15 +48,20 @@ class DetailListView(BasicImagePreviewView):
             self.__treeview.move(k, "", index)
         self.__treeview.heading(col, command=lambda: self._sort_column(col, not reverse))
 
-    def append_result(self, image_path: str, *extra_info: str | int) -> str:
+    def append(self, image_path: str, *extra_info: str | int) -> str:
         iid = self._generate_unique_path_item(image_path)
         content = (os.path.basename(image_path), *extra_info)
         self._results[iid] = (image_path, *extra_info)
-        return self.__treeview.insert('', tk.END, values=content, iid=iid, text=image_path)
+        return self.__treeview.insert('', tk.END, values=content, iid=iid, text=image_path)    
 
-    def clear_results(self) -> None:
+    def clear(self) -> None:
         self._results.clear()
         self.__treeview.delete(*self.__treeview.get_children())
+
+    def delete(self, *items) -> None:
+        self.__treeview.delete(*items)
+        for item in items:
+            del self._results[item]
 
     def selection(self) -> tuple[str, ...]:
         return self.__treeview.selection()

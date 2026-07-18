@@ -20,7 +20,7 @@ class PreviewCanvasView(BasicImagePreviewView):
         canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         return canvas
 
-    def append_result(self, image_path: str, image_obj: Image.Image) -> str:
+    def append(self, image_path: str, image_obj: Image.Image) -> str:
         iid = self._generate_unique_path_item(image_path)
         canvas_width = max(self._canvas.winfo_width(), 100)
         canvas_height = max(self._canvas.winfo_height(), 80)
@@ -32,13 +32,13 @@ class PreviewCanvasView(BasicImagePreviewView):
             imgtk = ImageTk.PhotoImage(img)
         except UnidentifiedImageError:
             return ""
-        self.clear_results()
+        self.clear()
         self._results[iid] = (image_path, imgtk)
         self._canvas.create_image(x, y, anchor=tk.CENTER, image=imgtk)
         self._tooltip.text = image_path
         return iid
 
-    def clear_results(self) -> None:
+    def clear(self) -> None:
         self._results.clear()
         self._canvas.delete(tk.ALL)
         self._tooltip.text = "没有文件"

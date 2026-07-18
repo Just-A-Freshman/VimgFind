@@ -331,16 +331,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._cols = max(1, (canvas_width - self.MARGIN * 2) // item_width)
 
         if old_cols != self._cols and old_cols != 0:
-            for item, canvas_item in self._canvas_items.items():
-                x, y = self._get_item_position(item)
-                image_id = canvas_item.get("image_id", "")
-                if image_id:
-                    self._canvas.coords(image_id, x + self._thumbnail_size // 2, y + self._thumbnail_size // 2)
-                border_id = canvas_item.get("border_id", "")
-                if border_id:
-                    self._canvas.coords(border_id, x - 4, y - 4, x + self._thumbnail_size + 4, y + self._thumbnail_size + 4)
-                self._canvas.coords(canvas_item["placeholder_id"], x + self._thumbnail_size // 2, y + self._thumbnail_size // 2)
-                self._canvas.coords(canvas_item["image_info_id"], x + self._thumbnail_size // 2, y + self._thumbnail_size + self.MARGIN // 2 + self.FONT_HEIGHT // 2)
+            self._reposition_items()
 
         rows = math.ceil(len(self._results) / self._cols) if self._cols > 0 else 0
         item_height = self._thumbnail_size + self.MARGIN + self.FONT_HEIGHT
@@ -350,6 +341,18 @@ class ThumbnailGridView(BasicImagePreviewView):
         else:
             self._canvas.configure(scrollregion=(0, 0, canvas_width, canvas_height))
             self._canvas.yview_moveto(0)
+
+    def _reposition_items(self) -> None:
+        for item, canvas_item in self._canvas_items.items():
+            x, y = self._get_item_position(item)
+            image_id = canvas_item.get("image_id", "")
+            if image_id:
+                self._canvas.coords(image_id, x + self._thumbnail_size // 2, y + self._thumbnail_size // 2)
+            border_id = canvas_item.get("border_id", "")
+            if border_id:
+                self._canvas.coords(border_id, x - 4, y - 4, x + self._thumbnail_size + 4, y + self._thumbnail_size + 4)
+            self._canvas.coords(canvas_item["placeholder_id"], x + self._thumbnail_size // 2, y + self._thumbnail_size // 2)
+            self._canvas.coords(canvas_item["image_info_id"], x + self._thumbnail_size // 2, y + self._thumbnail_size + self.MARGIN // 2 + self.FONT_HEIGHT // 2)
 
     def _get_item_position(self, item: str) -> tuple[int, int]:
         if self._cols == 0:
@@ -385,15 +388,15 @@ class ThumbnailGridView(BasicImagePreviewView):
                 self._image_loader.add_task(item, image_path, self._thumbnail_size)
         self._visible_items = new_visible_items
 
-    def append_result(self, image_path: str, *extra_info: str | int) -> str:
+    def append(self, image_path: str, *extra_info: str | int) -> str:
         item = self._generate_unique_path_item(image_path)
         self._results[item] = (image_path, *extra_info)
         self._update_layout()
         self._create_placeholder(item)
         self.parent.after(100, self._load_visible_images)
         return item
-
-    def clear_results(self) -> None:
+    
+    def clear(self) -> None:
         self._cancel_timer()
         self._loading_tasks.clear()
         self._visible_image_data.clear()
@@ -404,6 +407,28 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._canvas.delete(tk.ALL)
         self._update_layout()
 
+    def delete(self, *items) -> None:
+        for key in items:
+            canvas_item = self._canvas_items.pop(key, None)
+            if not canvas_item:
+                continue
+            for field in ("image_id", "placeholder_id", "image_info_id", "border_id"):
+                cid = canvas_item.get(field, "")
+                if cid:
+                    self._canvas.delete(cid)
+            self._visible_image_data.pop(key, None)
+            self._visible_items.discard(key)
+            self._selected_items.discard(key)
+            self._loading_tasks.discard(key)
+            del self._results[key]
+
+        for new_index, key in enumerate(self._results):
+            if key in self._canvas_items:
+                self._canvas_items[key]["pos_index"] = new_index
+
+        self._reposition_items()
+        self._update_layout()
+        
     def selection(self) -> tuple[str, ...]:
         return tuple(self._selected_items)
 
