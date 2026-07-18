@@ -4,7 +4,8 @@ from typing import Callable, Any
 from collections import OrderedDict
 from collections import namedtuple
 import hashlib
-import os
+
+import utils.file_ops as file_ops
 
 
 ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
@@ -19,11 +20,10 @@ class BasicImagePreviewView(object):
         self.theme_color = self._get_theme_colors()
 
     def _generate_unique_path_item(self, path: str) -> str:
-        norm_path = os.path.normpath(path)
-        path_item = hashlib.md5(norm_path.encode()).hexdigest()[:16]
-        while path_item in self._results:
-            path_item += "#"
-        return path_item
+        norm_path = file_ops.normalize_path(path)
+        while norm_path in self._results:
+            norm_path += "#"
+        return hashlib.md5(norm_path.encode()).hexdigest()[:16]
 
     def _get_theme_colors(self) -> ThemeColor:
         style = Style()
