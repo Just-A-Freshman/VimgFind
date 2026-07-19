@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ttkbootstrap import Button, Labelframe, Frame, Entry, Label, Treeview, Scrollbar
 from ttkbootstrap.constants import LINK
 import tkinter as tk

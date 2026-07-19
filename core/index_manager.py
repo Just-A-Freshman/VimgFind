@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 import json
@@ -91,7 +92,7 @@ class VectorIndexManager:
     
     def get_items(self, ids: list[int]) -> np.ndarray:
         assert self.__hnsw_index is not None
-        return self.__hnsw_index.get_items(ids)   # type: ignore
+        return self.__hnsw_index.get_items(ids)   # type: ignore[return-value]
 
     @classmethod
     def build_from_vectors(
@@ -146,7 +147,7 @@ class VectorIndexManager:
         self.__hnsw_index = None
 
 
-class NameIndexManager(object):
+class NameIndexManager:
     NOTEXISTS = 'NOTEXISTS'
     __slots__ = ("__name_index_path", "__max_match_count", "__name_index", "__valid_index_count")
 

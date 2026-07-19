@@ -1,3 +1,4 @@
+from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from threading import Thread, Event
 from pathlib import Path
@@ -40,7 +41,7 @@ EXT_FILTER_MAP: dict[str, set[str]] = {
     "TIFF": {".tiff", ".tif"},
 }
 
-class SearchTool(object):
+class SearchTool:
     __slots__ = (
         "__init_event", "force_stop_update", "__checkout_status",
         "__vec_idx_mgr", "__name_idx_mgr", "__multimodal_encoder", "__setting",

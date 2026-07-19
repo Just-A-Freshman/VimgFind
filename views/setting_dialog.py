@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton
 from ttkbootstrap.constants import LINK
 from ttkbootstrap.publisher import Publisher

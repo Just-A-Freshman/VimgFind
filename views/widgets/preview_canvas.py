@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ttkbootstrap import tooltip
 import tkinter as tk
 
@@ -27,7 +28,7 @@ class PreviewCanvasView(BasicImagePreviewView):
         x = canvas_width // 2
         y = canvas_height // 2
         try:
-            img: Image.Image = ImageOps.exif_transpose(image_obj)    # type:ignore
+            img: Image.Image = ImageOps.exif_transpose(image_obj)    # type: ignore[arg-type]
             img.thumbnail((canvas_width, canvas_height), Image.Resampling.BICUBIC)
             imgtk = ImageTk.PhotoImage(img)
         except UnidentifiedImageError:

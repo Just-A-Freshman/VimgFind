@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
 import tkinter as tk
 
@@ -40,7 +41,7 @@ class ModelFrame(Frame):
         self.model_tree = self.__set_model_tree(model_list_frame)
         self.name_tip_label = Label(detail_frame)
         self.detail_desc_text = Text(
-            detail_frame, wrap='char', relief=tk.FLAT, autostyle=False,    # type:ignore
+            detail_frame, wrap='char', relief=tk.FLAT, autostyle=False,    # type: ignore[arg-type]
             font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )
         self.name_edit_entry = Entry(detail_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))

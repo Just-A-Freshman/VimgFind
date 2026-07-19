@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import logging
 import tkinter as tk
@@ -215,7 +216,7 @@ class ExcludePreviewController:
                                     0, lambda t=total, e=excluded: self._update_status(t, e)
                                 )
                             except Exception:
-                                pass
+                                logging.warning("UI更新失败（可能在后台线程中）")
             except PermissionError:
                 pass
 

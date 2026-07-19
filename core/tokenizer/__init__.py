@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Tokenizers for multimodal model text encoding.
 
 Provides three pure-Python tokenizer implementations:

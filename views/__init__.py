@@ -1,3 +1,4 @@
+from __future__ import annotations
 from .main_window import WinGUI
 from .search_page import SearchFrame, FilterPanel
 from .index_page import IndexFrame

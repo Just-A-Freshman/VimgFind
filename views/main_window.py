@@ -1,3 +1,4 @@
+from __future__ import annotations
 from tkinterdnd2 import TkinterDnD
 from ttkbootstrap import Button, Notebook, Window
 from ttkbootstrap.constants import LINK
@@ -54,7 +55,7 @@ class WinGUI(Window, TkinterDnD.Tk):
         notebook.add(self.model_tab, text=_("  模型  "))
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        self.click_menu = ClickMenuView(parent)   # type:ignore
+        self.click_menu = ClickMenuView(parent)   # type: ignore[arg-type]
         self.common_setting_btn = Button(parent, text=_("通用设置"), style=LINK, cursor="hand2", takefocus=False)
         self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=TkS(1), anchor=tk.NE)
         return notebook

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ttkbootstrap import Button, Checkbutton, Scale, tooltip
 from ttkbootstrap.constants import LINK
 from tkinter.ttk import Frame, Label, Combobox, LabelFrame

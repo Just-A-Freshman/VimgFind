@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from typing import Callable, Literal
 
@@ -87,7 +88,7 @@ class ImagePreprocess:
         new_w = int(round(w * scale))
         new_h = int(round(h * scale))
         img = img.resize((new_w, new_h), Image.Resampling.BICUBIC)
-        canvas = Image.new("RGB", (self.__image_size, self.__image_size), self.__fill_color)   # type:ignore
+        canvas = Image.new("RGB", (self.__image_size, self.__image_size), self.__fill_color)   # type: ignore[arg-type]
         left = (self.__image_size - new_w) // 2
         top = (self.__image_size - new_h) // 2
         canvas.paste(img, (left, top))
@@ -175,7 +176,7 @@ class MultiModalEncoder:
         try:
             input_name = self.image_session.get_inputs()[0].name
             result = self.image_session.run([], {input_name: processed_image})
-            image_features = result[self.__output_index][0] # type: ignore
+            image_features = result[self.__output_index][0] # type: ignore[index]
             self._normalize(image_features)
         except Exception as e:
             logging.error(f"编码图像时出现错误: {e}")

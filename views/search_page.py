@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
 import tkinter as tk
 
@@ -150,6 +151,7 @@ class SearchFrame(Frame):
     nav_frame: tk.Frame
     nav_prev: Button
     nav_next: Button
+    nav_page_label: tk.Label
     __slots__ = (
         "search_entry", "filter_btn",
         "search_by_browser_btn", "search_by_clipboard_btn",

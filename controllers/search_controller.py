@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from .app_controller import AppController
 
 
-class SearchController(object):
+class SearchController:
     def __init__(self, app_controller: AppController) -> None:
         self._last_search_content: Path | str = ""
         self._is_finish_search: bool = True

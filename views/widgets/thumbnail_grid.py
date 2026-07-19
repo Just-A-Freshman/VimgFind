@@ -1,3 +1,4 @@
+from __future__ import annotations
 import tkinter as tk
 from tkinter.ttk import Scrollbar
 import math

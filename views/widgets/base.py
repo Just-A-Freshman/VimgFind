@@ -1,3 +1,4 @@
+from __future__ import annotations
 import tkinter as tk
 from ttkbootstrap import Style
 from typing import Callable, Any
@@ -11,7 +12,7 @@ import utils.file_ops as file_ops
 ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
 
 
-class BasicImagePreviewView(object):
+class BasicImagePreviewView:
     __slots__ = ("parent", "_results", "theme_color")
 
     def __init__(self, parent: tk.Widget) -> None:

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from tkinter import messagebox, filedialog
 import tkinter as tk
 from pathlib import Path
+import logging
 
 from tqdm import tqdm
 
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from .app_controller import AppController
 
 
-class IndexController(object):
+class IndexController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self._is_updating: bool = False
@@ -270,7 +271,7 @@ class IndexController(object):
             while True:
                 message = decorators.progress_queue.get_nowait()
                 self.app.view.index_tab.index_tip_label.config(text=message)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"__check_queue 异常: {e}")
         if self._is_updating:
             self.app.view.after(200, self.__check_queue)

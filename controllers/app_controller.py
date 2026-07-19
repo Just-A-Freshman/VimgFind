@@ -1,3 +1,4 @@
+from __future__ import annotations
 from tkinter import messagebox
 from tkinter.font import nametofont
 from tkinterdnd2 import DND_FILES
@@ -122,10 +123,10 @@ class AppController:
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family=WinInfo.default_font_family, size=WinInfo.default_font_size)
         self.view.search_tab.search_entry.config(style="Search.TEntry")
-        self.view.search_tab.filter_btn.config(bg=style.colors.get("inputbg"), fg=style.colors.get("inputfg"))   # type: ignore
+        self.view.search_tab.filter_btn.config(bg=style.colors.get("inputbg"), fg=style.colors.get("inputfg"))   # type: ignore[arg-type]
         self.view.search_tab.nav_page_label.config(font=("", TkS(-18)))
         self.view.index_tab.index_tip_label.config(font=(WinInfo.default_font_family, TkS(-18)))
-        self.view.model_tab.detail_desc_text.config(bg=style.colors.get('bg'), fg=style.colors.get('fg'),selectbackground=style.colors.get('selectbg'))  # type:ignore
+        self.view.model_tab.detail_desc_text.config(bg=style.colors.get('bg'), fg=style.colors.get('fg'),selectbackground=style.colors.get('selectbg'))  # type: ignore[arg-type]
 
     def open_setting_dialog(self) -> None:
         @decorators.send_task
