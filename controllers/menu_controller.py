@@ -137,3 +137,4 @@ class MenuController:
         for file_path in file_paths:
             file_ops.delete_file(file_path, hard=False)
         self.app.search_tools.remove_files(list(map(str, file_paths)))
+        self.app.index_controller.update_index_tip()
