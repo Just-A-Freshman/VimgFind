@@ -1,9 +1,22 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 import tkinter as tk
 
 from utils.i18n import _
+
+
+@dataclass
+class _FilterSnapshot:
+    threshold: float = 0.0
+    ext: str = ""
+    size_min: str = ""
+    size_min_unit: str = ""
+    size_max: str = ""
+    size_max_unit: str = ""
+    folder_selection: tuple = ()
+    folder_all: bool = True
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -14,14 +27,7 @@ class FilterController:
         self.app = app_controller
         self._folder_all_var = tk.BooleanVar(value=True)
         self._folder_paths: list[str] = []
-        self._saved_threshold: float | None = None
-        self._saved_ext: str = ""
-        self._saved_size_min: str = ""
-        self._saved_size_min_unit: str = ""
-        self._saved_size_max: str = ""
-        self._saved_size_max_unit: str = ""
-        self._saved_folder_selection: tuple = ()
-        self._saved_folder_all: bool = True
+        self._saved_state: _FilterSnapshot | None = None
 
     def init_filter_panel(self) -> None:
         fp = self.app.view.search_tab.filter_panel
@@ -115,30 +121,33 @@ class FilterController:
 
     def save_filter_state(self) -> None:
         fp = self.app.view.search_tab.filter_panel
-        self._saved_threshold = self.app.search_controller.similarity_threshold
-        self._saved_ext = fp.ext_combo.get()
-        self._saved_size_min = fp.size_min.get()
-        self._saved_size_min_unit = fp.size_min_unit.get()
-        self._saved_size_max = fp.size_max.get()
-        self._saved_size_max_unit = fp.size_max_unit.get()
-        self._saved_folder_selection = fp.folder_listbox.curselection()
-        self._saved_folder_all = self._folder_all_var.get()
+        self._saved_state = _FilterSnapshot(
+            threshold=self.app.search_controller.similarity_threshold,
+            ext=fp.ext_combo.get(),
+            size_min=fp.size_min.get(),
+            size_min_unit=fp.size_min_unit.get(),
+            size_max=fp.size_max.get(),
+            size_max_unit=fp.size_max_unit.get(),
+            folder_selection=fp.folder_listbox.curselection(),
+            folder_all=self._folder_all_var.get(),
+        )
 
     def restore_filter_state(self) -> None:
-        if self._saved_threshold is None:
+        s = self._saved_state
+        if s is None:
             return
         fp = self.app.view.search_tab.filter_panel
-        self.app.search_controller.set_similarity_threshold(self._saved_threshold)
-        fp.sim_scale.set(self._saved_threshold)
-        fp.sim_value.config(text=f"{int(self._saved_threshold)}%")
-        fp.ext_combo.set(self._saved_ext)
+        self.app.search_controller.set_similarity_threshold(s.threshold)
+        fp.sim_scale.set(s.threshold)
+        fp.sim_value.config(text=f"{int(s.threshold)}%")
+        fp.ext_combo.set(s.ext)
         fp.size_min.delete(0, tk.END)
-        fp.size_min.insert(0, self._saved_size_min)
-        fp.size_min_unit.set(self._saved_size_min_unit)
+        fp.size_min.insert(0, s.size_min)
+        fp.size_min_unit.set(s.size_min_unit)
         fp.size_max.delete(0, tk.END)
-        fp.size_max.insert(0, self._saved_size_max)
-        fp.size_max_unit.set(self._saved_size_max_unit)
+        fp.size_max.insert(0, s.size_max)
+        fp.size_max_unit.set(s.size_max_unit)
         fp.folder_listbox.selection_clear(0, tk.END)
-        for idx in self._saved_folder_selection:
+        for idx in s.folder_selection:
             fp.folder_listbox.selection_set(idx)
-        self._folder_all_var.set(self._saved_folder_all)
+        self._folder_all_var.set(s.folder_all)

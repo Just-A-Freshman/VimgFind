@@ -220,7 +220,7 @@ class SearchTool:
         if not rules_obj:
             return []
 
-        normalized_dirs = [os.path.normcase(os.path.realpath(d)) for d in search_dirs]
+        normalized_dirs = [file_ops.normalize_path(d) for d in search_dirs]
 
         def _is_excluded(rel_path: str) -> bool:
             if rules_obj.is_excluded(rel_path, is_dir=False):
