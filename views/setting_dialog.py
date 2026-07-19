@@ -43,6 +43,7 @@ class SettingDialog(tk.Toplevel):
         self.topmost_checkbutton = self.__set_topmost_checkbutton()
         self.open_settings_file_btn = self.__set_open_settings_file_btn()
         self.check_update_btn = self.__set_check_update_btn()
+        self.__adjust_size()
 
     def __win(self, parent) -> None:
         self.withdraw()
@@ -50,12 +51,10 @@ class SettingDialog(tk.Toplevel):
         self.iconbitmap(WinInfo.ico_path)
         self.transient(parent)
         self.update_idletasks()
-        win_w = TkS(220)
-        win_h = TkS(220)
-        x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
-        y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
-        self.geometry(f"{win_w}x{win_h}+{x}+{y}")
-        self.minsize(win_w, win_h)
+        x = parent.winfo_rootx() + (parent.winfo_width() - TkS(220)) // 2
+        y = parent.winfo_rooty() + (parent.winfo_height() - TkS(220)) // 2
+        self.geometry(f"+{x}+{y}")
+        self.minsize(TkS(200), TkS(180))
         self.deiconify()
 
     def __set_theme_combobox(self) -> Combobox:
@@ -96,6 +95,20 @@ class SettingDialog(tk.Toplevel):
         open_settings_file_btn = Button(self, text=_("配置文件"), takefocus=True, style=LINK, cursor="hand2")
         open_settings_file_btn.grid(row=5, column=2, pady=TkS(10), padx=TkS(15))
         return open_settings_file_btn
+
+    def __adjust_size(self) -> None:
+        self.update_idletasks()
+        bbox = self.grid_bbox()
+        if bbox and bbox[2] > 0:
+            win_w = bbox[0] + bbox[2] + TkS(10)
+            win_h = bbox[1] + bbox[3] + TkS(10)
+        else:
+            return
+        parent = self.master
+        x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
+        y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
+        self.geometry(f"{win_w}x{win_h}+{x}+{y}")
+        self.minsize(win_w, win_h)
 
     def destroy(self) -> None:
         Publisher.unsubscribe(str(self.theme_combobox))

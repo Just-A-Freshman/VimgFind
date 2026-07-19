@@ -1,5 +1,5 @@
 from tkinterdnd2 import TkinterDnD
-from ttkbootstrap import Button, Notebook, Window, Menu
+from ttkbootstrap import Button, Notebook, Window
 from ttkbootstrap.constants import LINK
 from ttkbootstrap.utility import enable_high_dpi_awareness
 import tkinter as tk
