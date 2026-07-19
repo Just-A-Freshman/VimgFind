@@ -12,6 +12,7 @@ from .image_ops import (
 from .decorators import QueueStream, progress_queue, redirect_output, send_task
 from .update_checker import UpdateCheckResult, check
 from .exclude_rules import ExcludeRules, compile_rules, is_accepted_extension
+from .i18n import I18n, _
 
 __all__ = [
     "DROPFILES",
@@ -24,4 +25,5 @@ __all__ = [
     "QueueStream", "progress_queue", "redirect_output", "send_task",
     "UpdateCheckResult", "check",
     "ExcludeRules", "compile_rules", "is_accepted_extension",
+    "I18n", "_",
 ]
