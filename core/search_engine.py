@@ -239,18 +239,22 @@ class SearchTool:
                     return True
             return False
 
+        def _find_rel(norm_path: str) -> str | None:
+            for nd in normalized_dirs:
+                parent_with_sep = nd.rstrip(os.sep) + os.sep
+                if norm_path.startswith(parent_with_sep):
+                    return norm_path[len(parent_with_sep):].replace("\\", "/")
+            return None
+
         result: list[str] = []
         for index_file, _ in self.__name_idx_mgr.name_index:
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            index_file_norm = file_ops.normalize_path(index_file)
-            for nd in normalized_dirs:
-                parent_with_sep = nd.rstrip(os.sep) + os.sep
-                if index_file_norm.startswith(parent_with_sep):
-                    rel = index_file_norm[len(parent_with_sep):].replace("\\", "/")
-                    if _is_excluded(rel):
-                        result.append(index_file)
-                    break
+            rel = _find_rel(os.path.normcase(index_file))
+            if rel is None:
+                rel = _find_rel(file_ops.normalize_path(index_file))
+            if rel is not None and _is_excluded(rel):
+                result.append(index_file)
         return result
 
     def remove_files_in_directory(self, directory: str, keep_dirs: list[str] | None = None) -> None:
