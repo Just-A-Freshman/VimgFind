@@ -324,7 +324,7 @@ class ModelController:
     def _update_tree_status(self, model_id: str, status: str) -> None:
         view = self.app.view.model_tab
         if model_id in view.model_tree.get_children(""):
-            view.model_tree.set(model_id, "状态", _(STATUS_LABEL.get(status, status)))
+            view.model_tree.set(model_id, _("状态"), _(STATUS_LABEL.get(status, status)))
 
     def _get_model_status(self, model_id: str) -> str:
         if self._current_download and self._current_download.model_id == model_id:
