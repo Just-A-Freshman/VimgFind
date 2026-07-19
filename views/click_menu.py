@@ -31,10 +31,8 @@ class ClickMenuView:
         menu.add_command(label=_("大图标"))
         menu.add_command(label=_("超大图标"))
         menu.add_separator()
-        menu.add_command(label=_("结果数: 10"))
-        menu.add_command(label=_("结果数: 30"))
-        menu.add_command(label=_("结果数: 50"))
-        menu.add_command(label=_("结果数: 100"))
+        for count in (10, 30, 50, 100):
+            menu.add_command(label=_("结果数: {count}", count=count))
         menu.add_separator()
         model_menu = Menu(self.parent, tearoff=0)
         menu.add_cascade(label=_("切换模型"), menu=model_menu)
