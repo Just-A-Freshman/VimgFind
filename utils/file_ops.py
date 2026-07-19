@@ -14,6 +14,7 @@ import win32clipboard
 from send2trash import send2trash
 
 from . import exclude_rules
+from .i18n import _
 
 
 class DROPFILES(ctypes.Structure):
@@ -37,7 +38,7 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
                 for entry in it:
                     scanned_count += 1
                     if scanned_count % 50 == 0:
-                        print(f"正在扫描目录... 已处理 {scanned_count} 项")
+                        print(_("正在扫描目录... 已处理 {scanned_count} 项", scanned_count=scanned_count))
                     if entry.is_dir(follow_symlinks=False):
                         rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
                         if rules_obj and rules_obj.is_excluded(rel, is_dir=True):
@@ -54,7 +55,7 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
                         yield entry.path
         except PermissionError:
             pass
-    print(f"目录扫描完成：共处理 {scanned_count} 项")
+    print(_("目录扫描完成：共处理 {scanned_count} 项", scanned_count=scanned_count))
 
 
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
