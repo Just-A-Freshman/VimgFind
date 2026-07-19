@@ -1,16 +1,18 @@
 from __future__ import annotations
-from tkinterdnd2 import TkinterDnD
-from ttkbootstrap import Button, Notebook, Window
-from ttkbootstrap.constants import LINK
-from ttkbootstrap.utility import enable_high_dpi_awareness
+
 import tkinter as tk
 
-from config.settings import WinInfo, TkS
-from utils.i18n import _
-from .search_page import SearchFrame
+from tkinterdnd2 import TkinterDnD
+from ttkbootstrap.constants import LINK
+from ttkbootstrap.utility import enable_high_dpi_awareness
+from ttkbootstrap import Button, Notebook, Window
+
+from .click_menu import ClickMenuView
 from .index_page import IndexFrame
 from .model_page import ModelFrame
-from .click_menu import ClickMenuView
+from .search_page import SearchFrame
+from config.settings import WinInfo, TkS
+from utils.i18n import _
 
 
 class WinGUI(Window, TkinterDnD.Tk):

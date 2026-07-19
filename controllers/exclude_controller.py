@@ -1,21 +1,21 @@
 from __future__ import annotations
-import os
-import logging
-import tkinter as tk
-from tkinter import filedialog
-from ttkbootstrap import Style
-from threading import Thread
+
 from pathlib import Path
+from threading import Thread
+from tkinter import filedialog
+import tkinter as tk
+import logging
+import os
 
-import pathspec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
+from pathspec import PathSpec
+from ttkbootstrap import Style
 
-import utils.file_ops as file_ops
-import utils.exclude_rules as exclude_rules
+from config import Setting, TkS
 from utils.i18n import _
 from views.exclude_dialog import ExcludeDialog
-from config import Setting, TkS
-
+import utils.exclude_rules as exclude_rules
+import utils.file_ops as file_ops
 
 MAX_PREVIEW_ITEMS = 100000
 PROGRESS_INTERVAL = 500
@@ -272,7 +272,7 @@ class ExcludePreviewController:
                 self.dialog.preview_status_label.config(text=_("取反规则本身不排除文件"))
                 return
             try:
-                single_spec = pathspec.PathSpec.from_lines(
+                single_spec = PathSpec.from_lines(
                     GitWildMatchPattern,
                     [rule_text.lower()],
                 )

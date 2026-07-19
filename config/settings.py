@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import json
-import os
-from pathlib import Path
-from datetime import datetime
 from dataclasses import fields, asdict
+from datetime import datetime
+from pathlib import Path
 import ctypes
+import json
 import logging
+import os
 
 from .types import AppSettings, ModelConfig
-
 
 ROOT = Path(__file__).resolve().parent.parent
 SCALE_FACTOR = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
@@ -38,7 +37,7 @@ RANGE_LABEL = {
 }
 
 
-class Setting(object):
+class Setting:
     config_path = ROOT / "config" / "data"
     temp_image_path = ROOT / "temp"
     setting_path = config_path / "setting.json"
@@ -130,7 +129,7 @@ class Setting(object):
 
 
 
-class WinInfo(object):
+class WinInfo:
     version = "2.5.1"
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     ico_path = Setting.config_path / "favicon.ico"

@@ -3,8 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field, fields
 from typing import Literal
 
-
-
 @dataclass(slots=True)
 class MetaInfo:
     id: str = ""

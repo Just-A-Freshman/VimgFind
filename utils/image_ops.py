@@ -1,17 +1,18 @@
 from __future__ import annotations
+
+from pathlib import Path
+from tkinter import filedialog, messagebox
 import io
 import logging
 import urllib.request
-from pathlib import Path
-from tkinter import filedialog, messagebox
 
+from PIL.ImageFile import ImageFile
+from PIL import Image, UnidentifiedImageError
 import win32clipboard
 import win32con
-from PIL import Image, UnidentifiedImageError
-from PIL.ImageFile import ImageFile
 
-from config.settings import Setting
 from . import file_ops
+from config.settings import Setting
 
 
 def parse_image_from_clipboard_bytes() -> None | ImageFile:

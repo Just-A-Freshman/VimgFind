@@ -1,9 +1,11 @@
 from __future__ import annotations
-from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
+
 import tkinter as tk
 
-from config.types import ModelConfig
+from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
+
 from config.settings import WinInfo, TkS, STATUS_LABEL
+from config.types import ModelConfig
 from utils.i18n import _
 
 

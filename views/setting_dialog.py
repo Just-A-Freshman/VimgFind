@@ -1,8 +1,10 @@
 from __future__ import annotations
-from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton
+
+import tkinter as tk
+
 from ttkbootstrap.constants import LINK
 from ttkbootstrap.publisher import Publisher
-import tkinter as tk
+from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton
 
 from config.settings import WinInfo, TkS
 from utils.i18n import _

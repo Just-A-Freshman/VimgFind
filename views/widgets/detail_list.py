@@ -1,11 +1,12 @@
 from __future__ import annotations
-import tkinter as tk
+
 from tkinter.ttk import Treeview, Scrollbar
 import os
+import tkinter as tk
 
 from .base import BasicImagePreviewView
-from utils.i18n import _
 from config.settings import TkS
+from utils.i18n import _
 
 
 class DetailListView(BasicImagePreviewView):

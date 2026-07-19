@@ -1,25 +1,25 @@
 from __future__ import annotations
-from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
-from threading import Thread, Event
-from pathlib import Path
-from typing import Iterator
-from re import sub
+
 from enum import Enum
-import random
+from pathlib import Path
+from re import sub
+from threading import Thread, Event
+from typing import Iterator
 import logging
 import os
+import random
 
-import numpy as np
-from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from PIL import Image
+from tqdm import tqdm
+import numpy as np
 
-from config.settings import Setting
 from .index_manager import VectorIndexManager, NameIndexManager
 from .multimodal_encoder import MultiModalEncoder
+from config.settings import Setting
+import utils.exclude_rules as exclude_rules
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
-import utils.exclude_rules as exclude_rules
-
 
 class SearchStatus(str, Enum):
     OK = "ok"

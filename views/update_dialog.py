@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from tkinter.ttk import Label, Progressbar
 import tkinter as tk
 

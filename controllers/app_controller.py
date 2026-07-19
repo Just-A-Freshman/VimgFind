@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from tkinter import messagebox
 from tkinter.font import nametofont
 from tkinterdnd2 import DND_FILES
@@ -6,18 +7,16 @@ import tkinter as tk
 
 from views import WinGUI, SettingDialog
 from config.settings import Setting, WinInfo, TkS, RANGE_LABEL
-import utils.file_ops as file_ops
-import utils.decorators as decorators
-import utils.update_checker as update_checker
-from utils.i18n import I18n, _
-
 from core import SearchTool
 from .filter_controller import FilterController
 from .search_controller import SearchController
 from .index_controller import IndexController
 from .menu_controller import MenuController
 from .model_controller import ModelController
-
+from utils.i18n import I18n, _
+import utils.file_ops as file_ops
+import utils.decorators as decorators
+import utils.update_checker as update_checker
 
 
 class AppController:

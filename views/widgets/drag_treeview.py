@@ -1,6 +1,7 @@
 from __future__ import annotations
-import tkinter as tk
+
 from tkinter.ttk import Treeview
+import tkinter as tk
 
 from config.settings import TkS
 

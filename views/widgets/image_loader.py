@@ -1,12 +1,12 @@
 from __future__ import annotations
+
 from collections import namedtuple
-from concurrent.futures import ThreadPoolExecutor
 import queue
 
+from concurrent.futures import ThreadPoolExecutor
 from PIL import ImageTk, ImageOps
 
 import utils.image_ops as image_ops
-
 
 LoaderResult = namedtuple("LoaderResult", ["item", "size", "photo", "error"])
 

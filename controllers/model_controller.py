@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-import zipfile
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from ttkbootstrap import Entry
 from typing import TYPE_CHECKING, Callable, cast
 import tkinter as tk
+import zipfile
 
-from config.types import ModelConfig
-from config.settings import STATUS_LABEL, TYPE_LABEL
-from utils.i18n import _
 from core import SearchTool
+from ttkbootstrap import Entry
+
+from config.settings import STATUS_LABEL, TYPE_LABEL
+from config.types import ModelConfig
+from utils.i18n import _
 import utils.file_ops as file_ops
 import utils.model_checker as model_checker
 
 if TYPE_CHECKING:
     from .app_controller import AppController
     from views.model_page import ModelFrame
-
 
 
 class ModelController:

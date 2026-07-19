@@ -1,17 +1,18 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from tkinter import messagebox, filedialog
-import tkinter as tk
+
 from pathlib import Path
+from tkinter import messagebox, filedialog
+from typing import TYPE_CHECKING
 import logging
+import tkinter as tk
 
 from tqdm import tqdm
+from views import ExcludeDialog
 
+from .exclude_controller import ExcludePreviewController
+from utils.i18n import _
 import utils.decorators as decorators
 import utils.idle_tracker as idle_tracker
-from utils.i18n import _
-from views import ExcludeDialog
-from .exclude_controller import ExcludePreviewController
 
 if TYPE_CHECKING:
     from .app_controller import AppController

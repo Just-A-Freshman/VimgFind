@@ -1,13 +1,14 @@
 from __future__ import annotations
-import tkinter as tk
-from ttkbootstrap import Style
-from typing import Callable, Any
-from collections import OrderedDict
+
 from collections import namedtuple
+from collections import OrderedDict
+from typing import Callable, Any
 import hashlib
+import tkinter as tk
+
+from ttkbootstrap import Style
 
 import utils.file_ops as file_ops
-
 
 ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
 

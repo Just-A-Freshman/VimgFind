@@ -1,23 +1,23 @@
 from __future__ import annotations
 
+from pathlib import Path
 from tkinter import filedialog, messagebox
 from typing import TYPE_CHECKING, Literal
-from pathlib import Path
-import linecache
 import datetime
+import linecache
 import logging
 import os
 import tkinter as tk
 
+from core import SearchStatus
 from PIL import Image
 
 from config.settings import Setting
-import utils.file_ops as file_ops
-import utils.image_ops as image_ops
-import utils.decorators as decorators
 from utils.i18n import _
 from views.widgets import DetailListView, ThumbnailGridView
-from core import SearchStatus
+import utils.decorators as decorators
+import utils.file_ops as file_ops
+import utils.image_ops as image_ops
 
 if TYPE_CHECKING:
     from .app_controller import AppController

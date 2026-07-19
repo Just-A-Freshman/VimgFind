@@ -1,14 +1,14 @@
 from __future__ import annotations
-import logging
-from typing import Callable, Literal
 
-from config.types import EncoderConfig
-from .tokenizer import create_tokenizer
+from typing import Callable, Literal
+import logging
+
 from PIL import Image
 import numpy as np
 import onnxruntime as ort
 
-
+from .tokenizer import create_tokenizer
+from config.types import EncoderConfig
 
 class ImagePreprocess:
     VALID_TYPES = frozenset({"resize", "resize_crop", "resize_pad"})

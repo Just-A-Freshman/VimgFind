@@ -1,12 +1,14 @@
 from __future__ import annotations
-from ttkbootstrap import Button, Checkbutton, Scale, tooltip
-from ttkbootstrap.constants import LINK
+
 from tkinter.ttk import Frame, Label, Combobox, LabelFrame
 import tkinter as tk
 
+from ttkbootstrap.constants import LINK
+from ttkbootstrap import Button, Checkbutton, Scale, tooltip
+
 from config.settings import WinInfo, TkS
-from views.widgets import DragReorderTreeview
 from utils.i18n import _
+from views.widgets import DragReorderTreeview
 
 
 class IndexFrame(Frame):

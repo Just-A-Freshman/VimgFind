@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+
 from ttkbootstrap import Menu
 
 from config.settings import TkS

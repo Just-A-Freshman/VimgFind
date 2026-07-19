@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 import json
 import re
-from .base import BaseTokenizer
 
+from .base import BaseTokenizer
 
 def _bytes_to_unicode() -> tuple[dict[int, str], dict[str, int]]:
     """Map each byte 0-255 to a unique printable unicode char and vice versa."""

@@ -1,14 +1,15 @@
 from __future__ import annotations
-import tkinter as tk
+
 from tkinter.ttk import Scrollbar
 import math
 import os
+import tkinter as tk
 
-import utils.file_ops as file_ops
 from .base import BasicImagePreviewView
 from .image_loader import ImageLoader
-from utils.i18n import _
 from config.settings import TkS
+from utils.i18n import _
+import utils.file_ops as file_ops
 
 
 class ThumbnailGridView(BasicImagePreviewView):

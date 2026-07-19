@@ -1,6 +1,7 @@
 from __future__ import annotations
-import pathspec
+
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
+import pathspec
 
 from config.settings import Setting
 

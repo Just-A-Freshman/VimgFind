@@ -1,23 +1,24 @@
 from __future__ import annotations
+
+from pathlib import Path
+from tkinter import messagebox
 import subprocess
 import tempfile
 import threading
 import zipfile
-from pathlib import Path
-from tkinter import messagebox
 
-from utils import file_ops
-from utils.i18n import _
-from utils.model_checker import MultiThreadDownloader
 from config.settings import ROOT
 from views import UpdateDialog
+from utils.i18n import _
+import utils.file_ops as file_ops
+import utils.model_checker as model_checker
 
 
 class UpdateController:
     def __init__(self, app) -> None:
         self.app = app
         self._dialog: UpdateDialog | None = None
-        self._downloader: MultiThreadDownloader | None = None
+        self._downloader: model_checker.MultiThreadDownloader | None = None
         self._temp_dir: Path | None = None
         self._cancelled = False
 
@@ -63,7 +64,7 @@ class UpdateController:
                     pct = int(downloaded * 100 / total)
                     dialog.after(0, lambda: dialog.progressbar.config(value=pct))
 
-            downloader = MultiThreadDownloader(
+            downloader = model_checker.MultiThreadDownloader(
                 url=download_url,
                 save_path=str(zip_path),
                 num_threads=16,

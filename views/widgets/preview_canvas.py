@@ -1,8 +1,9 @@
 from __future__ import annotations
-from ttkbootstrap import tooltip
+
 import tkinter as tk
 
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
+from ttkbootstrap import tooltip
 
 from .base import BasicImagePreviewView
 from utils.i18n import _

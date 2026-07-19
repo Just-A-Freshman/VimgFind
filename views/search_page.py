@@ -1,6 +1,8 @@
 from __future__ import annotations
-from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
+
 import tkinter as tk
+
+from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
 from config.settings import WinInfo, TkS

@@ -1,10 +1,13 @@
 from __future__ import annotations
-from ttkbootstrap import Button, Labelframe, Frame, Entry, Label, Treeview, Scrollbar
-from ttkbootstrap.constants import LINK
+
 import tkinter as tk
+
+from ttkbootstrap.constants import LINK
+from ttkbootstrap import Button, Labelframe, Frame, Entry, Label, Treeview, Scrollbar
 
 from config.settings import WinInfo, TkS
 from utils.i18n import _
+
 
 class ExcludeDialog(tk.Toplevel):
     add_rule_btn: Button

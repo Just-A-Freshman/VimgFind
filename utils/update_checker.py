@@ -1,14 +1,14 @@
 from __future__ import annotations
+
+from collections import namedtuple
+from typing import cast
 import json
 import re
 import sys
-import urllib.request
 import urllib.error
-from collections import namedtuple
-from typing import cast
+import urllib.request
 
 from config.settings import WinInfo
-
 
 UpdateCheckResult = namedtuple(
     "UpdateCheckResult",

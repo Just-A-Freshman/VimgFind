@@ -1,21 +1,22 @@
 from __future__ import annotations
-import ctypes
-import logging
-import os
-import shutil
-import hashlib
-import subprocess
-import unicodedata
-import uuid
+
 from pathlib import Path
 from tkinter import Tk
 from typing import Iterator
+import ctypes
+import hashlib
+import logging
+import os
+import shutil
+import subprocess
+import unicodedata
+import uuid
 
-import win32clipboard
 from send2trash import send2trash
+import win32clipboard
 
-from . import exclude_rules
 from .i18n import _
+from . import exclude_rules
 
 
 class DROPFILES(ctypes.Structure):

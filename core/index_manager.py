@@ -1,17 +1,17 @@
 from __future__ import annotations
+
 from pathlib import Path
 from typing import Callable
 import json
 import logging
-import tempfile
 import os
+import tempfile
 
-import numpy as np
-import hnswlib
 from tqdm import tqdm
+import hnswlib
+import numpy as np
 
 import utils.file_ops as file_ops
-
 
 HNSW_EF_CONSTRUCTION = 200
 HNSW_M = 32

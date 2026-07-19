@@ -1,24 +1,22 @@
 from __future__ import annotations
+
+from enum import Enum, auto
+from pathlib import Path
+from typing import Callable
+from urllib.error import URLError
 import json
 import logging
 import os
 import tempfile
 import threading
 import time
-import zipfile
-from pathlib import Path
-from typing import Callable
-from urllib.error import URLError
-import urllib.request as request
 import urllib.error
+import urllib.request as request
+import zipfile
 
-from enum import Enum, auto
-
-from config.types import ModelConfig
-from config.settings import Setting
 from . import file_ops
-
-
+from config.settings import Setting
+from config.types import ModelConfig
 
 
 def validate_unknown_zip(zip_path: Path, model_id: str) -> ModelConfig:

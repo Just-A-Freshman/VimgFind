@@ -1,10 +1,11 @@
 from __future__ import annotations
-import functools
-import logging
-import sys
+
 from queue import Queue
 from threading import Thread
 from typing import Callable
+import functools
+import logging
+import sys
 
 
 class QueueStream:

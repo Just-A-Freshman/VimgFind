@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from typing import Callable
 import ctypes
 import ctypes.wintypes
-from typing import Callable
 import tkinter as tk
 
 

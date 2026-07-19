@@ -1,7 +1,7 @@
 {
-    "max_work_thread": 11,
-    "max_match_count": 100,
-    "preview_mode": "detail_info",
+    "max_work_thread": 4,
+    "max_match_count": 10,
+    "preview_mode": "big_ico",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",

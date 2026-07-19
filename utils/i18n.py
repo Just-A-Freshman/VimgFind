@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-from config.settings import Setting
 
+from config.settings import Setting
 
 LOCALES_DIR = Setting.config_path / "locales"
 

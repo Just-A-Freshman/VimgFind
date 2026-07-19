@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from pathlib import Path
-import tkinter as tk
-from tkinter import messagebox, filedialog
 from tkinter import font as tkfont
+from tkinter import messagebox, filedialog
+from typing import TYPE_CHECKING
+import tkinter as tk
+
 from ttkbootstrap import Treeview
 
+from config.settings import TkS
+from utils.i18n import _
+from views.widgets import BasicImagePreviewView, PreviewCanvasView
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
-from utils.i18n import _
-from config.settings import TkS
-from views.widgets import BasicImagePreviewView, PreviewCanvasView
 
 if TYPE_CHECKING:
     from .app_controller import AppController
