@@ -2,6 +2,7 @@ from tkinter.ttk import Label, Progressbar
 import tkinter as tk
 
 from config.settings import WinInfo, TkS
+from utils.i18n import _
 
 
 class UpdateDialog(tk.Toplevel):
@@ -25,7 +26,7 @@ class UpdateDialog(tk.Toplevel):
 
     def __win(self) -> None:
         self.withdraw()
-        self.title("软件更新")
+        self.title(_("软件更新"))
         self.iconbitmap(WinInfo.ico_path)
         self.resizable(False, False)
         self.transient(self.parent)
@@ -38,7 +39,7 @@ class UpdateDialog(tk.Toplevel):
         self.deiconify()
 
     def __set_status_label(self) -> Label:
-        label = Label(self, text=f"正在下载更新包 v{self.version}...")
+        label = Label(self, text=_("正在下载更新包 v{version}...", version=self.version))
         label.pack(pady=(TkS(15), TkS(5)))
         return label
 
@@ -48,6 +49,6 @@ class UpdateDialog(tk.Toplevel):
         return bar
 
     def __set_hint_label(self) -> Label:
-        label = Label(self, text="关闭窗口可取消更新")
+        label = Label(self, text=_("关闭窗口可取消更新"))
         label.pack(pady=(TkS(5), TkS(10)))
         return label

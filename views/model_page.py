@@ -3,6 +3,7 @@ import tkinter as tk
 
 from config.types import ModelConfig
 from config.settings import WinInfo, TkS, STATUS_LABEL
+from utils.i18n import _
 
 
 class ModelFrame(Frame):
@@ -43,17 +44,17 @@ class ModelFrame(Frame):
             font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )
         self.name_edit_entry = Entry(detail_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        self.use_btn = Button(detail_frame, text="使用模型", takefocus=False, padding=(TkS(15), TkS(5)))
-        self.uninstall_btn = Button(detail_frame, text="卸载模型", takefocus=False, padding=(TkS(15), TkS(5)), style="secondary")
-        self.download_btn = Button(detail_frame, text="下载模型", takefocus=False, padding=(TkS(15), TkS(5)))
+        self.use_btn = Button(detail_frame, text=_("使用模型"), takefocus=False, padding=(TkS(15), TkS(5)))
+        self.uninstall_btn = Button(detail_frame, text=_("卸载模型"), takefocus=False, padding=(TkS(15), TkS(5)), style="secondary")
+        self.download_btn = Button(detail_frame, text=_("下载模型"), takefocus=False, padding=(TkS(15), TkS(5)))
         self.download_progressbar = Progressbar(detail_frame, orient=tk.HORIZONTAL, mode="determinate", maximum=100)
         self.download_progress_label = Label(detail_frame, text="")
-        self.download_control_btn = Button(detail_frame, style="link", takefocus=False, text="暂停")
-        self.download_cancel_btn = Button(detail_frame, style="link", takefocus=False, text="取消")
+        self.download_control_btn = Button(detail_frame, style="link", takefocus=False, text=_("暂停"))
+        self.download_cancel_btn = Button(detail_frame, style="link", takefocus=False, text=_("取消"))
         self.show_default()
 
     def __set_model_list_frame(self) -> Labelframe:
-        frame = Labelframe(self, text="模型列表")
+        frame = Labelframe(self, text=_("模型列表"))
         frame.place(relx=0.01, rely=0.02, relwidth=0.57, relheight=0.98)
         frame.grid_rowconfigure(0, weight=0)
         frame.grid_rowconfigure(1, weight=1)
@@ -67,15 +68,15 @@ class ModelFrame(Frame):
         return entry
 
     def __set_broswer_button(self, parent) -> Button:
-        broswer_button = Button(parent, text="加载本地模型", takefocus=False)
+        broswer_button = Button(parent, text=_("加载本地模型"), takefocus=False)
         broswer_button.grid(row=0, column=1, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
         return broswer_button
 
     def __set_model_tree(self, parent) -> Treeview:
-        columns = ["名称", "标签", "类型", "大小", "状态"]
+        columns = [_("名称"), _("标签"), _("类型"), _("大小"), _("状态")]
         tree = Treeview(parent, show="headings", columns=columns)
         tree.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5))
-        col_widths = {"名称": TkS(40), "标签": TkS(30), "类型": TkS(30), "大小": TkS(30), "状态": TkS(30)}
+        col_widths = {_("名称"): TkS(40), _("标签"): TkS(30), _("类型"): TkS(30), _("大小"): TkS(30), _("状态"): TkS(30)}
         for col in columns:
             tree.heading(col, text=col, anchor=tk.CENTER)
             tree.column(col, anchor=tk.CENTER, width=col_widths[col], stretch=True)
@@ -86,7 +87,7 @@ class ModelFrame(Frame):
         return tree
 
     def __set_detail_frame(self) -> Labelframe:
-        frame = Labelframe(self, text="模型详情")
+        frame = Labelframe(self, text=_("模型详情"))
         frame.place(relx=0.59, rely=0.02, relwidth=0.40, relheight=0.98)
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
@@ -104,7 +105,7 @@ class ModelFrame(Frame):
         name = self.model_tree.item(selection[0], "values")[0] if selection else ""
         status = self.model_tree.item(selection[0], "values")[-1] if selection else ""
 
-        self.name_tip_label.config(text="名称：")
+        self.name_tip_label.config(text=_("名称："))
         self.name_tip_label.grid_forget()
         self.name_tip_label.place(x=TkS(5), y=TkS(13))
         self.name_edit_entry.config(state=tk.NORMAL)
@@ -113,21 +114,21 @@ class ModelFrame(Frame):
         self.name_edit_entry.place(x=TkS(50), y=TkS(5), height=TkS(35), relwidth=0.8)
         self.detail_desc_text.config(state=tk.NORMAL)
         self.detail_desc_text.delete('1.0', tk.END)
-        text = f"描述：{model_config.meta.description}\n\n下载地址：{model_config.meta.download_url}"
+        text = _("描述：{desc}\n\n下载地址：{url}", desc=model_config.meta.description, url=model_config.meta.download_url)
         self.detail_desc_text.insert(tk.END, text)
         self.detail_desc_text.place(relx=0.01, y=TkS(70), relwidth=0.98, relheight=0.7)
         self.detail_desc_text.config(state=tk.DISABLED)
 
-        if status == STATUS_LABEL["not download"]:
+        if status == _(STATUS_LABEL["not download"]):
             self.name_edit_entry.config(state=tk.DISABLED)
             self.download_btn.place(relx=0.5, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
-        elif status == STATUS_LABEL["downloading"]:
+        elif status == _(STATUS_LABEL["downloading"]):
             self.name_edit_entry.config(state=tk.DISABLED)
         else:
             self.use_btn.place(relx=0.32, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
             self.uninstall_btn.place(relx=0.68, rely=0.88, anchor=tk.CENTER, width=TkS(100), height=TkS(40))
-            self.use_btn.config(state=tk.DISABLED if status == STATUS_LABEL["using"] else tk.NORMAL)
-            self.uninstall_btn.config(state=tk.DISABLED if status == STATUS_LABEL["using"] else tk.NORMAL)
+            self.use_btn.config(state=tk.DISABLED if status == _(STATUS_LABEL["using"]) else tk.NORMAL)
+            self.uninstall_btn.config(state=tk.DISABLED if status == _(STATUS_LABEL["using"]) else tk.NORMAL)
 
     def show_default(self) -> None:
         for w in (
@@ -136,6 +137,5 @@ class ModelFrame(Frame):
             self.download_control_btn, self.download_cancel_btn,
         ):
             w.place_forget()
-        self.name_tip_label.config(text="选择模型查看详细信息")
+        self.name_tip_label.config(text=_("选择模型查看详细信息"))
         self.name_tip_label.grid(row=0, column=0)
-

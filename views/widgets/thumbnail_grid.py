@@ -6,6 +6,7 @@ import os
 import utils.file_ops as file_ops
 from .base import BasicImagePreviewView
 from .image_loader import ImageLoader
+from utils.i18n import _
 from config.settings import TkS
 
 
@@ -267,7 +268,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         display_name = file_ops.truncate_filename(filename, self._characters_size)
         placeholder_id = self._canvas.create_text(
             x + self._thumbnail_size // 2, y + self._thumbnail_size // 2,
-            text="图片加载中...", fill=self.theme_color.fg
+            text=_("图片加载中..."), fill=self.theme_color.fg
         )
         image_info_id = self._canvas.create_text(
             x + self._thumbnail_size // 2,
@@ -302,7 +303,7 @@ class ThumbnailGridView(BasicImagePreviewView):
             else:
                 self._canvas.itemconfig(canvas_item["image_id"], image=image_data['photo'])
         else:
-            self._canvas.itemconfig(canvas_item["placeholder_id"], text=f"{image_data.get('error', '加载失败')[:10]}")
+            self._canvas.itemconfig(canvas_item["placeholder_id"], text=f"{image_data.get('error', _('加载失败'))[:10]}")
             self._canvas.itemconfig(canvas_item["image_info_id"], text=filename)
 
     def _set_item_selected(self, item: str, selected: bool) -> None:

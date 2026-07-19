@@ -4,6 +4,7 @@ import tkinter as tk
 from ttkbootstrap import Menu
 
 from config.settings import TkS
+from utils.i18n import _
 
 
 class ClickMenuView:
@@ -25,35 +26,35 @@ class ClickMenuView:
 
     def __set_preview_setting_menu(self) -> tuple[Menu, Menu]:
         menu = Menu(self.parent, tearoff=0, activeborderwidth=TkS(3))
-        menu.add_command(label="详情模式")
-        menu.add_command(label="中等图标")
-        menu.add_command(label="大图标")
-        menu.add_command(label="超大图标")
+        menu.add_command(label=_("详情模式"))
+        menu.add_command(label=_("中等图标"))
+        menu.add_command(label=_("大图标"))
+        menu.add_command(label=_("超大图标"))
         menu.add_separator()
-        menu.add_command(label="结果数: 10")
-        menu.add_command(label="结果数: 30")
-        menu.add_command(label="结果数: 50")
-        menu.add_command(label="结果数: 100")
+        menu.add_command(label=_("结果数: 10"))
+        menu.add_command(label=_("结果数: 30"))
+        menu.add_command(label=_("结果数: 50"))
+        menu.add_command(label=_("结果数: 100"))
         menu.add_separator()
         model_menu = Menu(self.parent, tearoff=0)
-        menu.add_cascade(label="切换模型", menu=model_menu)
+        menu.add_cascade(label=_("切换模型"), menu=model_menu)
         return menu, model_menu
 
     def __set_single_file_menu(self) -> Menu:
         menu = Menu(self.parent, tearoff=0, activeborderwidth=TkS(3))
-        menu.add_command(label="复制图片")
-        menu.add_command(label="复制路径")
-        menu.add_command(label="图片另存为")
-        menu.add_command(label="删除图片")
+        menu.add_command(label=_("复制图片"))
+        menu.add_command(label=_("复制路径"))
+        menu.add_command(label=_("图片另存为"))
+        menu.add_command(label=_("删除图片"))
         menu.add_separator()
-        menu.add_command(label="打开图片")
-        menu.add_command(label="打开文件夹")
+        menu.add_command(label=_("打开图片"))
+        menu.add_command(label=_("打开文件夹"))
         return menu
 
     def __set_multi_file_menu(self) -> Menu:
         menu = Menu(self.parent, tearoff=0, activeborderwidth=TkS(3))
-        menu.add_command(label="复制图片")
-        menu.add_command(label="复制路径")
-        menu.add_command(label="图片另存为")
-        menu.add_command(label="删除图片")
+        menu.add_command(label=_("复制图片"))
+        menu.add_command(label=_("复制路径"))
+        menu.add_command(label=_("图片另存为"))
+        menu.add_command(label=_("删除图片"))
         return menu

@@ -3,6 +3,7 @@ from tkinter.ttk import Treeview, Scrollbar
 import os
 
 from .base import BasicImagePreviewView
+from utils.i18n import _
 from config.settings import TkS
 
 
@@ -15,7 +16,7 @@ class DetailListView(BasicImagePreviewView):
         self.parent.after(50, self._create_scrollbar)
 
     def _create_treeview(self, extra_columns: dict[str, int]) -> None:
-        columns = {"名称": TkS(80), **extra_columns}
+        columns = {_("名称"): TkS(80), **extra_columns}
         self.__treeview = Treeview(self.parent, show="headings", columns=list(columns), padding=TkS(1))
         for text, width in columns.items():
             self.__treeview.heading(text, text=text, anchor=tk.CENTER)
@@ -40,11 +41,11 @@ class DetailListView(BasicImagePreviewView):
 
     def _sort_column(self, col: str, reverse: bool) -> None:
         data = [(self.__treeview.set(k, col), k) for k in self.__treeview.get_children("")]
-        if col == "相似度" or col == "大小":
+        if col == _("相似度") or col == _("大小"):
             data.sort(key=lambda x: float(x[0].rstrip("MB%")), reverse=reverse)
         else:
             data.sort(reverse=reverse)
-        for index, (_, k) in enumerate(data):
+        for index, (tmp, k) in enumerate(data):
             self.__treeview.move(k, "", index)
         self.__treeview.heading(col, command=lambda: self._sort_column(col, not reverse))
 

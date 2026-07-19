@@ -4,7 +4,7 @@ import tkinter as tk
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 
 from .base import BasicImagePreviewView
-
+from utils.i18n import _
 
 
 class PreviewCanvasView(BasicImagePreviewView):
@@ -13,7 +13,7 @@ class PreviewCanvasView(BasicImagePreviewView):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self._canvas = self._create_canvas(parent)
-        self._tooltip = tooltip.ToolTip(self._canvas, text="没有文件", delay=500, topmost=True)
+        self._tooltip = tooltip.ToolTip(self._canvas, text=_("没有文件"), delay=500, topmost=True)
 
     def _create_canvas(self, parent) -> tk.Canvas:
         canvas = tk.Canvas(parent, highlightthickness=0, cursor="hand2")
@@ -44,7 +44,7 @@ class PreviewCanvasView(BasicImagePreviewView):
     def clear(self) -> None:
         self._results.clear()
         self._canvas.delete(tk.ALL)
-        self._tooltip.text = "没有文件"
+        self._tooltip.text = _("没有文件")
 
     def selection(self) -> tuple[str, ...]:
         return tuple(self._results.keys())

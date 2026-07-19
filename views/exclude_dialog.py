@@ -3,7 +3,7 @@ from ttkbootstrap.constants import LINK
 import tkinter as tk
 
 from config.settings import WinInfo, TkS
-
+from utils.i18n import _
 
 class ExcludeDialog(tk.Toplevel):
     add_rule_btn: Button
@@ -45,7 +45,7 @@ class ExcludeDialog(tk.Toplevel):
 
     def __win(self) -> None:
         self.withdraw()
-        self.title("排除设置")
+        self.title(_("排除设置"))
         self.iconbitmap(WinInfo.ico_path)
         win_w = TkS(620)
         win_h = TkS(520)
@@ -59,7 +59,7 @@ class ExcludeDialog(tk.Toplevel):
         self.deiconify()
 
     def __set_edit_rules_frame(self) -> Labelframe:
-        frame = Labelframe(self, text="排除规则")
+        frame = Labelframe(self, text=_("排除规则"))
         frame.place(relx=0.04, rely=0.03, relwidth=0.92, relheight=0.40)
         return frame
 
@@ -78,22 +78,22 @@ class ExcludeDialog(tk.Toplevel):
         return rules_tree
 
     def __set_add_rule_btn(self, parent: Frame) -> Button:
-        add_rule_btn = Button(parent, text="新建规则", takefocus=False, cursor="hand2")
+        add_rule_btn = Button(parent, text=_("新建规则"), takefocus=False, cursor="hand2")
         add_rule_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=self._ipadx, ipady=self._ipady)
         return add_rule_btn
 
     def __set_del_rule_btn(self, parent: Frame) -> Button:
-        del_rule_btn = Button(parent, text="删除规则", takefocus=False, cursor="hand2")
+        del_rule_btn = Button(parent, text=_("删除规则"), takefocus=False, cursor="hand2")
         del_rule_btn.pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
         return del_rule_btn
 
     def __set_help_btn(self, parent: Frame) -> Button:
-        help_btn = Button(parent, text="帮助文档", takefocus=False, cursor="hand2", style=LINK)
+        help_btn = Button(parent, text=_("帮助文档"), takefocus=False, cursor="hand2", style=LINK)
         help_btn.pack(side=tk.RIGHT, padx=(TkS(7), 0))
         return help_btn
 
     def __set_preview_rules_frame(self) -> Labelframe:
-        frame = Labelframe(self, text="选择任意文件夹预览排除效果")
+        frame = Labelframe(self, text=_("选择任意文件夹预览排除效果"))
         frame.place(relx=0.04, rely=0.46, relwidth=0.92, relheight=0.53)
         return frame
 
@@ -103,7 +103,7 @@ class ExcludeDialog(tk.Toplevel):
         return preview_path_entry
 
     def __set_browse_btn(self, parent: Frame) -> Button:
-        browse_btn = Button(parent, text="浏览", takefocus=False, cursor="hand2")
+        browse_btn = Button(parent, text=_("浏览"), takefocus=False, cursor="hand2")
         browse_btn.pack(side=tk.RIGHT, ipadx=self._ipadx * 2, ipady=self._ipady)
         return browse_btn
 
@@ -113,7 +113,7 @@ class ExcludeDialog(tk.Toplevel):
         return preview_status_label
 
     def __set_stop_btn(self, parent: Frame) -> Button:
-        stop_btn = Button(parent, text="停止", style=LINK, cursor="hand2")
+        stop_btn = Button(parent, text=_("停止"), style=LINK, cursor="hand2")
         return stop_btn
 
     def __set_preview_tree(self, parent: Labelframe) -> Treeview:

@@ -3,6 +3,7 @@ import tkinter as tk
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
 from config.settings import WinInfo, TkS
+from utils.i18n import _
 
 
 class FilterPanel(Labelframe):
@@ -26,7 +27,7 @@ class FilterPanel(Labelframe):
     )
 
     def __init__(self, parent, **kwargs) -> None:
-        super().__init__(parent, text="过滤设置", **kwargs)
+        super().__init__(parent, text=_("过滤设置"), **kwargs)
         self.place_forget()
         self._setup_grid()
 
@@ -46,7 +47,7 @@ class FilterPanel(Labelframe):
         self.grid_columnconfigure(6, minsize=TkS(6))
 
     def __set_sim_scale(self) -> tuple[Scale, Label]:
-        label = Label(self, text="相似度阈值", width=10, anchor=tk.W)
+        label = Label(self, text=_("相似度阈值"), width=10, anchor=tk.W)
         label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(10), TkS(5)))
         sim_scale = Scale(self, from_=0, to=100, orient=tk.HORIZONTAL)
         sim_value = Label(self, text="0%", width=5)
@@ -55,11 +56,11 @@ class FilterPanel(Labelframe):
         return sim_scale, sim_value
 
     def __set_ext_combo(self) -> Combobox:
-        label = Label(self, text="文件类型", width=10, anchor=tk.W)
+        label = Label(self, text=_("文件类型"), width=10, anchor=tk.W)
         label.grid(row=1, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5)))
         ext_combo = Combobox(
             self,
-            values=["所有图片文件", "PNG", "JPG/JPEG", "WebP", "GIF", "BMP", "TIFF"],
+            values=[_("所有图片文件"), "PNG", "JPG/JPEG", "WebP", "GIF", "BMP", "TIFF"],
             state="readonly",
             font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )
@@ -68,7 +69,7 @@ class FilterPanel(Labelframe):
         return ext_combo
 
     def __set_size_min(self) -> tuple[Entry, Combobox]:
-        label = Label(self, text="文件大小", width=10, anchor=tk.W)
+        label = Label(self, text=_("文件大小"), width=10, anchor=tk.W)
         label.grid(row=2, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5)))
         size_min = Entry(self, width=6)
         size_min.grid(row=2, column=1, sticky=tk.EW, padx=(TkS(4), TkS(1)), pady=(TkS(5), TkS(5)))
@@ -81,7 +82,7 @@ class FilterPanel(Labelframe):
         return size_min, size_min_unit
 
     def __set_size_max(self) -> tuple[Entry, Combobox]:
-        Label(self, text="到").grid(row=2, column=3, pady=(TkS(5), TkS(5)))
+        Label(self, text=_("到")).grid(row=2, column=3, pady=(TkS(5), TkS(5)))
         size_max = Entry(self, width=6)
         size_max.grid(row=2, column=4, sticky=tk.EW, padx=(TkS(2), TkS(1)), pady=(TkS(5), TkS(5)))
         size_max_unit = Combobox(
@@ -94,17 +95,17 @@ class FilterPanel(Labelframe):
 
     def __set_folder_left_frame(self) -> Frame:
         left_frame = Frame(self)
-        Label(left_frame, text="所属文件夹", width=10, anchor=tk.W).pack(anchor=tk.W)
+        Label(left_frame, text=_("所属文件夹"), width=10, anchor=tk.W).pack(anchor=tk.W)
         left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(TkS(6), 0), pady=(TkS(5), TkS(1)))
         return left_frame
 
     def __set_folder_select_all(self, parent: Frame) -> Checkbutton:
-        folder_select_all = Checkbutton(parent, text="全选")
+        folder_select_all = Checkbutton(parent, text=_("全选"))
         folder_select_all.pack(anchor=tk.W, pady=(TkS(11), 0))
         return folder_select_all
 
     def __set_dedup_check(self, parent: Frame) -> Checkbutton:
-        dedup_check = Checkbutton(parent, text="去重")
+        dedup_check = Checkbutton(parent, text=_("去重"))
         dedup_check.pack(anchor=tk.W, pady=(TkS(8), 0))
         return dedup_check
 
@@ -126,9 +127,9 @@ class FilterPanel(Labelframe):
     def __set_confirm_cancel_btn(self) -> tuple[Button, Button]:
         btn_frame = Frame(self)
         btn_frame.grid(row=4, column=0, columnspan=7, pady=(TkS(7), TkS(15)))
-        confirm_btn = Button(btn_frame, text="确定", takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)))
+        confirm_btn = Button(btn_frame, text=_("确定"), takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)))
         confirm_btn.grid(row=0, column=0, padx=(0, TkS(25)))
-        cancel_btn = Button(btn_frame, text="取消", takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)), style="secondary")
+        cancel_btn = Button(btn_frame, text=_("取消"), takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)), style="secondary")
         cancel_btn.grid(row=0, column=1)
         return confirm_btn, cancel_btn
 
@@ -189,12 +190,12 @@ class SearchFrame(Frame):
         return btn
 
     def __set_search_by_browser_button(self) -> Button:
-        btn = Button(self, text="浏览", takefocus=False)
+        btn = Button(self, text=_("浏览"), takefocus=False)
         btn.place(relx=0.415, rely=0.0192, relwidth=0.1, relheight=0.0690)
         return btn
 
     def __set_search_by_clipboard_button(self) -> Button:
-        btn = Button(self, text="剪切板", takefocus=False)
+        btn = Button(self, text=_("剪切板"), takefocus=False)
         btn.place(relx=0.525, rely=0.0192, relwidth=0.1, relheight=0.0690)
         return btn
 
@@ -209,12 +210,12 @@ class SearchFrame(Frame):
         return frame
 
     def __set_preview_frame1(self) -> Labelframe:
-        frame = Labelframe(self, text="源图片")
+        frame = Labelframe(self, text=_("源图片"))
         frame.place(relx=0.63, rely=0.095, relwidth=0.365, relheight=0.4444)
         return frame
 
     def __set_preview_frame2(self) -> Labelframe:
-        frame = Labelframe(self, text="匹配图片")
+        frame = Labelframe(self, text=_("匹配图片"))
         frame.place(relx=0.63, rely=0.5555, relwidth=0.365, relheight=0.4444)
         return frame
 
