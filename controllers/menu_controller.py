@@ -12,7 +12,6 @@ import utils.image_ops as image_ops
 from utils.i18n import _
 from config.settings import TkS
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
-from views.click_menu import ClickMenuView
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -20,8 +19,7 @@ if TYPE_CHECKING:
 
 class MenuController:
     app: AppController
-    _click_menu_view: ClickMenuView
-    __slots__ = ("app", "_click_menu_view")
+    __slots__ = ("app",)
 
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
