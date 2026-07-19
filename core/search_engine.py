@@ -221,14 +221,21 @@ class SearchTool:
             return []
 
         normalized_dirs = [file_ops.normalize_path(d) for d in search_dirs]
+        _excluded_cache: dict[str, bool] = {}
 
         def _is_excluded(rel_path: str) -> bool:
             if rules_obj.is_excluded(rel_path, is_dir=False):
                 return True
-            parts = rel_path.replace("\\", "/").split("/")
-            for i in range(len(parts)):
+            parts = rel_path.split("/")
+            for i in range(len(parts) - 1):
                 parent = "/".join(parts[:i + 1]) + "/"
-                if rules_obj.is_excluded(parent, is_dir=True):
+                if parent in _excluded_cache:
+                    if _excluded_cache[parent]:
+                        return True
+                    continue
+                result = rules_obj.is_excluded(parent, is_dir=True)
+                _excluded_cache[parent] = result
+                if result:
                     return True
             return False
 
@@ -236,9 +243,11 @@ class SearchTool:
         for index_file, _ in self.__name_idx_mgr.name_index:
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
+            index_file_norm = file_ops.normalize_path(index_file)
             for nd in normalized_dirs:
-                if file_ops.is_path_under(index_file, nd):
-                    rel = os.path.relpath(index_file, nd).replace("\\", "/")
+                parent_with_sep = nd.rstrip(os.sep) + os.sep
+                if index_file_norm.startswith(parent_with_sep):
+                    rel = index_file_norm[len(parent_with_sep):].replace("\\", "/")
                     if _is_excluded(rel):
                         result.append(index_file)
                     break
