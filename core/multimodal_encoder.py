@@ -161,7 +161,7 @@ class MultiModalEncoder:
             logging.error(f"加载ONNX模型[{model_path}]失败: {e}")
             return None
 
-    def _normalization(self, fv: np.ndarray) -> None:
+    def _normalize(self, fv: np.ndarray) -> None:
         if self.__normalization:
             norm = np.linalg.norm(fv, axis=-1, keepdims=True)
             norm[norm == 0] = 1.0
@@ -176,7 +176,7 @@ class MultiModalEncoder:
             input_name = self.image_session.get_inputs()[0].name
             result = self.image_session.run([], {input_name: processed_image})
             image_features = result[self.__output_index][0] # type: ignore
-            self._normalization(image_features)
+            self._normalize(image_features)
         except Exception as e:
             logging.error(f"编码图像时出现错误: {e}")
             return None
@@ -216,7 +216,7 @@ class MultiModalEncoder:
                 text_features_list.append(text_feature)
 
             text_features = np.stack(text_features_list, axis=0)
-            self._normalization(text_features)
+            self._normalize(text_features)
             return text_features
         except Exception as e:
             logging.error(f"编码文字时出现错误: {e}")

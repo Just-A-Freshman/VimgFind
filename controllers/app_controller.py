@@ -91,7 +91,7 @@ class AppController:
         model_tab.download_btn.config(command=self.model_controller.download_model)
         model_tab.download_control_btn.config(command=self.model_controller.on_download_control)
         model_tab.download_cancel_btn.config(command=self.model_controller.on_download_cancel)
-        model_tab.broswer_button.config(command=self.model_controller.load_local_model)
+        model_tab.browser_button.config(command=self.model_controller.load_local_model)
 
         self.view.drop_target_register(DND_FILES)
         self.view.dnd_bind('<<Drop>>', self.__on_drop)

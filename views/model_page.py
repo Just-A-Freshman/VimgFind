@@ -26,7 +26,7 @@ class ModelFrame(Frame):
         "uninstall_btn", "download_btn",
         "download_progressbar", "download_progress_label",
         "download_control_btn", "download_cancel_btn",
-        "name_tip_label", "broswer_button", "name_edit_entry",
+        "name_tip_label", "browser_button", "name_edit_entry",
     )
 
     def __init__(self, parent, **kwargs) -> None:
@@ -36,7 +36,7 @@ class ModelFrame(Frame):
         detail_frame = self.__set_detail_frame()
 
         self.load_local_model_entry = self.__set_load_local_model_entry(model_list_frame)
-        self.broswer_button = self.__set_broswer_button(model_list_frame)
+        self.browser_button = self.__set_browser_button(model_list_frame)
         self.model_tree = self.__set_model_tree(model_list_frame)
         self.name_tip_label = Label(detail_frame)
         self.detail_desc_text = Text(
@@ -67,10 +67,10 @@ class ModelFrame(Frame):
         entry.grid(row=0, column=0, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
         return entry
 
-    def __set_broswer_button(self, parent) -> Button:
-        broswer_button = Button(parent, text=_("加载本地模型"), takefocus=False)
-        broswer_button.grid(row=0, column=1, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
-        return broswer_button
+    def __set_browser_button(self, parent) -> Button:
+        browser_button = Button(parent, text=_("加载本地模型"), takefocus=False)
+        browser_button.grid(row=0, column=1, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
+        return browser_button
 
     def __set_model_tree(self, parent) -> Treeview:
         columns = [_("名称"), _("标签"), _("类型"), _("大小"), _("状态")]
