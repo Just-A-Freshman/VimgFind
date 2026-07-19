@@ -1,7 +1,7 @@
 {
-    "max_work_thread": 10,
-    "max_match_count": 30,
-    "preview_mode": "medium_ico",
+    "max_work_thread": 11,
+    "max_match_count": 100,
+    "preview_mode": "detail_info",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
@@ -11,5 +11,6 @@
     "cache_ttl": 3600,
     "schedule_index_save_interval": 600,
     "maximize_window": false,
-    "topmost_window": false
+    "topmost_window": false,
+    "locale": "en"
 }

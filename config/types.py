@@ -75,6 +75,7 @@ class AppSettings:
     schedule_index_save_interval: int = 600
     maximize_window: bool = False
     topmost_window: bool = False
+    locale: str = "zh-CN"
 
     @classmethod
     def from_dict(cls, data: dict) -> AppSettings:
