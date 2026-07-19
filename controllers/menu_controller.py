@@ -120,7 +120,10 @@ class MenuController:
         
         selection = widget.selection()
         if isinstance(widget, PreviewCanvasView):
-            tab.preview_view.delete(*selection)
+            try:
+                tab.preview_view.delete(*selection)
+            except tk.TclError:
+                pass
             if tab.preview_canvas1.selection() == tab.preview_canvas2.selection():
                 tab.preview_canvas1.clear()
                 tab.preview_canvas2.clear()
