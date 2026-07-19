@@ -9,6 +9,7 @@ import tkinter as tk
 
 from config.types import ModelConfig
 from config.settings import STATUS_LABEL, TYPE_LABEL
+from utils.i18n import _
 from core import SearchTool
 import utils.file_ops as file_ops
 import utils.model_checker as model_checker
@@ -39,9 +40,9 @@ class ModelController:
             view.model_tree.insert("", tk.END, iid=model_id, values=(
                 cfg.meta.name or model_id,
                 cfg.meta.label or "",
-                TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type),
+                _(TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type)),
                 file_ops.format_bytes(cfg.meta.size),
-                STATUS_LABEL.get(status, status),
+                _(STATUS_LABEL.get(status, status)),
             ))
 
     def get_downloaded_models(self) -> list[ModelConfig]:
@@ -157,7 +158,7 @@ class ModelController:
         if not model_checker.is_installed(self.app.setting, model_id):
             return
 
-        answer = messagebox.askyesno("确认卸载", f"确定要卸载模型「{cfg.meta.name or model_id}」吗？\n该模型对应的索引也会被删除！", icon=messagebox.WARNING)
+        answer = messagebox.askyesno(_("确认卸载"), _("确定要卸载模型「{name}」吗？\n该模型对应的索引也会被删除！", name=cfg.meta.name or model_id), icon=messagebox.WARNING)
         if not answer:
             return
 
@@ -178,7 +179,7 @@ class ModelController:
         if cfg is None:
             return
         if not cfg.meta.download_url:
-            messagebox.showinfo("提示", "该模型没有可用的下载地址。")
+            messagebox.showinfo(_("提示"), _("该模型没有可用的下载地址。"))
             return
 
         if self._current_download is not None and self._current_download.state in (
@@ -205,10 +206,10 @@ class ModelController:
         btn = self.app.view.model_tab.download_control_btn
         if task.state == model_checker.DownloadState.DOWNLOADING:
             task.pause()
-            btn.config(text="继续")
+            btn.config(text=_("继续"))
         elif task.state == model_checker.DownloadState.PAUSED:
             task.resume()
-            btn.config(text="暂停")
+            btn.config(text=_("暂停"))
 
     def on_download_cancel(self) -> None:
         task = self._current_download
@@ -221,7 +222,7 @@ class ModelController:
 
     def load_local_model(self, file_path: str = "") -> None:
         if not file_path:
-            file_path = filedialog.askopenfilename(title="选择模型文件", filetypes=[("ZIP files", "*.zip"), ("All files", "*.*")])
+            file_path = filedialog.askopenfilename(title=_("选择模型文件"), filetypes=[("ZIP files", "*.zip"), ("All files", "*.*")])
             if not file_path:
                 return
 
@@ -229,7 +230,7 @@ class ModelController:
         model_id = zip_path.stem
 
         if model_checker.is_installed(self.app.setting, model_id):
-            answer = messagebox.askyesno("提示", f"模型「{model_id}」已安装，是否覆盖？")
+            answer = messagebox.askyesno(_("提示"), _("模型「{id}」已安装，是否覆盖？", id=model_id))
             if not answer:
                 return
 
@@ -244,10 +245,9 @@ class ModelController:
             expected_cs = (entry.get("meta_info") or {}).get("checksum_sha256", "")
             if expected_cs and not file_ops.verify_file_sha256(zip_path, expected_cs):
                 messagebox.showerror(
-                    "校验失败",
-                    f"校验和不匹配，存在模型 ID 冲突风险！\n\n"
-                    f"文件「{zip_path.name}」的校验和与远程记录不匹配，\n"
-                    f"可能是文件损坏或被篡改，请勿加载。"
+                    _("校验失败"),
+                    _("校验和不匹配，存在模型 ID 冲突风险！\n\n文件「{name}」的校验和与远程记录不匹配，\n可能是文件损坏或被篡改，请勿加载。",
+                        name=zip_path.name)
                 )
                 return
             cfg = ModelConfig.from_dict(entry)
@@ -257,7 +257,7 @@ class ModelController:
                 if cfg is None:
                     return
             except AssertionError as e:
-                messagebox.showerror("错误", str(e))
+                messagebox.showerror(_("错误"), str(e))
                 return
 
         self._load_model_from_zip(zip_path, model_id, cfg)
@@ -274,9 +274,9 @@ class ModelController:
 
             self.app.setting.save_model_config(model_id, cfg)
             self.load_model_list()
-            messagebox.showinfo("提示", f"模型「{model_id}」加载成功！")
+            messagebox.showinfo(_("提示"), _("模型「{id}」加载成功！", id=model_id))
         except Exception as e:
-            messagebox.showerror("错误", f"加载模型失败：{e}")
+            messagebox.showerror(_("错误"), _("加载模型失败：{e}", e=str(e)))
             if dest_dir.exists():
                 file_ops.rmtree(dest_dir)
 
@@ -299,11 +299,11 @@ class ModelController:
 
     def _show_download_progress(self, view: ModelFrame) -> None:
         view.download_btn.place_forget()
-        view.download_progress_label.config(text="准备下载...")
+        view.download_progress_label.config(text=_("准备下载..."))
         view.download_progressbar.config(value=0)
         view.download_progress_label.place(relx=0.05, rely=0.87, relwidth=0.50, anchor=tk.W)
         is_paused = self._current_download and self._current_download.state == model_checker.DownloadState.PAUSED
-        view.download_control_btn.config(text="继续" if is_paused else "暂停")
+        view.download_control_btn.config(text=_("继续") if is_paused else _("暂停"))
         view.download_control_btn.place(relx=0.62, rely=0.87, anchor=tk.W)
         view.download_cancel_btn.place(relx=0.78, rely=0.87, anchor=tk.W)
         view.download_progressbar.place(relx=0.5, rely=0.92, relwidth=0.9, anchor=tk.CENTER)
@@ -324,7 +324,7 @@ class ModelController:
     def _update_tree_status(self, model_id: str, status: str) -> None:
         view = self.app.view.model_tab
         if model_id in view.model_tree.get_children(""):
-            view.model_tree.set(model_id, "状态", STATUS_LABEL.get(status, status))
+            view.model_tree.set(model_id, "状态", _(STATUS_LABEL.get(status, status)))
 
     def _get_model_status(self, model_id: str) -> str:
         if self._current_download and self._current_download.model_id == model_id:
@@ -368,5 +368,5 @@ class ModelController:
             )
             if not is_installed_anyway:
                 self._remove_model(model_id)
-            messagebox.showerror("下载失败", f"模型「{model_id}」下载失败，请检查网络后重试。")
+            messagebox.showerror(_("下载失败"), _("模型「{id}」下载失败，请检查网络后重试。", id=model_id))
             self.on_model_select()

@@ -9,6 +9,7 @@ from ttkbootstrap import Treeview
 
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
+from utils.i18n import _
 from config.settings import TkS
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
 from views.click_menu import ClickMenuView
@@ -59,7 +60,7 @@ class MenuController:
             menu.entryconfig(2, command=lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
             menu.entryconfig(3, command=lambda: self.delete_files(*selected_files, widget=widget))
         else:
-            messagebox.showinfo("提示", "选中文件不存在！")
+            messagebox.showinfo(_("提示"), _("选中文件不存在！"))
             return
         menu.post(event.x_root, event.y_root)
 
@@ -79,7 +80,7 @@ class MenuController:
         model_menu = self.app.view.click_menu.model_menu
         model_menu.delete(0, tk.END)
         if self.app.index_controller.is_updating:
-            model_menu.add_command(label="索引更新中，暂不可用", state=tk.DISABLED)
+            model_menu.add_command(label=_("索引更新中，暂不可用"), state=tk.DISABLED)
         else:
             for model in self.app.model_controller.get_downloaded_models():
                 model_menu.add_command(
@@ -105,7 +106,7 @@ class MenuController:
             return
         selected_file = selected_files[0]
         if not selected_file.exists():
-            messagebox.showinfo("提示", "文件不存在！")
+            messagebox.showinfo(_("提示"), _("文件不存在！"))
             return
         else:
             file_ops.open_file(selected_file)
@@ -113,7 +114,7 @@ class MenuController:
     def delete_files(self, *file_paths: str | Path, widget: BasicImagePreviewView) -> None:
         assert self.app.search_tools
         tab = self.app.view.search_tab
-        answer = messagebox.askokcancel("提示", f"你确定要删除这{len(file_paths)}张图片吗？")
+        answer = messagebox.askokcancel(_("提示"), _("你确定要删除这{count}张图片吗？", count=len(file_paths)))
         if not answer:
             return
         

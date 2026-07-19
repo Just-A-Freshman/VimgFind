@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 import utils.decorators as decorators
 import utils.idle_tracker as idle_tracker
+from utils.i18n import _
 from views import ExcludeDialog
 from .exclude_controller import ExcludePreviewController
 
@@ -34,11 +35,12 @@ class IndexController(object):
         valid_index_count = self.app.search_tools.valid_index_count
         invalid_index_count = self.app.search_tools.total_index_count - self.app.search_tools.valid_index_count
         invalid_index_ratio = invalid_index_count / max(self.app.search_tools.total_index_count, 1)
-        self.app.view.index_tab.index_tip_label.config(text=f"当前索引图库({valid_index_count}张图片)")
-        self.app.view.index_tab.index_tooltip.text = (
-            f"总占用槽位：{self.app.search_tools.total_index_count}\n"
-            f"无效索引数：{invalid_index_count}\n"
-            f"占比：{invalid_index_ratio * 100:.2f}%"
+        self.app.view.index_tab.index_tip_label.config(text=_("当前索引图库({count}张图片)", count=valid_index_count))
+        self.app.view.index_tab.index_tooltip.text = _(
+            "总占用槽位：{total}\n无效索引数：{invalid}\n占比：{ratio:.2f}%",
+            total=self.app.search_tools.total_index_count,
+            invalid=invalid_index_count,
+            ratio=invalid_index_ratio * 100,
         )
 
     def switch_model(self, event) -> None:
@@ -53,16 +55,16 @@ class IndexController(object):
         if dir_path != "" and not Path(dir_path).is_dir():
             return
         if dir_path == "":
-            dir_path = filedialog.askdirectory(title="选择索引文件夹")
+            dir_path = filedialog.askdirectory(title=_("选择索引文件夹"))
             if not dir_path:
                 return
         search_dirs: list = self.app.setting.model.index.search_dir
         if dir_path in search_dirs:
-            messagebox.showinfo("提示", "新索引的目录已包含在当前索引目录中！")
+            messagebox.showinfo(_("提示"), _("新索引的目录已包含在当前索引目录中！"))
             return
         for search_dir in search_dirs:
             if Path(dir_path).is_relative_to(search_dir):
-                messagebox.showinfo("提示", "该文件夹是索引目录的子文件夹！")
+                messagebox.showinfo(_("提示"), _("该文件夹是索引目录的子文件夹！"))
                 return
         search_dirs.append(dir_path)
         self.refresh_index_dataset_table()
@@ -81,11 +83,11 @@ class IndexController(object):
                 progress_bar
             )
 
-        answer = messagebox.askyesno("提示", "重建索引极其耗时，\n您确定要进行重建吗？")
+        answer = messagebox.askyesno(_("提示"), _("重建索引极其耗时，\n您确定要进行重建吗？"))
         if not answer:
             return
         if self.app.setting.app.update_index_range == "all" and len(self.app.model_controller.get_downloaded_models()) > 1:
-            answer = messagebox.askyesno("提示", "您确定要重建全部模型的索引吗？")
+            answer = messagebox.askyesno(_("提示"), _("您确定要重建全部模型的索引吗？"))
             if not answer:
                 return
         self._is_auto_updating = False
@@ -120,7 +122,7 @@ class IndexController(object):
         tab.delete_index_button.config(state=tk.DISABLED)
         tab.rebuild_index_button.config(state=tk.DISABLED)
         tab.update_index_button.config(
-            text="终止索引更新",
+            text=_("终止索引更新"),
             command=lambda: setattr(self.app.search_tools, "force_stop_update", True)
         )
         self._is_updating = True
@@ -144,15 +146,15 @@ class IndexController(object):
                     model_work()
                 self.app.model_controller.switch_model(original_id)
             if show_message:
-                messagebox.showinfo("提示", "索引更新完成！")
+                messagebox.showinfo(_("提示"), _("索引更新完成！"))
         except Exception as e:
-            messagebox.showerror("错误", f"索引更新时遇到错误：{str(e)}")
+            messagebox.showerror(_("错误"), _("索引更新时遇到错误：{e}", e=str(e)))
         finally:
             tab.switch_model_combobox.config(state="readonly")
             self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.NORMAL)
             setattr(self.app.search_tools, "force_stop_update", False)
             self.app.view.after(1000, self.update_index_tip)
-            tab.update_index_button.config(text="更新索引目录", command=self.sync_index)
+            tab.update_index_button.config(text=_("更新索引目录"), command=self.sync_index)
             tab.delete_index_button.config(state=tk.NORMAL)
             tab.rebuild_index_button.config(state=tk.NORMAL)
             self.app.model_controller.on_model_select()
@@ -196,7 +198,7 @@ class IndexController(object):
         selected = self.app.view.index_tab.index_dataset_table.selection()
         if not selected:
             return
-        answer = messagebox.askyesno("提示", "你确定要删除选中目录吗？")
+        answer = messagebox.askyesno(_("提示"), _("你确定要删除选中目录吗？"))
         if not answer:
             return
         self._is_updating = True
@@ -241,28 +243,27 @@ class IndexController(object):
         search_dirs = self.app.setting.model.index.search_dir
         rules = self.app.setting.model.index.exclude_rules or []
         if not rules:
-            messagebox.showinfo("提示", "当前没有设置排除规则。")
+            messagebox.showinfo(_("提示"), _("当前没有设置排除规则。"))
             return
         if not search_dirs:
-            messagebox.showinfo("提示", "当前没有索引目录。")
+            messagebox.showinfo(_("提示"), _("当前没有索引目录。"))
             return
 
         excluded = self.app.search_tools.get_excluded_files(rules, search_dirs)
         if not excluded:
-            messagebox.showinfo("提示", "索引中没有匹配排除规则的文件。")
+            messagebox.showinfo(_("提示"), _("索引中没有匹配排除规则的文件。"))
             return
 
         answer = messagebox.askyesno(
-            "确认清理",
-            f"将在索引中移除 {len(excluded)} 个匹配排除规则的文件记录。\n\n"
-            f"此操作不可撤消，是否继续？"
+            _("确认清理"),
+            _("将在索引中移除 {count} 个匹配排除规则的文件记录。\n\n此操作不可撤消，是否继续？", count=len(excluded))
         )
         if not answer:
             return
         self.app.search_tools.remove_files(excluded)
         self.app.search_tools.remove_nonexists()
         self.app.view.after(1000, self.update_index_tip)
-        messagebox.showinfo("提示", f"已清理 {len(excluded)} 个文件记录。")
+        messagebox.showinfo(_("提示"), _("已清理 {count} 个文件记录。", count=len(excluded)))
 
     def __check_queue(self) -> None:
         try:

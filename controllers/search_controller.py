@@ -15,6 +15,7 @@ from config.settings import Setting
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.decorators as decorators
+from utils.i18n import _
 from views.widgets import DetailListView, ThumbnailGridView
 from core import SearchStatus
 
@@ -36,7 +37,7 @@ class SearchController(object):
     @decorators.send_task
     def search_by_browser(self, image_paths: list[str] | None = None) -> None:
         if image_paths is None:
-            raw_paths = filedialog.askopenfilenames(filetypes=[("图片文件", "*" + ";*".join(Setting.accepted_exts))])
+            raw_paths = filedialog.askopenfilenames(filetypes=[(_("图片文件"), "*" + ";*".join(Setting.accepted_exts))])
             if not raw_paths:
                 return
             image_paths = list(raw_paths)
@@ -51,7 +52,7 @@ class SearchController(object):
                 return
             image_obj = image_ops.parse_image_from_path(image_path)
             if image_obj is None:
-                messagebox.showwarning("警告", "无法识别该图片类型！")
+                messagebox.showwarning(_("警告"), _("无法识别该图片类型！"))
                 return
             self.__search_image(image_obj, source_path=image_path)
 
@@ -80,7 +81,7 @@ class SearchController(object):
                     if image_obj is None:
                         raise tk.TclError
             except tk.TclError:
-                messagebox.showinfo("提示", "无法识别剪切板中的图片数据！")
+                messagebox.showinfo(_("提示"), _("无法识别剪切板中的图片数据！"))
                 return
         if image_path is None:
             image_path = file_ops.generate_unique_filename(Setting.temp_image_path, ".jpg")
@@ -102,7 +103,7 @@ class SearchController(object):
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools
         if not self.app.setting.model.index.search_dir:
-            messagebox.showinfo("提示", "请在索引选项卡索引至少一个目录！")
+            messagebox.showinfo(_("提示"), _("请在索引选项卡索引至少一个目录！"))
             return
         if not self._is_finish_search:
             return
@@ -110,7 +111,7 @@ class SearchController(object):
             if self.app.index_controller.is_auto_updating:
                 self.app.search_tools.force_stop_update = True
             else:
-                if not messagebox.askyesno("提示", "索引正在更新中，是否终止索引更新？"):
+                if not messagebox.askyesno(_("提示"), _("索引正在更新中，是否终止索引更新？")):
                     return
                 if self.app.index_controller.is_updating:
                     self.app.search_tools.force_stop_update = True
@@ -122,11 +123,11 @@ class SearchController(object):
                 tab.set_nav_page_label(self._queue_index + 1, self._queue_total)
                 source_path = linecache.getline(str(Setting.temp_multi_search_queue), self._queue_index + 1).strip()
                 if not source_path or not Path(source_path).is_file():
-                    messagebox.showinfo("提示", f"第 {self._queue_index + 1} 张图片不存在或已被删除！")
+                    messagebox.showinfo(_("提示"), _("第 {n} 张图片不存在或已被删除！", n=self._queue_index + 1))
                     return
                 input_data = image_ops.parse_image_from_path(source_path)
                 if input_data is None:
-                    messagebox.showwarning("警告", "无法识别该图片类型！")
+                    messagebox.showwarning(_("警告"), _("无法识别该图片类型！"))
                     return
                 tab.set_nav_visible(True)
             else:
@@ -152,13 +153,13 @@ class SearchController(object):
             except StopIteration:
                 status = self.app.search_tools.checkout_status
                 if status == SearchStatus.EMPTY_INDEX:
-                    messagebox.showinfo("提示", "索引中还没有任何图像，也许\n你还没有点击更新索引目录？")
+                    messagebox.showinfo(_("提示"), _("索引中还没有任何图像，也许\n你还没有点击更新索引目录？"))
                 elif status == SearchStatus.EMPTY_INPUT:
                     pass
                 elif status == SearchStatus.NO_RESULTS:
-                    messagebox.showinfo("提示", "筛选条件过于严格，没有匹配到任何图像！")
+                    messagebox.showinfo(_("提示"), _("筛选条件过于严格，没有匹配到任何图像！"))
                 else:
-                    messagebox.showerror("错误", "图片搜索失败！\n请查看config/data/error.log获取错误信息！")
+                    messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
                 return
             first_img_path, first_sim = first_result
             if Path(first_img_path).exists():
@@ -172,7 +173,7 @@ class SearchController(object):
                     tab.preview_view.append(img_path, *extra_info)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
-            messagebox.showerror("错误", f"搜索过程发生异常：{e}")
+            messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
         finally:
             self._is_finish_search = True
 
@@ -238,7 +239,7 @@ class SearchController(object):
         tab.preview_view.destroy()
         self.app.setting.app.preview_mode = mode
         if mode == "detail_info":
-            tab.preview_view = DetailListView(tab.preview_container, {"大小": 100, "修改时间": 160, "相似度": 100})
+            tab.preview_view = DetailListView(tab.preview_container, {_("大小"): 100, _("修改时间"): 160, _("相似度"): 100})
         else:
             thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 220)
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)

@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import tkinter as tk
 
+from utils.i18n import _
+
 if TYPE_CHECKING:
     from .app_controller import AppController
 

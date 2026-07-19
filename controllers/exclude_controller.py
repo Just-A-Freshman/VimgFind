@@ -11,6 +11,7 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
 import utils.file_ops as file_ops
 import utils.exclude_rules as exclude_rules
+from utils.i18n import _
 from views.exclude_dialog import ExcludeDialog
 from config import Setting, TkS
 
@@ -63,7 +64,7 @@ class ExcludePreviewController:
             self.refilter_preview()
 
     def on_browse(self) -> None:
-        dir_path = filedialog.askdirectory(title="选择要预览的目录")
+        dir_path = filedialog.askdirectory(title=_("选择要预览的目录"))
         if dir_path:
             self.dialog.preview_path_entry.delete(0, tk.END)
             self.dialog.preview_path_entry.insert(tk.END, dir_path)
@@ -158,7 +159,7 @@ class ExcludePreviewController:
             return
 
         self.dialog.preview_tree.delete(*self.dialog.preview_tree.get_children())
-        self.dialog.preview_status_label.config(text="正在扫描目录结构...（点击停止终止扫描）")
+        self.dialog.preview_status_label.config(text=_("正在扫描目录结构...（点击停止终止扫描）"))
 
         rules = self.collect_rules()
         self._cancel_scan = False
@@ -228,7 +229,7 @@ class ExcludePreviewController:
     def _update_status(self, total: int, excluded: int) -> None:
         if self._closed:
             return
-        self.dialog.preview_status_label.config(text=f"已排除 {excluded} 项（共扫描 {total} 项）")
+        self.dialog.preview_status_label.config(text=_("已排除 {excluded} 项（共扫描 {total} 项）", excluded=excluded, total=total))
 
     def _preview_complete(self, cache, scan_cache, total, excluded, truncated) -> None:
         if self._closed:
@@ -267,7 +268,7 @@ class ExcludePreviewController:
             rule_text = self.dialog.rules_tree.item(selected[0], "values")[0].strip()
             if rule_text.startswith("!"):
                 self.dialog.preview_tree.delete(*self.dialog.preview_tree.get_children())
-                self.dialog.preview_status_label.config(text="取反规则本身不排除文件")
+                self.dialog.preview_status_label.config(text=_("取反规则本身不排除文件"))
                 return
             try:
                 single_spec = pathspec.PathSpec.from_lines(
@@ -297,12 +298,12 @@ class ExcludePreviewController:
         file_count = len(files)
         self.dialog.preview_status_label.configure(foreground="")
         if self._preview_truncated:
-            self.dialog.preview_status_label.config(text=f"排除项过多，仅展示前 {MAX_PREVIEW_ITEMS} 条，建议缩小预览范围")
+            self.dialog.preview_status_label.config(text=_("排除项过多，仅展示前 {max} 条，建议缩小预览范围", max=MAX_PREVIEW_ITEMS))
         elif dir_count == 0 and file_count == 0:
             self.dialog.preview_status_label.configure(foreground="red")
-            self.dialog.preview_status_label.config(text="显示排除：0 个目录，0 个文件 — 当前规则无匹配项")
+            self.dialog.preview_status_label.config(text=_("显示排除：0 个目录，0 个文件 — 当前规则无匹配项"))
         else:
-            self.dialog.preview_status_label.config(text=f"显示排除：{dir_count} 个目录，{file_count} 个文件")
+            self.dialog.preview_status_label.config(text=_("显示排除：{dirs} 个目录，{files} 个文件", dirs=dir_count, files=file_count))
 
     def refilter_preview(self) -> None:
         if not self._scan_cache:
@@ -338,7 +339,7 @@ class ExcludePreviewController:
         rules = self.setting.model.index.exclude_rules or []
         for rule in rules:
             self.dialog.rules_tree.insert("", tk.END, values=(rule,))
-        self.dialog.preview_status_label.config(text="被排除索引的文件夹/文件")
+        self.dialog.preview_status_label.config(text=_("被排除索引的文件夹/文件"))
 
     @staticmethod
     def open_help_doc() -> None:

@@ -8,6 +8,7 @@ from config.settings import Setting, WinInfo, TkS, RANGE_LABEL
 import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.update_checker as update_checker
+from utils.i18n import I18n, _
 
 from core import SearchTool
 from .filter_controller import FilterController
@@ -21,6 +22,7 @@ from .model_controller import ModelController
 class AppController:
     def __init__(self) -> None:
         self.setting = Setting()
+        I18n().load(self.setting.app.locale)
         self.view = WinGUI(self.setting.app.maximize_window, self.setting.app.topmost_window)
         self.search_tools: SearchTool | None = None
         self.filter_controller = FilterController(self)
@@ -75,7 +77,7 @@ class AppController:
 
         index_tab.auto_update_checkbutton.config(command=self.index_controller.toggle_auto_update)
         index_tab.update_range_combobox.bind(
-            "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "update_index_range", {v: k for k, v in RANGE_LABEL.items()}[e.widget.get()])
+            "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "update_index_range", next(k for k, v in RANGE_LABEL.items() if _(v) == e.widget.get()))
         )
         index_tab.update_threads_count_scale.bind("<ButtonRelease-1>", lambda e: setattr(self.setting.app, "max_work_thread", int(float(e.widget.get()))))
         index_tab.exclude_button.config(command=self.index_controller.open_exclude_dialog)
@@ -107,7 +109,7 @@ class AppController:
         downloaded_models = self.model_controller.get_downloaded_models()
         self.view.index_tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
         self.view.index_tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.setting.app.current_model), ""))
-        self.view.index_tab.update_range_combobox.set(RANGE_LABEL[self.setting.app.update_index_range])
+        self.view.index_tab.update_range_combobox.set(_(RANGE_LABEL[self.setting.app.update_index_range]))
 
     def change_theme(self, target_theme: str = "") -> None:
         style = self.view.style
@@ -130,10 +132,10 @@ class AppController:
         def check_for_update() -> None:
             result = update_checker.check()
             if result.error is not None:
-                messagebox.showerror("检查更新失败", f"无法检查更新：{result.error}\n\n请检查网络连接后重试。")
+                messagebox.showerror(_("检查更新失败"), _("无法检查更新：{error}\n\n请检查网络连接后重试。", error=result.error))
                 return
             if result.has_update:
-                answer = messagebox.askyesno("检查更新", f"发现新版本：v{result.latest_version}\n是否立即更新？")
+                answer = messagebox.askyesno(_("检查更新"), _("发现新版本：v{version}\n是否立即更新？", version=result.latest_version))
                 if not answer:
                     return
                 from .update_controller import UpdateController
@@ -141,7 +143,7 @@ class AppController:
                 update_ctrl = UpdateController(self)
                 self.view.after(0, lambda: update_ctrl.do_update(result.download_url, result.latest_version))
             else:
-                messagebox.showinfo("检查更新", f"当前版本：v{WinInfo.version}\n你使用的已是最新版本！\n\n仓库地址：{WinInfo.repo_url}")
+                messagebox.showinfo(_("检查更新"), _("当前版本：v{version}\n你使用的已是最新版本！\n\n仓库地址：{url}", version=WinInfo.version, url=WinInfo.repo_url))
         dialog = SettingDialog(self.view)
         dialog.theme_combobox.config(values=self.view.style.theme_names())
         dialog.theme_combobox.set(self.setting.app.ui_style)
@@ -157,6 +159,10 @@ class AppController:
         )
         dialog.open_settings_file_btn.config(command=lambda: file_ops.open_file(Setting.setting_path))
         dialog.check_update_btn.config(command=check_for_update)
+
+        LOCALE_MAP = {"中文": "zh-CN", "English": "en"}
+        dialog.locale_combobox.set(next(k for k, v in LOCALE_MAP.items() if v == self.setting.app.locale))
+        dialog.locale_combobox.bind("<<ComboboxSelected>>", lambda e: self._on_locale_change(LOCALE_MAP[e.widget.get()]))
 
     def __on_drop(self, event) -> None:
         file_paths_str: str = getattr(event, "data")
@@ -177,6 +183,12 @@ class AppController:
             self.search_tools.save_index()
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
 
+    def _on_locale_change(self, locale: str) -> None:
+        self.setting.app.locale = locale
+        I18n().load(locale)
+        self.setting.save()
+        messagebox.showinfo(_("提示"), _("语言切换将在重启后生效。"))
+
     def destroy(self) -> None:
         try:
             if hasattr(self.index_controller, 'idle_tracker'):
@@ -189,7 +201,7 @@ class AppController:
                 self.search_tools.destroy()
             file_ops.rmtree(Setting.temp_image_path)
         except Exception as e:
-            messagebox.showerror("错误", str(e))
+            messagebox.showerror(_("错误"), str(e))
         finally:
             self.view.destroy()
 

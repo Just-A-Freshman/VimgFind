@@ -6,6 +6,7 @@ from pathlib import Path
 from tkinter import messagebox
 
 from utils import file_ops
+from utils.i18n import _
 from utils.model_checker import MultiThreadDownloader
 from config.settings import ROOT
 from views import UpdateDialog
@@ -101,12 +102,12 @@ class UpdateController:
                 shell=True,
                 creationflags=subprocess.CREATE_NEW_CONSOLE,
             )
-            messagebox.showinfo("更新完成", "更新包已下载并安装，请重启程序以完成更新。")
+            messagebox.showinfo(_("更新完成"), _("更新包已下载并安装，请重启程序以完成更新。"))
         except Exception as e:
-            messagebox.showerror("更新失败", f"更新过程中出现错误：\n{e}")
+            messagebox.showerror(_("更新失败"), _("更新过程中出现错误：\n{msg}", msg=str(e)))
         finally:
             self._cleanup()
 
     def _on_error(self, error_msg: str) -> None:
-        messagebox.showerror("更新失败", f"更新过程中出现错误：\n{error_msg}")
+        messagebox.showerror(_("更新失败"), _("更新过程中出现错误：\n{msg}", msg=error_msg))
         self._cleanup()
