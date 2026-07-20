@@ -39,6 +39,8 @@ EXT_FILTER_MAP: dict[str, set[str]] = {
     "GIF": {".gif"},
     "BMP": {".bmp"},
     "TIFF": {".tiff", ".tif"},
+    "PSD": {".psd"},
+    "ICO": {".ico"}
 }
 
 class SearchTool:

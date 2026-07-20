@@ -57,6 +57,8 @@ def parse_image_from_url(url: str) -> Image.Image | None:
     except Exception as e:
         logging.warning(f"从URL解析图片失败: {e}")
         return None
+
+
 def save_as_image(src_path: Path) -> None:
     filetypes = [
         ("PNG 图片", "*.png"),
@@ -65,6 +67,7 @@ def save_as_image(src_path: Path) -> None:
         ("BMP 图片", "*.bmp"),
         ("GIF 图片", "*.gif"),
         ("TIFF 图片", "*.tiff"),
+        ("ICO 图片", "*.ico")
     ]
     dest = filedialog.asksaveasfilename(
         defaultextension=src_path.suffix,
