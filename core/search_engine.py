@@ -368,7 +368,8 @@ class SearchTool:
                     continue
 
             if dedup:
-                if prev_similarity is not None and prev_size is not None and similarity == prev_similarity and st_size == prev_size:
+                if prev_similarity is not None and prev_size is not None and \
+                    abs(similarity - prev_similarity) < THRESHOLD_EPSILON and st_size == prev_size:
                     continue
                 prev_similarity = similarity
                 prev_size = st_size
