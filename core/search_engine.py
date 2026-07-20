@@ -99,8 +99,8 @@ class SearchTool:
         new_files = []
         current_files = file_ops.get_file_iterator(target_dir, exclude_rules)
         existing_files = set(
-            file_ops.normalize_path(i[0])
-            for i in self.__name_idx_mgr.name_index
+            file_ops.normalize_path(i[0]) for i in self.__name_idx_mgr.name_index
+            if i[0] != NameIndexManager.NOTEXISTS
         )
         new_files = []
         for file in current_files:
