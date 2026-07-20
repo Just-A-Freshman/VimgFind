@@ -90,12 +90,12 @@ class SettingDialog(tk.Toplevel):
         return check_btn
 
     def __set_check_update_btn(self) -> Button:
-        check_update_btn = Button(self, text=_("检查更新"), takefocus=True, style=LINK, cursor="hand2")
+        check_update_btn = Button(self, text=_("检查更新"), style=LINK, cursor="hand2")
         check_update_btn.grid(row=5, column=1, pady=TkS(10), padx=TkS(15), sticky=tk.W)
         return check_update_btn
 
     def __set_open_settings_file_btn(self) -> Button:
-        open_settings_file_btn = Button(self, text=_("配置文件"), takefocus=True, style=LINK, cursor="hand2")
+        open_settings_file_btn = Button(self, text=_("配置文件"), style=LINK, cursor="hand2")
         open_settings_file_btn.grid(row=5, column=2, pady=TkS(10), padx=TkS(15))
         return open_settings_file_btn
 

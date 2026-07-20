@@ -42,10 +42,10 @@ class IndexFrame(Frame):
         index_setting_frame = self.__set_index_setting_frame()
         scan_setting_frame = self.__set_scan_setting_frame()
         self.switch_model_combobox = self.__set_switch_model_combobox(index_setting_frame)
-        self.add_index_button = self.__set_add_index_button(index_setting_frame)
-        self.update_index_button = self.__set_update_index_button(index_setting_frame)
-        self.delete_index_button = self.__set_delete_index_button(index_setting_frame)
-        self.rebuild_index_button = self.__set_rebuild_index_button(index_setting_frame)
+        self.add_index_button = self.__set_index_btn(index_setting_frame, _("添加索引目录"), 1, pady_top=5)
+        self.update_index_button = self.__set_index_btn(index_setting_frame, _("更新索引目录"), 2)
+        self.delete_index_button = self.__set_index_btn(index_setting_frame, _("删除索引目录"), 3)
+        self.rebuild_index_button = self.__set_index_btn(index_setting_frame, _("重建索引目录"), 4, pady_bottom=5)
         self.auto_update_checkbutton = self.__set_auto_update_checkbutton(scan_setting_frame)
         self.update_range_combobox = self.__set_update_range_combobox(scan_setting_frame)
         self.update_threads_count_scale = self.__set_update_threads_count_scale(scan_setting_frame)
@@ -84,24 +84,12 @@ class IndexFrame(Frame):
         combobox.pack(side=tk.LEFT, padx=(TkS(5), TkS(5)), expand=True, fill=tk.BOTH)
         return combobox
 
-    def __set_add_index_button(self, parent) -> Button:
-        btn = Button(parent, text=_("添加索引目录"), takefocus=False)
-        btn.grid(row=1, column=0, padx=TkS(2), pady=(TkS(5), TkS(2)), ipadx=TkS(5), ipady=TkS(2), sticky=tk.NSEW, columnspan=2)
-        return btn
-
-    def __set_update_index_button(self, parent) -> Button:
-        btn = Button(parent, text=_("更新索引目录"), takefocus=False)
-        btn.grid(row=2, column=0, padx=TkS(2), pady=TkS(2), ipadx=TkS(5), ipady=TkS(2), sticky=tk.NSEW, columnspan=2)
-        return btn
-
-    def __set_delete_index_button(self, parent) -> Button:
-        btn = Button(parent, text=_("删除索引目录"), takefocus=False)
-        btn.grid(row=3, column=0, padx=TkS(2), pady=TkS(2), ipadx=TkS(5), ipady=TkS(2), sticky=tk.NSEW, columnspan=2)
-        return btn
-
-    def __set_rebuild_index_button(self, parent) -> Button:
-        btn = Button(parent, text=_("重建索引目录"), takefocus=False)
-        btn.grid(row=4, column=0, padx=TkS(2), pady=(TkS(2), TkS(5)), ipadx=TkS(5), ipady=TkS(2), sticky=tk.NSEW, columnspan=2)
+    def __set_index_btn(self, parent: LabelFrame, text: str, row: int, *, pady_top: int = 2, pady_bottom: int = 2) -> Button:
+        btn = Button(parent, text=text, takefocus=False)
+        btn.grid(
+            row=row, column=0, padx=TkS(2), pady=(TkS(pady_top), TkS(pady_bottom)),
+            ipadx=TkS(5), ipady=TkS(2), sticky=tk.NSEW, columnspan=2
+        )
         return btn
 
     def __set_scan_setting_frame(self) -> LabelFrame:

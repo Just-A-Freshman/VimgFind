@@ -71,29 +71,25 @@ class FilterPanel(Labelframe):
         ext_combo.current(0)
         return ext_combo
 
+    def __set_size_unit_combo(self, column: int, padx: tuple) -> Combobox:
+        combo = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
+        combo.grid(row=2, column=column, sticky=tk.EW, padx=padx, pady=(TkS(5), TkS(5)))
+        combo.current(1)
+        return combo
+
     def __set_size_min(self) -> tuple[Entry, Combobox]:
         label = Label(self, text=_("文件大小"), width=10, anchor=tk.W)
         label.grid(row=2, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5)))
         size_min = Entry(self, width=6)
         size_min.grid(row=2, column=1, sticky=tk.EW, padx=(TkS(4), TkS(1)), pady=(TkS(5), TkS(5)))
-        size_min_unit = Combobox(
-            self, values=["KB", "MB"], state="readonly", width=4,
-            font=(WinInfo.default_font_family, WinInfo.default_font_size)
-        )
-        size_min_unit.grid(row=2, column=2, sticky=tk.EW, padx=(0, TkS(1)), pady=(TkS(5), TkS(5)))
-        size_min_unit.current(1)
+        size_min_unit = self.__set_size_unit_combo(2, (0, TkS(1)))
         return size_min, size_min_unit
 
     def __set_size_max(self) -> tuple[Entry, Combobox]:
         Label(self, text=_("到")).grid(row=2, column=3, pady=(TkS(5), TkS(5)))
         size_max = Entry(self, width=6)
         size_max.grid(row=2, column=4, sticky=tk.EW, padx=(TkS(2), TkS(1)), pady=(TkS(5), TkS(5)))
-        size_max_unit = Combobox(
-            self, values=["KB", "MB"], state="readonly", width=4,
-            font=(WinInfo.default_font_family, WinInfo.default_font_size)
-        )
-        size_max_unit.grid(row=2, column=5, sticky=tk.EW, padx=(0, 0), pady=(TkS(5), TkS(5)))
-        size_max_unit.current(1)
+        size_max_unit = self.__set_size_unit_combo(5, (0, 0))
         return size_max, size_max_unit
 
     def __set_folder_left_frame(self) -> Frame:
@@ -241,9 +237,7 @@ class SearchFrame(Frame):
 
     def set_nav_visible(self, show: bool) -> None:
         if show:
-            self.nav_frame.grid(
-                row=1, column=0, sticky='ew', padx=(TkS(1), TkS(12)), pady=(0, TkS(1))
-            )
+            self.nav_frame.grid(row=1, column=0, sticky='ew', padx=(TkS(1), TkS(12)), pady=(0, TkS(1)))
             self.nav_frame.lift()
         else:
             self.nav_frame.grid_forget()

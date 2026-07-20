@@ -36,7 +36,6 @@ class WinGUI(Window, TkinterDnD.Tk):
             self.state("zoom")
         if topmost:
             self.attributes("-topmost", True)
-            self.attributes("")
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         width = WinInfo.width
