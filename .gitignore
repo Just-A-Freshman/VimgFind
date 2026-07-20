@@ -234,3 +234,11 @@ error.log
 
 # Test dir
 test/
+
+# vscode config
+.vscode/
+
+# AI Agent docs
+AGENT.MD
+
+todo
