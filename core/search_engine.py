@@ -32,16 +32,6 @@ class SearchStatus(str, Enum):
 
 THRESHOLD_EPSILON = 1e-3
 
-EXT_FILTER_MAP: dict[str, set[str]] = {
-    "PNG": {".png"},
-    "JPG/JPEG": {".jpg", ".jpeg"},
-    "WebP": {".webp"},
-    "GIF": {".gif"},
-    "BMP": {".bmp"},
-    "TIFF": {".tiff", ".tif"},
-    "PSD": {".psd"},
-    "ICO": {".ico"}
-}
 
 class SearchTool:
     __slots__ = (
@@ -332,7 +322,7 @@ class SearchTool:
             folder_filters: list[str] | None,
             dedup: bool = False
         ) -> Iterator[tuple[str, float]]:
-        ext_set = EXT_FILTER_MAP.get(file_ext_label)
+        ext_set = Setting.EXT_GROUP_MAP.get(file_ext_label)
         yielded_count = 0
         threshold -= THRESHOLD_EPSILON
         prev_similarity: float | None = None

@@ -5,7 +5,7 @@ import tkinter as tk
 from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
-from config.settings import WinInfo, TkS
+from config.settings import WinInfo, TkS, Setting
 from utils.i18n import _
 
 
@@ -63,7 +63,7 @@ class FilterPanel(Labelframe):
         label.grid(row=1, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5)))
         ext_combo = Combobox(
             self,
-            values=[_("所有图片文件"), "PNG", "JPG/JPEG", "WebP", "GIF", "BMP", "TIFF"],
+            values=[_("所有图片文件"), *Setting.EXT_GROUP_MAP],
             state="readonly",
             font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )

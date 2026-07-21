@@ -66,8 +66,7 @@ def save_as_image(src_path: Path) -> None:
         ("WebP 图片", "*.webp"),
         ("BMP 图片", "*.bmp"),
         ("GIF 图片", "*.gif"),
-        ("TIFF 图片", "*.tiff"),
-        ("ICO 图片", "*.ico")
+        ("TIFF 图片", "*.tiff")
     ]
     dest = filedialog.asksaveasfilename(
         defaultextension=src_path.suffix,
