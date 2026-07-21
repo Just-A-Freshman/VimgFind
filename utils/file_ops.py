@@ -192,9 +192,10 @@ def normalize_path(path: str) -> str:
     return os.path.normcase(os.path.realpath(path))
 
 
-def is_path_under(path: str, parent_dir: str) -> bool:
-    path = normalize_path(path)
-    parent_dir = normalize_path(parent_dir)
+def is_path_under(path: str, parent_dir: str, *, normalized: bool = False) -> bool:
+    if not normalized:
+        path = normalize_path(path)
+        parent_dir = normalize_path(parent_dir)
     parent_with_sep = parent_dir.rstrip(os.sep) + os.sep
     return path.startswith(parent_with_sep)
 
