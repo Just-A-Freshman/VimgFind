@@ -263,11 +263,13 @@ class IndexController:
                 messagebox.showinfo(_("提示"), _("索引中没有匹配排除规则的文件。"))
                 return
 
-            answer = messagebox.askyesno(
+            if not messagebox.askyesno(
                 _("确认清理"),
                 _("将在索引中移除 {count} 个匹配排除规则的文件记录。\n\n此操作不可撤消，是否继续？", count=len(excluded))
-            )
-            if not answer:
+            ):
+                return
+            if self._is_updating:
+                messagebox.showinfo(_("提示"), _("索引正在更新中，禁用排除图片清理！"))
                 return
             self.app.search_tools.remove_files(excluded)
             self.app.search_tools.remove_nonexists()
