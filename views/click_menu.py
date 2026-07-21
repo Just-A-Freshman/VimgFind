@@ -14,10 +14,7 @@ class ClickMenuView:
     model_menu: Menu
     single_file_menu: Menu
     multi_file_menu: Menu
-    __slots__ = (
-        "preview_setting_menu", "model_menu",
-        "single_file_menu", "multi_file_menu",
-    )
+    __slots__ = ("preview_setting_menu", "model_menu", "single_file_menu", "multi_file_menu",)
 
     def __init__(self, parent: tk.Misc) -> None:
         self.preview_setting_menu, self.model_menu = self.__set_preview_setting_menu(parent)
