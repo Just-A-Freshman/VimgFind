@@ -10,23 +10,27 @@ from utils.i18n import _
 
 class ClickMenuView:
     parent: tk.Misc
-    preview_setting_menu: Menu
-    model_menu: Menu
-    single_file_menu: Menu
-    multi_file_menu: Menu
-    __slots__ = ("preview_setting_menu", "model_menu", "single_file_menu", "multi_file_menu",)
+    __slots__ = ("parent", )
 
     def __init__(self, parent: tk.Misc) -> None:
-        self.preview_setting_menu, self.model_menu = self.__set_preview_setting_menu(parent)
-        self.single_file_menu = self.__set_single_file_menu(parent)
-        self.multi_file_menu = self.__set_multi_file_menu(parent)
+        self.parent = parent
+
+    @property
+    def preview_setting_menu(self) -> tuple[Menu, Menu]:
+        return self.__set_preview_setting_menu(self.parent)
+    
+    @property
+    def single_file_menu(self) -> Menu:
+        return self.__set_single_file_menu(self.parent)
+    
+    @property
+    def multi_file_menu(self) -> Menu:
+        return self.__set_multi_file_menu(self.parent)
 
     def __set_preview_setting_menu(self, parent) -> tuple[Menu, Menu]:
         menu = Menu(parent, tearoff=0, activeborderwidth=TkS(3))
-        menu.add_command(label=_("详情模式"))
-        menu.add_command(label=_("中等图标"))
-        menu.add_command(label=_("大图标"))
-        menu.add_command(label=_("超大图标"))
+        for preview_mode in (_("详情模式"), _("中等图标"), _("大图标"), _("超大图标")):
+            menu.add_command(label=preview_mode)
         menu.add_separator()
         for count in (10, 30, 50, 100):
             menu.add_command(label=_("结果数: {count}", count=count))
