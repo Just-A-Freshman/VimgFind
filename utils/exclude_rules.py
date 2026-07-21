@@ -148,30 +148,16 @@ class ExcludeRules:
         return filename[dot:].lower() in Setting.accepted_exts
 
     # ── public API ────────────────────────────────────────────────
-
-    @overload
-    def should_skip_file(self, entry: os.DirEntry, target_dir: str) -> bool: ...
-
-    @overload
-    def should_skip_file(self, entry: str, target_dir: str) -> bool: ...
-
-    @overload
-    def should_skip_file(self, entry: Path, target_dir: str) -> bool: ...
-
-    def should_skip_file(self, entry: os.DirEntry | str | Path, target_dir: str) -> bool:
-        if isinstance(entry, str):
-            entry = Path(entry)
-        name = entry.name
-
-        if not self._is_accepted_extension(name):
+    def should_skip_file(self, entry: os.DirEntry | str, target_dir: str) -> bool:
+        path = entry if isinstance(entry, str) else entry.path
+        if not self._is_accepted_extension(path):
             return True
 
         # Special rules (size, mtime) — stat only if needed
         has_size = self._min_size > 0 or self._max_size > 0
         has_mtime = self._min_modified > 0.0 or self._max_modified > 0.0
         if has_size or has_mtime:
-            st = entry.stat()
-
+            st = os.stat(entry) if isinstance(entry, str) else entry.stat()
             if has_size:
                 if self._min_size > 0 and st.st_size < self._min_size:
                     return True
@@ -183,22 +169,11 @@ class ExcludeRules:
                 if self._max_modified > 0.0 and st.st_mtime > self._max_modified:
                     return True
 
-        # Pathspec matching
-        path = entry.path if isinstance(entry, os.DirEntry) else str(entry)
         rel = os.path.relpath(path, target_dir).replace("\\", "/")
         return self._is_excluded(rel, is_dir=False)
 
-    @overload
-    def should_skip_dir(self, entry: os.DirEntry, target_dir: str) -> bool: ...
-
-    @overload
-    def should_skip_dir(self, entry: str, target_dir: str) -> bool: ...
-
-    @overload
-    def should_skip_dir(self, entry: Path, target_dir: str) -> bool: ...
-
-    def should_skip_dir(self, entry: os.DirEntry | str | Path, target_dir: str) -> bool:
-        path = entry.path if isinstance(entry, os.DirEntry) else str(entry)
+    def should_skip_dir(self, entry: os.DirEntry | str, target_dir: str) -> bool:
+        path = entry.path if isinstance(entry, os.DirEntry) else entry
         rel = os.path.relpath(path, target_dir).replace("\\", "/")
         if not self._is_excluded(rel, is_dir=True):
             return False
