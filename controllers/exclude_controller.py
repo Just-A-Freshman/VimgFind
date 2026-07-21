@@ -268,6 +268,26 @@ class ExcludePreviewController:
                 self.dialog.preview_tree.delete(*self.dialog.preview_tree.get_children())
                 self.dialog.preview_status_label.config(text=_("取反规则本身不排除文件"))
                 return
+            if exclude_rules.ExcludeRules.SPECIAL_RULE_PATTERN.match(rule_text):
+                target_dir = self.dialog.preview_path_entry.get().strip()
+                if target_dir and self._scan_cache:
+                    single_excl = exclude_rules.compile_rules([rule_text])
+                    if single_excl:
+                        filtered = [
+                            (rel, is_dir) for rel, is_dir in self._scan_cache
+                            if (
+                                single_excl.should_skip_dir(
+                                    os.path.join(target_dir, rel), target_dir
+                                ) if is_dir else
+                                single_excl.should_skip_file(
+                                    os.path.join(target_dir, rel), target_dir
+                                )
+                            )
+                        ]
+                    else:
+                        filtered = []
+                else:
+                    filtered = []
             else:
                 try:
                     single_spec = PathSpec.from_lines(
