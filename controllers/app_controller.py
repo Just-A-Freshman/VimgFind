@@ -1,22 +1,21 @@
 from __future__ import annotations
 
 from tkinter import messagebox
-from tkinter.font import nametofont
 from tkinterdnd2 import DND_FILES
 import tkinter as tk
 
-from views import WinGUI, SettingDialog
-from config.settings import Setting, WinInfo, TkS, RANGE_LABEL
+from views import WinGUI
+from config.settings import Setting, RANGE_LABEL
 from core import SearchTool
 from .filter_controller import FilterController
 from .search_controller import SearchController
 from .index_controller import IndexController
 from .menu_controller import MenuController
 from .model_controller import ModelController
+from .setting_controller import SettingController
 from utils.i18n import I18n, _
 import utils.file_ops as file_ops
 import utils.decorators as decorators
-import utils.update_checker as update_checker
 
 
 class AppController:
@@ -30,8 +29,9 @@ class AppController:
         self.index_controller = IndexController(self)
         self.menu_controller = MenuController(self)
         self.model_controller = ModelController(self)
+        self.setting_controller = SettingController(self)
 
-        self.change_theme(self.setting.app.ui_style)
+        self.setting_controller.change_theme(self.setting.app.ui_style)
         self.search_controller.set_preview_mode(self.setting.app.preview_mode)
         self.bind_event(first_time=True)
         self.view.after(10, self.__env_init)
@@ -40,7 +40,7 @@ class AppController:
     def bind_event(self, first_time=False) -> None:
         search_tab = self.view.search_tab
         index_tab = self.view.index_tab
-        self.view.common_setting_btn.config(command=self.open_setting_dialog)
+        self.view.common_setting_btn.config(command=self.setting_controller.open_setting_dialog)
         search_tab.preview_view.bind("<<ItemviewSelect>>", self.search_controller.preview_found_image)
         search_tab.preview_view.bind("<Control-a>", lambda e: search_tab.preview_view.selection_set(tk.ALL))
         search_tab.preview_view.bind("<Control-v>", lambda e: self.search_controller.search_image_by_clipboard())
@@ -111,59 +111,6 @@ class AppController:
         self.view.index_tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.setting.app.current_model), ""))
         self.view.index_tab.update_range_combobox.set(_(RANGE_LABEL[self.setting.app.update_index_range]))
 
-    def change_theme(self, target_theme: str = "") -> None:
-        style = self.view.style
-        valid_theme_names = style.theme_names()
-        self.setting.app.ui_style = target_theme if target_theme in valid_theme_names else "superhero"
-        style.theme_use(self.setting.app.ui_style)
-        style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
-        style.configure('TNotebook.Tab', font=(WinInfo.default_font_family, TkS(-18)))
-        style.configure("Treeview", rowheight=TkS(30))
-        default_font = nametofont("TkDefaultFont")
-        default_font.configure(family=WinInfo.default_font_family, size=WinInfo.default_font_size)
-        self.view.search_tab.search_entry.config(style="Search.TEntry")
-        self.view.search_tab.filter_btn.config(bg=style.colors.get("inputbg"), fg=style.colors.get("inputfg"))   # type: ignore[arg-type]
-        self.view.search_tab.nav_page_label.config(font=("", TkS(-18)))
-        self.view.index_tab.index_tip_label.config(font=(WinInfo.default_font_family, TkS(-18)))
-        self.view.model_tab.detail_desc_text.config(bg=style.colors.get('bg'), fg=style.colors.get('fg'),selectbackground=style.colors.get('selectbg'))  # type: ignore[arg-type]
-
-    def open_setting_dialog(self) -> None:
-        @decorators.send_task
-        def check_for_update() -> None:
-            result = update_checker.check()
-            if result.error is not None:
-                messagebox.showerror(_("检查更新失败"), _("无法检查更新：{error}\n\n请检查网络连接后重试。", error=result.error))
-                return
-            if result.has_update:
-                answer = messagebox.askyesno(_("检查更新"), _("发现新版本：v{version}\n是否立即更新？", version=result.latest_version))
-                if not answer:
-                    return
-                from .update_controller import UpdateController
-                dialog.destroy()
-                update_ctrl = UpdateController(self)
-                self.view.after(0, lambda: update_ctrl.do_update(result.download_url, result.latest_version))
-            else:
-                messagebox.showinfo(_("检查更新"), _("当前版本：v{version}\n你使用的已是最新版本！\n\n仓库地址：{url}", version=WinInfo.version, url=WinInfo.repo_url))
-        dialog = SettingDialog(self.view)
-        dialog.theme_combobox.config(values=self.view.style.theme_names())
-        dialog.theme_combobox.set(self.setting.app.ui_style)
-        dialog.theme_combobox.bind("<<ComboboxSelected>>", lambda e: self.change_theme(e.widget.get()))
-        if self.setting.app.maximize_window and not dialog.maximize_checkbutton.instate(['selected']):
-            dialog.maximize_checkbutton.invoke()
-        if self.setting.app.topmost_window and not dialog.topmost_checkbutton.instate(['selected']):
-            dialog.topmost_checkbutton.invoke()
-        dialog.maximize_checkbutton.config(command=lambda: setattr(self.setting.app, 'maximize_window', dialog.maximize_checkbutton.instate(['selected'])))
-        dialog.topmost_checkbutton.config(
-                command=lambda: ((sel := dialog.topmost_checkbutton.instate(['selected'])),
-                setattr(self.setting.app, "topmost_window", sel), self.view.attributes('-topmost', sel), dialog.attributes('-topmost', sel))
-        )
-        dialog.open_settings_file_btn.config(command=lambda: file_ops.open_file(Setting.setting_path))
-        dialog.check_update_btn.config(command=check_for_update)
-
-        LOCALE_MAP = {"中文": "zh-CN", "English": "en"}
-        dialog.locale_combobox.set(next(k for k, v in LOCALE_MAP.items() if v == self.setting.app.locale))
-        dialog.locale_combobox.bind("<<ComboboxSelected>>", lambda e: self._on_locale_change(LOCALE_MAP[e.widget.get()]))
-
     def __on_drop(self, event) -> None:
         file_paths_str: str = getattr(event, "data")
         file_paths = file_ops.extract_file_paths(file_paths_str)
@@ -182,12 +129,6 @@ class AppController:
         if self.search_tools:
             self.search_tools.save_index()
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
-
-    def _on_locale_change(self, locale: str) -> None:
-        self.setting.app.locale = locale
-        I18n().load(locale)
-        self.setting.save()
-        messagebox.showinfo(_("提示"), _("语言切换将在重启后生效。"))
 
     def destroy(self) -> None:
         try:
