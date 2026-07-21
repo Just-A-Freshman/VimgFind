@@ -67,14 +67,10 @@ class MenuController:
         tab = self.app.view.search_tab
         ctrl = self.app.search_controller
         menu = self.app.view.click_menu.preview_setting_menu
-        menu.entryconfig(0, command=lambda: ctrl.set_preview_mode("detail_info"))
-        menu.entryconfig(1, command=lambda: ctrl.set_preview_mode("medium_ico"))
-        menu.entryconfig(2, command=lambda: ctrl.set_preview_mode("big_ico"))
-        menu.entryconfig(3, command=lambda: ctrl.set_preview_mode("huge_ico"))
-        menu.entryconfig(5, command=lambda: ctrl.set_preview_result_count(10))
-        menu.entryconfig(6, command=lambda: ctrl.set_preview_result_count(30))
-        menu.entryconfig(7, command=lambda: ctrl.set_preview_result_count(50))
-        menu.entryconfig(8, command=lambda: ctrl.set_preview_result_count(100))
+        for i, mode in enumerate(["detail_info", "medium_ico", "big_ico", "huge_ico"]):
+            menu.entryconfig(i, command=lambda m=mode: ctrl.set_preview_mode(m))  # type: ignore
+        for i, count in enumerate([10, 30, 50, 100], start=5):
+            menu.entryconfig(i, command=lambda c=count: ctrl.set_preview_result_count(c))
 
         model_menu = self.app.view.click_menu.model_menu
         model_menu.delete(0, tk.END)

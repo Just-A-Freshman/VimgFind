@@ -74,40 +74,11 @@ class IndexController:
 
     @decorators.send_task
     @decorators.redirect_output
-    def rebuild_index(self) -> None:
-        def rebuild_current_model() -> None:
-            assert self.app.search_tools
-            progress_bar = tqdm(total=0, ascii=False, ncols=50)
-            self.app.search_tools.rebuild_index(
-                [d for d in self.app.setting.model.index.search_dir if Path(d).exists()],
-                int(float(self.app.view.index_tab.update_threads_count_scale.get())),
-                self.app.setting.model.index.exclude_rules or [], 
-                progress_bar
-            )
-
-        answer = messagebox.askyesno(_("提示"), _("重建索引极其耗时，\n您确定要进行重建吗？"))
-        if not answer:
-            return
-        if self.app.setting.app.update_index_range == "all" and len(self.app.model_controller.get_downloaded_models()) > 1:
-            answer = messagebox.askyesno(_("提示"), _("您确定要重建全部模型的索引吗？"))
-            if not answer:
-                return
-        self._is_auto_updating = False
-        self._run_index_task(rebuild_current_model)
-
-    @decorators.send_task
-    @decorators.redirect_output
     def sync_index(self, show_message: bool = True, auto: bool = False) -> None:
         def sync_current_model() -> None:
             assert self.app.search_tools
             self.app.search_tools.remove_nonexists()
-            progress_bar = tqdm(total=0, ascii=False, ncols=50)
-            self.app.search_tools.update_index(
-                [d for d in self.app.setting.model.index.search_dir if Path(d).exists()],
-                int(float(self.app.view.index_tab.update_threads_count_scale.get())),
-                self.app.setting.model.index.exclude_rules or [],
-                progress_bar
-            )
+            self.app.search_tools.update_index(*self.__get_index_params())
             self.app.search_tools.remove_duplicate()
 
         if auto:
@@ -117,9 +88,34 @@ class IndexController:
             self._is_auto_updating = True
         else:
             self._is_auto_updating = False        
-        self._run_index_task(sync_current_model, show_message)
+        self.__run_index_task(sync_current_model, show_message)
 
-    def _run_index_task(self, model_work, show_message: bool = True) -> None:
+    @decorators.send_task
+    @decorators.redirect_output
+    def rebuild_index(self) -> None:
+        def rebuild_current_model() -> None:
+            assert self.app.search_tools
+            self.app.search_tools.rebuild_index(*self.__get_index_params())
+
+        answer = messagebox.askyesno(_("提示"), _("重建索引极其耗时，\n您确定要进行重建吗？"))
+        if not answer:
+            return
+        if self.app.setting.app.update_index_range == "all" and len(self.app.model_controller.get_downloaded_models()) > 1:
+            answer = messagebox.askyesno(_("提示"), _("您确定要重建全部模型的索引吗？"))
+            if not answer:
+                return
+        self._is_auto_updating = False
+        self.__run_index_task(rebuild_current_model)
+
+    def __get_index_params(self) -> tuple[list[str], int, list[str], tqdm]:
+        return (
+            [d for d in self.app.setting.model.index.search_dir if Path(d).exists()],
+            int(float(self.app.view.index_tab.update_threads_count_scale.get())),
+            self.app.setting.model.index.exclude_rules or [],
+            tqdm(total=0, ascii=False, ncols=50)
+        )
+
+    def __run_index_task(self, model_work, show_message: bool = True) -> None:
         tab = self.app.view.index_tab
         tab.delete_index_button.config(state=tk.DISABLED)
         tab.rebuild_index_button.config(state=tk.DISABLED)
@@ -206,11 +202,11 @@ class IndexController:
         self._is_updating = True
         self.__check_queue()
         dirs_to_delete = []
-        search_dir: list = self.app.setting.model.index.search_dir
+        search_dirs: list = self.app.setting.model.index.search_dir
         for item in selected:
             delete_search_dir = self.app.view.index_tab.index_dataset_table.item(item, 'values')[1]
             dirs_to_delete.append(delete_search_dir)
-            search_dir.remove(delete_search_dir)
+            search_dirs.remove(delete_search_dir)
             self.app.view.index_tab.index_dataset_table.delete(item)
         self.refresh_index_dataset_table()
         remaining_dirs = [d for d in self.app.setting.model.index.search_dir]
