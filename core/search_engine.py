@@ -208,45 +208,33 @@ class SearchTool:
 
     def get_excluded_files(self, rules: list[str], search_dirs: list[str]) -> list[str]:
         self.__init_event.wait()
+
+        if not rules:
+            return []
+
         rules_obj = exclude_rules.compile_rules(rules)
         if not rules_obj:
             return []
 
-        normalized_dirs = [file_ops.normalize_path(d) for d in search_dirs]
-        _excluded_cache: dict[str, bool] = {}
-
-        def _is_excluded(rel_path: str) -> bool:
-            if rules_obj.is_excluded(rel_path, is_dir=False):
-                return True
-            parts = rel_path.split("/")
-            for i in range(len(parts) - 1):
-                parent = "/".join(parts[:i + 1]) + "/"
-                if parent in _excluded_cache:
-                    if _excluded_cache[parent]:
-                        return True
-                    continue
-                result = rules_obj.is_excluded(parent, is_dir=True)
-                _excluded_cache[parent] = result
-                if result:
-                    return True
-            return False
-
-        def _find_rel(norm_path: str) -> str | None:
-            for nd in normalized_dirs:
-                parent_with_sep = nd.rstrip(os.sep) + os.sep
-                if norm_path.startswith(parent_with_sep):
-                    return norm_path[len(parent_with_sep):].replace("\\", "/")
-            return None
-
+        normalized_dirs = [os.path.normcase(d) for d in search_dirs]
         result: list[str] = []
+
         for index_file, _ in self.__name_idx_mgr.name_index:
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            rel = _find_rel(os.path.normcase(index_file))
-            if rel is None:
-                rel = _find_rel(file_ops.normalize_path(index_file))
-            if rel is not None and _is_excluded(rel):
+
+            norm_file = os.path.normcase(index_file)
+            target_dir = next((nd for nd in normalized_dirs if file_ops.is_path_under(norm_file, nd, normalized=True)), None,)
+            if target_dir is None:
                 result.append(index_file)
+                continue
+
+            try:
+                if rules_obj.should_skip_file(index_file, target_dir):
+                    result.append(index_file)
+            except OSError:
+                continue
+
         return result
 
     def remove_files_in_directory(self, directory: str, keep_dirs: list[str] | None = None) -> None:
