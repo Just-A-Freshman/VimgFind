@@ -49,7 +49,33 @@ class ExcludePreviewController:
     def on_rule_select(self, event=None) -> None:
         if self._debounce_timer is not None:
             self.dialog.after_cancel(self._debounce_timer)
-        self._debounce_timer = self.dialog.after(500, self._refresh_preview_from_cache)
+        self._debounce_timer = self.dialog.after(500, self._refresh_preview_tree)
+
+    def _compute_excluded(
+        self,
+        scan_cache: list[tuple[str, bool]],
+        excl_rules,
+        target_dir: str,
+        max_items: int = MAX_PREVIEW_ITEMS,
+    ) -> tuple[list[tuple[str, bool]], int, bool]:
+        """对 scan_cache 应用 excl_rules，返回（被排除列表, 排除数, 是否截断）"""
+        excluded: list[tuple[str, bool]] = []
+        count = 0
+        truncated = False
+        for rel, is_dir in scan_cache:
+            if count >= max_items:
+                truncated = True
+                break
+            full_path = os.path.join(target_dir, rel)
+            if is_dir:
+                if excl_rules.should_skip_dir(full_path, target_dir):
+                    excluded.append((rel, True))
+                    count += 1
+            else:
+                if excl_rules.should_skip_file(full_path, target_dir):
+                    excluded.append((rel, False))
+                    count += 1
+        return excluded, count, truncated
 
     def stop_scan(self) -> None:
         self._cancel_scan = True
@@ -169,18 +195,15 @@ class ExcludePreviewController:
         pre_rules = exclude_rules.compile_rules([])
         excl_rules = exclude_rules.compile_rules(rules)
 
-        excluded_cache: list[tuple[str, bool]] = []
         scan_cache: list[tuple[str, bool]] = []
         total = 0
-        excluded = 0
-        truncated = False
 
         def _walk(path: str) -> None:
-            nonlocal total, excluded, truncated
+            nonlocal total
             try:
                 with os.scandir(path) as it:
                     for entry in it:
-                        if self._cancel_scan or truncated:
+                        if self._cancel_scan:
                             return
 
                         rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
@@ -188,39 +211,33 @@ class ExcludePreviewController:
 
                         if entry.is_dir(follow_symlinks=False):
                             scan_cache.append((rel, True))
-                            if excl_rules and excl_rules.should_skip_dir(entry, target_dir):
-                                excluded_cache.append((rel, True))
-                                excluded += 1
-                                if excluded >= MAX_PREVIEW_ITEMS:
-                                    truncated = True
-                                    return
                             _walk(entry.path)
 
                         elif entry.is_file(follow_symlinks=False):
                             if pre_rules and pre_rules.should_skip_file(entry, target_dir):
                                 continue
                             scan_cache.append((rel, False))
-                            if excl_rules and excl_rules.should_skip_file(entry, target_dir):
-                                excluded_cache.append((rel, False))
-                                excluded += 1
-                                if excluded >= MAX_PREVIEW_ITEMS:
-                                    truncated = True
-                                    return
 
                         if total % PROGRESS_INTERVAL == 0:
                             try:
                                 self.dialog.after(
-                                    0, lambda t=total, e=excluded: self._update_status(t, e)
+                                    0, lambda t=total: self._update_status(t, 0)
                                 )
                             except Exception:
-                                logging.warning("UI更新失败（可能在后台线程中）")
+                                pass
             except PermissionError:
                 pass
 
         _walk(target_dir)
 
+        excluded_cache, excluded_count, truncated = self._compute_excluded(
+            scan_cache, excl_rules, target_dir
+        ) if excl_rules else ([], 0, False)
+
         try:
-            self.dialog.after(0, lambda: self._preview_complete(excluded_cache, scan_cache, total, excluded, truncated))
+            self.dialog.after(0, lambda: self._preview_complete(
+                excluded_cache, scan_cache, total, excluded_count, truncated
+            ))
         except Exception:
             pass
 
@@ -240,11 +257,6 @@ class ExcludePreviewController:
 
         self.dialog.stop_btn.pack_forget()
 
-        self._refresh_preview_tree()
-
-    def _refresh_preview_from_cache(self) -> None:
-        if self._closed or not self._preview_cache:
-            return
         self._refresh_preview_tree()
 
     @staticmethod
@@ -273,32 +285,17 @@ class ExcludePreviewController:
                 if target_dir and self._scan_cache:
                     single_excl = exclude_rules.compile_rules([rule_text])
                     if single_excl:
-                        filtered = [
-                            (rel, is_dir) for rel, is_dir in self._scan_cache
-                            if (
-                                single_excl.should_skip_dir(
-                                    os.path.join(target_dir, rel), target_dir
-                                ) if is_dir else
-                                single_excl.should_skip_file(
-                                    os.path.join(target_dir, rel), target_dir
-                                )
-                            )
-                        ]
+                        filtered = self._compute_excluded(self._scan_cache, single_excl, target_dir)[0]
                     else:
                         filtered = []
                 else:
                     filtered = []
             else:
                 try:
-                    single_spec = PathSpec.from_lines(
-                        GitWildMatchPattern,
-                        [rule_text.lower()],
-                    )
+                    single_spec = PathSpec.from_lines(GitWildMatchPattern, [rule_text.lower()])
                     filtered = [
                         (rel, is_dir) for rel, is_dir in self._preview_cache
-                        if single_spec.match_file(
-                            rel.lower() + ("/" if is_dir else "")
-                        )
+                        if single_spec.match_file(rel.lower() + ("/" if is_dir else ""))
                     ]
                 except Exception:
                     filtered = self._preview_cache
@@ -339,25 +336,12 @@ class ExcludePreviewController:
             self._refresh_preview_tree()
             return
 
-        excluded_cache: list[tuple[str, bool]] = []
-        excluded = 0
-        truncated = False
-        for rel, is_dir in self._scan_cache:
-            if excluded >= MAX_PREVIEW_ITEMS:
-                truncated = True
-                break
-            full_path = os.path.join(target_dir, rel)
-            if is_dir:
-                if rules_obj.should_skip_dir(full_path, target_dir):
-                    excluded_cache.append((rel, True))
-                    excluded += 1
-            else:
-                if rules_obj.should_skip_file(full_path, target_dir):
-                    excluded_cache.append((rel, False))
-                    excluded += 1
+        excluded_cache, excluded_count, truncated = self._compute_excluded(
+            self._scan_cache, rules_obj, target_dir
+        )
 
         self._preview_cache = excluded_cache
-        self._preview_excluded = excluded
+        self._preview_excluded = excluded_count
         self._preview_total = len(self._scan_cache)
         self._preview_truncated = truncated
 
