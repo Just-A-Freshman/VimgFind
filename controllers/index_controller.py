@@ -248,7 +248,7 @@ class IndexController:
             messagebox.showinfo(_("提示"), _("当前没有索引目录。"))
             return
         if self._is_updating:
-            messagebox.showinfo(_("提示"), _("索引正在更新中，禁用排除规则清理！"))
+            messagebox.showinfo(_("提示"), _("索引正在更新中，禁用排除图片清理！"))
             return
         if self._is_cleaning:
             return
