@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from tkinter import messagebox
 import subprocess
 import tempfile
@@ -13,17 +14,21 @@ from utils.i18n import _
 import utils.file_ops as file_ops
 import utils.model_checker as model_checker
 
+if TYPE_CHECKING:
+    from app_controller import AppController
+
 
 class UpdateController:
-    def __init__(self, app) -> None:
-        self.app = app
+    def __init__(self, app_controller: AppController) -> None:
+        self.app = app_controller
         self._dialog: UpdateDialog | None = None
         self._downloader: model_checker.MultiThreadDownloader | None = None
         self._temp_dir: Path | None = None
         self._cancelled = False
 
     def do_update(self, download_url: str, version: str) -> None:
-        dialog = UpdateDialog(self.app.view, download_url, version)
+        dialog = UpdateDialog(self.app.view)
+        dialog.status_label.config(text=_("正在下载更新包 v{version}...", version=version))
         self._dialog = dialog
         self._downloader = None
         self._temp_dir = None

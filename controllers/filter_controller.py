@@ -6,6 +6,9 @@ import tkinter as tk
 
 from utils.i18n import _
 
+if TYPE_CHECKING:
+    from .app_controller import AppController
+
 
 @dataclass
 class _FilterSnapshot:
@@ -17,9 +20,6 @@ class _FilterSnapshot:
     size_max_unit: str = ""
     folder_selection: tuple = ()
     folder_all: bool = True
-
-if TYPE_CHECKING:
-    from .app_controller import AppController
 
 
 class FilterController:

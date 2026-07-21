@@ -15,18 +15,17 @@ class ClickMenuView:
     single_file_menu: Menu
     multi_file_menu: Menu
     __slots__ = (
-        "parent", "preview_setting_menu", "model_menu",
+        "preview_setting_menu", "model_menu",
         "single_file_menu", "multi_file_menu",
     )
 
     def __init__(self, parent: tk.Misc) -> None:
-        self.parent = parent
-        self.preview_setting_menu, self.model_menu = self.__set_preview_setting_menu()
-        self.single_file_menu = self.__set_single_file_menu()
-        self.multi_file_menu = self.__set_multi_file_menu()
+        self.preview_setting_menu, self.model_menu = self.__set_preview_setting_menu(parent)
+        self.single_file_menu = self.__set_single_file_menu(parent)
+        self.multi_file_menu = self.__set_multi_file_menu(parent)
 
-    def __set_preview_setting_menu(self) -> tuple[Menu, Menu]:
-        menu = Menu(self.parent, tearoff=0, activeborderwidth=TkS(3))
+    def __set_preview_setting_menu(self, parent) -> tuple[Menu, Menu]:
+        menu = Menu(parent, tearoff=0, activeborderwidth=TkS(3))
         menu.add_command(label=_("详情模式"))
         menu.add_command(label=_("中等图标"))
         menu.add_command(label=_("大图标"))
@@ -35,12 +34,12 @@ class ClickMenuView:
         for count in (10, 30, 50, 100):
             menu.add_command(label=_("结果数: {count}", count=count))
         menu.add_separator()
-        model_menu = Menu(self.parent, tearoff=0)
+        model_menu = Menu(parent, tearoff=0)
         menu.add_cascade(label=_("切换模型"), menu=model_menu)
         return menu, model_menu
 
-    def __set_single_file_menu(self) -> Menu:
-        menu = Menu(self.parent, tearoff=0, activeborderwidth=TkS(3))
+    def __set_single_file_menu(self, parent) -> Menu:
+        menu = Menu(parent, tearoff=0, activeborderwidth=TkS(3))
         menu.add_command(label=_("复制图片"))
         menu.add_command(label=_("复制路径"))
         menu.add_command(label=_("图片另存为"))
@@ -50,8 +49,8 @@ class ClickMenuView:
         menu.add_command(label=_("打开文件夹"))
         return menu
 
-    def __set_multi_file_menu(self) -> Menu:
-        menu = Menu(self.parent, tearoff=0, activeborderwidth=TkS(3))
+    def __set_multi_file_menu(self, parent) -> Menu:
+        menu = Menu(parent, tearoff=0, activeborderwidth=TkS(3))
         menu.add_command(label=_("复制图片"))
         menu.add_command(label=_("复制路径"))
         menu.add_command(label=_("图片另存为"))

@@ -23,14 +23,12 @@ class ExcludeDialog(tk.Toplevel):
         "add_rule_btn", "del_rule_btn", "help_btn",
         "rules_tree", "preview_path_entry", "browse_btn",
         "preview_status_label", "stop_btn", "preview_tree",
-        "parent", "setting", "_ipady", "_ipadx",
+        "parent"
     )
 
-    def __init__(self, parent, setting) -> None:
+    def __init__(self, parent) -> None:
         super().__init__(parent)
-        self.parent = parent
-        self.setting = setting
-        self.__win()
+        self.__win(parent)
         edit_rules_frame = self.__set_edit_rules_frame()
         button_frame = self.__set_edit_frame(edit_rules_frame)
         self.add_rule_btn = self.__set_add_rule_btn(button_frame)
@@ -40,25 +38,23 @@ class ExcludeDialog(tk.Toplevel):
         
         preview_rules_frame = self.__set_preview_rules_frame()
         path_frame = self.__set_edit_frame(preview_rules_frame)
+        status_frame = self.__set_edit_frame(preview_rules_frame)
         self.preview_path_entry = self.__set_preview_path_entry(path_frame)
         self.browse_btn = self.__set_browse_btn(path_frame)
-        self.status_frame = self.__set_edit_frame(preview_rules_frame)
-        self.preview_status_label = self.__set_preview_status_label(self.status_frame)
-        self.stop_btn = self.__set_stop_btn(self.status_frame)
+        self.preview_status_label = self.__set_preview_status_label(status_frame)
+        self.stop_btn = Button(status_frame, text=_("停止"), style=LINK, cursor="hand2")
         self.preview_tree = self.__set_preview_tree(preview_rules_frame)
 
-    def __win(self) -> None:
+    def __win(self, parent: tk.Tk) -> None:
         self.withdraw()
         self.title(_("排除设置"))
         self.iconbitmap(WinInfo.ico_path)
         win_w = TkS(620)
         win_h = TkS(520)
-        self._ipady = max(4, win_h // 81)
-        self._ipadx = max(4, win_h // 56)
-        x = self.parent.winfo_rootx() + (self.parent.winfo_width() - win_w) // 2
-        y = self.parent.winfo_rooty() + (self.parent.winfo_height() - win_h) // 2
+        x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
+        y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
-        self.transient(self.parent)
+        self.transient(parent)
         self.grab_set()
         self.deiconify()
 
@@ -83,12 +79,12 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_add_rule_btn(self, parent: Frame) -> Button:
         add_rule_btn = Button(parent, text=_("新建规则"), takefocus=False, cursor="hand2")
-        add_rule_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=self._ipadx, ipady=self._ipady)
+        add_rule_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(9), ipady=TkS(6))
         return add_rule_btn
 
     def __set_del_rule_btn(self, parent: Frame) -> Button:
         del_rule_btn = Button(parent, text=_("删除规则"), takefocus=False, cursor="hand2")
-        del_rule_btn.pack(side=tk.LEFT, ipadx=self._ipadx, ipady=self._ipady)
+        del_rule_btn.pack(side=tk.LEFT, ipadx=TkS(9), ipady=TkS(6))
         return del_rule_btn
 
     def __set_help_btn(self, parent: Frame) -> Button:
@@ -103,22 +99,18 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_preview_path_entry(self, parent: Frame) -> Entry:
         preview_path_entry = Entry(parent, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(2)), ipady=self._ipady)
+        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(2)), ipady=TkS(6))
         return preview_path_entry
 
     def __set_browse_btn(self, parent: Frame) -> Button:
         browse_btn = Button(parent, text=_("浏览"), takefocus=False, cursor="hand2")
-        browse_btn.pack(side=tk.RIGHT, ipadx=self._ipadx * 2, ipady=self._ipady)
+        browse_btn.pack(side=tk.RIGHT, ipadx=TkS(9) * 2, ipady=TkS(6))
         return browse_btn
 
     def __set_preview_status_label(self, parent: Frame) -> Label:
         preview_status_label = Label(parent, anchor=tk.W)
         preview_status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         return preview_status_label
-
-    def __set_stop_btn(self, parent: Frame) -> Button:
-        stop_btn = Button(parent, text=_("停止"), style=LINK, cursor="hand2")
-        return stop_btn
 
     def __set_preview_tree(self, parent: Labelframe) -> Treeview:
         preview_tree = Treeview(parent, columns=("path",), show="", cursor="hand2")

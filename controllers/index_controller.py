@@ -173,7 +173,7 @@ class IndexController:
         self.app.filter_controller.refresh_folder_filter()
 
     def open_exclude_dialog(self) -> None:
-        dialog = ExcludeDialog(self.app.view, self.app.setting)
+        dialog = ExcludeDialog(self.app.view)
         controller = ExcludePreviewController(dialog, self.app.setting)
         dialog.help_btn.config(command=controller.open_help_doc)
         dialog.stop_btn.config(command=controller.stop_scan)

@@ -11,37 +11,31 @@ class UpdateDialog(tk.Toplevel):
     status_label: Label
     progressbar: Progressbar
     hint_label: Label
-    __slots__ = (
-        "status_label", "progressbar", "hint_label",
-        "parent", "download_url", "version",
-    )
+    __slots__ = ("status_label", "progressbar", "hint_label")
 
-    def __init__(self, parent, download_url, version) -> None:
+    def __init__(self, parent) -> None:
         super().__init__(parent)
-        self.parent = parent
-        self.download_url = download_url
-        self.version = version
-        self.__win()
+        self.__win(parent)
         self.status_label = self.__set_status_label()
         self.progressbar = self.__set_progressbar()
         self.hint_label = self.__set_hint_label()
 
-    def __win(self) -> None:
+    def __win(self, parent) -> None:
         self.withdraw()
         self.title(_("软件更新"))
         self.iconbitmap(WinInfo.ico_path)
         self.resizable(False, False)
-        self.transient(self.parent)
+        self.transient(parent)
         self.grab_set()
         win_w = TkS(380)
         win_h = TkS(130)
-        x = self.parent.winfo_rootx() + (self.parent.winfo_width() - win_w) // 2
-        y = self.parent.winfo_rooty() + (self.parent.winfo_height() - win_h) // 2
+        x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
+        y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.deiconify()
 
     def __set_status_label(self) -> Label:
-        label = Label(self, text=_("正在下载更新包 v{version}...", version=self.version))
+        label = Label(self)
         label.pack(pady=(TkS(15), TkS(5)))
         return label
 
