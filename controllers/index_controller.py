@@ -23,6 +23,7 @@ class IndexController:
         self.app = app_controller
         self._is_updating: bool = False
         self._is_auto_updating: bool = False
+        self._is_cleaning: bool = False
 
     @property
     def is_updating(self) -> bool:
@@ -246,22 +247,34 @@ class IndexController:
         if not search_dirs:
             messagebox.showinfo(_("提示"), _("当前没有索引目录。"))
             return
-
-        excluded = self.app.search_tools.get_excluded_files(rules, search_dirs)
-        if not excluded:
-            messagebox.showinfo(_("提示"), _("索引中没有匹配排除规则的文件。"))
+        if self._is_updating:
+            messagebox.showinfo(_("提示"), _("索引正在更新中，禁用排除规则清理！"))
             return
-
-        answer = messagebox.askyesno(
-            _("确认清理"),
-            _("将在索引中移除 {count} 个匹配排除规则的文件记录。\n\n此操作不可撤消，是否继续？", count=len(excluded))
-        )
-        if not answer:
+        if self._is_cleaning:
             return
-        self.app.search_tools.remove_files(excluded)
-        self.app.search_tools.remove_nonexists()
-        self.app.view.after(1000, self.update_index_tip)
-        messagebox.showinfo(_("提示"), _("已清理 {count} 个文件记录。", count=len(excluded)))
+        self._is_cleaning = True
+        try:
+            tip = self.app.view.index_tab.index_tip_label
+            tip.after(0, lambda: tip.config(text=_("正在检查排除文件...")))
+            excluded = self.app.search_tools.get_excluded_files(rules, search_dirs)
+            tip.after(0, lambda: tip.config(text=_("检查完成。")))
+
+            if not excluded:
+                messagebox.showinfo(_("提示"), _("索引中没有匹配排除规则的文件。"))
+                return
+
+            answer = messagebox.askyesno(
+                _("确认清理"),
+                _("将在索引中移除 {count} 个匹配排除规则的文件记录。\n\n此操作不可撤消，是否继续？", count=len(excluded))
+            )
+            if not answer:
+                return
+            self.app.search_tools.remove_files(excluded)
+            self.app.search_tools.remove_nonexists()
+            messagebox.showinfo(_("提示"), _("已清理 {count} 个文件记录。", count=len(excluded)))
+        finally:
+            self.update_index_tip()
+            self._is_cleaning = False
 
     def __check_queue(self) -> None:
         try:

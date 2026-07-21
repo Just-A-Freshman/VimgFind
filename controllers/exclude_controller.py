@@ -163,13 +163,14 @@ class ExcludePreviewController:
         self.dialog.preview_status_label.config(text=_("正在扫描目录结构...（点击停止终止扫描）"))
 
         rules = self.collect_rules()
+        clean_rules, min_bytes = exclude_rules.extract_min_size(rules)
         self._cancel_scan = False
         self._scan_thread = Thread(
-            target=self._do_preview, args=(dir_path, rules), daemon=True
+            target=self._do_preview, args=(dir_path, clean_rules, min_bytes), daemon=True
         )
         self._scan_thread.start()
 
-    def _do_preview(self, target_dir: str, rules: list[str]) -> None:
+    def _do_preview(self, target_dir: str, rules: list[str], min_bytes: int = 0) -> None:
         rules_obj = exclude_rules.compile_rules(rules)
 
         excluded_cache: list[tuple[str, bool]] = []
@@ -197,10 +198,13 @@ class ExcludePreviewController:
                                 if excluded >= MAX_PREVIEW_ITEMS:
                                     truncated = True
                                     return
-                            else:
-                                _walk(entry.path)
+                            if rules_obj and rules_obj.should_skip_dir(entry, target_dir):
+                                continue
+                            _walk(entry.path)
                         elif entry.is_file(follow_symlinks=False):
-                            if not exclude_rules.is_accepted_extension(entry.name):
+                            if rules_obj and not rules_obj.is_accepted_extension(entry.name):
+                                continue
+                            if min_bytes > 0 and entry.stat().st_size < min_bytes:
                                 continue
                             scan_cache.append((rel, False))
                             if rules_obj and rules_obj.is_excluded(rel, is_dir=False):
