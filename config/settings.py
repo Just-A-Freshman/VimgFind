@@ -45,7 +45,16 @@ class Setting:
     temp_multi_search_queue = temp_image_path / "multi_search_queue.txt"
     manifest_cache = models_dir / "_manifest_cache.json"
     error_log = config_path / "error.log"
-    accepted_exts = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.psd', '.tif', '.tiff', '.ico', '.bmp'}
+    EXT_GROUP_MAP: dict[str, set[str]] = {
+        "PNG": {".png"},
+        "JPG/JPEG": {".jpg", ".jpeg"},
+        "WebP": {".webp"},
+        "GIF": {".gif"},
+        "BMP": {".bmp"},
+        "TIFF": {".tiff", ".tif"},
+        "PSD": {".psd"}
+    }
+    accepted_exts = set().union(*EXT_GROUP_MAP.values())
 
     def __init__(self) -> None:
         Path.mkdir(Setting.temp_image_path, exist_ok=True)
