@@ -42,18 +42,12 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
                     if scanned_count % 50 == 0:
                         print(_("正在扫描目录... 已处理 {scanned_count} 项", scanned_count=scanned_count))
                     if entry.is_dir(follow_symlinks=False):
-                        rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
-                        if rules_obj and rules_obj.is_excluded(rel, is_dir=True):
-                            if not rules_obj.is_affected_by_negation(rel):
-                                continue
+                        if rules_obj and rules_obj.should_skip_dir(entry, target_dir):
+                            continue
                         stack.append(entry.path)
                     elif entry.is_file(follow_symlinks=False):
-                        if not exclude_rules.is_accepted_extension(entry.name):
+                        if rules_obj and rules_obj.should_skip_file(entry, target_dir):
                             continue
-                        if rules_obj:
-                            rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
-                            if rules_obj.is_excluded(rel, is_dir=False):
-                                continue
                         yield entry.path
         except PermissionError:
             pass
