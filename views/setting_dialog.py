@@ -163,7 +163,7 @@ class CustomMenuTab(Frame):
         "$image_dir\t图像所在文件夹路径\n"
         "$filename\t图像的名称（带后缀）\n"
         "$basename\t图像的名称（无后缀）\n"
-        "$ext\t\t图像的后缀名\n"
+        "$ext\t\t图像的后缀名"
     )
 
     __slots__ = (
@@ -184,7 +184,6 @@ class CustomMenuTab(Frame):
         self.command_tooltip = tooltip.ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_tip)
         self.command_text = Text(edit_frame)
         self.show_default()
-        self.show_detail(["Ctrl", "A"], "666")
 
     def __set_column_frames(self) -> tuple[Frame, Frame]:
         left_frame = Frame(self)
@@ -238,7 +237,7 @@ class CustomMenuTab(Frame):
         for w in self.shortcut_tip_label.master.children.values():
             w.grid_forget()
         self.shortcut_tip_label.config(text=_("选择菜单配置详细信息"))
-        self.shortcut_tip_label.grid(row=3, column=0, padx=TkS(20))
+        self.shortcut_tip_label.grid(row=2, column=0, padx=TkS(20))
 
 
 class UpdateTab(Frame):
