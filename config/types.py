@@ -67,13 +67,15 @@ class AppSettings:
     auto_update_idle_threshold: int = 300
     update_index_range: Literal["current", "all"] = "current"
     ui_style: str = "superhero"
-    current_model: str = "chinese-clip"
+    current_model: str = "osnet"
     remote_manifest_url: str = "https://raw.githubusercontent.com/Just-A-Freshman/VimgFind/main/models.json"
     cache_ttl: int = 3600
     schedule_index_save_interval: int = 600
     maximize_window: bool = False
     topmost_window: bool = False
     locale: str = "zh-CN"
+    custom_menu_items: list[dict] = field(default_factory=list)
+    other_config_path: str = ""
 
     @classmethod
     def from_dict(cls, data: dict) -> AppSettings:

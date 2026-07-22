@@ -73,10 +73,17 @@ class Setting:
             self._model_cache[model_id] = self.load_model_config(model_id)
         return self._model_cache[model_id]
 
-    def load_app_config(self) -> AppSettings:
-        if Setting.setting_path.exists():
-            with open(Setting.setting_path, "r", encoding="utf-8") as f:
-                return AppSettings.from_dict(json.load(f))
+    def load_app_config(self, default: bool = False) -> AppSettings:
+        if not Setting.setting_path.exists() or default:
+            return AppSettings()
+        with open(Setting.setting_path, "r", encoding="utf-8") as f:
+            app = AppSettings.from_dict(json.load(f))
+            if app.other_config_path == "":
+                return app
+        new_path = Path(app.other_config_path)
+        if new_path.exists() and new_path != Setting.setting_path:
+            with open(new_path, "r", encoding="utf-8") as f1:
+                return AppSettings.from_dict(json.load(f1))
         return AppSettings()
 
     def load_model_config(self, model_id: str) -> ModelConfig:
