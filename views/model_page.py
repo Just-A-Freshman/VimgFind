@@ -97,13 +97,9 @@ class ModelFrame(Frame):
         return frame
 
     def show_detail(self, model_config: ModelConfig) -> None:
-        for w in (
-            self.detail_desc_text, self.use_btn, self.uninstall_btn,
-            self.download_btn, self.download_progress_label, self.download_progressbar,
-            self.download_control_btn, self.download_cancel_btn,
-        ):
+        for w in self.name_tip_label.master.children.values():
             w.place_forget()
-
+            
         selection = self.model_tree.selection()
         name = self.model_tree.item(selection[0], "values")[0] if selection else ""
         status = self.model_tree.item(selection[0], "values")[-1] if selection else ""
@@ -134,11 +130,7 @@ class ModelFrame(Frame):
             self.uninstall_btn.config(state=tk.DISABLED if status == _(STATUS_LABEL["using"]) else tk.NORMAL)
 
     def show_default(self) -> None:
-        for w in (
-            self.name_edit_entry, self.detail_desc_text, self.use_btn, self.uninstall_btn,
-            self.download_btn, self.download_progressbar, self.download_progress_label,
-            self.download_control_btn, self.download_cancel_btn,
-        ):
+        for w in self.name_tip_label.master.children.values():
             w.place_forget()
         self.name_tip_label.config(text=_("选择模型查看详细信息"))
         self.name_tip_label.grid(row=0, column=0)
