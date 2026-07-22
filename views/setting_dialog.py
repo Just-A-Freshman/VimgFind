@@ -3,27 +3,17 @@ from __future__ import annotations
 import tkinter as tk
 
 from ttkbootstrap.constants import LINK
-from ttkbootstrap.publisher import Publisher
-from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton
+from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Treeview, Scrollbar, Notebook, Text
 
 from config.settings import WinInfo, TkS
 from utils.i18n import _
 
 
 class SettingDialog(tk.Toplevel):
-    theme_combobox: Combobox
-    locale_combobox: Combobox
-    maximize_checkbutton: Checkbutton
-    topmost_checkbutton: Checkbutton
-    open_settings_file_btn: Button
-    check_update_btn: Button
+    general_tab: GeneralTab
+    custom_menu_tab: CustomMenuTab
     _instance = None
-    __slots__ = (
-        "theme_combobox", "locale_combobox",
-        "maximize_checkbutton", "topmost_checkbutton",
-        "open_settings_file_btn", "check_update_btn",
-        "_initialized",
-    )
+    __slots__ = ("general_tab", "custom_menu_tab", "_initialized")
 
     def __new__(cls, parent=None):
         if cls._instance is not None and cls._instance.winfo_exists():
@@ -33,86 +23,215 @@ class SettingDialog(tk.Toplevel):
         instance = super().__new__(cls)
         cls._instance = instance
         return instance
-    
+
     def __init__(self, parent) -> None:
         if hasattr(self, '_initialized'):
             return
         super().__init__(parent)
         self.__win(parent)
         self._initialized = True
-        self.theme_combobox = self.__set_theme_combobox()
-        self.locale_combobox = self.__set_locale_combobox()
-        self.maximize_checkbutton = self.__set_maximize_checkbutton()
-        self.topmost_checkbutton = self.__set_topmost_checkbutton()
-        self.open_settings_file_btn = self.__set_open_settings_file_btn()
-        self.check_update_btn = self.__set_check_update_btn()
-        self.__adjust_size()
-
+        self.general_tab, self.custom_menu_tab = self.__set_notebook()
+        
     def __win(self, parent) -> None:
         self.withdraw()
-        self.title(_("通用设置"))
+        self.title(_("设置"))
         self.iconbitmap(WinInfo.ico_path)
         self.transient(parent)
-        self.update_idletasks()
-        x = parent.winfo_rootx() + (parent.winfo_width() - TkS(220)) // 2
-        y = parent.winfo_rooty() + (parent.winfo_height() - TkS(220)) // 2
-        self.geometry(f"+{x}+{y}")
-        self.minsize(TkS(200), TkS(180))
         self.deiconify()
-
-    def __set_theme_combobox(self) -> Combobox:
-        theme_setting_frame = Frame(self)
-        theme_setting_frame.grid(row=1, column=1, columnspan=2, padx=(TkS(15), TkS(15)), pady=TkS(10), sticky=tk.W)
-        Label(theme_setting_frame, text=_("界面主题：")).pack(side=tk.LEFT)
-        combo = Combobox(theme_setting_frame, state="readonly", width=TkS(6), font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        combo.pack(side=tk.LEFT)
-        return combo
-
-    def __set_locale_combobox(self) -> Combobox:
-        locale_frame = Frame(self)
-        locale_frame.grid(row=2, column=1, columnspan=2, padx=(TkS(15), TkS(15)), pady=TkS(10), sticky=tk.W)
-        Label(locale_frame, text=_("界面语言：")).pack(side=tk.LEFT)
-        combo = Combobox(
-            locale_frame, values=["中文", "English"], state="readonly", width=TkS(6),
-            font=(WinInfo.default_font_family, WinInfo.default_font_size)
-        )
-        combo.pack(side=tk.LEFT)
-        return combo
-
-    def __set_maximize_checkbutton(self) -> Checkbutton:
-        check_btn = Checkbutton(self, text=_("  启动时最大化窗口"))
-        check_btn.grid(row=3, column=1, columnspan=4, pady=TkS(10), padx=(TkS(20), TkS(15)), sticky=tk.EW)
-        return check_btn
-    
-    def __set_topmost_checkbutton(self) -> Checkbutton:
-        check_btn = Checkbutton(self, text=_("  将当前窗口置顶"))
-        check_btn.grid(row=4, column=1, columnspan=2, pady=TkS(10), padx=(TkS(20), TkS(15)), sticky=tk.EW)
-        return check_btn
-
-    def __set_check_update_btn(self) -> Button:
-        check_update_btn = Button(self, text=_("检查更新"), style=LINK, cursor="hand2")
-        check_update_btn.grid(row=5, column=1, pady=TkS(10), padx=TkS(15), sticky=tk.W)
-        return check_update_btn
-
-    def __set_open_settings_file_btn(self) -> Button:
-        open_settings_file_btn = Button(self, text=_("配置文件"), style=LINK, cursor="hand2")
-        open_settings_file_btn.grid(row=5, column=2, pady=TkS(10), padx=TkS(15))
-        return open_settings_file_btn
-
-    def __adjust_size(self) -> None:
         self.update_idletasks()
-        bbox = self.grid_bbox()
-        if bbox and bbox[2] > 0:
-            win_w = bbox[0] + bbox[2] + TkS(10)
-            win_h = bbox[1] + bbox[3] + TkS(10)
-        else:
-            return
-        parent = self.master
+        win_w = TkS(450)
+        win_h = TkS(320)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
-        self.minsize(win_w, win_h)
+        self.resizable(False, False)
 
-    def destroy(self) -> None:
-        Publisher.unsubscribe(str(self.theme_combobox))
-        super().destroy()
+    def __set_notebook(self) -> tuple[GeneralTab, CustomMenuTab]:
+        notebook = Notebook(self, style="sub.TNotebook")
+        general_tab = GeneralTab(notebook)
+        custom_menu_tab = CustomMenuTab(notebook)
+        update_tab = UpdateTab(notebook)
+        notebook.add(general_tab, text=_("  常规  "))
+        notebook.add(custom_menu_tab, text=_("  自定义菜单  "))
+        notebook.add(update_tab, text=_("  更新  "))
+        notebook.pack(fill=tk.BOTH, expand=True, padx=TkS(5), pady=TkS(5))
+        return general_tab, custom_menu_tab
+
+
+class GeneralTab(Frame):
+    locale_combobox: Combobox
+    theme_combobox: Combobox
+    maximize_checkbutton: Checkbutton
+    topmost_checkbutton: Checkbutton
+    config_path_entry: Entry
+    open_folder_btn: Button
+    open_config_btn: Button
+    change_config_btn: Button
+    help_btn: Button
+    reset_btn: Button
+    __slots__ = (
+        "locale_combobox", "theme_combobox",
+        "maximize_checkbutton", "topmost_checkbutton",
+        "config_path_entry", "open_folder_btn",
+        "open_config_btn", "change_config_btn",
+        "help_btn", "reset_btn",
+    )
+
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
+        self.grid_columnconfigure(0, weight=1)
+        self.locale_combobox = self.__set_locale_combobox()
+        self.theme_combobox = self.__set_theme_combobox()
+        self.maximize_checkbutton, self.topmost_checkbutton = self.__set_maximize_topmost_checkbutton()
+        config_label_frame = self.__set_config_labelframe()
+        self.config_path_entry = self.__set_config_path_entry(config_label_frame)
+        self.open_folder_btn, self.open_config_btn, self.change_config_btn = self.__set_config_buttons(config_label_frame)
+        self.help_btn, self.reset_btn = self.__set_bottom_buttons()
+
+    def __set_locale_combobox(self) -> Combobox:
+        frame = Frame(self)
+        frame.grid(row=0, column=0, padx=TkS(10), pady=TkS(12), sticky=tk.W)
+        Label(frame, text=_("显示语言：")).pack(side=tk.LEFT)
+        locale_combobox = Combobox(
+            frame, values=["中文", "English"], state="readonly", width=TkS(6), 
+            font=(WinInfo.default_font_family, WinInfo.default_font_size),
+        )
+        locale_combobox.pack(side=tk.LEFT)
+        return locale_combobox
+    
+    def __set_theme_combobox(self) -> Combobox:
+        frame = Frame(self)
+        frame.grid(row=1, column=0, padx=TkS(10), pady=TkS(12), sticky=tk.W)
+        Label(frame, text=_("主题设置：")).pack(side=tk.LEFT)
+        theme_combobox = Combobox(
+            frame, state="readonly", width=TkS(6), style="info",
+            font=(WinInfo.default_font_family, WinInfo.default_font_size),
+        )
+        theme_combobox.pack(side=tk.LEFT)
+        return theme_combobox
+    
+    def __set_maximize_topmost_checkbutton(self) -> tuple[Checkbutton, Checkbutton]:
+        checkbutton_frame = Frame(self)
+        checkbutton_frame.grid(row=2, column=0, padx=TkS(10), pady=TkS(15), columnspan=4, sticky=tk.EW)
+        maximize_checkbutton = Checkbutton(checkbutton_frame, text=_("启动时最大化窗口"))
+        topmost_checkbutton = Checkbutton(checkbutton_frame, text=_("将当前窗口置顶"))
+        maximize_checkbutton.pack(side=tk.LEFT)
+        topmost_checkbutton.pack(side=tk.LEFT, padx=TkS(10))
+        return maximize_checkbutton, topmost_checkbutton
+    
+    def __set_config_labelframe(self):
+        config_labelframe = Labelframe(self, text=_("配置文件存储位置"))
+        config_labelframe.grid(row=3, column=0, padx=TkS(10), pady=TkS(15), columnspan=8, sticky=tk.EW)
+        return config_labelframe
+
+    def __set_config_path_entry(self, parent):
+        config_path_entry = Entry(parent, state="readonly", font=(WinInfo.default_font_family, TkS(-10)))
+        config_path_entry.pack(side=tk.TOP, fill=tk.X, expand=True, padx=TkS(5), ipady=TkS(4))
+        return config_path_entry
+
+    def __set_config_buttons(self, parent) -> tuple[Button, Button, Button]:
+        open_folder_btn = Button(parent, text=_("打开所在文件夹"), cursor="hand2", style="link")
+        open_config_btn = Button(parent, text=_("打开"), cursor="hand2", style="link")
+        change_config_btn = Button(parent, text=_("更改"), cursor="hand2", style="link")
+        open_folder_btn.pack(side=tk.LEFT, pady=TkS(3))
+        change_config_btn.pack(side=tk.RIGHT, pady=TkS(3))
+        open_config_btn.pack(side=tk.RIGHT, padx=(0, TkS(4)), pady=TkS(3))
+        return open_folder_btn, open_config_btn, change_config_btn
+
+    def __set_bottom_buttons(self) -> tuple[Button, Button]:
+        bottom_frame = Frame(self)
+        bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10))
+        help_btn = Button(bottom_frame, text=_("帮助"), style=LINK, cursor="hand2")
+        reset_btn = Button(bottom_frame, text=_("恢复默认"), style=LINK, cursor="hand2")
+        help_btn.pack(side=tk.LEFT)
+        reset_btn.pack(side=tk.RIGHT)
+        return help_btn, reset_btn
+    
+
+class CustomMenuTab(Frame):
+    add_button: Button
+    delete_button: Button
+    custom_menu_tree: Treeview
+    in_use_checkbutton: Checkbutton
+    shortcut_tip_label: Label
+    shortcut_entry: Entry
+    command_tip_label: Label
+    command_text: Text
+
+    __slots__ = (
+        "add_button", "custom_menu_tree", "in_use_checkbutton",
+        "shortcut_entry", "command_text",
+        "shortcut_tip_label", "command_tip_label",
+    )
+
+    def __init__(self, parent) -> None:
+        super().__init__(parent)
+        left_frame, right_frame = self.__set_column_frames()
+        self.add_button, self.delete_button = self.__set_menu_buttons(left_frame)
+        self.custom_menu_tree = self.__set_custom_menu_tree(left_frame)
+        edit_frame = self.__set_edit_frame(right_frame)
+        self.shortcut_tip_label = Label(edit_frame)
+        self.shortcut_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        self.command_tip_label = Label(edit_frame, text=_("执行命令："))
+        self.command_text = Text(edit_frame)
+        self.show_default()
+        self.show_detail(["Ctrl", "A"], "666")
+
+    def __set_column_frames(self) -> tuple[Frame, Frame]:
+        left_frame = Frame(self)
+        left_frame.place(relx=0, rely=0, relheight=1, relwidth=0.5)
+        right_frame = Frame(self)
+        right_frame.place(relx=0.51, rely=0, relheight=1, relwidth=0.48)
+        return left_frame, right_frame
+    
+    def __set_menu_buttons(self, parent: Frame) -> tuple[Button, Button]:
+        btn_frame = Frame(parent)
+        btn_frame.pack(fill=tk.X, padx=TkS(3), pady=(TkS(10), 0))
+        add_btn = Button(btn_frame, text=_("新建"), takefocus=False, cursor="hand2")
+        add_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(10))
+        del_btn = Button(btn_frame, text=_("删除"), takefocus=False, cursor="hand2")
+        del_btn.pack(side=tk.LEFT, ipadx=TkS(10))
+        return add_btn, del_btn
+
+    def __set_custom_menu_tree(self, parent: Frame) -> Treeview:
+        columns = {_("菜单名称"): TkS(80), _("是否启用"): TkS(80)}
+        treeview = Treeview(parent, show="headings", columns=list(columns), padding=TkS(1))
+        for text, width in columns.items():
+            treeview.heading(text, text=text, anchor=tk.CENTER)
+            treeview.column(text, anchor=tk.CENTER, width=width, stretch=True)
+
+        scroll = Scrollbar(treeview, orient=tk.VERTICAL, command=treeview.yview)
+        scroll.pack(fill=tk.Y, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
+        treeview.configure(yscrollcommand=scroll.set)
+        treeview.pack(fill=tk.BOTH, expand=True, pady=TkS(5))
+        return treeview
+    
+    def __set_edit_frame(self, parent) -> Labelframe:
+        edit_frame = Labelframe(parent, text=_("配置编辑"))
+        edit_frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(31), TkS(5)))
+        edit_frame.grid_rowconfigure(2, weight=1)
+        edit_frame.grid_columnconfigure(0, weight=1)
+        edit_frame.grid_columnconfigure(1, weight=1)
+        return edit_frame
+
+    def show_detail(self, shortcut: list[str], command: str) -> None:
+        self.shortcut_tip_label.config(text=_("快捷键："))
+        self.shortcut_tip_label.grid(row=0, column=0, padx=TkS(5), pady=TkS(15), sticky=tk.W)
+        self.shortcut_entry.grid(row=0, column=1, sticky=tk.EW)
+        self.shortcut_entry.delete(0, tk.END)
+        self.shortcut_entry.insert(tk.END, " + ".join(shortcut))
+        self.command_tip_label.grid(row=1, column=0, padx=TkS(5), columnspan=2, sticky=tk.W)
+        self.command_text.grid(row=2, column=0, sticky=tk.EW, columnspan=2, padx=TkS(5))
+        self.command_text.delete('1.0', tk.END)
+        self.command_text.insert(tk.END, command)
+
+    def show_default(self) -> None:
+        for w in self.shortcut_tip_label.master.children.values():
+            w.grid_forget()
+        self.shortcut_tip_label.config(text=_("选择菜单配置详细信息"))
+        self.shortcut_tip_label.grid(row=3, column=0, padx=TkS(20))
+
+
+class UpdateTab(Frame):
+    pass
+
