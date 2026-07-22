@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 
 from ttkbootstrap.constants import LINK
-from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Treeview, Scrollbar, Notebook, Text
+from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Treeview, Scrollbar, Notebook, Text, tooltip
 
 from config.settings import WinInfo, TkS
 from utils.i18n import _
@@ -125,14 +125,14 @@ class GeneralTab(Frame):
         return config_labelframe
 
     def __set_config_path_entry(self, parent):
-        config_path_entry = Entry(parent, state="readonly", font=(WinInfo.default_font_family, TkS(-10)))
+        config_path_entry = Entry(parent, state="readonly", font=(WinInfo.default_font_family, TkS(-12)))
         config_path_entry.pack(side=tk.TOP, fill=tk.X, expand=True, padx=TkS(5), ipady=TkS(4))
         return config_path_entry
 
     def __set_config_buttons(self, parent) -> tuple[Button, Button, Button]:
-        open_folder_btn = Button(parent, text=_("打开所在文件夹"), cursor="hand2", style="link")
-        open_config_btn = Button(parent, text=_("打开"), cursor="hand2", style="link")
-        change_config_btn = Button(parent, text=_("更改"), cursor="hand2", style="link")
+        open_folder_btn = Button(parent, text=_("打开所在文件夹"), cursor="hand2", style="link", takefocus=False)
+        open_config_btn = Button(parent, text=_("打开"), cursor="hand2", style="link", takefocus=False)
+        change_config_btn = Button(parent, text=_("更改"), cursor="hand2", style="link", takefocus=False)
         open_folder_btn.pack(side=tk.LEFT, pady=TkS(3))
         change_config_btn.pack(side=tk.RIGHT, pady=TkS(3))
         open_config_btn.pack(side=tk.RIGHT, padx=(0, TkS(4)), pady=TkS(3))
@@ -141,12 +141,12 @@ class GeneralTab(Frame):
     def __set_bottom_buttons(self) -> tuple[Button, Button]:
         bottom_frame = Frame(self)
         bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10))
-        help_btn = Button(bottom_frame, text=_("帮助"), style=LINK, cursor="hand2")
-        reset_btn = Button(bottom_frame, text=_("恢复默认"), style=LINK, cursor="hand2")
+        help_btn = Button(bottom_frame, text=_("帮助"), style=LINK, cursor="hand2", takefocus=False)
+        reset_btn = Button(bottom_frame, text=_("恢复默认"), style=LINK, cursor="hand2", takefocus=False)
         help_btn.pack(side=tk.LEFT)
         reset_btn.pack(side=tk.RIGHT)
         return help_btn, reset_btn
-    
+
 
 class CustomMenuTab(Frame):
     add_button: Button
@@ -157,6 +157,14 @@ class CustomMenuTab(Frame):
     shortcut_entry: Entry
     command_tip_label: Label
     command_text: Text
+    command_tip = (
+        "命令将在cmd中执行，有以下变量可用：\n"
+        "$image_path\t图像路径\n"
+        "$image_dir\t图像所在文件夹路径\n"
+        "$filename\t图像的名称（带后缀）\n"
+        "$basename\t图像的名称（无后缀）\n"
+        "$ext\t\t图像的后缀名\n"
+    )
 
     __slots__ = (
         "add_button", "custom_menu_tree", "in_use_checkbutton",
@@ -173,6 +181,7 @@ class CustomMenuTab(Frame):
         self.shortcut_tip_label = Label(edit_frame)
         self.shortcut_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         self.command_tip_label = Label(edit_frame, text=_("执行命令："))
+        self.command_tooltip = tooltip.ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_tip)
         self.command_text = Text(edit_frame)
         self.show_default()
         self.show_detail(["Ctrl", "A"], "666")
