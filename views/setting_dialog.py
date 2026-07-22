@@ -37,7 +37,7 @@ class SettingDialog(tk.Toplevel):
         self.title(_("设置"))
         self.iconbitmap(WinInfo.ico_path)
         self.transient(parent)
-        self.deiconify()
+        
         self.update_idletasks()
         win_w = TkS(450)
         win_h = TkS(320)
@@ -45,6 +45,7 @@ class SettingDialog(tk.Toplevel):
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.resizable(False, False)
+        self.deiconify()
 
     def __set_notebook(self) -> tuple[GeneralTab, CustomMenuTab]:
         notebook = Notebook(self, style="sub.TNotebook")
@@ -157,6 +158,8 @@ class CustomMenuTab(Frame):
     shortcut_entry: Entry
     command_tip_label: Label
     command_text: Text
+    name_edit_tip_label: Label
+    name_edit_entry: Entry
     command_tip = (
         "命令将在cmd中执行，有以下变量可用：\n"
         "$image_path\t图像路径\n"
@@ -167,9 +170,11 @@ class CustomMenuTab(Frame):
     )
 
     __slots__ = (
-        "add_button", "custom_menu_tree", "in_use_checkbutton",
+        "add_button", "delete_button", 
+        "custom_menu_tree", "in_use_checkbutton",
         "shortcut_entry", "command_text",
         "shortcut_tip_label", "command_tip_label",
+        "name_edit_tip_label", "name_edit_entry",
     )
 
     def __init__(self, parent) -> None:
@@ -178,7 +183,10 @@ class CustomMenuTab(Frame):
         self.add_button, self.delete_button = self.__set_menu_buttons(left_frame)
         self.custom_menu_tree = self.__set_custom_menu_tree(left_frame)
         edit_frame = self.__set_edit_frame(right_frame)
-        self.shortcut_tip_label = Label(edit_frame)
+        self.name_edit_tip_label = Label(edit_frame)
+        self.name_edit_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        self.in_use_checkbutton = Checkbutton(edit_frame, text=_("启用"))
+        self.shortcut_tip_label = Label(edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         self.command_tip_label = Label(edit_frame, text=_("执行命令："))
         self.command_tooltip = tooltip.ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_tip)
@@ -217,27 +225,33 @@ class CustomMenuTab(Frame):
     def __set_edit_frame(self, parent) -> Labelframe:
         edit_frame = Labelframe(parent, text=_("配置编辑"))
         edit_frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(31), TkS(5)))
-        edit_frame.grid_rowconfigure(2, weight=1)
-        edit_frame.grid_columnconfigure(0, weight=1)
+        edit_frame.grid_rowconfigure(3, weight=1)
         edit_frame.grid_columnconfigure(1, weight=1)
         return edit_frame
 
-    def show_detail(self, shortcut: list[str], command: str) -> None:
-        self.shortcut_tip_label.config(text=_("快捷键："))
-        self.shortcut_tip_label.grid(row=0, column=0, padx=TkS(5), pady=TkS(15), sticky=tk.W)
-        self.shortcut_entry.grid(row=0, column=1, sticky=tk.EW)
+    def show_detail(self, name: str, in_use: bool, shortcut: list[str], command: str) -> None:
+        self.name_edit_tip_label.config(text=_("名称："))
+        self.name_edit_tip_label.grid(row=0, column=0, padx=TkS(5), sticky=tk.W)
+        self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)))
+        self.name_edit_entry.delete(0, tk.END)
+        self.name_edit_entry.insert(tk.END, name)
+        self.in_use_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
+        self.in_use_checkbutton.state(["selected"] if in_use else ["!selected"])
+
+        self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=TkS(10), sticky=tk.W)
+        self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
         self.shortcut_entry.delete(0, tk.END)
         self.shortcut_entry.insert(tk.END, " + ".join(shortcut))
-        self.command_tip_label.grid(row=1, column=0, padx=TkS(5), columnspan=2, sticky=tk.W)
-        self.command_text.grid(row=2, column=0, sticky=tk.EW, columnspan=2, padx=TkS(5))
+        self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=3, sticky=tk.W)
+        self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=3, padx=TkS(5), pady=(0, TkS(5)))
         self.command_text.delete('1.0', tk.END)
         self.command_text.insert(tk.END, command)
 
     def show_default(self) -> None:
-        for w in self.shortcut_tip_label.master.children.values():
+        for w in self.name_edit_tip_label.master.children.values():
             w.grid_forget()
-        self.shortcut_tip_label.config(text=_("选择菜单配置详细信息"))
-        self.shortcut_tip_label.grid(row=2, column=0, padx=TkS(20))
+        self.name_edit_tip_label.config(text=_("选择菜单配置详细信息"))
+        self.name_edit_tip_label.grid(row=3, column=1, padx=TkS(20))
 
 
 class UpdateTab(Frame):
