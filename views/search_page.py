@@ -149,8 +149,8 @@ class SearchFrame(Frame):
     nav_frame: tk.Frame
     nav_prev: Button
     nav_next: Button
-    nav_page_label: tk.Label
-    toast_label: tk.Label
+    nav_page_label: Label
+    toast_label: Label
     __slots__ = (
         "search_entry", "filter_btn",
         "search_by_browser_btn", "search_by_clipboard_btn",
@@ -178,8 +178,8 @@ class SearchFrame(Frame):
         self.preview_frame2 = self.__set_preview_frame2()
         self.preview_canvas1 = PreviewCanvasView(self.preview_frame1)
         self.preview_canvas2 = PreviewCanvasView(self.preview_frame2)
-        self.__set_nav_buttons()
-        self.toast_label = self.__set_toast_label()
+        self.toast_label = Label(self.preview_container, background="#50a450")
+        self.nav_frame, self.nav_page_label, self.nav_prev, self.nav_next = self.__set_nav_buttons()
 
     def __set_search_entry(self) -> Entry:
         ipt = Entry(self, font=(WinInfo.default_font_family, WinInfo.default_font_size))
@@ -221,29 +221,22 @@ class SearchFrame(Frame):
         frame.place(relx=0.63, rely=0.5555, relwidth=0.365, relheight=0.4444)
         return frame
 
-    def __set_nav_buttons(self) -> None:
-        self.nav_frame = tk.Frame(self.preview_container, bg="#6c757d", borderwidth=TkS(6))
-        self.nav_page_label = tk.Label(self.nav_frame, text="0 / 0", bg="#6c757d", fg="white")
-        self.nav_page_label.pack(side=tk.LEFT, padx=(TkS(15), 0))
-        self.nav_prev = Button(
-            self.nav_frame, text="◀", takefocus=False,
+    def __set_nav_buttons(self) -> tuple[tk.Frame, Label, Button, Button]:
+        nav_frame = tk.Frame(self.preview_container, borderwidth=TkS(6))
+        nav_page_label = Label(nav_frame, text="0 / 0")
+        nav_page_label.pack(side=tk.LEFT, padx=(TkS(15), 0))
+        nav_prev = Button(
+            nav_frame, text="◀", takefocus=False,
             cursor="hand2", padding=(TkS(4), TkS(1)), width=3
         )
-        self.nav_next = Button(
-            self.nav_frame, text="▶", takefocus=False,
+        nav_next = Button(
+            nav_frame, text="▶", takefocus=False,
             cursor="hand2", padding=(TkS(4), TkS(1)), width=3
         )
-        self.nav_next.pack(side=tk.RIGHT, padx=(0, TkS(5)))
-        self.nav_prev.pack(side=tk.RIGHT, padx=(0, TkS(5)))
-        self.nav_frame.pack_forget()
-
-    def __set_toast_label(self) -> tk.Label:
-        toast = tk.Label(
-            self, font=(WinInfo.default_font_family, TkS(-14)),
-            bg="#50a450", fg="white", padx=TkS(10), pady=TkS(4),
-        )
-        toast.place(relx=1.0, rely=1.0, anchor=tk.SE, x=TkS(-10), y=TkS(-10))
-        return toast
+        nav_next.pack(side=tk.RIGHT, padx=(0, TkS(5)))
+        nav_prev.pack(side=tk.RIGHT, padx=(0, TkS(5)))
+        nav_frame.pack_forget()
+        return nav_frame, nav_page_label, nav_prev, nav_next
 
     def set_nav_visible(self, show: bool) -> None:
         if show:
