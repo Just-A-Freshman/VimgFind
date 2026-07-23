@@ -49,15 +49,21 @@ class MenuController:
             except Exception as e:
                 messagebox.showerror("错误", _("自定义命令执行失败: {err}\n命令: {cmd}", err=str(e), cmd=resolved))
 
+    def __append_custom_menu(self, menu: Menu, selected_files: list[Path]):
+        custom_items = self.app.setting.app.custom_menu_items
+        if not custom_items:
+            return
+        for item in custom_items:
+            label, in_use, shortcut, cmd = item.values()
+            if not in_use:
+                continue
+            menu.add_command(label=label, command=lambda f=selected_files, c=cmd: self.__run_custom_command(f, c))
+        if menu.index(tk.END) is not None: 
+            menu.add_separator()
+
     def __create_single_file_menu(self, widget, selected_file: Path) -> Menu:
-        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
-        # custom_items = self.app.setting.app.custom_menu_items
-        # if custom_items:
-        #     menu.add_separator()
-        #     for item in custom_items:
-        #         label = item.get("label", _("未命名"))
-        #         cmd = item.get("command", "")
-        #         menu.add_command(label=label, command=lambda f=selected_files, c=cmd: run_custom_command(f, c))
+        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3), bd=0)
+        self.__append_custom_menu(menu, [selected_file])
         menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
         menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
         menu.add_command(label=_("图片另存为"), command=lambda: image_ops.save_as_image(selected_file))
@@ -67,17 +73,18 @@ class MenuController:
         menu.add_command(label=_("打开文件夹"), command=lambda: file_ops.open_file(selected_file, True))
         return menu
 
-    def __create_multi_file_menu(self, parent, selected_files: list[Path]) -> Menu:
-        menu = Menu(parent, tearoff=0, activeborderwidth=TkS(3))
+    def __create_multi_file_menu(self, widget, selected_files: list[Path]) -> Menu:
+        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
+        self.__append_custom_menu(menu, selected_files)
         menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_files(*selected_files))
         menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view))
         menu.add_command(label=_("图片另存为"), command=lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
-        menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(*selected_files, widget=parent))
+        menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(*selected_files, widget=widget))
         return menu
     
-    def __create_adjustment_menu(self, parent) -> Menu:
-        menu = Menu(parent, tearoff=0, activeborderwidth=TkS(3))
-        model_menu = Menu(parent, tearoff=0)
+    def __create_adjustment_menu(self) -> Menu:
+        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
+        model_menu = Menu(menu, tearoff=0)
         ctrl = self.app.search_controller
         for label, mode in (
             (_("详情模式"), "detail_info"), (_("中等图标"), "medium_ico"),
@@ -120,14 +127,18 @@ class MenuController:
         menu.post(event.x_root, event.y_root)
         menu.bind("<Unmap>", lambda e: menu.destroy())
 
-    def show_adjustment_menu(self) -> None:
-        # adjustment_menu = self.__create_preview_setting_menu(event.widget)
-        # frame1_right = event.widget.winfo_rootx() + event.widget.winfo_width()
-        # menu_font = tkfont.Font(font=adjustment_menu.cget("font"))
-        # menu_width = int(menu_font.measure("-") * 21)
-        # adjustment_menu.post(frame1_right - menu_width, event.widget.winfo_rooty() + TkS(25))
-        # adjustment_menu.bind("<Unmap>", lambda e: adjustment_menu.destroy())
-        pass
+    def show_adjustment_menu(self, widget) -> None:
+        def get_label(i) -> str:
+            try:
+                return adjustment_menu.entrycget(i, 'label')
+            except tk.TclError:
+                return ""
+        adjustment_menu = self.__create_adjustment_menu()
+        winfo_right = widget.winfo_rootx() + widget.winfo_width()
+        menu_font = tkfont.Font(font=adjustment_menu.cget("font"))
+        menu_width = max(menu_font.measure(get_label(i)) for i in range(adjustment_menu.index(tk.END) or 0 + 1)) + TkS(65)
+        adjustment_menu.post(winfo_right - menu_width, widget.winfo_rooty() + TkS(25))
+        adjustment_menu.bind("<Unmap>", lambda e: adjustment_menu.destroy())
 
     def double_click_open_file(self, event: tk.Event, widget=None) -> None:
         if widget is None:
