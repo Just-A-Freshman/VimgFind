@@ -29,6 +29,8 @@ class ImageLoader:
                 item=item, size=(0, 0), photo=None, error="加载图片失败！"
             ))
         else:
+            if img.mode == 'P':
+                img = img.convert('RGBA')
             img = ImageOps.exif_transpose(img) or img
             width, height = img.size
             img.thumbnail((thumbnail_size, thumbnail_size))
@@ -43,12 +45,7 @@ class ImageLoader:
         results = []
         while not self._result_queue.empty():
             result = self._result_queue.get_nowait()
-            photo = None
-            if result.photo is not None:
-                img = result.photo
-                if img.mode == 'P':
-                    img = img.convert('RGBA')
-                photo = ImageTk.PhotoImage(img)
+            photo = ImageTk.PhotoImage(result.photo) if result.photo is not None else None
             results.append(LoaderResult(
                 item=result.item, size=result.size, photo=photo, error=result.error
             ))
