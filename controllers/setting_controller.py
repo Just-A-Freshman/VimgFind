@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from config.settings import Setting, WinInfo, TkS
 from views import SettingDialog
 from utils.i18n import I18n, _
-from utils.shortcut import MODIFIER_KEYS, parse_event_to_shortcut
+from utils.shortcut import track_modifiers, on_shortcut_key
 import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.update_checker as update_checker
@@ -158,7 +158,10 @@ class CustomMenuController:
         self.custom_menu_tab.custom_menu_tree.bind("<<TreeviewSelect>>", self.__on_tree_select)
         self.custom_menu_tab.name_edit_entry.bind("<KeyRelease>", self.__on_name_change)
         self.custom_menu_tab.in_use_checkbutton.config(command=self.__on_in_use_change)
-        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>", self.__on_shortcut_key)
+        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>", track_modifiers, add="+")
+        self.custom_menu_tab.shortcut_entry.bind("<KeyRelease>", track_modifiers, add="+")
+        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>",
+            lambda e: on_shortcut_key(e, self.custom_menu_tab.shortcut_entry, self.__save_shortcut_to_data), add="+")
         self.custom_menu_tab.shortcut_entry.bind("<FocusOut>", self.__on_shortcut_focusout)
         self.custom_menu_tab.command_text.bind("<KeyRelease>", self.__on_command_change)
         if not self.custom_menu_tab.custom_menu_tree.selection():
@@ -179,26 +182,6 @@ class CustomMenuController:
     def item_data(self):
         return self.__items_data
     
-    def __on_shortcut_key(self, event) -> str | None:
-        tab = self.custom_menu_tab
-        keysym: str = event.keysym
-        if keysym in MODIFIER_KEYS:
-            return "break"
-
-        if keysym in ("BackSpace", "Delete"):
-            if not bool(event.state & (0x0004 | 0x0001 | 0x0008 | 0x0040)):
-                tab.shortcut_entry.delete(0, "end")
-                self.__save_shortcut_to_data([])
-                return "break"
-
-        shortcut = parse_event_to_shortcut(event)
-        tab.shortcut_entry.delete(0, "end")
-        tab.shortcut_entry.insert(0, " + ".join(shortcut))
-
-        self.__save_shortcut_to_data(shortcut)
-
-        return "break"
-
     def __on_shortcut_focusout(self, _event=None) -> None:
         selection = self.custom_menu_tab.custom_menu_tree.selection()
         if not selection:

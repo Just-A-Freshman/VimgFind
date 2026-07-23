@@ -14,6 +14,7 @@ from PIL import Image
 
 from config.settings import Setting, TkS
 from utils.i18n import _
+from utils.shortcut import track_modifiers
 from views.widgets import DetailListView, ThumbnailGridView
 import utils.decorators as decorators
 import utils.file_ops as file_ops
@@ -44,6 +45,8 @@ class SearchController:
             tab.preview_view.bind("<<ItemviewSelect>>", self.__preview_found_image)
             tab.preview_view.bind("<Control-a>", lambda e: tab.preview_view.selection_set(tk.ALL))
             tab.preview_view.bind("<Control-v>", lambda e: self.search_image_by_clipboard())
+            tab.preview_view.bind("<KeyPress>", track_modifiers, add="+")
+            tab.preview_view.bind("<KeyRelease>", track_modifiers, add="+")
             tab.preview_view.bind("<KeyPress>", self.app.menu_controller.on_custom_shortcut, add="+")
             return
         tab.search_by_browser_btn.config(command=self.search_by_browser)

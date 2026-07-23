@@ -12,7 +12,7 @@ from ttkbootstrap import Treeview, Menu
 
 from config.settings import TkS
 from utils.i18n import _
-from utils.shortcut import parse_event_to_shortcut
+from utils.shortcut import build_shortcut, track_modifiers
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
@@ -27,7 +27,7 @@ class MenuController:
         self.app = app_controller
 
     def on_custom_shortcut(self, event) -> str | None:
-        shortcut = parse_event_to_shortcut(event)
+        shortcut = build_shortcut(event)
         pv = self.app.view.search_tab.preview_view
         selected_ids = pv.selection()
         if not selected_ids:
