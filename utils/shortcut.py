@@ -32,7 +32,7 @@ def parse_event_to_shortcut(event) -> list[str]:
         modifiers.append("Ctrl")
     if event.state & 0x0001:
         modifiers.append("Shift")
-    if event.state & 0x0008:
+    if event.state & 0x0008 or event.state & 0x20000:
         modifiers.append("Alt")
     if event.state & 0x0040:
         modifiers.append("Win")
