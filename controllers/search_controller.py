@@ -50,7 +50,7 @@ class SearchController:
         tab.filter_panel.cancel_btn.config(command=self.app.filter_controller.cancel_filter)
         tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.toggle_filter_panel())
         tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())
-        tab.preview_view.bind("<<ItemviewSelect>>", self.preview_found_image)
+        tab.preview_view.bind("<<ItemviewSelect>>", self.__preview_found_image)
         tab.preview_view.bind("<Control-a>", lambda e: tab.preview_view.selection_set(tk.ALL))
         tab.preview_view.bind("<Control-v>", lambda e: self.search_image_by_clipboard())
 
@@ -63,10 +63,10 @@ class SearchController:
             image_paths = list(raw_paths)
 
         if len(image_paths) > 1:
-            self._write_queue_file(image_paths)
+            self.__write_queue_file(image_paths)
             self.__search_image()
         else:
-            self._delete_queue_file()
+            self.__delete_queue_file()
             image_path = image_paths[0]
             if not Path(image_path).is_file():
                 return
@@ -87,7 +87,7 @@ class SearchController:
                 all_paths = [Path(l.strip()) for l in copy_text.splitlines() if l.strip()]
                 valid_paths = [str(p.absolute()) for p in all_paths if p.is_file()]
                 if len(valid_paths) > 1:
-                    self._write_queue_file(valid_paths)
+                    self.__write_queue_file(valid_paths)
                     self.__search_image()
                     return
                 elif len(valid_paths) == 1:
@@ -111,14 +111,54 @@ class SearchController:
                 Setting.temp_image_path.mkdir(exist_ok=True)
             image_obj.save(image_path)
 
-        self._delete_queue_file()
+        self.__delete_queue_file()
         self.__search_image(image_obj, source_path=str(image_path.absolute()))
 
     @decorators.send_task
     def search_image_by_text(self) -> None:
         text = self.app.view.search_tab.search_entry.get().strip()
-        self._delete_queue_file()
+        self.__delete_queue_file()
         self.__search_image(text)
+
+    def resend_last_search(self) -> None:
+        if isinstance(self._last_search_content, str):
+            self.__search_image(self._last_search_content)
+        elif self._queue_total > 0:
+            self.__search_image()
+        else:
+            self.search_by_browser([str(self._last_search_content)])
+
+    def set_preview_result_count(self, max_match_count: int) -> None:
+        assert self.app.search_tools
+        self.app.setting.app.max_match_count = min(max_match_count, 100)
+        self.app.search_tools.update_max_match_count(max_match_count)
+        self.resend_last_search()
+
+    def set_similarity_threshold(self, value: float | None) -> None:
+        try:
+            if value is not None:
+                self.similarity_threshold = min(float(value), 100)
+        except (ValueError, TypeError):
+            self.similarity_threshold = 0.0
+
+    def set_preview_mode(self, mode: Literal["detail_info", "medium_ico", "big_ico", "huge_ico"]) -> None:
+        tab = self.app.view.search_tab
+        results = tab.preview_view.get_show_results()
+        current_selection = tab.preview_view.selection()
+        tab.preview_view.destroy()
+        self.app.setting.app.preview_mode = mode
+        if mode == "detail_info":
+            tab.preview_view = DetailListView(tab.preview_container, {_("大小"): 100, _("修改时间"): 160, _("相似度"): 100})
+        else:
+            thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 220)
+            tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
+        if self._queue_total > 0:
+            tab.set_nav_visible(True)
+        self.env_init(only_preview_widget=True)
+        for result in results:
+            img_path, *extra_info = result
+            tab.preview_view.append(img_path, *extra_info)
+        tab.preview_view.selection_set(*current_selection)
 
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools
@@ -183,13 +223,13 @@ class SearchController:
                 return
             first_img_path, first_sim = first_result
             if Path(first_img_path).exists():
-                first_extra_info = SearchController.generate_extra_info(first_img_path, first_sim)
+                first_extra_info = SearchController.__generate_extra_info(first_img_path, first_sim)
                 item = tab.preview_view.append(first_img_path, *first_extra_info)
                 tab.preview_view.selection_set(item)
 
             for img_path, similarity in results:
                 if Path(img_path).exists():
-                    extra_info = SearchController.generate_extra_info(img_path, similarity)
+                    extra_info = SearchController.__generate_extra_info(img_path, similarity)
                     tab.preview_view.append(img_path, *extra_info)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
@@ -197,14 +237,14 @@ class SearchController:
         finally:
             self._is_finish_search = True
 
-    def _write_queue_file(self, paths: list[str]) -> None:
+    def __write_queue_file(self, paths: list[str]) -> None:
         linecache.clearcache()
         Setting.temp_multi_search_queue.parent.mkdir(parents=True, exist_ok=True)
         Setting.temp_multi_search_queue.write_text("\n".join(paths), encoding="utf-8")
         self._queue_index = 0
         self._queue_total = len(paths)
 
-    def _delete_queue_file(self) -> None:
+    def __delete_queue_file(self) -> None:
         if Setting.temp_multi_search_queue.exists():
             Setting.temp_multi_search_queue.unlink(missing_ok=True)
         self._queue_index = self._queue_total = 0
@@ -221,7 +261,7 @@ class SearchController:
         self._nav_debounce_timer = tab.after(50, do_navigate)
 
     @staticmethod
-    def generate_extra_info(image_path: str, similarity: float) -> tuple:
+    def __generate_extra_info(image_path: str, similarity: float) -> tuple:
         st = os.stat(image_path)
         mtime = datetime.datetime.fromtimestamp(st.st_mtime)
         content = (
@@ -231,47 +271,7 @@ class SearchController:
         )
         return content
 
-    def resend_last_search(self) -> None:
-        if isinstance(self._last_search_content, str):
-            self.__search_image(self._last_search_content)
-        elif self._queue_total > 0:
-            self.__search_image()
-        else:
-            self.search_by_browser([str(self._last_search_content)])
-
-    def set_preview_result_count(self, max_match_count: int) -> None:
-        assert self.app.search_tools
-        self.app.setting.app.max_match_count = min(max_match_count, 100)
-        self.app.search_tools.update_max_match_count(max_match_count)
-        self.resend_last_search()
-
-    def set_similarity_threshold(self, value: float | None) -> None:
-        try:
-            if value is not None:
-                self.similarity_threshold = min(float(value), 100)
-        except (ValueError, TypeError):
-            self.similarity_threshold = 0.0
-
-    def set_preview_mode(self, mode: Literal["detail_info", "medium_ico", "big_ico", "huge_ico"]) -> None:
-        tab = self.app.view.search_tab
-        results = tab.preview_view.get_show_results()
-        current_selection = tab.preview_view.selection()
-        tab.preview_view.destroy()
-        self.app.setting.app.preview_mode = mode
-        if mode == "detail_info":
-            tab.preview_view = DetailListView(tab.preview_container, {_("大小"): 100, _("修改时间"): 160, _("相似度"): 100})
-        else:
-            thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 220)
-            tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
-        if self._queue_total > 0:
-            tab.set_nav_visible(True)
-        self.env_init(only_preview_widget=True)
-        for result in results:
-            img_path, *extra_info = result
-            tab.preview_view.append(img_path, *extra_info)
-        tab.preview_view.selection_set(*current_selection)
-
-    def preview_found_image(self, event: tk.Event) -> None:
+    def __preview_found_image(self, event: tk.Event) -> None:
         @decorators.send_task
         def _preview() -> None:
             try:
