@@ -51,6 +51,10 @@ __MODIFIER_ORDER: list[str] = ["Ctrl", "Alt", "Shift", "Win"]
 _active_modifiers: set[str] = set()
 
 
+def reset_modifiers() -> None:
+    _active_modifiers.clear()
+
+
 def track_modifiers(event) -> None:
     keysym = event.keysym
     if keysym in __MODIFIER_LOOKUP:

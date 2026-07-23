@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from config.settings import Setting, WinInfo, TkS
 from views import SettingDialog
 from utils.i18n import I18n, _
-from utils.shortcut import track_modifiers, on_shortcut_key
+import utils.shortcut as shortcut
 import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.update_checker as update_checker
@@ -158,10 +158,12 @@ class CustomMenuController:
         self.custom_menu_tab.custom_menu_tree.bind("<<TreeviewSelect>>", self.__on_tree_select)
         self.custom_menu_tab.name_edit_entry.bind("<KeyRelease>", self.__on_name_change)
         self.custom_menu_tab.in_use_checkbutton.config(command=self.__on_in_use_change)
-        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>", track_modifiers, add="+")
-        self.custom_menu_tab.shortcut_entry.bind("<KeyRelease>", track_modifiers, add="+")
-        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>",
-            lambda e: on_shortcut_key(e, self.custom_menu_tab.shortcut_entry, self.__save_shortcut_to_data), add="+")
+        self.custom_menu_tab.shortcut_entry.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")
+        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>", shortcut.track_modifiers, add="+")
+        self.custom_menu_tab.shortcut_entry.bind("<KeyRelease>", shortcut.track_modifiers, add="+")
+        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>", lambda e: shortcut.on_shortcut_key(
+            e, self.custom_menu_tab.shortcut_entry, self.__save_shortcut_to_data), add="+"
+        )
         self.custom_menu_tab.shortcut_entry.bind("<FocusOut>", self.__on_shortcut_focusout)
         self.custom_menu_tab.command_text.bind("<KeyRelease>", self.__on_command_change)
         if not self.custom_menu_tab.custom_menu_tree.selection():

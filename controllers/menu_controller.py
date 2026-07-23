@@ -12,8 +12,8 @@ from ttkbootstrap import Treeview, Menu
 
 from config.settings import TkS
 from utils.i18n import _
-from utils.shortcut import build_shortcut, track_modifiers
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
+import utils.shortcut as shortcut
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.decorators as decorators
@@ -27,7 +27,7 @@ class MenuController:
         self.app = app_controller
 
     def on_custom_shortcut(self, event) -> str | None:
-        shortcut = build_shortcut(event)
+        custom_shortcut = shortcut.build_shortcut(event)
         pv = self.app.view.search_tab.preview_view
         selected_ids = pv.selection()
         if not selected_ids:
@@ -36,7 +36,7 @@ class MenuController:
         for item in self.app.setting.app.custom_menu_items:
             if not item.get("in_use", False):
                 continue
-            if item.get("shortcut", []) == shortcut:
+            if item.get("shortcut", []) == custom_shortcut:
                 paths = [Path(pv.item(fid)[0]) for fid in selected_ids]
                 paths = [p for p in paths if p.exists()]
                 if paths:
