@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from config.settings import Setting, WinInfo, TkS
 from views import SettingDialog
 from utils.i18n import I18n, _
+from utils.shortcut import MODIFIER_KEYS, parse_event_to_shortcut
 import utils.decorators as decorators
 import utils.update_checker as update_checker
 
@@ -57,6 +58,8 @@ class SettingController:
         custom_menu_ctrl = CustomMenuController(self.dialog.custom_menu_tab, self.app)
         # self.update_ctrl = UpdateController(dialog, self.app)
         # dialog.general_tab.topmost_checkbutton.bind("<Button-1>", lambda _: dialog.lift())
+        general_ctrl.env_init()
+        custom_menu_ctrl.env_init()
         self.dialog.protocol("WM_DELETE_WINDOW", destroy)
 
 
@@ -67,10 +70,8 @@ class GeneralController:
     def __init__(self, general_tab: GeneralTab, app_controller: AppController) -> None:
         self.general_tab = general_tab
         self.app = app_controller
-        self.__bind_event()
-        self.__env_init()
 
-    def __bind_event(self) -> None:
+    def env_init(self) -> None:
         tab = self.general_tab
         tab.theme_combobox.bind("<<ComboboxSelected>>", lambda _: self.app.setting_controller.change_theme(tab.theme_combobox.get()))
         tab.locale_combobox.bind("<<ComboboxSelected>>", self.__on_locale_change)
@@ -84,9 +85,6 @@ class GeneralController:
         tab.change_config_btn.config(command=self.__change_config_path)
         tab.help_btn.config(command=lambda: None)
         tab.reset_btn.config(command=self.__reset_to_default)
-
-    def __env_init(self) -> None:
-        tab = self.general_tab
         idx = self.LOCALE_MAP.get(self.app.setting.app.locale, 0)
         tab.locale_combobox.current(idx)
 
@@ -133,14 +131,9 @@ class GeneralController:
         )
         if not path:
             return
+        messagebox.showinfo(_("提示"), _("配置文件已切换，需要重启后才能生效。"))
         self.app.setting.app.other_config_path = path
-        new_app = self.app.setting.load_app_config()
-        self.app.setting._app = new_app
-        self.__env_init()
-        messagebox.showinfo(
-            _("提示"),
-            _("配置文件已切换，部分设置可能需要重启应用后完全生效。"),
-        )
+        self.app.destroy()
 
     def __get_active_config_path(self) -> Path:
         if self.app.setting.app.other_config_path:
@@ -153,48 +146,24 @@ class GeneralController:
         if not messagebox.askyesno(_("恢复默认"), _("确定要将所有设置恢复为默认值吗？\n此操作需要重启应用。")):
             return
         self.app.setting._app = self.app.setting.load_app_config(default=True)
-        self.app.setting.save()
-        self.app.view.after(100, self.app.destroy)
+        self.app.destroy()
 
 
 class CustomMenuController:
-    MODIFIER_KEYS: dict[str, str] = {
-        "Control_L": "Ctrl", "Control_R": "Ctrl",
-        "Shift_L": "Shift", "Shift_R": "Shift",
-        "Alt_L": "Alt", "Alt_R": "Alt",
-        "Super_L": "Win", "Super_R": "Win",
-    }
-    SPECIAL_KEYS: dict[str, str] = {
-        "Return": "Enter",
-        "space": "Space",
-        "Tab": "Tab",
-        "Escape": "Esc",
-        "BackSpace": "Backspace",
-        "Delete": "Delete",
-        "Home": "Home",
-        "End": "End",
-        "Prior": "Page Up",
-        "Next": "Page Down",
-        "Insert": "Insert",
-        "Print": "Print Screen",
-        "Pause": "Pause",
-        "Up": "↑",
-        "Down": "↓",
-        "Left": "←",
-        "Right": "→",
-    }
     DEFAULT_ITEM = {"label": _("未命名"), "in_use": False, "shortcut": [], "command": ""}
 
     def __init__(self, custom_menu_tab: CustomMenuTab, app_controller: AppController) -> None:
         self.custom_menu_tab = custom_menu_tab
         self.app = app_controller
         self.__items_data: dict[str, dict] = {}
-        self.__env_init()
-        self.__bind_event()
-        if not custom_menu_tab.custom_menu_tree.selection():
-            custom_menu_tab.show_default()
 
-    def __bind_event(self):
+    def env_init(self) -> None:
+        for item in self.app.setting.app.custom_menu_items:
+            full_item = {**self.DEFAULT_ITEM, **item}
+            iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=(
+                full_item["label"], _("是") if full_item["in_use"] else _("否"),
+            ))
+            self.__items_data[iid] = full_item
         self.custom_menu_tab.add_button.config(command=self.__add_menu_item)
         self.custom_menu_tab.delete_button.config(command=self.__delete_menu_item)
         self.custom_menu_tab.custom_menu_tree.bind("<<TreeviewSelect>>", self.__on_tree_select)
@@ -203,14 +172,8 @@ class CustomMenuController:
         self.custom_menu_tab.shortcut_entry.bind("<KeyPress>", self.__on_shortcut_key)
         self.custom_menu_tab.shortcut_entry.bind("<FocusOut>", self.__on_shortcut_focusout)
         self.custom_menu_tab.command_text.bind("<KeyRelease>", self.__on_command_change)
-
-    def __env_init(self) -> None:
-        for item in self.app.setting.app.custom_menu_items:
-            full_item = {**self.DEFAULT_ITEM, **item}
-            iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=(
-                full_item["label"], _("是") if full_item["in_use"] else _("否"),
-            ))
-            self.__items_data[iid] = full_item
+        if not self.custom_menu_tab.custom_menu_tree.selection():
+            self.custom_menu_tab.show_default()    
     
     def __save_shortcut_to_data(self, shortcut: list[str]) -> None:
         tab = self.custom_menu_tab
@@ -230,7 +193,7 @@ class CustomMenuController:
     def __on_shortcut_key(self, event) -> str | None:
         tab = self.custom_menu_tab
         keysym: str = event.keysym
-        if keysym in CustomMenuController.MODIFIER_KEYS:
+        if keysym in MODIFIER_KEYS:
             return "break"
 
         if keysym in ("BackSpace", "Delete"):
@@ -239,21 +202,7 @@ class CustomMenuController:
                 self.__save_shortcut_to_data([])
                 return "break"
 
-        modifiers: list[str] = []
-        if event.state & 0x0004:
-            modifiers.append("Ctrl")
-        if event.state & 0x0001:
-            modifiers.append("Shift")
-        if event.state & 0x0008:
-            modifiers.append("Alt")
-        if event.state & 0x0040:
-            modifiers.append("Win")
-
-        key_name: str = CustomMenuController.SPECIAL_KEYS.get(keysym, keysym)
-        if len(key_name) == 1 and key_name.isalpha():
-            key_name = key_name.lower()
-
-        shortcut = modifiers + [key_name]
+        shortcut = parse_event_to_shortcut(event)
         tab.shortcut_entry.delete(0, "end")
         tab.shortcut_entry.insert(0, " + ".join(shortcut))
 
