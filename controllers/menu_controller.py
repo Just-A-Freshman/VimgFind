@@ -11,6 +11,7 @@ from ttkbootstrap import Treeview, Menu
 
 from config.settings import TkS
 from utils.i18n import _
+from utils.shortcut import parse_event_to_shortcut
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
@@ -20,93 +21,25 @@ if TYPE_CHECKING:
 
 
 class MenuController:
-    __slots__ = ("app",)
-
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
 
-    def __get_item_files(self, event: tk.Event, preview_widget: BasicImagePreviewView) -> list[Path]:
-        selected_items = preview_widget.selection()
-        current_selected_item = preview_widget.identify_item(event)
-        if current_selected_item == "":
-            return []
-        if current_selected_item in selected_items:
-            return [Path(preview_widget.item(item)[0]) for item in selected_items]
-        preview_widget.selection_set(current_selected_item)
-        return [Path(preview_widget.item(current_selected_item)[0])]
-    
-    @staticmethod
-    def __run_custom_command(selected_files: list[Path], raw_command: str) -> None:
-        for file_path in selected_files:
-            path_str = str(file_path)
-            resolved = raw_command.replace("$image_path", path_str)
-            resolved = resolved.replace("$image_dir", str(file_path.parent))
-            resolved = resolved.replace("$filename", file_path.name)
-            resolved = resolved.replace("$basename", file_path.stem)
-            resolved = resolved.replace("$ext", file_path.suffix)
-            try:
-                subprocess.Popen(resolved, shell=True)
-            except Exception as e:
-                messagebox.showerror("错误", _("自定义命令执行失败: {err}\n命令: {cmd}", err=str(e), cmd=resolved))
-
-    def __append_custom_menu(self, menu: Menu, selected_files: list[Path]):
-        custom_items = self.app.setting.app.custom_menu_items
-        if not custom_items:
+    def on_custom_shortcut(self, event) -> str | None:
+        shortcut = parse_event_to_shortcut(event)
+        pv = self.app.view.search_tab.preview_view
+        selected_ids = pv.selection()
+        if not selected_ids:
             return
-        for item in custom_items:
-            label, in_use, shortcut, cmd = item.values()
-            if not in_use:
+
+        for item in self.app.setting.app.custom_menu_items:
+            if not item.get("in_use", False):
                 continue
-            menu.add_command(label=label, command=lambda f=selected_files, c=cmd: self.__run_custom_command(f, c))
-        if menu.index(tk.END) is not None: 
-            menu.add_separator()
-
-    def __create_single_file_menu(self, widget, selected_file: Path) -> Menu:
-        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3), bd=0)
-        self.__append_custom_menu(menu, [selected_file])
-        menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
-        menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
-        menu.add_command(label=_("图片另存为"), command=lambda: image_ops.save_as_image(selected_file))
-        menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(selected_file, widget=widget))
-        menu.add_separator()
-        menu.add_command(label=_("打开图片"), command=lambda: file_ops.open_file(selected_file))
-        menu.add_command(label=_("打开文件夹"), command=lambda: file_ops.open_file(selected_file, True))
-        return menu
-
-    def __create_multi_file_menu(self, widget, selected_files: list[Path]) -> Menu:
-        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
-        self.__append_custom_menu(menu, selected_files)
-        menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_files(*selected_files))
-        menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view))
-        menu.add_command(label=_("图片另存为"), command=lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
-        menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(*selected_files, widget=widget))
-        return menu
-    
-    def __create_adjustment_menu(self) -> Menu:
-        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
-        model_menu = Menu(menu, tearoff=0)
-        ctrl = self.app.search_controller
-        for label, mode in (
-            (_("详情模式"), "detail_info"), (_("中等图标"), "medium_ico"),
-            (_("大图标"), "big_ico"), (_("超大图标"), "huge_ico")
-        ):
-            menu.add_command(label=label, command=lambda m=mode: ctrl.set_preview_mode(m))  # type:ignore
-        
-        menu.add_separator()
-        for count in (10, 30, 50, 100):
-            menu.add_command(label=_("结果数: {count}", count=count), command=lambda c=count: ctrl.set_preview_result_count(c))
-        
-        menu.add_separator()
-        menu.add_cascade(label=_("切换模型"), menu=model_menu)
-        if self.app.index_controller.is_updating:
-            model_menu.add_command(label=_("索引更新中，暂不可用"), state=tk.DISABLED)
-        else:
-            for model in self.app.model_controller.get_downloaded_models():
-                model_menu.add_command(
-                    label=model.meta.name,
-                    command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True)
-                )
-        return menu
+            if item.get("shortcut", []) == shortcut:
+                paths = [Path(pv.item(fid)[0]) for fid in selected_ids]
+                paths = [p for p in paths if p.exists()]
+                if paths:
+                    self.__run_custom_command(paths, item["command"])
+                    return "break"
 
     def show_selected_image_menu(self, event: tk.Event, widget=None) -> None:
         if widget is None:
@@ -186,3 +119,85 @@ class MenuController:
             file_ops.delete_file(file_path, hard=False)
         self.app.search_tools.remove_files(list(map(str, file_paths)))
         self.app.index_controller.update_index_tip()
+
+    def __get_item_files(self, event: tk.Event, preview_widget: BasicImagePreviewView) -> list[Path]:
+        selected_items = preview_widget.selection()
+        current_selected_item = preview_widget.identify_item(event)
+        if current_selected_item == "":
+            return []
+        if current_selected_item in selected_items:
+            return [Path(preview_widget.item(item)[0]) for item in selected_items]
+        preview_widget.selection_set(current_selected_item)
+        return [Path(preview_widget.item(current_selected_item)[0])]
+    
+    def __run_custom_command(self, selected_files: list[Path], raw_command: str) -> None:
+        for file_path in selected_files:
+            path_str = str(file_path)
+            resolved = raw_command.replace("$image_path", path_str)
+            resolved = resolved.replace("$image_dir", str(file_path.parent))
+            resolved = resolved.replace("$filename", file_path.name)
+            resolved = resolved.replace("$basename", file_path.stem)
+            resolved = resolved.replace("$ext", file_path.suffix)
+            try:
+                subprocess.Popen(resolved, shell=True)
+            except Exception as e:
+                messagebox.showerror("错误", _("自定义命令执行失败: {err}\n命令: {cmd}", err=str(e), cmd=resolved))
+
+    def __append_custom_menu(self, menu: Menu, selected_files: list[Path]):
+        custom_items = self.app.setting.app.custom_menu_items
+        if not custom_items:
+            return
+        for item in custom_items:
+            label, in_use, shortcut, cmd = item.values()
+            if not in_use:
+                continue
+            menu.add_command(label=label, command=lambda f=selected_files, c=cmd: self.__run_custom_command(f, c))
+        if menu.index(tk.END) is not None: 
+            menu.add_separator()
+
+    def __create_single_file_menu(self, widget, selected_file: Path) -> Menu:
+        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3), bd=0)
+        self.__append_custom_menu(menu, [selected_file])
+        menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
+        menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
+        menu.add_command(label=_("图片另存为"), command=lambda: image_ops.save_as_image(selected_file))
+        menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(selected_file, widget=widget))
+        menu.add_separator()
+        menu.add_command(label=_("打开图片"), command=lambda: file_ops.open_file(selected_file))
+        menu.add_command(label=_("打开文件夹"), command=lambda: file_ops.open_file(selected_file, True))
+        return menu
+
+    def __create_multi_file_menu(self, widget, selected_files: list[Path]) -> Menu:
+        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
+        self.__append_custom_menu(menu, selected_files)
+        menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_files(*selected_files))
+        menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view))
+        menu.add_command(label=_("图片另存为"), command=lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
+        menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(*selected_files, widget=widget))
+        return menu
+    
+    def __create_adjustment_menu(self) -> Menu:
+        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
+        model_menu = Menu(menu, tearoff=0)
+        ctrl = self.app.search_controller
+        for label, mode in (
+            (_("详情模式"), "detail_info"), (_("中等图标"), "medium_ico"),
+            (_("大图标"), "big_ico"), (_("超大图标"), "huge_ico")
+        ):
+            menu.add_command(label=label, command=lambda m=mode: ctrl.set_preview_mode(m))  # type:ignore
+        
+        menu.add_separator()
+        for count in (10, 30, 50, 100):
+            menu.add_command(label=_("结果数: {count}", count=count), command=lambda c=count: ctrl.set_preview_result_count(c))
+        
+        menu.add_separator()
+        menu.add_cascade(label=_("切换模型"), menu=model_menu)
+        if self.app.index_controller.is_updating:
+            model_menu.add_command(label=_("索引更新中，暂不可用"), state=tk.DISABLED)
+        else:
+            for model in self.app.model_controller.get_downloaded_models():
+                model_menu.add_command(
+                    label=model.meta.name,
+                    command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True)
+                )
+        return menu
