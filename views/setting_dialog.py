@@ -68,13 +68,13 @@ class GeneralTab(Frame):
     open_config_btn: Button
     change_config_btn: Button
     help_btn: Button
-    reset_btn: Button
+    error_log_btn: Button
     __slots__ = (
         "locale_combobox", "theme_combobox",
         "maximize_checkbutton", "topmost_checkbutton",
         "config_path_entry", "open_folder_btn",
         "open_config_btn", "change_config_btn",
-        "help_btn", "reset_btn",
+        "help_btn", "error_log_btn",
     )
 
     def __init__(self, parent) -> None:
@@ -86,7 +86,7 @@ class GeneralTab(Frame):
         config_label_frame = self.__set_config_labelframe()
         self.config_path_entry = self.__set_config_path_entry(config_label_frame)
         self.open_folder_btn, self.open_config_btn, self.change_config_btn = self.__set_config_buttons(config_label_frame)
-        self.help_btn, self.reset_btn = self.__set_bottom_buttons()
+        self.help_btn, self.error_log_btn = self.__set_bottom_buttons()
 
     def __set_locale_combobox(self) -> Combobox:
         frame = Frame(self)
@@ -142,10 +142,10 @@ class GeneralTab(Frame):
         bottom_frame = Frame(self)
         bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10))
         help_btn = Button(bottom_frame, text=_("帮助"), style=LINK, cursor="hand2", takefocus=False)
-        reset_btn = Button(bottom_frame, text=_("恢复默认"), style=LINK, cursor="hand2", takefocus=False)
+        error_log_btn = Button(bottom_frame, text=_("错误日志"), style=LINK, cursor="hand2", takefocus=False)
         help_btn.pack(side=tk.LEFT)
-        reset_btn.pack(side=tk.RIGHT)
-        return help_btn, reset_btn
+        error_log_btn.pack(side=tk.RIGHT)
+        return help_btn, error_log_btn
 
 
 class CustomMenuTab(Frame):
