@@ -310,7 +310,7 @@ class SearchTool:
             folder_filters: list[str] | None,
             dedup: bool = False
         ) -> Iterator[tuple[str, float]]:
-        ext_set = Setting.EXT_GROUP_MAP.get(file_ext_label)
+        ext_set = Setting.ext_group_map.get(file_ext_label)
         yielded_count = 0
         threshold -= THRESHOLD_EPSILON
         prev_similarity: float | None = None
