@@ -73,18 +73,16 @@ class Setting:
             self._model_cache[model_id] = self.load_model_config(model_id)
         return self._model_cache[model_id]
 
-    def load_app_config(self, default: bool = False) -> AppSettings:
-        if not Setting.setting_path.exists() or default:
+    def load_app_config(self) -> AppSettings:
+        if not Setting.setting_path.exists():
             return AppSettings()
         with open(Setting.setting_path, "r", encoding="utf-8") as f:
-            app = AppSettings.from_dict(json.load(f))
-            if app.other_config_path == "":
-                return app
-        new_path = Path(app.other_config_path)
-        if new_path.exists() and new_path != Setting.setting_path:
-            with open(new_path, "r", encoding="utf-8") as f1:
-                return AppSettings.from_dict(json.load(f1))
-        return AppSettings()
+            self._app = AppSettings.from_dict(json.load(f))
+            active_config_path = self.get_active_config_path()
+            if active_config_path == Setting.setting_path:
+                return self._app
+        with open(active_config_path, "r", encoding="utf-8") as f1:
+            return AppSettings.from_dict(json.load(f1))
 
     def load_model_config(self, model_id: str) -> ModelConfig:
         model_path = Setting.models_dir / model_id / "model.json"
@@ -109,6 +107,13 @@ class Setting:
                         f.write(line)
                 except (ValueError, IndexError):
                     pass
+
+    def get_active_config_path(self) -> Path:
+        if self.app.other_config_path:
+            other = Path(self.app.other_config_path)
+            if other.exists():
+                return other
+        return Setting.setting_path
 
     def get_model_list(self) -> list[str]:
         if not self.models_dir.exists():
