@@ -140,7 +140,7 @@ class GeneralTab(Frame):
     def __set_bottom_buttons(self) -> tuple[Button, Button]:
         bottom_frame = Frame(self)
         bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10))
-        help_btn = Button(bottom_frame, text=_("帮助"), style=LINK, cursor="hand2", takefocus=False)
+        help_btn = Button(bottom_frame, text=_("帮助文档"), style=LINK, cursor="hand2", takefocus=False)
         error_log_btn = Button(bottom_frame, text=_("错误日志"), style=LINK, cursor="hand2", takefocus=False)
         help_btn.pack(side=tk.LEFT)
         error_log_btn.pack(side=tk.RIGHT)
@@ -158,7 +158,7 @@ class CustomMenuTab(Frame):
     command_text: Text
     name_edit_tip_label: Label
     name_edit_entry: Entry
-    command_tip = _(
+    command_variable_tip = _(
         "命令将在命令行中执行，有以下变量可用：\n"
         "$image_path\t图像路径\n"
         "$image_dir\t图像所在文件夹路径\n"
@@ -166,10 +166,10 @@ class CustomMenuTab(Frame):
         "$basename\t图像的名称（无后缀）\n"
         "$ext\t\t图像的后缀名"
     )
-
     __slots__ = (
-        "add_button", "delete_button", 
-        "custom_menu_tree", "in_use_checkbutton",
+        "add_button", "delete_button",
+        "custom_menu_tree", "help_btn",
+        "batch_mode_checkbutton", "in_use_checkbutton",
         "shortcut_entry", "command_text",
         "shortcut_tip_label", "command_tip_label",
         "name_edit_tip_label", "name_edit_entry",
@@ -180,14 +180,15 @@ class CustomMenuTab(Frame):
         left_frame, right_frame = self.__set_column_frames()
         self.add_button, self.delete_button = self.__set_menu_buttons(left_frame)
         self.custom_menu_tree = self.__set_custom_menu_tree(left_frame)
-        edit_frame = self.__set_edit_frame(right_frame)
+        self.help_btn, edit_frame = self.__set_help_edit_frame(right_frame)
         self.name_edit_tip_label = Label(edit_frame)
         self.name_edit_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         self.in_use_checkbutton = Checkbutton(edit_frame, text=_("启用"))
+        self.batch_mode_checkbutton = Checkbutton(edit_frame, text=_("批量模式"))
         self.shortcut_tip_label = Label(edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         self.command_tip_label = Label(edit_frame, text=_("执行命令："))
-        self.command_tooltip = tooltip.ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_tip)
+        self.command_tooltip = tooltip.ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_variable_tip)
         self.command_text = Text(edit_frame)
         self.show_default()
 
@@ -220,28 +221,31 @@ class CustomMenuTab(Frame):
         treeview.pack(fill=tk.BOTH, expand=True, pady=TkS(5))
         return treeview
     
-    def __set_edit_frame(self, parent) -> Labelframe:
+    def __set_help_edit_frame(self, parent) -> tuple[Button, Labelframe]:
+        help_btn = Button(parent, text=_("帮助文档"), takefocus=False, cursor="hand2", style="link")
+        help_btn.pack(side=tk.TOP, anchor=tk.E, pady=(TkS(5), 0))
         edit_frame = Labelframe(parent, text=_("配置编辑"))
-        edit_frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(31), TkS(5)))
+        edit_frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(1), TkS(5)))
         edit_frame.grid_rowconfigure(3, weight=1)
         edit_frame.grid_columnconfigure(1, weight=1)
-        return edit_frame
+        return help_btn, edit_frame
 
-    def show_detail(self, name: str, in_use: bool, shortcut: list[str], command: str) -> None:
+    def show_detail(self, name: str, in_use: bool, batch_mode: bool, shortcut: list[str], command: str) -> None:
         self.name_edit_tip_label.config(text=_("名称："))
         self.name_edit_tip_label.grid(row=0, column=0, padx=TkS(5), sticky=tk.W)
         self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)))
         self.name_edit_entry.delete(0, tk.END)
         self.name_edit_entry.insert(tk.END, name)
         self.in_use_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
-        self.in_use_checkbutton.state(["selected"] if in_use else ["!selected"])
-
+        if in_use: self.in_use_checkbutton.invoke()
         self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=TkS(10), sticky=tk.W)
         self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
         self.shortcut_entry.delete(0, tk.END)
         self.shortcut_entry.insert(tk.END, " + ".join(shortcut))
-        self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=3, sticky=tk.EW)
+        self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=2, sticky=tk.W)
+        self.batch_mode_checkbutton.grid(row=2, column=1, columnspan=2, sticky=tk.E, padx=TkS(5))
         self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=3, padx=TkS(5), pady=(0, TkS(5)))
+        if batch_mode: self.batch_mode_checkbutton.invoke()
         self.command_text.delete('1.0', tk.END)
         self.command_text.insert(tk.END, command)
 
