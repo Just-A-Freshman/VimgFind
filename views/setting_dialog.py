@@ -158,8 +158,8 @@ class CustomMenuTab(Frame):
     command_text: Text
     name_edit_tip_label: Label
     name_edit_entry: Entry
-    command_tip = (
-        "命令将在cmd中执行，有以下变量可用：\n"
+    command_tip = _(
+        "命令将在命令行中执行，有以下变量可用：\n"
         "$image_path\t图像路径\n"
         "$image_dir\t图像所在文件夹路径\n"
         "$filename\t图像的名称（带后缀）\n"
@@ -240,7 +240,7 @@ class CustomMenuTab(Frame):
         self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
         self.shortcut_entry.delete(0, tk.END)
         self.shortcut_entry.insert(tk.END, " + ".join(shortcut))
-        self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=3, sticky=tk.W)
+        self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=3, sticky=tk.EW)
         self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=3, padx=TkS(5), pady=(0, TkS(5)))
         self.command_text.delete('1.0', tk.END)
         self.command_text.insert(tk.END, command)
