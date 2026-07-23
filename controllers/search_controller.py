@@ -12,7 +12,7 @@ import tkinter as tk
 from core import SearchStatus
 from PIL import Image
 
-from config.settings import Setting
+from config.settings import Setting, TkS
 from utils.i18n import _
 from views.widgets import DetailListView, ThumbnailGridView
 import utils.decorators as decorators
@@ -33,6 +33,7 @@ class SearchController:
         self.__queue_index: int = 0
         self.__queue_total: int = 0
         self.__nav_debounce_timer: str | None = None
+        self.__show_toast_timer: str | None = None
 
     def env_init(self, only_preview_widget: bool = False) -> None:
         tab = self.app.view.search_tab
@@ -160,6 +161,15 @@ class SearchController:
             img_path, *extra_info = result
             tab.preview_view.append(img_path, *extra_info)
         tab.preview_view.selection_set(*current_selection)
+
+    def show_toast(self, message: str, duration: int = 1500) -> None:
+        toast = self.app.view.search_tab.toast_label
+        toast.config(text=message)
+        toast.place(relx=1.0, rely=1.0, anchor=tk.SE, height=TkS(30))
+        toast.lift()
+        if self.__show_toast_timer is not None:
+            self.app.view.after_cancel(self.__show_toast_timer)
+        self.__show_toast_timer = self.app.view.after(duration, lambda: toast.place_forget())
 
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools

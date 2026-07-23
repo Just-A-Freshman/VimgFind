@@ -4,8 +4,9 @@ from pathlib import Path
 from tkinter import font as tkfont
 from tkinter import messagebox, filedialog
 from typing import TYPE_CHECKING
-import subprocess
 import tkinter as tk
+import subprocess
+import logging
 
 from ttkbootstrap import Treeview, Menu
 
@@ -15,6 +16,7 @@ from utils.shortcut import parse_event_to_shortcut
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
+import utils.decorators as decorators
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -130,29 +132,42 @@ class MenuController:
         preview_widget.selection_set(current_selected_item)
         return [Path(preview_widget.item(current_selected_item)[0])]
     
+    @decorators.send_task
     def __run_custom_command(self, selected_files: list[Path], raw_command: str) -> None:
+        def run_cmd(cmd):
+            try:
+                result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
+                return result.returncode, result.stdout, result.stderr
+            except FileNotFoundError as e:
+                return -1, "", str(e)
+            except Exception as e:
+                return -1, "", str(e)
+
+        error_count = 0
         for file_path in selected_files:
-            path_str = str(file_path)
-            resolved = raw_command.replace("$image_path", path_str)
+            resolved = raw_command.replace("$image_path", str(file_path))
             resolved = resolved.replace("$image_dir", str(file_path.parent))
             resolved = resolved.replace("$filename", file_path.name)
             resolved = resolved.replace("$basename", file_path.stem)
             resolved = resolved.replace("$ext", file_path.suffix)
-            try:
-                subprocess.Popen(resolved, shell=True)
-            except Exception as e:
-                messagebox.showerror("错误", _("自定义命令执行失败: {err}\n命令: {cmd}", err=str(e), cmd=resolved))
+            returncode, stdout, stderr = run_cmd(resolved)
+            if returncode != 0:
+                logging.error(f"执行命令：{resolved}, 命令输出：{stdout}, 错误原因：{stderr}")
+                error_count += 1
+        self.app.search_controller.show_toast(
+            _("命令执行成功！") if error_count == 0 else _("{error_count}张图片的命令执行失败。", error_count=error_count)
+        )
 
     def __append_custom_menu(self, menu: Menu, selected_files: list[Path]):
         custom_items = self.app.setting.app.custom_menu_items
         if not custom_items:
             return
         for item in custom_items:
-            label, in_use, shortcut, cmd = item.values()
+            label, in_use, _, cmd = item.values()
             if not in_use:
                 continue
             menu.add_command(label=label, command=lambda f=selected_files, c=cmd: self.__run_custom_command(f, c))
-        if menu.index(tk.END) is not None: 
+        if menu.index(tk.END) is not None:
             menu.add_separator()
 
     def __create_single_file_menu(self, widget, selected_file: Path) -> Menu:
