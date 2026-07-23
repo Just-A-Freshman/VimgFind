@@ -3,7 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from tkinter import font as tkfont
 from tkinter import messagebox, filedialog
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
 import tkinter as tk
 import subprocess
 import logging
@@ -22,6 +24,57 @@ if TYPE_CHECKING:
     from .app_controller import AppController
 
 
+@dataclass(slots=True)
+class CustomMenuItem:
+    def __init__(
+        self,
+        label: str = "",
+        in_use: bool = False,
+        shortcut: list[str] | None = None,
+        batch_mode: bool = False,
+        command: str = "",
+    ) -> None:
+        self.label = label
+        self.in_use = in_use
+        self.shortcut = shortcut or []
+        self.batch_mode = batch_mode
+        self.command = command
+
+    @classmethod
+    def from_dict(cls, data: dict) -> CustomMenuItem:
+        return cls(
+            label=data.get("label", ""),
+            in_use=data.get("in_use", False),
+            shortcut=data.get("shortcut", []),
+            batch_mode=data.get("batch_mode", False),
+            command=data.get("command", ""),
+        )
+
+    def resolve_single(self, file_path: Path) -> str:
+        cmd = self.command
+        cmd = cmd.replace("$image_path", str(file_path))
+        cmd = cmd.replace("$image_dir", str(file_path.parent))
+        cmd = cmd.replace("$filename", file_path.name)
+        cmd = cmd.replace("$basename", file_path.stem)
+        cmd = cmd.replace("$ext", file_path.suffix)
+        return cmd
+
+    def resolve_batch(self, file_paths: list[Path]) -> str:
+        cmd = self.command
+        cmd = cmd.replace("$image_paths", "\n".join(str(p) for p in file_paths))
+        cmd = cmd.replace(
+            "$image_dirs",
+            "\n".join(sorted({str(p.parent) for p in file_paths})),
+        )
+        first = file_paths[0]
+        cmd = cmd.replace("$image_path", str(first))
+        cmd = cmd.replace("$image_dir", str(first.parent))
+        cmd = cmd.replace("$filename", first.name)
+        cmd = cmd.replace("$basename", first.stem)
+        cmd = cmd.replace("$ext", first.suffix)
+        return cmd
+
+
 class MenuController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
@@ -34,13 +87,14 @@ class MenuController:
             return
 
         for item in self.app.setting.app.custom_menu_items:
-            if not item.get("in_use", False):
+            item = CustomMenuItem.from_dict(item)
+            if not item.in_use:
                 continue
-            if item.get("shortcut", []) == custom_shortcut:
+            if item.shortcut == custom_shortcut:
                 paths = [Path(pv.item(fid)[0]) for fid in selected_ids]
                 paths = [p for p in paths if p.exists()]
                 if paths:
-                    self.__run_custom_command(paths, item["command"])
+                    self.__run_custom_command(paths, item)
                     return "break"
 
     def show_selected_image_menu(self, event: tk.Event, widget=None) -> None:
@@ -68,6 +122,7 @@ class MenuController:
                 return adjustment_menu.entrycget(i, 'label')
             except tk.TclError:
                 return ""
+
         adjustment_menu = self.__create_adjustment_menu()
         winfo_right = widget.winfo_rootx() + widget.winfo_width()
         menu_font = tkfont.Font(font=adjustment_menu.cget("font"))
@@ -131,33 +186,44 @@ class MenuController:
             return [Path(preview_widget.item(item)[0]) for item in selected_items]
         preview_widget.selection_set(current_selected_item)
         return [Path(preview_widget.item(current_selected_item)[0])]
-    
+
     @decorators.send_task
-    def __run_custom_command(self, selected_files: list[Path], raw_command: str) -> None:
-        error_count = 0
-        for file_path in selected_files:
-            resolved = raw_command.replace("$image_path", str(file_path))
-            resolved = resolved.replace("$image_dir", str(file_path.parent))
-            resolved = resolved.replace("$filename", file_path.name)
-            resolved = resolved.replace("$basename", file_path.stem)
-            resolved = resolved.replace("$ext", file_path.suffix)
+    def __run_custom_command(self, selected_files: list[Path], menu_item: CustomMenuItem) -> None:
+        if menu_item.batch_mode:
+            resolved = menu_item.resolve_batch(selected_files)
             returncode, stdout, stderr = file_ops.run_cmd(resolved)
             if returncode != 0:
                 logging.error(f"执行命令：{resolved}, 命令输出：{stdout}, 错误原因：{stderr}")
-                error_count += 1
-        self.app.search_controller.show_toast(
-            _("命令执行成功！") if error_count == 0 else _("{error_count}张图片的命令执行失败。", error_count=error_count)
-        )
+                self.app.search_controller.show_toast(
+                    _("{count}张图片的命令执行失败。", count=len(selected_files))
+                )
+            else:
+                self.app.search_controller.show_toast(_("命令执行成功！"))
+        else:
+            error_count = 0
+            for file_path in selected_files:
+                resolved = menu_item.resolve_single(file_path)
+                returncode, stdout, stderr = file_ops.run_cmd(resolved)
+                if returncode != 0:
+                    logging.error(f"执行命令：{resolved}, 命令输出：{stdout}, 错误原因：{stderr}")
+                    error_count += 1
+            self.app.search_controller.show_toast(
+                _("命令执行成功！") if error_count == 0
+                else _("{count}张图片的命令执行失败。", count=error_count)
+            )
 
-    def __append_custom_menu(self, menu: Menu, selected_files: list[Path]):
+    def __append_custom_menu(self, menu: Menu, selected_files: list[Path]) -> None:
         custom_items = self.app.setting.app.custom_menu_items
         if not custom_items:
             return
         for item in custom_items:
-            label, in_use, _, cmd = item.values()
-            if not in_use:
+            item = CustomMenuItem.from_dict(item)
+            if not item.in_use:
                 continue
-            menu.add_command(label=label, command=lambda f=selected_files, c=cmd: self.__run_custom_command(f, c))
+            menu.add_command(
+                label=item.label,
+                command=lambda f=selected_files, m=item: self.__run_custom_command(f, m),
+            )
         if menu.index(tk.END) is not None:
             menu.add_separator()
 
@@ -181,21 +247,23 @@ class MenuController:
         menu.add_command(label=_("图片另存为"), command=lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
         menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(*selected_files, widget=widget))
         return menu
-    
+
     def __create_adjustment_menu(self) -> Menu:
         menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
         model_menu = Menu(menu, tearoff=0)
         ctrl = self.app.search_controller
         for label, mode in (
-            (_("详情模式"), "detail_info"), (_("中等图标"), "medium_ico"),
-            (_("大图标"), "big_ico"), (_("超大图标"), "huge_ico")
+            (_("详情模式"), "detail_info"),
+            (_("中等图标"), "medium_ico"),
+            (_("大图标"), "big_ico"),
+            (_("超大图标"), "huge_ico"),
         ):
             menu.add_command(label=label, command=lambda m=mode: ctrl.set_preview_mode(m))  # type:ignore
-        
+
         menu.add_separator()
         for count in (10, 30, 50, 100):
             menu.add_command(label=_("结果数: {count}", count=count), command=lambda c=count: ctrl.set_preview_result_count(c))
-        
+
         menu.add_separator()
         menu.add_cascade(label=_("切换模型"), menu=model_menu)
         if self.app.index_controller.is_updating:
@@ -204,6 +272,6 @@ class MenuController:
             for model in self.app.model_controller.get_downloaded_models():
                 model_menu.add_command(
                     label=model.meta.name,
-                    command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True)
+                    command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True),
                 )
         return menu
