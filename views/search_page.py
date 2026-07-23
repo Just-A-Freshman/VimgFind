@@ -150,6 +150,7 @@ class SearchFrame(Frame):
     nav_prev: Button
     nav_next: Button
     nav_page_label: tk.Label
+    toast_label: tk.Label
     __slots__ = (
         "search_entry", "filter_btn",
         "search_by_browser_btn", "search_by_clipboard_btn",
@@ -158,7 +159,7 @@ class SearchFrame(Frame):
         "preview_frame1", "preview_frame2",
         "preview_canvas1", "preview_canvas2",
         "nav_frame", "nav_prev", "nav_next",
-        "nav_page_label",
+        "nav_page_label", "toast_label",
     )
 
     def __init__(self, parent, **kwargs) -> None:
@@ -178,6 +179,7 @@ class SearchFrame(Frame):
         self.preview_canvas1 = PreviewCanvasView(self.preview_frame1)
         self.preview_canvas2 = PreviewCanvasView(self.preview_frame2)
         self.__set_nav_buttons()
+        self.toast_label = self.__set_toast_label()
 
     def __set_search_entry(self) -> Entry:
         ipt = Entry(self, font=(WinInfo.default_font_family, WinInfo.default_font_size))
@@ -234,6 +236,14 @@ class SearchFrame(Frame):
         self.nav_next.pack(side=tk.RIGHT, padx=(0, TkS(5)))
         self.nav_prev.pack(side=tk.RIGHT, padx=(0, TkS(5)))
         self.nav_frame.pack_forget()
+
+    def __set_toast_label(self) -> tk.Label:
+        toast = tk.Label(
+            self, font=(WinInfo.default_font_family, TkS(-14)),
+            bg="#50a450", fg="white", padx=TkS(10), pady=TkS(4),
+        )
+        toast.place(relx=1.0, rely=1.0, anchor=tk.SE, x=TkS(-10), y=TkS(-10))
+        return toast
 
     def set_nav_visible(self, show: bool) -> None:
         if show:
