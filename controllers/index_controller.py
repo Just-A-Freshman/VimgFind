@@ -9,6 +9,7 @@ import tkinter as tk
 from tqdm import tqdm
 from views import ExcludeDialog
 
+from config.settings import RANGE_LABEL
 from .exclude_controller import ExcludePreviewController
 from utils.i18n import _
 import utils.decorators as decorators
@@ -24,6 +25,38 @@ class IndexController:
         self._is_updating: bool = False
         self._is_auto_updating: bool = False
         self._is_cleaning: bool = False
+
+    def env_init(self) -> None:
+        self.refresh_index_dataset_table()
+        self.update_index_tip()
+        tab = self.app.view.index_tab
+        downloaded_models = self.app.model_controller.get_downloaded_models()
+        tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
+        tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.app.setting.app.current_model), ""))
+        tab.update_range_combobox.set(_(RANGE_LABEL[self.app.setting.app.update_index_range]))
+        tab.update_threads_count_scale.set(self.app.setting.app.max_work_thread)
+        if self.app.setting.app.auto_update_index:
+            tab.auto_update_checkbutton.invoke()
+
+        # bind event
+        tab.index_dataset_table.on_reorder = self.__on_reorder
+        tab.add_index_button.config(command=self.add_search_dir)
+        tab.clean_excluded_button.config(command=self.__clean_excluded)
+        tab.update_index_button.config(command=self.__sync_index)
+        tab.delete_index_button.config(command=self.__delete_search_dir)
+        tab.rebuild_index_button.config(command=self.__rebuild_index)
+        tab.auto_update_checkbutton.config(command=self.__toggle_auto_update)
+        tab.exclude_button.config(command=self.__open_exclude_dialog)
+
+        tab.index_dataset_table.bind("<Double-Button-1>", self.app.menu_controller.double_click_open_file)
+        tab.switch_model_combobox.bind("<<ComboboxSelected>>", self.__switch_model)
+        tab.switch_model_combobox.bind("<MouseWheel>", lambda _: "break")
+        tab.update_range_combobox.bind(
+            "<<ComboboxSelected>>", lambda e: setattr(
+                self.app.setting.app, "update_index_range", 
+                next(k for k, v in RANGE_LABEL.items() if _(v) == e.widget.get())
+        ))
+        tab.update_threads_count_scale.bind("<ButtonRelease-1>", lambda e: setattr(self.app.setting.app, "max_work_thread", int(float(e.widget.get()))))
 
     @property
     def is_updating(self) -> bool:
@@ -46,14 +79,6 @@ class IndexController:
             ratio=invalid_index_ratio * 100,
         )
 
-    def switch_model(self, event) -> None:
-        idx = event.widget.current()
-        if idx < 0:
-            return
-        models = self.app.model_controller.get_downloaded_models()
-        if idx < len(models):
-            self.app.model_controller.switch_model(models[idx].meta.id)
-
     def add_search_dir(self, dir_path: str = "") -> None:
         if dir_path != "" and not Path(dir_path).is_dir():
             return
@@ -73,9 +98,32 @@ class IndexController:
         self.refresh_index_dataset_table()
         self.app.setting.save()
 
+    def refresh_index_dataset_table(self) -> None:
+        tb = self.app.view.index_tab.index_dataset_table
+        for item in tb.get_children():
+            tb.delete(item)
+        search_dirs = self.app.setting.model.index.search_dir
+        for index, dir_path in enumerate(search_dirs, 1):
+            tb.insert("", tk.END, values=(index, dir_path))
+        self.app.filter_controller.refresh_folder_filter()
+
+    def __on_reorder(self, source_idx: int, target_idx: int) -> None:
+        search_dirs: list = self.app.setting.model.index.search_dir
+        dir_to_move = search_dirs.pop(source_idx)
+        search_dirs.insert(target_idx, dir_to_move)
+        self.app.filter_controller.refresh_folder_filter()
+
+    def __switch_model(self, event) -> None:
+        idx = event.widget.current()
+        if idx < 0:
+            return
+        models = self.app.model_controller.get_downloaded_models()
+        if idx < len(models):
+            self.app.model_controller.switch_model(models[idx].meta.id)
+
     @decorators.send_task
     @decorators.redirect_output
-    def sync_index(self, show_message: bool = True, auto: bool = False) -> None:
+    def __sync_index(self, show_message: bool = True, auto: bool = False) -> None:
         def sync_current_model() -> None:
             assert self.app.search_tools
             self.app.search_tools.remove_nonexists()
@@ -93,7 +141,7 @@ class IndexController:
 
     @decorators.send_task
     @decorators.redirect_output
-    def rebuild_index(self) -> None:
+    def __rebuild_index(self) -> None:
         def rebuild_current_model() -> None:
             assert self.app.search_tools
             self.app.search_tools.rebuild_index(*self.__get_index_params())
@@ -153,23 +201,14 @@ class IndexController:
             self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.NORMAL)
             setattr(self.app.search_tools, "force_stop_update", False)
             self.app.view.after(1000, self.update_index_tip)
-            tab.update_index_button.config(text=_("更新索引目录"), command=self.sync_index)
+            tab.update_index_button.config(text=_("更新索引目录"), command=self.__sync_index)
             tab.delete_index_button.config(state=tk.NORMAL)
             tab.rebuild_index_button.config(state=tk.NORMAL)
             self.app.model_controller.on_model_select()
             self._is_updating = False
             self._is_auto_updating = False
 
-    def refresh_index_dataset_table(self) -> None:
-        tb = self.app.view.index_tab.index_dataset_table
-        for item in tb.get_children():
-            tb.delete(item)
-        search_dirs = self.app.setting.model.index.search_dir
-        for index, dir_path in enumerate(search_dirs, 1):
-            tb.insert("", tk.END, values=(index, dir_path))
-        self.app.filter_controller.refresh_folder_filter()
-
-    def open_exclude_dialog(self) -> None:
+    def __open_exclude_dialog(self) -> None:
         dialog = ExcludeDialog(self.app.view)
         controller = ExcludePreviewController(dialog, self.app.setting)
         dialog.help_btn.config(command=controller.open_help_doc)
@@ -184,15 +223,9 @@ class IndexController:
         dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
         controller.load_rules_into_view()
 
-    def on_reorder(self, source_idx: int, target_idx: int) -> None:
-        search_dirs: list = self.app.setting.model.index.search_dir
-        dir_to_move = search_dirs.pop(source_idx)
-        search_dirs.insert(target_idx, dir_to_move)
-        self.app.filter_controller.refresh_folder_filter()
-
     @decorators.send_task
     @decorators.redirect_output
-    def delete_search_dir(self) -> None:
+    def __delete_search_dir(self) -> None:
         assert self.app.search_tools
         selected = self.app.view.index_tab.index_dataset_table.selection()
         if not selected:
@@ -218,7 +251,7 @@ class IndexController:
         self._is_updating = False
         self.app.view.after(1000, self.update_index_tip)
 
-    def toggle_auto_update(self) -> None:
+    def __toggle_auto_update(self) -> None:
         enabled = self.app.view.index_tab.auto_update_checkbutton.instate(['selected'])
         self.app.setting.app.auto_update_index = enabled
         if enabled:
@@ -226,7 +259,7 @@ class IndexController:
                 self.idle_tracker = idle_tracker.IdleMonitor(
                     root=self.app.view,
                     threshold=self.app.setting.app.auto_update_idle_threshold,
-                    on_idle=lambda: self.sync_index(auto=True),
+                    on_idle=lambda: self.__sync_index(auto=True),
                 )
                 self.idle_tracker.start()
         else:
@@ -237,7 +270,7 @@ class IndexController:
                 self.app.search_tools.force_stop_update = True
 
     @decorators.send_task
-    def clean_excluded(self) -> None:
+    def __clean_excluded(self) -> None:
         assert self.app.search_tools
         search_dirs = self.app.setting.model.index.search_dir
         rules = self.app.setting.model.index.exclude_rules or []

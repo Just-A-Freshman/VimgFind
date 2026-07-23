@@ -28,7 +28,7 @@ class ExcludeDialog(tk.Toplevel):
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
-        self.__win(parent)
+        self.withdraw()
         edit_rules_frame = self.__set_edit_rules_frame()
         button_frame = self.__set_edit_frame(edit_rules_frame)
         self.add_rule_btn = self.__set_add_rule_btn(button_frame)
@@ -44,16 +44,17 @@ class ExcludeDialog(tk.Toplevel):
         self.preview_status_label = self.__set_preview_status_label(status_frame)
         self.stop_btn = Button(status_frame, text=_("停止"), style=LINK, cursor="hand2")
         self.preview_tree = self.__set_preview_tree(preview_rules_frame)
+        self.__win(parent)
 
     def __win(self, parent: tk.Tk) -> None:
-        self.withdraw()
+        self.update_idletasks()
         self.title(_("排除设置"))
-        self.iconbitmap(WinInfo.ico_path)
         win_w = TkS(620)
         win_h = TkS(520)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
+        self.iconbitmap(WinInfo.ico_path)
         self.transient(parent)
         self.grab_set()
         self.deiconify()

@@ -34,6 +34,26 @@ class SearchController:
         self._queue_total: int = 0
         self._nav_debounce_timer: str | None = None
 
+    def env_init(self, only_preview_widget: bool = False) -> None:
+        tab = self.app.view.search_tab
+        if only_preview_widget:
+            for w in (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view):
+                w.bind("<Button-3>", lambda e, w=w: self.app.menu_controller.show_selected_image_menu(e, w))
+                w.bind("<Double-Button-1>", lambda e, w=w: self.app.menu_controller.double_click_open_file(e, w))
+            return
+        tab.search_by_browser_btn.config(command=self.search_by_browser)
+        tab.search_by_clipboard_btn.config(command=self.search_image_by_clipboard)
+        tab.nav_prev.config(command=lambda: self.__debounce_navigate(-1))
+        tab.nav_next.config(command=lambda: self.__debounce_navigate(1))
+        tab.more_options_button.config(command=self.app.menu_controller.show_adjustment_menu)
+        tab.filter_panel.confirm_btn.config(command=self.app.filter_controller.confirm_filter)
+        tab.filter_panel.cancel_btn.config(command=self.app.filter_controller.cancel_filter)
+        tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.toggle_filter_panel())
+        tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())
+        tab.preview_view.bind("<<ItemviewSelect>>", self.preview_found_image)
+        tab.preview_view.bind("<Control-a>", lambda e: tab.preview_view.selection_set(tk.ALL))
+        tab.preview_view.bind("<Control-v>", lambda e: self.search_image_by_clipboard())
+
     @decorators.send_task
     def search_by_browser(self, image_paths: list[str] | None = None) -> None:
         if image_paths is None:
@@ -189,7 +209,7 @@ class SearchController:
             Setting.temp_multi_search_queue.unlink(missing_ok=True)
         self._queue_index = self._queue_total = 0
 
-    def _debounce_navigate(self, direction: int) -> None:
+    def __debounce_navigate(self, direction: int) -> None:
         def do_navigate() -> None:
             self._nav_debounce_timer = None
             if 0 <= self._queue_index < self._queue_total:
@@ -245,7 +265,7 @@ class SearchController:
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
         if self._queue_total > 0:
             tab.set_nav_visible(True)
-        self.app.bind_event()
+        self.env_init(only_preview_widget=True)
         for result in results:
             img_path, *extra_info = result
             tab.preview_view.append(img_path, *extra_info)

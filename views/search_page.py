@@ -63,7 +63,7 @@ class FilterPanel(Labelframe):
         label.grid(row=1, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5)))
         ext_combo = Combobox(
             self,
-            values=[_("所有图片文件"), *Setting.EXT_GROUP_MAP],
+            values=[_("所有图片文件"), *Setting.ext_group_map],
             state="readonly",
             font=(WinInfo.default_font_family, WinInfo.default_font_size)
         )

@@ -28,16 +28,13 @@ class SettingDialog(tk.Toplevel):
         if hasattr(self, '_initialized'):
             return
         super().__init__(parent)
-        self.__win(parent)
+        self.withdraw()
         self._initialized = True
         self.general_tab, self.custom_menu_tab = self.__set_notebook()
+        self.__win(parent)
         
     def __win(self, parent) -> None:
-        self.withdraw()
-        self.title(_("设置"))
-        self.iconbitmap(WinInfo.ico_path)
         self.transient(parent)
-        
         self.update_idletasks()
         win_w = TkS(450)
         win_h = TkS(320)
@@ -45,6 +42,8 @@ class SettingDialog(tk.Toplevel):
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.resizable(False, False)
+        self.title(_("设置"))
+        self.iconbitmap(WinInfo.ico_path)
         self.deiconify()
 
     def __set_notebook(self) -> tuple[GeneralTab, CustomMenuTab]:

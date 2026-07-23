@@ -32,7 +32,6 @@ class UpdateDialog(tk.Toplevel):
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
-        self.deiconify()
 
     def __set_status_label(self) -> Label:
         label = Label(self)

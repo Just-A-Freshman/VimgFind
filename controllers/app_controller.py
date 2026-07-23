@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from tkinter import messagebox
 from tkinterdnd2 import DND_FILES
-import tkinter as tk
 
 from views import WinGUI
-from config.settings import Setting, RANGE_LABEL
+from config.settings import Setting
 from core import SearchTool
 from .filter_controller import FilterController
 from .search_controller import SearchController
@@ -21,95 +20,36 @@ import utils.decorators as decorators
 class AppController:
     def __init__(self) -> None:
         self.setting = Setting()
-        I18n().load(self.setting.app.locale)
         self.view = WinGUI(self.setting.app.maximize_window, self.setting.app.topmost_window)
         self.search_tools: SearchTool | None = None
-        self.filter_controller = FilterController(self)
-        self.search_controller = SearchController(self)
-        self.index_controller = IndexController(self)
-        self.menu_controller = MenuController(self)
-        self.model_controller = ModelController(self)
+        
         self.setting_controller = SettingController(self)
-
+        self.search_controller = SearchController(self)
+        self.filter_controller = FilterController(self)
+        self.menu_controller = MenuController(self)
+        self.index_controller = IndexController(self)
+        self.model_controller = ModelController(self)
         self.setting_controller.change_theme(self.setting.app.ui_style)
         self.search_controller.set_preview_mode(self.setting.app.preview_mode)
-        self.bind_event(first_time=True)
-        self.view.after(10, self.__env_init)
-        self.view.protocol("WM_DELETE_WINDOW", self.destroy)
-
-    def bind_event(self, first_time=False) -> None:
-        search_tab = self.view.search_tab
-        index_tab = self.view.index_tab
-        self.view.common_setting_btn.config(command=self.setting_controller.open_setting_dialog)
-        search_tab.preview_view.bind("<<ItemviewSelect>>", self.search_controller.preview_found_image)
-        search_tab.preview_view.bind("<Control-a>", lambda e: search_tab.preview_view.selection_set(tk.ALL))
-        search_tab.preview_view.bind("<Control-v>", lambda e: self.search_controller.search_image_by_clipboard())
-        preview_widgets = (search_tab.preview_canvas1, search_tab.preview_canvas2, search_tab.preview_view)
-        for w in preview_widgets:
-            w.bind("<Button-3>", lambda e, w=w: self.menu_controller.create_right_click_menu(e, w))
-            w.bind("<Double-Button-1>", lambda e, w=w: self.menu_controller.double_click_open_file(e, w))
-
-        if not first_time:
-            return
-
-        search_tab.search_by_browser_btn.config(command=self.search_controller.search_by_browser)
-        search_tab.search_by_clipboard_btn.config(command=self.search_controller.search_image_by_clipboard)
-        search_tab.search_entry.bind("<Return>", lambda e: self.search_controller.search_image_by_text())
-        search_tab.nav_prev.config(command=lambda: self.search_controller._debounce_navigate(-1))
-        search_tab.nav_next.config(command=lambda: self.search_controller._debounce_navigate(1))
-        search_tab.more_options_button.config(command=self.menu_controller.create_preview_setting_menu)
-        search_tab.filter_btn.bind("<Button-1>", lambda e: self.filter_controller.toggle_filter_panel())
-        search_tab.filter_panel.confirm_btn.config(command=self.filter_controller.confirm_filter)
-        search_tab.filter_panel.cancel_btn.config(command=self.filter_controller.cancel_filter)
-        self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)
-        self.filter_controller.init_filter_panel()
-
-        index_tab.index_dataset_table.bind("<Double-Button-1>", self.menu_controller.double_click_open_file)
-        index_tab.index_dataset_table.on_reorder = self.index_controller.on_reorder
-        index_tab.switch_model_combobox.bind("<<ComboboxSelected>>", self.index_controller.switch_model)
-        index_tab.switch_model_combobox.bind("<MouseWheel>", lambda _: "break")
-        
-        index_tab.add_index_button.config(command=self.index_controller.add_search_dir)
-        index_tab.clean_excluded_button.config(command=self.index_controller.clean_excluded)
-        index_tab.update_index_button.config(command=self.index_controller.sync_index)
-        index_tab.delete_index_button.config(command=self.index_controller.delete_search_dir)
-        index_tab.rebuild_index_button.config(command=self.index_controller.rebuild_index)
-
-        index_tab.auto_update_checkbutton.config(command=self.index_controller.toggle_auto_update)
-        index_tab.update_range_combobox.bind(
-            "<<ComboboxSelected>>", lambda e: setattr(self.setting.app, "update_index_range", next(k for k, v in RANGE_LABEL.items() if _(v) == e.widget.get()))
-        )
-        index_tab.update_threads_count_scale.bind("<ButtonRelease-1>", lambda e: setattr(self.setting.app, "max_work_thread", int(float(e.widget.get()))))
-        index_tab.exclude_button.config(command=self.index_controller.open_exclude_dialog)
-
-        model_tab = self.view.model_tab
-        model_tab.model_tree.bind("<<TreeviewSelect>>", self.model_controller.on_model_select)
-        model_tab.model_tree.bind("<Double-Button-1>", self.model_controller.on_model_double_click)
-        model_tab.name_edit_entry.bind("<FocusOut>", self.model_controller.on_name_edited)
-        model_tab.use_btn.config(command=self.model_controller.switch_model)
-        model_tab.uninstall_btn.config(command=self.model_controller.uninstall_model)
-        model_tab.download_btn.config(command=self.model_controller.download_model)
-        model_tab.download_control_btn.config(command=self.model_controller.on_download_control)
-        model_tab.download_cancel_btn.config(command=self.model_controller.on_download_cancel)
-        model_tab.browser_button.config(command=self.model_controller.load_local_model)
-
-        self.view.drop_target_register(DND_FILES)
-        self.view.dnd_bind('<<Drop>>', self.__on_drop)
+        self.view.after(50, self.env_init)
 
     @decorators.send_task
-    def __env_init(self) -> None:
+    def env_init(self) -> None:
+        self.filter_controller.env_init()
+        self.model_controller.env_init()
+
         self.search_tools = SearchTool(self.setting)
-        self.index_controller.refresh_index_dataset_table()
-        self.view.index_tab.update_threads_count_scale.set(self.setting.app.max_work_thread)
-        if self.setting.app.auto_update_index:
-            self.view.index_tab.auto_update_checkbutton.invoke()
-        self.index_controller.update_index_tip()
+        self.index_controller.env_init()
+        self.search_controller.env_init()
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
-        self.model_controller.load_model_list()
-        downloaded_models = self.model_controller.get_downloaded_models()
-        self.view.index_tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
-        self.view.index_tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.setting.app.current_model), ""))
-        self.view.index_tab.update_range_combobox.set(_(RANGE_LABEL[self.setting.app.update_index_range]))
+        I18n().load(self.setting.app.locale)
+
+        # bind event
+        self.view.common_setting_btn.config(command=lambda: self.setting_controller.show_dialog())
+        self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)
+        self.view.drop_target_register(DND_FILES)
+        self.view.dnd_bind('<<Drop>>', self.__on_drop)
+        self.view.protocol("WM_DELETE_WINDOW", self.destroy)
 
     def __on_drop(self, event) -> None:
         file_paths_str: str = getattr(event, "data")
