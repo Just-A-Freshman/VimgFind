@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Callable, Literal
 import tkinter as tk
 
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
@@ -54,8 +55,8 @@ class PreviewCanvasView(BasicImagePreviewView):
     def identify_item(self, event: tk.Event) -> str:
         return list(self._results.keys())[0] if self._results else ""
 
-    def bind(self, sequence: str, func) -> None:
-        self._canvas.bind(sequence, func)
+    def bind(self, sequence: str, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:
+        self._canvas.bind(sequence, func, add)
 
     def destroy(self) -> None:
         self._results.clear()

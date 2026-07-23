@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from typing import Callable, Literal
 from tkinter.ttk import Treeview, Scrollbar
-import os
 import tkinter as tk
+import os
+
 
 from .base import BasicImagePreviewView
 from config.settings import TkS
@@ -80,10 +82,10 @@ class DetailListView(BasicImagePreviewView):
     def identify_item(self, event: tk.Event) -> str:
         return self.__treeview.identify_row(event.y)
 
-    def bind(self, sequence: str, func) -> None:
+    def bind(self, sequence: str, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:
         if sequence == "<<ItemviewSelect>>":
             sequence = "<<TreeviewSelect>>"
-        self.__treeview.bind(sequence, func)
+        self.__treeview.bind(sequence, func, add)
 
     def destroy(self) -> None:
         self.__scrollbar.destroy()

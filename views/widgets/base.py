@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import namedtuple
 from collections import OrderedDict
-from typing import Callable, Any
+from typing import Callable, Literal, Any
 import hashlib
 import tkinter as tk
 
@@ -60,7 +60,7 @@ class BasicImagePreviewView:
     def item(self, item) -> tuple:
         return self._results[item]
 
-    def bind(self, sequence: str, func: Callable) -> None:
+    def bind(self, sequence: str, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:
         pass
 
     def destroy(self) -> None:

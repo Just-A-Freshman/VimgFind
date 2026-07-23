@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from typing import Callable, Literal
 from tkinter.ttk import Scrollbar
+import tkinter as tk
 import math
 import os
-import tkinter as tk
+
 
 from .base import BasicImagePreviewView
 from .image_loader import ImageLoader
@@ -482,8 +484,8 @@ class ThumbnailGridView(BasicImagePreviewView):
         clicked_item = list(self._results)[index]
         return clicked_item
 
-    def bind(self, sequence: str, func) -> None:
-        self._canvas.bind(sequence, func)
+    def bind(self, sequence: str, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:
+        self._canvas.bind(sequence, func, add)
 
     def destroy(self) -> None:
         self._is_destroy = True
