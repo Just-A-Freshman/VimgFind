@@ -47,7 +47,6 @@ class SettingController:
     def show_dialog(self):
         def destroy():
             custom_menu_ctrl.save_edits()
-            self.app.setting.app.custom_menu_items = list(custom_menu_ctrl.item_data.values())
             self.app.setting.save()
             if self.dialog is not None:
                 self.dialog.destroy()
@@ -372,6 +371,7 @@ class CustomMenuController:
         item["shortcut"] = [s.strip() for s in raw.split("+") if s.strip()]
         item["command"] = tab.command_text.get("1.0", "end-1c")
         self.__items_data[iid] = item
+        self.app.setting.app.custom_menu_items = list(self.item_data.values())
 
 
 class UpdateController:
