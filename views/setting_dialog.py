@@ -41,7 +41,6 @@ class SettingDialog(tk.Toplevel):
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
-        self.resizable(False, False)
         self.title(_("设置"))
         self.iconbitmap(WinInfo.ico_path)
         self.deiconify()
