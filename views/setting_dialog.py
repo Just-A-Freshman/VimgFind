@@ -230,12 +230,12 @@ class CustomMenuTab(Frame):
         edit_frame.grid_columnconfigure(1, weight=1)
         return help_btn, edit_frame
 
-    def show_detail(self, name: str, in_use: bool, batch_mode: bool, shortcut: list[str], command: str) -> None:
+    def show_detail(self, label: str, in_use: bool, batch_mode: bool, shortcut: list[str], command: str) -> None:
         self.name_edit_tip_label.config(text=_("名称："))
         self.name_edit_tip_label.grid(row=0, column=0, padx=TkS(5), sticky=tk.W)
         self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)))
         self.name_edit_entry.delete(0, tk.END)
-        self.name_edit_entry.insert(tk.END, name)
+        self.name_edit_entry.insert(tk.END, label)
         self.in_use_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
         if in_use: self.in_use_checkbutton.invoke()
         self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=TkS(10), sticky=tk.W)
