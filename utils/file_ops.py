@@ -64,22 +64,9 @@ def open_file(file_path: str | Path, highlight: bool = False) -> None:
         command = ["explorer.exe", "/select,", str(file_path)]
     else:
         command = ["explorer.exe", str(file_path)]
-    try:
-        result = subprocess.run(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False
-        )
-        if result.stderr:
-            logging.error(f"[警告] 打开文件时产生提示：{result.stderr.strip()}")
-    except subprocess.CalledProcessError as e:
-        logging.error(f"打开文件失败：命令 {' '.join(command)} 执行错误，详情：{e.stderr}")
-    except FileNotFoundError:
-        logging.error(f"打开文件失败：未找到命令 {' '.join(command)}，请检查系统配置")
-    except Exception as e:
-        logging.error(f"打开文件时发生未知错误：{str(e)}")
+    returncode, _, stderr = run_cmd(command)
+    if returncode == -1:
+        logging.error(f"打开文件失败：命令 {' '.join(command)} 执行错误，详情：{stderr}")
 
 
 def copy_files(*file_paths: str | Path) -> None:
@@ -170,6 +157,16 @@ def rmtree(target_dir: str | Path) -> None:
         shutil.rmtree(target_dir)
     except Exception as e:
         logging.error(f"删除失败：{str(target_dir)}，原因：{str(e)}")
+
+
+def run_cmd(cmd):
+    try:
+        result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
+        return result.returncode, result.stdout, result.stderr
+    except FileNotFoundError as e:
+        return -1, "", str(e)
+    except Exception as e:
+        return -1, "", str(e)
 
 
 def truncate_filename(filename: str, target_width: int = 16) -> str:
