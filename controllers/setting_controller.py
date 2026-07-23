@@ -11,6 +11,7 @@ from config.settings import Setting, WinInfo, TkS
 from views import SettingDialog
 from utils.i18n import I18n, _
 from utils.shortcut import MODIFIER_KEYS, parse_event_to_shortcut
+import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.update_checker as update_checker
 
@@ -80,11 +81,11 @@ class GeneralController:
             self.general_tab.maximize_checkbutton.instate(["selected"]))
         )
         tab.topmost_checkbutton.config(command=self.__on_topmost_change)
-        tab.open_folder_btn.config(command=lambda: os.startfile(self.__get_active_config_path().parent))
-        tab.open_config_btn.config(command=lambda: os.startfile(self.__get_active_config_path()))
+        tab.open_folder_btn.config(command=lambda: file_ops.open_file(self.app.setting.get_active_config_path().parent))
+        tab.open_config_btn.config(command=lambda: file_ops.open_file(self.app.setting.get_active_config_path().absolute()))
         tab.change_config_btn.config(command=self.__change_config_path)
         tab.help_btn.config(command=lambda: None)
-        tab.reset_btn.config(command=self.__reset_to_default)
+        tab.error_log_btn.config(command=lambda: file_ops.open_file(Setting.error_log))
         idx = self.LOCALE_MAP.get(self.app.setting.app.locale, 0)
         tab.locale_combobox.current(idx)
 
@@ -135,18 +136,6 @@ class GeneralController:
         self.app.setting.app.other_config_path = path
         self.app.destroy()
 
-    def __get_active_config_path(self) -> Path:
-        if self.app.setting.app.other_config_path:
-            other = Path(self.app.setting.app.other_config_path)
-            if other.exists() and other != Setting.setting_path:
-                return other
-        return Setting.setting_path
-
-    def __reset_to_default(self) -> None:
-        if not messagebox.askyesno(_("恢复默认"), _("确定要将所有设置恢复为默认值吗？\n此操作需要重启应用。")):
-            return
-        self.app.setting._app = self.app.setting.load_app_config(default=True)
-        self.app.destroy()
 
 
 class CustomMenuController:

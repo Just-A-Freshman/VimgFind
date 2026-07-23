@@ -134,15 +134,6 @@ class MenuController:
     
     @decorators.send_task
     def __run_custom_command(self, selected_files: list[Path], raw_command: str) -> None:
-        def run_cmd(cmd):
-            try:
-                result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
-                return result.returncode, result.stdout, result.stderr
-            except FileNotFoundError as e:
-                return -1, "", str(e)
-            except Exception as e:
-                return -1, "", str(e)
-
         error_count = 0
         for file_path in selected_files:
             resolved = raw_command.replace("$image_path", str(file_path))
@@ -150,7 +141,7 @@ class MenuController:
             resolved = resolved.replace("$filename", file_path.name)
             resolved = resolved.replace("$basename", file_path.stem)
             resolved = resolved.replace("$ext", file_path.suffix)
-            returncode, stdout, stderr = run_cmd(resolved)
+            returncode, stdout, stderr = file_ops.run_cmd(resolved)
             if returncode != 0:
                 logging.error(f"执行命令：{resolved}, 命令输出：{stdout}, 错误原因：{stderr}")
                 error_count += 1
