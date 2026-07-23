@@ -43,7 +43,12 @@ class ImageLoader:
         results = []
         while not self._result_queue.empty():
             result = self._result_queue.get_nowait()
-            photo = ImageTk.PhotoImage(result.photo) if result.photo is not None else None
+            photo = None
+            if result.photo is not None:
+                img = result.photo
+                if img.mode == 'P':
+                    img = img.convert('RGBA')
+                photo = ImageTk.PhotoImage(img)
             results.append(LoaderResult(
                 item=result.item, size=result.size, photo=photo, error=result.error
             ))
