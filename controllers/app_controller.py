@@ -6,12 +6,11 @@ from tkinterdnd2 import DND_FILES
 from views import WinGUI
 from config.settings import Setting
 from core import SearchTool
-from .filter_controller import FilterController
-from .search_controller import SearchController
+from .search_controller import SearchController, FilterController
 from .index_controller import IndexController
-from .menu_controller import MenuController
 from .model_controller import ModelController
 from .setting_controller import SettingController
+from .menu_controller import MenuController
 from utils.i18n import I18n, _
 import utils.file_ops as file_ops
 import utils.decorators as decorators
