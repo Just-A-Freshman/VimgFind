@@ -3,7 +3,8 @@ from __future__ import annotations
 import tkinter as tk
 
 from ttkbootstrap.constants import LINK
-from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Treeview, Scrollbar, Notebook, Text, tooltip
+from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Treeview, Scrollbar, Notebook, Text
+from ttkbootstrap.widgets import ToolTip
 
 from config.settings import WinInfo, TkS
 from utils.i18n import _
@@ -188,7 +189,7 @@ class CustomMenuTab(Frame):
         self.shortcut_tip_label = Label(edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         self.command_tip_label = Label(edit_frame, text=_("执行命令："))
-        self.command_tooltip = tooltip.ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_variable_tip)
+        self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_variable_tip)
         self.command_text = Text(edit_frame)
         self.show_default()
 
