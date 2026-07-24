@@ -66,19 +66,16 @@ def fetch_remote_manifest(
         return cache.get("models")
     try:
         req = request.Request(url, headers={"Accept": "application/json"},)
-        with request.urlopen(req, timeout=10) as resp:
+        with request.urlopen(req, timeout=5) as resp:
             models: list[dict] = json.loads(json.loads(resp.read().decode("utf-8"))["raw_content"])
-        try:
-            cache_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump({"timestamp": now, "models": models}, f, indent=2)
-        except IOError:
-            pass
+        
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump({"timestamp": now, "models": models}, f, indent=2)
         return models
     except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, OSError) as e:
-        logging.warning(f"获取远程模型清单失败: {e}")
-        return None
-    
+        logging.error(f"获取远程模型失败：{str(e)}")
+        return cache.get("models")
 
 
 def is_installed(setting: Setting, model_id: str) -> bool:
