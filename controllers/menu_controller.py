@@ -187,7 +187,7 @@ class MenuController:
                     _("{count}张图片的命令执行失败。", count=len(selected_files))
                 )
             else:
-                self.app.search_controller.show_toast(_("命令执行成功！"))
+                self.app.search_controller.show_toast(_("{label}成功！", label=menu_item.label))
         else:
             error_count = 0
             for file_path in selected_files:
@@ -250,7 +250,7 @@ class MenuController:
             menu.add_command(label=label, command=lambda m=mode: ctrl.set_preview_mode(m))  # type:ignore
 
         menu.add_separator()
-        for count in (10, 30, 50, 100):
+        for count in (10, 50, 100, 300):
             menu.add_command(label=_("结果数: {count}", count=count), command=lambda c=count: ctrl.set_preview_result_count(c))
 
         menu.add_separator()
