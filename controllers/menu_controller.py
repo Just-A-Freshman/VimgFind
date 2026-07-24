@@ -3,11 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from tkinter import font as tkfont
 from tkinter import messagebox, filedialog
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import tkinter as tk
-import subprocess
 import logging
 
 from ttkbootstrap import Treeview, Menu
@@ -60,17 +58,11 @@ class CustomMenuItem:
 
     def resolve_batch(self, file_paths: list[Path]) -> str:
         cmd = self.command
-        cmd = cmd.replace("$image_paths", "\n".join(str(p) for p in file_paths))
-        cmd = cmd.replace(
-            "$image_dirs",
-            "\n".join(sorted({str(p.parent) for p in file_paths})),
-        )
-        first = file_paths[0]
-        cmd = cmd.replace("$image_path", str(first))
-        cmd = cmd.replace("$image_dir", str(first.parent))
-        cmd = cmd.replace("$filename", first.name)
-        cmd = cmd.replace("$basename", first.stem)
-        cmd = cmd.replace("$ext", first.suffix)
+        cmd = cmd.replace("$image_path", " ".join(f"\"{str(p)}\"" for p in file_paths))
+        cmd = cmd.replace("$image_dir", " ".join(f"\"{str(p.parent)}\"" for p in file_paths))
+        cmd = cmd.replace("$filename", " ".join(f"\"{p.name}\"" for p in file_paths))
+        cmd = cmd.replace("$basename", " ".join(f"\"{p.stem}\"" for p in file_paths))
+        cmd = cmd.replace("$ext", " ".join(f"\"{p.suffix}\"" for p in file_paths))
         return cmd
 
 
@@ -204,7 +196,7 @@ class MenuController:
                 resolved = menu_item.resolve_single(file_path)
                 returncode, stdout, stderr = file_ops.run_cmd(resolved)
                 if returncode != 0:
-                    logging.error(f"执行命令：{resolved}, 命令输出：{stdout}, 错误原因：{stderr}")
+                    logging.error(f"执行命令失败：{resolved}, 错误原因：{stderr}")
                     error_count += 1
             self.app.search_controller.show_toast(
                 _("命令执行成功！") if error_count == 0

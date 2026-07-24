@@ -141,7 +141,6 @@ class GeneralController:
         self.app.destroy()
 
 
-
 class CustomMenuController:
     DEFAULT_ITEM = {"label": _("未命名"), "in_use": False, "batch_mode": False, "shortcut": [], "command": ""}
 
@@ -235,7 +234,7 @@ class CustomMenuController:
         elif property == "batch_mode":
             self.__items_data[iid]["batch_mode"] = tab.batch_mode_checkbutton.instate(["selected"])
         elif property == "shortcut":
-            self.__items_data[iid]["shortcut"] = [s.strip() for s in tab.shortcut_entry.get().split("+") if s.strip()]
+            self.__items_data[iid]["shortcut"] = [s.strip() for s in tab.shortcut_entry.get().split("＋") if s.strip()]
         else:
             self.__items_data[iid]["command"] = tab.command_text.get("1.0", tk.END).strip()
         

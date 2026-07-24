@@ -4,46 +4,60 @@ MODIFIER_KEYS: dict[str, str] = {
     "Control_L": "Ctrl", "Control_R": "Ctrl",
     "Shift_L": "Shift", "Shift_R": "Shift",
     "Alt_L": "Alt", "Alt_R": "Alt",
-    "Super_L": "Win", "Super_R": "Win",
+    "Super_L": "Win", "Super_R": "Win"
 }
 
 SPECIAL_KEYS: dict[str, str] = {
     "Return": "Enter",
     "space": "Space",
-    "Tab": "Tab",
     "Escape": "Esc",
-    "BackSpace": "Backspace",
-    "Delete": "Delete",
     "minus": "-",
+    "underscore": "_",
     "equal": "=",
+    "plus": "+",
     "semicolon": ";",
+    "colon": ":",
     "apostrophe": "'",
+    "quotedbl": "\"",
     "bracketleft": "[",
+    "braceleft": "{",
+    "braceright": "}",
     "bracketright": "]",
     "slash": "/",
+    "question": "?",
     "backslash": "\\",
+    "bar": "|",
     "comma": ",",
+    "less": "<",
+    "greater": ">",
     "period": ".",
     "grave": "`",
-    "Home": "Home",
-    "End": "End",
+    "asciitilde": "~",
+    "exclam": "!",
+    "at": "@",
+    "numbersign": "#",
+    "dollar": "$",
+    "percent": "%",
+    "asciicircum": "^",
+    "ampersand": "&",
+    "asterisk": "*",
+    "parenleft": "(",
+    "parenright": ")",
     "Prior": "Page Up",
     "Next": "Page Down",
-    "Insert": "Insert",
-    "Print": "Print Screen",
-    "Pause": "Pause",
     "Up": "↑",
     "Down": "↓",
     "Left": "←",
-    "Right": "→",
+    "Right": "→"
 }
+
 
 
 __MODIFIER_LOOKUP: dict[str, str] = {
     "Control_L": "Ctrl", "Control_R": "Ctrl",
     "Shift_L": "Shift", "Shift_R": "Shift",
     "Alt_L": "Alt", "Alt_R": "Alt",
-    "Super_L": "Win", "Super_R": "Win",
+    "Super_L": "Win", "Super_R": "Win"
 }
 
 __MODIFIER_ORDER: list[str] = ["Ctrl", "Alt", "Shift", "Win"]
@@ -70,7 +84,7 @@ def build_shortcut(event) -> list[str]:
 
     key_name: str = SPECIAL_KEYS.get(event.keysym, event.keysym) or ""
     if len(key_name) == 1 and key_name.isalpha():
-        key_name = key_name.lower()
+        key_name = key_name.upper()
     return modifiers + [key_name]
 
 
@@ -88,7 +102,7 @@ def on_shortcut_key(event, entry_widget, save_callback=None) -> str | None:
     shortcut = build_shortcut(event)
 
     entry_widget.delete(0, "end")
-    entry_widget.insert(0, " + ".join(shortcut))
+    entry_widget.insert(0, " ＋ ".join(shortcut))
 
     if save_callback:
         save_callback(shortcut)
