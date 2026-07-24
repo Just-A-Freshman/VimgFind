@@ -376,7 +376,7 @@ class ThumbnailGridView(BasicImagePreviewView):
             return
         canvas_y1 = self._canvas.canvasy(0)
         canvas_y2 = canvas_y1 + self._canvas.winfo_height()
-        item_height = self._thumbnail_size + self.MARGIN + 30
+        item_height = self._thumbnail_size + self.MARGIN + self.FONT_HEIGHT
 
         start_row = max(0, canvas_y1 // item_height - self.PRELOAD_ROWS)
         end_row = min(math.ceil(len(self._results) / self._cols), canvas_y2 // item_height + self.PRELOAD_ROWS)
