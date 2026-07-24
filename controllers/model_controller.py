@@ -323,10 +323,10 @@ class ModelController:
         view.download_btn.place_forget()
         view.download_progress_label.config(text=_("准备下载..."))
         view.download_progressbar.config(value=0)
-        view.download_progress_label.place(relx=0.05, rely=0.87, relwidth=0.50, anchor=tk.W)
+        view.download_progress_label.place(relx=0.05, rely=0.87, relwidth=0.58, anchor=tk.W)
         is_paused = self.__current_download and self.__current_download.state == model_checker.DownloadState.PAUSED
         view.download_control_btn.config(text=_("继续") if is_paused else _("暂停"))
-        view.download_control_btn.place(relx=0.62, rely=0.87, anchor=tk.W)
+        view.download_control_btn.place(relx=0.65, rely=0.87, anchor=tk.W)
         view.download_cancel_btn.place(relx=0.78, rely=0.87, anchor=tk.W)
         view.download_progressbar.place(relx=0.5, rely=0.92, relwidth=0.9, anchor=tk.CENTER)
 
