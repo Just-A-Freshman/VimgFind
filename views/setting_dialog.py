@@ -139,7 +139,7 @@ class GeneralTab(Frame):
 
     def __set_bottom_buttons(self) -> tuple[Button, Button]:
         bottom_frame = Frame(self)
-        bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10))
+        bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(5))
         help_btn = Button(bottom_frame, text=_("帮助文档"), style=LINK, cursor="hand2", takefocus=False)
         error_log_btn = Button(bottom_frame, text=_("错误日志"), style=LINK, cursor="hand2", takefocus=False)
         help_btn.pack(side=tk.LEFT)

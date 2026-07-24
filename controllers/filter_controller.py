@@ -25,7 +25,6 @@ class _FilterSnapshot:
 class FilterController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
-        self._folder_all_var = tk.BooleanVar(value=True)
         self._folder_paths: list[str] = []
         self._saved_state: _FilterSnapshot | None = None
 
@@ -33,20 +32,22 @@ class FilterController:
         fp = self.app.view.search_tab.filter_panel
         fp.sim_scale.set(self.app.search_controller.similarity_threshold)
         fp.sim_value.config(text=f"{int(self.app.search_controller.similarity_threshold)}%")
+        fp.folder_select_all.config(command=self.__on_folder_select_all)
+        for i in range(2):
+            fp.dedup_check.invoke()
+        fp.folder_select_all.invoke()
         fp.sim_scale.config(
             command=lambda value: (
                 fp.sim_value.config(text=f"{int(float(value))}%"),
                 self.app.search_controller.set_similarity_threshold(float(value))
             )
         )
+        fp.folder_listbox.bind("<<ListboxSelect>>", lambda _: self.__on_folder_listbox_select)
         self.refresh_folder_filter()
-        fp.folder_select_all.config(variable=self._folder_all_var, command=self.__on_folder_select_all)
-        fp.folder_listbox.bind("<<ListboxSelect>>", self.__on_folder_listbox_select)
-        self.__on_folder_select_all()
 
     def refresh_folder_filter(self) -> None:
         dirs = self.app.setting.model.index.search_dir
-        self._folder_paths = list(dirs)
+        self._folder_paths = dirs
         lb = self.app.view.search_tab.filter_panel.folder_listbox
         lb.delete(0, tk.END)
         for d in self._folder_paths:
@@ -67,7 +68,7 @@ class FilterController:
         ext = fp.ext_combo.get()
         size_min = parse_size(fp.size_min.get(), fp.size_min_unit.get())
         size_max = parse_size(fp.size_max.get(), fp.size_max_unit.get())
-        if self._folder_all_var.get():
+        if fp.folder_select_all.instate(["selected"]):
             folder_filters = None
         else:
             selected = fp.folder_listbox.curselection()
@@ -107,7 +108,6 @@ class FilterController:
         fp.folder_listbox.selection_clear(0, tk.END)
         for idx in s.folder_selection:
             fp.folder_listbox.selection_set(idx)
-        self._folder_all_var.set(s.folder_all)
         self.app.view.search_tab.filter_panel.place_forget()
 
     def on_root_click(self, event) -> None:
@@ -124,16 +124,17 @@ class FilterController:
         self.cancel_filter()
 
     def __on_folder_select_all(self) -> None:
-        lb = self.app.view.search_tab.filter_panel.folder_listbox
-        if self._folder_all_var.get():
-            lb.selection_set(0, tk.END)
+        fp = self.app.view.search_tab.filter_panel
+        if fp.folder_select_all.instate(["selected"]):
+            fp.folder_listbox.selection_set(0, tk.END)
         else:
-            lb.selection_clear(0, tk.END)
+            fp.folder_listbox.selection_clear(0, tk.END)
 
-    def __on_folder_listbox_select(self, *_) -> None:
-        lb = self.app.view.search_tab.filter_panel.folder_listbox
-        all_selected = len(lb.curselection()) == lb.size()
-        self._folder_all_var.set(all_selected)
+    def __on_folder_listbox_select(self) -> None:
+        fp = self.app.view.search_tab.filter_panel
+        select_all = len(fp.folder_listbox.curselection()) == fp.folder_listbox.size()
+        if select_all != fp.folder_select_all.instate(["selected"]):
+            fp.folder_select_all.invoke()
 
     def __save_filter_state(self) -> None:
         fp = self.app.view.search_tab.filter_panel
@@ -145,5 +146,5 @@ class FilterController:
             size_max=fp.size_max.get(),
             size_max_unit=fp.size_max_unit.get(),
             folder_selection=fp.folder_listbox.curselection(),
-            folder_all=self._folder_all_var.get(),
+            folder_all=fp.folder_select_all.instate(["selected"]),
         )

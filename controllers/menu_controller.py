@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from .app_controller import AppController
 
 
-@dataclass(slots=True)
 class CustomMenuItem:
     def __init__(
         self,

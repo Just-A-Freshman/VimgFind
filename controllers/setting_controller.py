@@ -75,6 +75,9 @@ class GeneralController:
 
     def env_init(self) -> None:
         tab = self.general_tab
+        for i in range(2):
+            tab.maximize_checkbutton.invoke()
+            tab.topmost_checkbutton.invoke()
         tab.theme_combobox.bind("<<ComboboxSelected>>", lambda _: self.app.setting_controller.change_theme(tab.theme_combobox.get()))
         tab.locale_combobox.bind("<<ComboboxSelected>>", self.__on_locale_change)
         tab.maximize_checkbutton.config(command=lambda: setattr(
@@ -147,14 +150,17 @@ class CustomMenuController:
         self.app = app_controller
         self.__items_data: dict[str, dict] = {}
 
-    def env_init(self) -> None:    
+    def env_init(self) -> None:
+        tab = self.custom_menu_tab
         for item in self.app.setting.app.custom_menu_items:
             full_item = {**self.DEFAULT_ITEM, **item}
             iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=(
                 full_item["label"], _("是") if full_item["in_use"] else _("否"),
             ))
             self.__items_data[iid] = full_item
-        tab = self.custom_menu_tab
+        for i in range(2):
+            tab.in_use_checkbutton.invoke()
+            tab.batch_mode_checkbutton.invoke()
         tab.add_button.config(command=self.__add_menu_item)
         tab.delete_button.config(command=self.__delete_menu_item)
         tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
