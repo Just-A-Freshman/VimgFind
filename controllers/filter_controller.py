@@ -35,15 +35,15 @@ class FilterController:
         fp.folder_select_all.config(command=self.__on_folder_select_all)
         for i in range(2):
             fp.dedup_check.invoke()
-        fp.folder_select_all.invoke()
         fp.sim_scale.config(
             command=lambda value: (
                 fp.sim_value.config(text=f"{int(float(value))}%"),
                 self.app.search_controller.set_similarity_threshold(float(value))
             )
         )
-        fp.folder_listbox.bind("<<ListboxSelect>>", lambda _: self.__on_folder_listbox_select)
+        fp.folder_listbox.bind("<<ListboxSelect>>", lambda _: self.__on_folder_listbox_select())
         self.refresh_folder_filter()
+        fp.folder_select_all.invoke()
 
     def refresh_folder_filter(self) -> None:
         dirs = self.app.setting.model.index.search_dir
@@ -65,6 +65,7 @@ class FilterController:
             return value / 1024 if unit == "KB" else value
         
         fp = self.app.view.search_tab.filter_panel
+        threshold = fp.sim_scale.get()
         ext = fp.ext_combo.get()
         size_min = parse_size(fp.size_min.get(), fp.size_min_unit.get())
         size_max = parse_size(fp.size_max.get(), fp.size_max_unit.get())
@@ -74,7 +75,7 @@ class FilterController:
             selected = fp.folder_listbox.curselection()
             folder_filters = [self._folder_paths[i] for i in selected] or None
         dedup = fp.dedup_check.instate(['selected'])
-        return ext, size_min, size_max, folder_filters, dedup
+        return threshold, ext, size_min, size_max, folder_filters, dedup
 
     def toggle_filter_panel(self) -> None:
         fp = self.app.view.search_tab.filter_panel
@@ -95,7 +96,6 @@ class FilterController:
         if s is None:
             return
         fp = self.app.view.search_tab.filter_panel
-        self.app.search_controller.set_similarity_threshold(s.threshold)
         fp.sim_scale.set(s.threshold)
         fp.sim_value.config(text=f"{int(s.threshold)}%")
         fp.ext_combo.set(s.ext)
@@ -139,7 +139,7 @@ class FilterController:
     def __save_filter_state(self) -> None:
         fp = self.app.view.search_tab.filter_panel
         self._saved_state = _FilterSnapshot(
-            threshold=self.app.search_controller.similarity_threshold,
+            threshold=fp.sim_scale.get(),
             ext=fp.ext_combo.get(),
             size_min=fp.size_min.get(),
             size_min_unit=fp.size_min_unit.get(),

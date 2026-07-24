@@ -220,9 +220,9 @@ class SearchController:
             else:
                 return
             tab.preview_view.clear()
-            ext, size_min, size_max, folder_filters, dedup = self.app.filter_controller.get_search_filters()
+            threshold, ext, size_min, size_max, folder_filters, dedup = self.app.filter_controller.get_search_filters()
             results = self.app.search_tools.checkout(
-                input_data, self.similarity_threshold, ext, size_min, size_max, folder_filters, dedup)
+                input_data, threshold, ext, size_min, size_max, folder_filters, dedup)
             try:
                 first_result = next(results)
             except StopIteration:
