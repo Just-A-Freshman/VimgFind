@@ -178,7 +178,7 @@ class SearchFrame(Frame):
         self.preview_frame2 = self.__set_preview_frame2()
         self.preview_canvas1 = PreviewCanvasView(self.preview_frame1)
         self.preview_canvas2 = PreviewCanvasView(self.preview_frame2)
-        self.toast_label = Label(self.preview_container, background="#50a450", padding=TkS(5))
+        self.toast_label = Label(self.preview_container, padding=TkS(5))
         self.nav_frame, self.nav_page_label, self.nav_prev, self.nav_next = self.__set_nav_buttons()
 
     def __set_search_entry(self) -> Entry:
