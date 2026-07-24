@@ -291,7 +291,7 @@ def format_bytes(
         return "{:.{}f}MB".format(value / 1024 ** 2, decimal_parts.get('MB', 1))
 
     if unit == "KB" or (unit == "auto" and value >= 1024):
-        return "{:.{}f}KB".format(value / 1024, decimal_parts.get('KB', 1))
+        return "{:.{}f}KB".format(value / 1024, decimal_parts.get('KB', 0))
 
     return "{:.{}f}B".format(value, decimal_parts.get('B', 0))
 
