@@ -29,6 +29,7 @@ class SearchController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self.__last_search_content: Path | str = ""
+        self.__last_save_dir: Path | None = None
         self.__is_finish_search: bool = True
         self.__preview_timer: str | None = None
         self.__queue_index: int = 0
@@ -63,10 +64,14 @@ class SearchController:
     @decorators.send_task
     def search_by_browser(self, image_paths: list[str] | None = None) -> None:
         if image_paths is None:
-            raw_paths = filedialog.askopenfilenames(filetypes=[(_("图片文件"), "*" + ";*".join(Setting.accepted_exts))])
+            raw_paths = filedialog.askopenfilenames(
+                filetypes=[(_("图片文件"), "*" + ";*".join(Setting.accepted_exts))],
+                initialdir=self.__last_save_dir
+            )
             if not raw_paths:
                 return
             image_paths = list(raw_paths)
+            self.__last_save_dir = Path(image_paths[0]).parent
 
         if len(image_paths) > 1:
             self.__write_queue_file(image_paths)
