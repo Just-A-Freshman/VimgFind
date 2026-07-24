@@ -237,7 +237,8 @@ class CustomMenuTab(Frame):
         self.name_edit_entry.delete(0, tk.END)
         self.name_edit_entry.insert(tk.END, label)
         self.in_use_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
-        if in_use: self.in_use_checkbutton.invoke()
+        if in_use != self.in_use_checkbutton.instate(["selected"]):
+            self.in_use_checkbutton.invoke()
         self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=TkS(10), sticky=tk.W)
         self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
         self.shortcut_entry.delete(0, tk.END)
@@ -245,10 +246,11 @@ class CustomMenuTab(Frame):
         self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=2, sticky=tk.W)
         self.batch_mode_checkbutton.grid(row=2, column=1, columnspan=2, sticky=tk.E, padx=TkS(5))
         self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=3, padx=TkS(5), pady=(0, TkS(5)))
-        if batch_mode: self.batch_mode_checkbutton.invoke()
+        if batch_mode != self.batch_mode_checkbutton.instate(["selected"]): 
+            self.batch_mode_checkbutton.invoke()
         self.command_text.delete('1.0', tk.END)
         self.command_text.insert(tk.END, command)
-
+        
     def show_default(self) -> None:
         for w in self.name_edit_tip_label.master.children.values():
             w.grid_forget()
