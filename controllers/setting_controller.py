@@ -142,7 +142,7 @@ class GeneralController:
 
 
 class CustomMenuController:
-    DEFAULT_ITEM = {"label": _("未命名"), "in_use": False, "batch_mode": False, "shortcut": [], "command": ""}
+    DEFAULT_ITEM = {"label": _("未命名"), "is_visible": False, "batch_mode": False, "shortcut": [], "command": ""}
 
     def __init__(self, custom_menu_tab: CustomMenuTab, app_controller: AppController) -> None:
         self.custom_menu_tab = custom_menu_tab
@@ -154,17 +154,17 @@ class CustomMenuController:
         for item in self.app.setting.app.custom_menu_items:
             full_item = {**self.DEFAULT_ITEM, **item}
             iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=(
-                full_item["label"], _("是") if full_item["in_use"] else _("否"),
+                full_item["label"], _("是") if full_item["is_visible"] else _("否"),
             ))
             self.__items_data[iid] = full_item
         for i in range(2):
-            tab.in_use_checkbutton.invoke()
+            tab.is_visible_checkbutton.invoke()
             tab.batch_mode_checkbutton.invoke()
         tab.add_button.config(command=self.__add_menu_item)
         tab.delete_button.config(command=self.__delete_menu_item)
         tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
         tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("label"))
-        tab.in_use_checkbutton.config(command=lambda: self.__sync_item_property("in_use"))
+        tab.is_visible_checkbutton.config(command=lambda: self.__sync_item_property("is_visible"))
         tab.batch_mode_checkbutton.config(command=lambda: self.__sync_item_property("batch_mode"))
         tab.shortcut_entry.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")
         tab.shortcut_entry.bind("<KeyPress>", shortcut.track_modifiers, add="+")
@@ -215,7 +215,7 @@ class CustomMenuController:
             self.__items_data.pop(iid, None)
         self.custom_menu_tab.show_default()
 
-    def __sync_item_property(self, property: Literal["label", "in_use", "batch_mode", "shortcut", "command"]):
+    def __sync_item_property(self, property: Literal["label", "is_visible", "batch_mode", "shortcut", "command"]):
         selection = self.custom_menu_tab.custom_menu_tree.selection()
         if not selection:
             return
@@ -226,10 +226,10 @@ class CustomMenuController:
         if property == "label":
             self.__items_data[iid]["label"] = tab.name_edit_entry.get().strip()
             tab.custom_menu_tree.set(iid, column="#1", value=self.__items_data[iid]["label"])
-        elif property == "in_use":
-            self.__items_data[iid]["in_use"] = tab.in_use_checkbutton.instate(["selected"])
+        elif property == "is_visible":
+            self.__items_data[iid]["is_visible"] = tab.is_visible_checkbutton.instate(["selected"])
             tab.custom_menu_tree.set(
-                iid, column="#2", value=_("是") if self.__items_data[iid]["in_use"] else _("否")
+                iid, column="#2", value=_("是") if self.__items_data[iid]["is_visible"] else _("否")
             )
         elif property == "batch_mode":
             self.__items_data[iid]["batch_mode"] = tab.batch_mode_checkbutton.instate(["selected"])

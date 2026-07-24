@@ -26,13 +26,13 @@ class CustomMenuItem:
     def __init__(
         self,
         label: str = "",
-        in_use: bool = False,
+        is_visible: bool = False,
         shortcut: list[str] | None = None,
         batch_mode: bool = False,
         command: str = "",
     ) -> None:
         self.label = label
-        self.in_use = in_use
+        self.is_visible = is_visible
         self.shortcut = shortcut or []
         self.batch_mode = batch_mode
         self.command = command
@@ -41,7 +41,7 @@ class CustomMenuItem:
     def from_dict(cls, data: dict) -> CustomMenuItem:
         return cls(
             label=data.get("label", ""),
-            in_use=data.get("in_use", False),
+            is_visible=data.get("is_visible", False),
             shortcut=data.get("shortcut", []),
             batch_mode=data.get("batch_mode", False),
             command=data.get("command", ""),
@@ -79,8 +79,6 @@ class MenuController:
 
         for item in self.app.setting.app.custom_menu_items:
             item = CustomMenuItem.from_dict(item)
-            if not item.in_use:
-                continue
             if item.shortcut == custom_shortcut:
                 paths = [Path(pv.item(fid)[0]) for fid in selected_ids]
                 paths = [p for p in paths if p.exists()]
@@ -209,7 +207,7 @@ class MenuController:
             return
         for item in custom_items:
             item = CustomMenuItem.from_dict(item)
-            if not item.in_use:
+            if not item.is_visible:
                 continue
             menu.add_command(
                 label=item.label,

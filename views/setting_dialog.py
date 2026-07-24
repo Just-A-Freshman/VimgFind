@@ -151,7 +151,7 @@ class CustomMenuTab(Frame):
     add_button: Button
     delete_button: Button
     custom_menu_tree: Treeview
-    in_use_checkbutton: Checkbutton
+    is_visible_checkbutton: Checkbutton
     shortcut_tip_label: Label
     shortcut_entry: Entry
     command_tip_label: Label
@@ -169,7 +169,7 @@ class CustomMenuTab(Frame):
     __slots__ = (
         "add_button", "delete_button",
         "custom_menu_tree", "help_btn",
-        "batch_mode_checkbutton", "in_use_checkbutton",
+        "batch_mode_checkbutton", "is_visible_checkbutton",
         "shortcut_entry", "command_text",
         "shortcut_tip_label", "command_tip_label",
         "name_edit_tip_label", "name_edit_entry",
@@ -183,7 +183,7 @@ class CustomMenuTab(Frame):
         self.help_btn, edit_frame = self.__set_help_edit_frame(right_frame)
         self.name_edit_tip_label = Label(edit_frame)
         self.name_edit_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        self.in_use_checkbutton = Checkbutton(edit_frame, text=_("启用"))
+        self.is_visible_checkbutton = Checkbutton(edit_frame, text=_("显示"))
         self.batch_mode_checkbutton = Checkbutton(edit_frame, text=_("批量模式"))
         self.shortcut_tip_label = Label(edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
@@ -209,7 +209,7 @@ class CustomMenuTab(Frame):
         return add_btn, del_btn
 
     def __set_custom_menu_tree(self, parent: Frame) -> Treeview:
-        columns = {_("菜单名称"): TkS(80), _("是否启用"): TkS(80)}
+        columns = {_("菜单名称"): TkS(80), _("是否显示"): TkS(80)}
         treeview = Treeview(parent, show="headings", columns=list(columns), padding=TkS(1))
         for text, width in columns.items():
             treeview.heading(text, text=text, anchor=tk.CENTER)
@@ -230,15 +230,15 @@ class CustomMenuTab(Frame):
         edit_frame.grid_columnconfigure(1, weight=1)
         return help_btn, edit_frame
 
-    def show_detail(self, label: str, in_use: bool, batch_mode: bool, shortcut: list[str], command: str) -> None:
+    def show_detail(self, label: str, is_visible: bool, batch_mode: bool, shortcut: list[str], command: str) -> None:
         self.name_edit_tip_label.config(text=_("名称："))
         self.name_edit_tip_label.grid(row=0, column=0, padx=TkS(5), sticky=tk.W)
         self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)))
         self.name_edit_entry.delete(0, tk.END)
         self.name_edit_entry.insert(tk.END, label)
-        self.in_use_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
-        if in_use != self.in_use_checkbutton.instate(["selected"]):
-            self.in_use_checkbutton.invoke()
+        self.is_visible_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
+        if is_visible != self.is_visible_checkbutton.instate(["selected"]):
+            self.is_visible_checkbutton.invoke()
         self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=TkS(10), sticky=tk.W)
         self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
         self.shortcut_entry.delete(0, tk.END)
