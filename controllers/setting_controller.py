@@ -5,7 +5,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox
 from tkinter.font import nametofont
 import tkinter as tk
-from typing import TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 from config.settings import Setting, WinInfo, TkS
 from views import SettingDialog
@@ -46,14 +46,15 @@ class SettingController:
             selectbackground=style.colors.get('selectbg'),             # type: ignore
         )
 
-    def show_dialog(self):
+    def show_dialog(self) -> None:
         def destroy():
-            custom_menu_ctrl.save_edits()
             self.app.setting.save()
             if self.dialog is not None:
                 self.dialog.destroy()
                 self.dialog = None
 
+        if self.dialog is not None:
+            return
         self.dialog = SettingDialog(self.app.view)
         general_ctrl = GeneralController(self.dialog.general_tab, self.app)
         custom_menu_ctrl = CustomMenuController(self.dialog.custom_menu_tab, self.app)
@@ -139,103 +140,39 @@ class GeneralController:
 
 
 class CustomMenuController:
-    DEFAULT_ITEM = {"label": _("未命名"), "in_use": False, "shortcut": [], "command": ""}
+    DEFAULT_ITEM = {"label": _("未命名"), "in_use": False, "batch_mode": False, "shortcut": [], "command": ""}
 
     def __init__(self, custom_menu_tab: CustomMenuTab, app_controller: AppController) -> None:
         self.custom_menu_tab = custom_menu_tab
         self.app = app_controller
         self.__items_data: dict[str, dict] = {}
 
-    def env_init(self) -> None:
+    def env_init(self) -> None:    
         for item in self.app.setting.app.custom_menu_items:
             full_item = {**self.DEFAULT_ITEM, **item}
             iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=(
                 full_item["label"], _("是") if full_item["in_use"] else _("否"),
             ))
             self.__items_data[iid] = full_item
-        self.custom_menu_tab.add_button.config(command=self.__add_menu_item)
-        self.custom_menu_tab.delete_button.config(command=self.__delete_menu_item)
-        self.custom_menu_tab.custom_menu_tree.bind("<<TreeviewSelect>>", self.__on_tree_select)
-        self.custom_menu_tab.name_edit_entry.bind("<KeyRelease>", self.__on_name_change)
-        self.custom_menu_tab.in_use_checkbutton.config(command=self.__on_in_use_change)
-        self.custom_menu_tab.shortcut_entry.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")
-        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>", shortcut.track_modifiers, add="+")
-        self.custom_menu_tab.shortcut_entry.bind("<KeyRelease>", shortcut.track_modifiers, add="+")
-        self.custom_menu_tab.shortcut_entry.bind("<KeyPress>", lambda e: shortcut.on_shortcut_key(
-            e, self.custom_menu_tab.shortcut_entry, self.__save_shortcut_to_data), add="+"
-        )
-        self.custom_menu_tab.shortcut_entry.bind("<FocusOut>", self.__on_shortcut_focusout)
-        self.custom_menu_tab.command_text.bind("<KeyRelease>", self.__on_command_change)
-        if not self.custom_menu_tab.custom_menu_tree.selection():
-            self.custom_menu_tab.show_default()    
-    
-    def __save_shortcut_to_data(self, shortcut: list[str]) -> None:
         tab = self.custom_menu_tab
-        selection = tab.custom_menu_tree.selection()
-        if not selection:
-            return
-        iid = selection[0]
-        item = self.__items_data.get(iid)
-        if item is not None:
-            item["shortcut"] = shortcut
-            self.__items_data[iid] = item
-
-    @property
-    def item_data(self):
-        return self.__items_data
-    
-    def __on_shortcut_focusout(self, _event=None) -> None:
-        selection = self.custom_menu_tab.custom_menu_tree.selection()
-        if not selection:
-            return
-        iid = selection[0]
-        item = self.__items_data.get(iid)
-        if item is None:
-            return
-        raw = self.custom_menu_tab.shortcut_entry.get()
-        item["shortcut"] = [s.strip() for s in raw.split("+") if s.strip()]
-        self.__items_data[iid] = item
-
-    def __on_command_change(self, _event=None) -> None:
-        selection = self.custom_menu_tab.custom_menu_tree.selection()
-        if not selection:
-            return
-        iid = selection[0]
-        item = self.__items_data.get(iid)
-        if item is None:
-            return
-        item["command"] = self.custom_menu_tab.command_text.get("1.0", "end-1c")
-        self.__items_data[iid] = item
-
-    def __on_name_change(self, _event=None) -> None:
-        selection = self.custom_menu_tab.custom_menu_tree.selection()
-        if not selection:
-            return
-        iid = selection[0]
-        item = self.__items_data.get(iid)
-        if item is None:
-            return
-        item["label"] = self.custom_menu_tab.name_edit_entry.get()
-        self.__items_data[iid] = item
-        self.custom_menu_tab.custom_menu_tree.item(
-            iid, values=(item["label"], _("是") if item["in_use"] else _("否")),
+        tab.add_button.config(command=self.__add_menu_item)
+        tab.delete_button.config(command=self.__delete_menu_item)
+        tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
+        tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("label"))
+        tab.in_use_checkbutton.config(command=lambda: self.__sync_item_property("in_use"))
+        tab.batch_mode_checkbutton.config(command=lambda: self.__sync_item_property("batch_mode"))
+        tab.shortcut_entry.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")
+        tab.shortcut_entry.bind("<KeyPress>", shortcut.track_modifiers, add="+")
+        tab.shortcut_entry.bind("<KeyRelease>", shortcut.track_modifiers, add="+")
+        tab.shortcut_entry.bind("<KeyPress>", lambda e: shortcut.on_shortcut_key(
+            e, tab.shortcut_entry, lambda _: self.__sync_item_property("shortcut")), add="+"
         )
+        tab.command_text.bind("<KeyRelease>", lambda _: self.__sync_item_property("command"))
+        tab.bind("<Destroy>", lambda _: self.__save_item_data())
+        self.__save_item_data(schedule=True)
+        self.__on_tree_select()
 
-    def __on_in_use_change(self) -> None:
-        selection = self.custom_menu_tab.custom_menu_tree.selection()
-        if not selection:
-            return
-        iid = selection[0]
-        item = self.__items_data.get(iid)
-        if item is None:
-            return
-        item["in_use"] = bool(self.custom_menu_tab.in_use_checkbutton.instate(["selected"]))
-        self.__items_data[iid] = item
-        self.custom_menu_tab.custom_menu_tree.item(
-            iid, values=(item["label"], _("是") if item["in_use"] else _("否")),
-        )
-
-    def __on_tree_select(self, _event=None) -> None:
+    def __on_tree_select(self) -> None:
         selection = self.custom_menu_tab.custom_menu_tree.selection()
         if not selection:
             self.custom_menu_tab.show_default()
@@ -243,30 +180,24 @@ class CustomMenuController:
         iid = selection[0]
         item = self.__items_data.get(iid)
         if item:
-            self.custom_menu_tab.show_detail(item["label"], item["in_use"], item["shortcut"], item["command"])
+            self.custom_menu_tab.show_detail(**item)
 
     def __add_menu_item(self) -> None:
         tab = self.custom_menu_tab
-        self.save_edits()
         for iid, item in self.__items_data.items():
-            label = item.get("label", "")
-            if (
-                (label == "" or label == self.DEFAULT_ITEM["label"])
-                and not item.get("in_use", False)
-                and not item.get("shortcut")
-                and not item.get("command")
-            ):
+            item["label"] = item["label"] or self.DEFAULT_ITEM["label"]
+            if item == self.DEFAULT_ITEM:
                 tab.custom_menu_tree.selection_set(iid)
                 tab.custom_menu_tree.focus(iid)
-                tab.show_detail(item["label"], item["in_use"], item["shortcut"], item["command"])
+                tab.show_detail(**item)
                 return
 
-        new_item = dict(self.DEFAULT_ITEM)
-        iid = tab.custom_menu_tree.insert("", tk.END, values=(new_item["label"], _("否")),)
+        new_item = self.DEFAULT_ITEM.copy()
+        iid = tab.custom_menu_tree.insert("", tk.END, values=(new_item["label"], _("否")))
         self.__items_data[iid] = new_item
         tab.custom_menu_tree.selection_set(iid)
         tab.custom_menu_tree.focus(iid)
-        tab.show_detail(new_item["label"], new_item["in_use"], new_item["shortcut"], new_item["command"])
+        tab.show_detail(**new_item)
 
     def __delete_menu_item(self) -> None:
         selection = self.custom_menu_tab.custom_menu_tree.selection()
@@ -274,27 +205,38 @@ class CustomMenuController:
             return
         if not messagebox.askyesno(_("删除"), _("确定要删除选中的菜单项吗？")):
             return
-        iid = selection[0]
-        self.custom_menu_tab.custom_menu_tree.delete(iid)
-        self.__items_data.pop(iid, None)
+        self.custom_menu_tab.custom_menu_tree.delete(*selection)
+        for iid in selection:
+            self.__items_data.pop(iid, None)
         self.custom_menu_tab.show_default()
 
-    def save_edits(self) -> None:
-        tab = self.custom_menu_tab
-        selection = tab.custom_menu_tree.selection()
+    def __sync_item_property(self, property: Literal["label", "in_use", "batch_mode", "shortcut", "command"]):
+        selection = self.custom_menu_tab.custom_menu_tree.selection()
         if not selection:
             return
+        tab = self.custom_menu_tab
         iid = selection[0]
-        item = self.__items_data.get(iid)
-        if item is None:
+        if iid not in self.__items_data:
             return
-        item["label"] = tab.name_edit_entry.get()
-        item["in_use"] = bool(tab.in_use_checkbutton.instate(["selected"]))
-        raw = tab.shortcut_entry.get()
-        item["shortcut"] = [s.strip() for s in raw.split("+") if s.strip()]
-        item["command"] = tab.command_text.get("1.0", "end-1c")
-        self.__items_data[iid] = item
-        self.app.setting.app.custom_menu_items = list(self.item_data.values())
+        if property == "label":
+            self.__items_data[iid]["label"] = tab.name_edit_entry.get().strip()
+            tab.custom_menu_tree.set(iid, column="#1", value=self.__items_data[iid]["label"])
+        elif property == "in_use":
+            self.__items_data[iid]["in_use"] = tab.in_use_checkbutton.instate(["selected"])
+            tab.custom_menu_tree.set(
+                iid, column="#2", value=_("是") if self.__items_data[iid]["in_use"] else _("否")
+            )
+        elif property == "batch_mode":
+            self.__items_data[iid]["batch_mode"] = tab.batch_mode_checkbutton.instate(["selected"])
+        elif property == "shortcut":
+            self.__items_data[iid]["shortcut"] = [s.strip() for s in tab.shortcut_entry.get().split("+") if s.strip()]
+        else:
+            self.__items_data[iid]["command"] = tab.command_text.get("1.0", tk.END).strip()
+        
+    def __save_item_data(self, schedule: bool = False) -> None:
+        self.app.setting.app.custom_menu_items = list(self.__items_data.values())
+        if schedule:
+            self.custom_menu_tab.after(3000, self.__save_item_data, schedule)
 
 
 class UpdateController:
