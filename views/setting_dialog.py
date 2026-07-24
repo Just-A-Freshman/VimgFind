@@ -103,7 +103,7 @@ class GeneralTab(Frame):
         frame.grid(row=1, column=0, padx=TkS(10), pady=TkS(12), sticky=tk.W)
         Label(frame, text=_("主题设置：")).pack(side=tk.LEFT)
         theme_combobox = Combobox(
-            frame, state="readonly", width=TkS(6), style="info",
+            frame, state="readonly", width=TkS(6),
             font=(WinInfo.default_font_family, WinInfo.default_font_size),
         )
         theme_combobox.pack(side=tk.LEFT)
