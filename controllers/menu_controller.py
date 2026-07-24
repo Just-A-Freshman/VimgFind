@@ -247,11 +247,14 @@ class MenuController:
             (_("大图标"), "big_ico"),
             (_("超大图标"), "huge_ico"),
         ):
+            if mode == self.app.setting.app.preview_mode: label += "✓"
             menu.add_command(label=label, command=lambda m=mode: ctrl.set_preview_mode(m))  # type:ignore
 
         menu.add_separator()
         for count in (10, 50, 100, 300):
-            menu.add_command(label=_("结果数: {count}", count=count), command=lambda c=count: ctrl.set_preview_result_count(c))
+            label = _("结果数: {count}", count=count)
+            if count == self.app.setting.app.max_match_count: label += "✓"
+            menu.add_command(label=label, command=lambda c=count: ctrl.set_preview_result_count(c))
 
         menu.add_separator()
         menu.add_cascade(label=_("切换模型"), menu=model_menu)
