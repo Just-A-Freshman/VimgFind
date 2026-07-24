@@ -319,9 +319,9 @@ class FilterController:
 
     def env_init(self) -> None:
         fp = self.app.view.search_tab.filter_panel
-        fp.folder_select_all.config(command=self.__on_folder_select_all)
         for i in range(2):
             fp.dedup_check.invoke()
+        fp.folder_select_all.config(command=self.__on_folder_select_all)
         fp.sim_scale.config(command=lambda value: (fp.sim_value.config(text=f"{int(float(value))}%")))
         fp.folder_listbox.bind("<<ListboxSelect>>", lambda _: fp.folder_select_all.state(
             ['selected'] if len(fp.folder_listbox.curselection()) == fp.folder_listbox.size() else ['!selected']

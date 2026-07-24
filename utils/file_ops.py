@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tkinter import Tk
-from typing import Iterator
+from typing import Iterator, Literal
 import ctypes
 import hashlib
 import logging
@@ -279,15 +279,21 @@ def get_folder_size(folder_path: str | Path) -> int:
     return total_size
 
 
-def format_bytes(value: int | float, *, as_speed: bool = False) -> str:
-    suffix, pg, pm, pk, pb = ("B/s", 2, 2, 1, 1) if as_speed else ("B", 1, 0, 0, 0)
-    if value >= 1024 ** 3:
-        return f"{value / 1024 ** 3:.{pg}f}G{suffix}"
-    if value >= 1024 ** 2:
-        return f"{value / 1024 ** 2:.{pm}f}M{suffix}"
-    if value >= 1024:
-        return f"{value / 1024:.{pk}f}K{suffix}"
-    return f"{value:.{pb}f}{suffix}"
+def format_bytes(
+        value: int | float,
+        unit: Literal["B", "KB", "MB", "GB", "auto"] = "auto",
+        decimal_parts: dict[str, int] = {}
+    ) -> str:
+    if unit == "GB" or (unit == "auto" and value >= 1024 ** 3):
+        return "{:.{}f}GB".format(value / 1024 ** 3, decimal_parts.get('GB', 1))
+
+    if unit == "MB" or (unit == "auto" and value >= 1024 ** 2):
+        return "{:.{}f}MB".format(value / 1024 ** 2, decimal_parts.get('MB', 1))
+
+    if unit == "KB" or (unit == "auto" and value >= 1024):
+        return "{:.{}f}KB".format(value / 1024, decimal_parts.get('KB', 1))
+
+    return "{:.{}f}B".format(value, decimal_parts.get('B', 0))
 
 
 def merge_dirs(src: Path, dst: Path, skip_names: set[str] | None = None) -> None:

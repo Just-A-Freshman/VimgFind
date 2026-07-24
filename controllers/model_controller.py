@@ -164,7 +164,7 @@ class ModelController:
                 cfg.meta.name or model_id,
                 cfg.meta.label or "",
                 _(TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type)),
-                file_ops.format_bytes(cfg.meta.size),
+                file_ops.format_bytes(cfg.meta.size, decimal_parts={'MB': 0, "KB": 0}),
                 _(STATUS_LABEL.get(status, status)),
             ))
 
@@ -334,7 +334,7 @@ class ModelController:
         if total > 0:
             view.download_progressbar.config(value=int(downloaded * 100 / total))
         view.download_progress_label.config(
-            text=f"{file_ops.format_bytes(speed, as_speed=True)} - {file_ops.format_bytes(downloaded)}/{file_ops.format_bytes(total)}"
+            text=f"{file_ops.format_bytes(speed)}/s - {file_ops.format_bytes(downloaded)}/{file_ops.format_bytes(total)}"
         )
 
     def __update_tree_status(self, model_id: str, status: str) -> None:

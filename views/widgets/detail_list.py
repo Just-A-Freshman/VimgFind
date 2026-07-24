@@ -39,10 +39,6 @@ class DetailListView(BasicImagePreviewView):
         self.__scrollbar.config(command=self.__treeview.yview)
         self.__treeview.configure(yscrollcommand=self.__scrollbar.set)
 
-    def _get_column_idx(self, column) -> int:
-        columns: tuple = self.__treeview["columns"]
-        return columns.index(column)
-
     def _sort_column(self, col: str, reverse: bool) -> None:
         data = [(self.__treeview.set(k, col), k) for k in self.__treeview.get_children("")]
         if col == _("相似度") or col == _("大小"):
@@ -66,7 +62,7 @@ class DetailListView(BasicImagePreviewView):
     def delete(self, *items) -> None:
         self.__treeview.delete(*items)
         for item in items:
-            del self._results[item]
+            self._results.pop(item)
 
     def selection(self) -> tuple[str, ...]:
         return self.__treeview.selection()
@@ -74,10 +70,7 @@ class DetailListView(BasicImagePreviewView):
     def selection_set(self, *items: str) -> None:
         if not items:
             return
-        if items[0] == tk.ALL:
-            self.__treeview.selection_set(self.__treeview.get_children(""))
-        else:
-            self.__treeview.selection_set(items)
+        self.__treeview.selection_set(self.__treeview.get_children("") if items[0] == tk.ALL else items)
 
     def identify_item(self, event: tk.Event) -> str:
         return self.__treeview.identify_row(event.y)
