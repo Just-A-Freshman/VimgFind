@@ -143,7 +143,8 @@ class SearchController:
 
     def resend_last_search(self) -> None:
         if isinstance(self.__last_search_content, str):
-            self.__search_image(self.__last_search_content)
+            if self.__last_search_content != "":
+                self.__search_image(self.__last_search_content)
         elif len(self.__queue_paths) > 0:
             self.__search_image()
         else:
