@@ -270,7 +270,7 @@ class SearchTool:
             size_max: float | None = None,
             folder_filters: list[str] | None = None,
             dedup: bool = False
-        ) -> Iterator[tuple[str, float]]:
+        ) -> Iterator[tuple[Path, float]]:
         self.__init_event.wait()
         self.__checkout_status = SearchStatus.OK
 
@@ -309,7 +309,7 @@ class SearchTool:
             size_min: float | None, size_max: float | None,
             folder_filters: list[str] | None,
             dedup: bool = False
-        ) -> Iterator[tuple[str, float]]:
+        ) -> Iterator[tuple[Path, float]]:
         ext_set = Setting.ext_group_map.get(file_ext_label)
         yielded_count = 0
         threshold -= THRESHOLD_EPSILON
@@ -324,14 +324,13 @@ class SearchTool:
                 self.__vec_idx_mgr.delete_vector(img_id)
                 continue
 
-            file_path = self.__name_idx_mgr.name_index[img_id][0]
-            file_path_obj = Path(file_path)
+            file_path = Path(self.__name_idx_mgr.name_index[img_id][0])
 
-            if ext_set and file_path_obj.suffix.lower() not in ext_set:
+            if ext_set and file_path.suffix.lower() not in ext_set:
                 continue
 
             try:
-                st_size = file_path_obj.stat().st_size
+                st_size = file_path.stat().st_size
             except OSError:
                 continue
             if size_min is not None or size_max is not None:
@@ -342,7 +341,7 @@ class SearchTool:
                     continue
 
             if folder_filters:
-                if not any(file_path_obj.is_relative_to(f) for f in folder_filters):
+                if not any(file_path.is_relative_to(f) for f in folder_filters):
                     continue
 
             if dedup:
