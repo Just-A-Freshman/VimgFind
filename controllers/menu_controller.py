@@ -10,7 +10,7 @@ import logging
 
 from ttkbootstrap import Treeview, Menu
 
-from config.settings import TkS
+from config.settings import TkS, Setting
 from utils.i18n import _
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
 import utils.shortcut as shortcut
@@ -69,6 +69,8 @@ class CustomMenuItem:
 class MenuController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
+        self.__last_single_image_save_dir: Path | None = None
+        self.__last_multi_image_save_dir: Path | None = None
 
     def on_custom_shortcut(self, event) -> str | None:
         custom_shortcut = shortcut.build_shortcut(event)
@@ -136,6 +138,24 @@ class MenuController:
             return
         else:
             file_ops.open_file(selected_file)
+
+    def save_as_image(self, *src_paths: Path) -> None:
+        if len(src_paths) == 1:
+            save_path = filedialog.asksaveasfilename(
+                filetypes=[(f"{i}(*{i})", f"*{i}") for i in Setting.accepted_exts if i not in ["psd"]],
+                initialdir=self.__last_single_image_save_dir,
+                initialfile=src_paths[0].stem,
+                defaultextension=src_paths[0].suffix
+            )
+            if save_path:
+                dest_path = Path(save_path)
+                self.__last_single_image_save_dir = dest_path.parent
+                image_ops.save_as_image(src_paths[0], dest_path)
+        else:
+            save_dir = filedialog.askdirectory(initialdir=self.__last_multi_image_save_dir)
+            if save_dir:
+                self.__last_multi_image_save_dir = Path(save_dir)
+                file_ops.save_to_dir(*src_paths, dest_dir=self.__last_multi_image_save_dir, is_binary=True, inplace=False)
 
     def delete_files(self, *file_paths: str | Path, widget: BasicImagePreviewView) -> None:
         assert self.app.search_tools
@@ -221,7 +241,7 @@ class MenuController:
         self.__append_custom_menu(menu, [selected_file])
         menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
         menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
-        menu.add_command(label=_("图片另存为"), command=lambda: image_ops.save_as_image(selected_file))
+        menu.add_command(label=_("图片另存为"), command=lambda: self.save_as_image(selected_file))
         menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(selected_file, widget=widget))
         menu.add_separator()
         menu.add_command(label=_("打开图片"), command=lambda: file_ops.open_file(selected_file))
@@ -233,7 +253,7 @@ class MenuController:
         self.__append_custom_menu(menu, selected_files)
         menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_files(*selected_files))
         menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view))
-        menu.add_command(label=_("图片另存为"), command=lambda: file_ops.save_to_dir(*selected_files, dest_dir=filedialog.askdirectory(), is_binary=True, inplace=False))
+        menu.add_command(label=_("图片另存为"), command=lambda: self.save_as_image(*selected_files))
         menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(*selected_files, widget=widget))
         return menu
 
