@@ -154,7 +154,7 @@ class SearchController:
         if mode == "detail_info":
             tab.preview_view = DetailListView(tab.preview_container, {_("大小"): 100, _("修改时间"): 160, _("相似度"): 100})
         else:
-            thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 220)
+            thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 110)
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
         if self.__queue_total > 0:
             tab.set_nav_visible(True)
@@ -236,13 +236,13 @@ class SearchController:
                 return
             first_img_path, first_sim = first_result
             if Path(first_img_path).exists():
-                first_extra_info = SearchController.__generate_extra_info(first_img_path, first_sim)
+                first_extra_info = self.__generate_extra_info(first_img_path, first_sim)
                 item = tab.preview_view.append(first_img_path, *first_extra_info)
                 tab.preview_view.selection_set(item)
 
             for img_path, similarity in results:
                 if Path(img_path).exists():
-                    extra_info = SearchController.__generate_extra_info(img_path, similarity)
+                    extra_info = self.__generate_extra_info(img_path, similarity)
                     tab.preview_view.append(img_path, *extra_info)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
