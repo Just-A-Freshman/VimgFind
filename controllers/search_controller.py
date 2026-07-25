@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Literal, Callable
 from dataclasses import dataclass
 import tkinter as tk
 import datetime
-import linecache
 import logging
 import math
 
@@ -32,7 +31,7 @@ class SearchController:
         self.__last_save_dir: Path | None = None
         self.__is_finish_search: bool = True
         self.__queue_index: int = 0
-        self.__queue_total: int = 0
+        self.__queue_paths: list[str] = []
         self.__preview_timer: str | None = None
         self.__nav_debounce_timer: str | None = None
         self.__show_toast_timer: str | None = None
@@ -75,10 +74,12 @@ class SearchController:
             self.__last_save_dir = Path(image_paths[0]).parent
 
         if len(image_paths) > 1:
-            self.__write_queue_file(image_paths)
+            self.__queue_paths = image_paths
+            self.__queue_index = 0
             self.__search_image()
         else:
-            self.__delete_queue_file()
+            self.__queue_paths = []
+            self.__queue_index = 0
             image_path = image_paths[0]
             if not Path(image_path).is_file():
                 return
@@ -96,10 +97,16 @@ class SearchController:
         if image_obj is None:
             try:
                 copy_text = self.app.view.clipboard_get()
-                all_paths = [Path(l.strip()) for l in copy_text.splitlines() if l.strip()]
-                valid_paths = [str(p.absolute()) for p in all_paths if p.is_file()]
+                lines = copy_text.splitlines()
+                if len(lines) > 1000:
+                    lines = lines[:1000]
+                    logging.info("剪切板中的路径过多：大于3000行，已自动截断。")
+                accept_exts = set(Setting.accepted_exts)
+                all_paths = [Path(l.strip()) for l in lines if l.strip()]
+                valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix in accept_exts]
                 if len(valid_paths) > 1:
-                    self.__write_queue_file(valid_paths)
+                    self.__queue_paths = valid_paths
+                    self.__queue_index = 0
                     self.__search_image()
                     return
                 elif len(valid_paths) == 1:
@@ -123,19 +130,21 @@ class SearchController:
                 Setting.temp_image_path.mkdir(exist_ok=True)
             image_obj.save(image_path)
 
-        self.__delete_queue_file()
+        self.__queue_paths = []
+        self.__queue_index = 0
         self.__search_image(image_obj, source_path=str(image_path.absolute()))
 
     @decorators.send_task
     def search_image_by_text(self) -> None:
         text = self.app.view.search_tab.search_entry.get().strip()
-        self.__delete_queue_file()
+        self.__queue_paths = []
+        self.__queue_index = 0
         self.__search_image(text)
 
     def resend_last_search(self) -> None:
         if isinstance(self.__last_search_content, str):
             self.__search_image(self.__last_search_content)
-        elif self.__queue_total > 0:
+        elif len(self.__queue_paths) > 0:
             self.__search_image()
         else:
             self.search_by_browser([str(self.__last_search_content)])
@@ -157,7 +166,7 @@ class SearchController:
         else:
             thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 110)
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
-        if self.__queue_total > 0:
+        if len(self.__queue_paths) > 0:
             tab.set_nav_visible(True)
         self.env_init(only_preview_widgets=True)
         for result in results:
@@ -191,10 +200,10 @@ class SearchController:
             return
         self.__is_finish_search = False
         tab = self.app.view.search_tab
-        if self.__queue_total > 0 or input_data is None:
-            tab.set_nav_state(self.__queue_index > 0, self.__queue_index < self.__queue_total - 1)
-            tab.set_nav_page_label(self.__queue_index + 1, self.__queue_total)
-            source_path = linecache.getline(str(Setting.temp_multi_search_queue), self.__queue_index + 1).strip()
+        if len(self.__queue_paths) > 0 or input_data is None:
+            tab.set_nav_state(self.__queue_index > 0, self.__queue_index < len(self.__queue_paths) - 1)
+            tab.set_nav_page_label(self.__queue_index + 1, len(self.__queue_paths))
+            source_path = self.__queue_paths[self.__queue_index]
             if not source_path or not Path(source_path).is_file():
                 messagebox.showinfo(_("提示"), _("第 {n} 张图片不存在或已被删除！", n=self.__queue_index + 1))
                 return
@@ -216,6 +225,7 @@ class SearchController:
                 first_result = next(results)
             except StopIteration:
                 self.__handle_empty_result(self.app.search_tools.checkout_status)
+                self.__is_finish_search = True
                 return
             first_img_path, first_sim = first_result
             if first_img_path.exists():
@@ -226,8 +236,7 @@ class SearchController:
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
-        finally:
-            self.__is_finish_search = True
+            self.__is_finish_search = True 
 
     def __is_allow_to_search(self) -> bool:
         assert self.app.search_tools
@@ -299,33 +308,23 @@ class SearchController:
                     for result in buffer: self.app.view.search_tab.preview_view.append(*result)
                 preview_iter = None
                 preview_batch_buffer = []
+                self.__is_finish_search = True
                 return
             for result in buffer: self.app.view.search_tab.preview_view.append(*result)
             preview_batch_k += 1
             preview_batch_buffer = []
             self.app.view.after(10, process_next_batch)
         
-        return process_next_batch()
-
-    def __write_queue_file(self, paths: list[str]) -> None:
-        linecache.clearcache()
-        Setting.temp_multi_search_queue.parent.mkdir(parents=True, exist_ok=True)
-        Setting.temp_multi_search_queue.write_text("\n".join(paths), encoding="utf-8")
-        self.__queue_index = 0
-        self.__queue_total = len(paths)
-
-    def __delete_queue_file(self) -> None:
-        if Setting.temp_multi_search_queue.exists():
-            Setting.temp_multi_search_queue.unlink(missing_ok=True)
-        self.__queue_index = self.__queue_total = 0
+        return process_next_batch()        
 
     def __debounce_navigate(self, direction: int) -> None:
         def do_navigate() -> None:
             self.__nav_debounce_timer = None
-            if 0 <= self.__queue_index < self.__queue_total:
+            if 0 <= self.__queue_index < len(self.__queue_paths):
                 self.__search_image()
         tab = self.app.view.search_tab
-        self.__queue_index = max(0, min(self.__queue_index + direction, self.__queue_total - 1))
+        self.__queue_index = max(0, min(self.__queue_index + direction, len(self.__queue_paths) - 1))
+        self.__search_image()
         if self.__nav_debounce_timer is not None:
             tab.after_cancel(self.__nav_debounce_timer)
         self.__nav_debounce_timer = tab.after(50, do_navigate)
