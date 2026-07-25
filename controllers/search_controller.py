@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Callable
 from dataclasses import dataclass
 import tkinter as tk
 import datetime
@@ -43,10 +43,10 @@ class SearchController:
             for w in (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view):
                 w.bind("<Button-3>", lambda e, w=w: self.app.menu_controller.show_selected_image_menu(e, w))
                 w.bind("<Double-Button-1>", lambda e, w=w: self.app.menu_controller.double_click_open_file(e, w))
-            tab.preview_view.bind("<<ItemviewSelect>>", self.__preview_found_image)
-            tab.preview_view.bind("<Control-a>", lambda e: tab.preview_view.selection_set(tk.ALL))
-            tab.preview_view.bind("<Control-v>", lambda e: self.search_image_by_clipboard())
-            tab.preview_view.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")
+            tab.preview_view.bind("<<ItemviewSelect>>", lambda _: self.__preview_found_image())
+            tab.preview_view.bind("<Control-a>", lambda _: tab.preview_view.selection_set(tk.ALL))
+            tab.preview_view.bind("<Control-v>", lambda _: self.search_image_by_clipboard())
+            tab.preview_view.bind("<FocusIn>", lambda _: shortcut.reset_modifiers(), add="+")
             tab.preview_view.bind("<KeyPress>", shortcut.track_modifiers, add="+")
             tab.preview_view.bind("<KeyRelease>", shortcut.track_modifiers, add="+")
             tab.preview_view.bind("<KeyPress>", self.app.menu_controller.on_custom_shortcut, add="+")
@@ -174,12 +174,8 @@ class SearchController:
             self.app.view.after_cancel(self.__show_toast_timer)
         self.__show_toast_timer = self.app.view.after(duration, lambda: toast.place_forget())
 
-    def _append_preview_result(self, results) -> None:
-        for result in results:
-            self.app.view.search_tab.preview_view.append(*result)
-
     @staticmethod
-    def _generate_extra_info(image_path: Path, similarity: float) -> tuple:
+    def __generate_extra_info(image_path: Path, similarity: float) -> tuple:
         st = image_path.stat()
         mtime = datetime.datetime.fromtimestamp(st.st_mtime)
         content = (
@@ -195,7 +191,7 @@ class SearchController:
             return
         self.__is_finish_search = False
         tab = self.app.view.search_tab
-        if self.__queue_total > 0:
+        if self.__queue_total > 0 or input_data is None:
             tab.set_nav_state(self.__queue_index > 0, self.__queue_index < self.__queue_total - 1)
             tab.set_nav_page_label(self.__queue_index + 1, self.__queue_total)
             source_path = linecache.getline(str(Setting.temp_multi_search_queue), self.__queue_index + 1).strip()
@@ -223,10 +219,10 @@ class SearchController:
                 return
             first_img_path, first_sim = first_result
             if first_img_path.exists():
-                first_extra_info = self._generate_extra_info(first_img_path, first_sim)
+                first_extra_info = self.__generate_extra_info(first_img_path, first_sim)
                 item = tab.preview_view.append(str(first_img_path), *first_extra_info)
                 tab.preview_view.selection_set(item)
-            SmoothPreviewController(self, results)
+            self.__smooth_preview(results)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
@@ -276,6 +272,41 @@ class SearchController:
         elif status == SearchStatus.ENCODE_FAILED:
             messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
 
+    def __smooth_preview(self, results_iter) -> None:
+        preview_batch_k = 0
+        preview_batch_buffer = []
+        preview_iter = results_iter
+
+        def smooth_batch_size(k, B_min=1, B_max=30, r=0.4, m=15):
+            raw = B_min + (B_max - B_min) / (1 + math.exp(-r * (k - m)))
+            return max(1, round(raw))
+
+        def process_next_batch() -> None:
+            nonlocal preview_batch_k, preview_batch_buffer, preview_iter
+            if preview_iter is None:
+                return
+            batch_size = smooth_batch_size(preview_batch_k)
+            buffer = preview_batch_buffer
+            try:
+                while len(buffer) < batch_size:
+                    img_path, similarity = next(preview_iter)
+                    if not img_path.exists():
+                        continue
+                    extra_info = self.__generate_extra_info(img_path, similarity)
+                    buffer.append((img_path, *extra_info))
+            except StopIteration:
+                if buffer:
+                    for result in buffer: self.app.view.search_tab.preview_view.append(*result)
+                preview_iter = None
+                preview_batch_buffer = []
+                return
+            for result in buffer: self.app.view.search_tab.preview_view.append(*result)
+            preview_batch_k += 1
+            preview_batch_buffer = []
+            self.app.view.after(10, process_next_batch)
+        
+        return process_next_batch()
+
     def __write_queue_file(self, paths: list[str]) -> None:
         linecache.clearcache()
         Setting.temp_multi_search_queue.parent.mkdir(parents=True, exist_ok=True)
@@ -299,7 +330,7 @@ class SearchController:
             tab.after_cancel(self.__nav_debounce_timer)
         self.__nav_debounce_timer = tab.after(50, do_navigate)
 
-    def __preview_found_image(self, event: tk.Event) -> None:
+    def __preview_found_image(self) -> None:
         @decorators.send_task
         def _preview() -> None:
             try:
@@ -317,42 +348,6 @@ class SearchController:
             self.app.view.after_cancel(self.__preview_timer)
         self.__preview_timer = self.app.view.after(100, _preview)
 
-
-class SmoothPreviewController:
-    def __init__(self, search_controller: SearchController, results_iter) -> None:
-        self.search_ctrl = search_controller
-        self.__preview_batch_k = 0
-        self.__preview_batch_buffer = []
-        self.__preview_iter = results_iter
-        self.__process_next_batch()
-
-    @staticmethod
-    def smooth_batch_size(k, B_min=1, B_max=30, r=0.4, m=15):
-        raw = B_min + (B_max - B_min) / (1 + math.exp(-r * (k - m)))
-        return max(1, round(raw))
-
-    def __process_next_batch(self) -> None:
-        if self.__preview_iter is None:
-            return
-        batch_size = self.smooth_batch_size(self.__preview_batch_k)
-        buffer = self.__preview_batch_buffer
-        try:
-            while len(buffer) < batch_size:
-                img_path, similarity = next(self.__preview_iter)
-                if not img_path.exists():
-                    continue
-                extra_info = self.search_ctrl._generate_extra_info(img_path, similarity)
-                buffer.append((img_path, *extra_info))
-        except StopIteration:
-            if buffer:
-                self.search_ctrl._append_preview_result(buffer)
-            self.__preview_iter = None
-            self.__preview_batch_buffer = []
-            return
-        self.search_ctrl._append_preview_result(buffer)
-        self.__preview_batch_k += 1
-        self.__preview_batch_buffer = []
-        self.search_ctrl.app.view.after(10, self.__process_next_batch)
 
 
 @dataclass(slots=True)
