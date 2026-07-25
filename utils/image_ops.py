@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from tkinter import filedialog, messagebox
 import io
 import logging
 import urllib.request
@@ -59,33 +58,17 @@ def parse_image_from_url(url: str) -> Image.Image | None:
         return None
 
 
-def save_as_image(src_path: Path) -> None:
-    filetypes = [
-        ("PNG 图片", "*.png"),
-        ("JPEG 图片", "*.jpg"),
-        ("WebP 图片", "*.webp"),
-        ("BMP 图片", "*.bmp"),
-        ("GIF 图片", "*.gif"),
-        ("TIFF 图片", "*.tiff")
-    ]
-    dest = filedialog.asksaveasfilename(
-        defaultextension=src_path.suffix,
-        filetypes=filetypes,
-        initialfile=src_path.stem
-    )
-    if not dest:
-        return
-    dest = Path(dest)
+def save_as_image(src_path: Path, dest_path : Path) -> bool:
     try:
-        if dest.suffix.lower() == src_path.suffix.lower():
-            if not file_ops.save_as(src_path, dest, True):
+        if dest_path.suffix.lower() == src_path.suffix.lower():
+            if not file_ops.save_as(src_path, dest_path, True):
                 raise Exception("系统权限错误！")
-            return
+            return False
         img: Image.Image = Image.open(src_path)
-        if dest.suffix.lower() in ('.jpg', '.jpeg') and img.mode == 'RGBA':
+        if dest_path.suffix.lower() in ('.jpg', '.jpeg') and img.mode == 'RGBA':
             img = img.convert('RGB')
-        img.save(dest)
-        return
+        img.save(dest_path)
+        return True
     except Exception as e:
-        messagebox.showerror("保存失败", str(e))
-        return
+        logging.error(f"图像保存时出现错误：{str(e)}")
+        return False
