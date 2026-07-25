@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-import io
-import logging
 import urllib.request
+import logging
+import io
 
 from PIL.ImageFile import ImageFile
 from PIL import Image, UnidentifiedImageError
 import win32clipboard
 import win32con
 
+from . import internet
 from . import file_ops
 from config.settings import Setting
 
@@ -38,6 +39,9 @@ def parse_image_from_path(image_path: str | Path) -> ImageFile | None:
 
 
 def parse_image_from_url(url: str) -> Image.Image | None:
+    if not internet.validate_url_safe(url):
+        return None
+
     url_lower = url.lower()
     is_likely_image = any(url_lower.endswith(ext) for ext in Setting.accepted_exts)
     try:
@@ -50,7 +54,7 @@ def parse_image_from_url(url: str) -> Image.Image | None:
             is_image_by_content = content_type.startswith('image/')
             if not is_image_by_content and not is_likely_image:
                 raise ValueError(f"URL不是图像链接: Content-Type={content_type}, URL={url}")
-            image_data = response.read()
+            image_data = response.read(50 * 1024 * 1024)
             image: Image.Image = Image.open(io.BytesIO(image_data)).convert("RGB")
             return image
     except Exception as e:
