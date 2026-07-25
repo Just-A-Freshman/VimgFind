@@ -142,9 +142,9 @@ class MenuController:
     def save_as_image(self, *src_paths: Path) -> None:
         if len(src_paths) == 1:
             save_path = filedialog.asksaveasfilename(
-                filetypes=[(f"{i}(*{i})", f"*{i}") for i in Setting.accepted_exts if i not in ["psd"]],
+                filetypes=[(f"{i}(*{i})", f"*{i}") for i in Setting.accepted_exts if i not in [".psd"]],
+                initialfile=src_paths[0].name,
                 initialdir=self.__last_single_image_save_dir,
-                initialfile=src_paths[0].stem,
                 defaultextension=src_paths[0].suffix
             )
             if save_path:

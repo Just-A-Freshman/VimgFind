@@ -21,6 +21,7 @@ class ExcludeRules:
         r'^#(?P<key>min_size|max_size|min_modified|max_modified)\s*[:=]\s*(?P<value>.+)$',
         re.IGNORECASE,
     )
+    ACCEPT_EXTS =  set(Setting.accepted_exts)
 
     def __init__(self, rules: list[str]) -> None:
         self._min_size: int = 0
@@ -46,8 +47,6 @@ class ExcludeRules:
                 self._has_unanchored_negation = True
             else:
                 self._anchored_negation.append(body)
-
-    # ── special rule parsing ──────────────────────────────────────
 
     def __extract_special_rules(self, rules: list[str]) -> list[str]:
         cleaned: list[str] = []
@@ -93,8 +92,6 @@ class ExcludeRules:
         except ValueError:
             raise ValueError(f"无法解析修改时间值: {val!r}")
 
-    # ── normalization helpers ─────────────────────────────────────
-
     @staticmethod
     def __has_wildcard(pattern: str) -> bool:
         for ch in ("*", "?", "["):
@@ -115,8 +112,6 @@ class ExcludeRules:
                 seen.add(lowered)
                 normalized.append(lowered)
         return normalized
-
-    # ── pathspec helpers ──────────────────────────────────────────
 
     def _is_excluded(self, rel_path: str, is_dir: bool) -> bool:
         normalized = rel_path.replace("\\", "/").lower()
@@ -143,7 +138,7 @@ class ExcludeRules:
         dot = filename.rfind(".")
         if dot == -1:
             return False
-        return filename[dot:].lower() in Setting.accepted_exts
+        return filename[dot:].lower() in ExcludeRules.ACCEPT_EXTS
 
     # ── public API ────────────────────────────────────────────────
     def should_skip_file(self, entry: os.DirEntry | str, target_dir: str) -> bool:

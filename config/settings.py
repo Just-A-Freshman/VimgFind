@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import fields, asdict
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 import ctypes
@@ -45,7 +46,7 @@ class Setting:
     temp_multi_search_queue = temp_image_path / "multi_search_queue.txt"
     manifest_cache = models_dir / "_manifest_cache.json"
     error_log = config_path / "error.log"
-    ext_group_map: dict[str, set[str]] = {
+    ext_group_map: OrderedDict[str, set[str]] = OrderedDict({
         "PNG": {".png"},
         "JPG/JPEG": {".jpg", ".jpeg"},
         "WebP": {".webp"},
@@ -53,8 +54,8 @@ class Setting:
         "BMP": {".bmp"},
         "TIFF": {".tiff", ".tif"},
         "PSD": {".psd"}
-    }
-    accepted_exts = set().union(*ext_group_map.values())
+    })
+    accepted_exts = [ext for group in ext_group_map.values() for ext in group]
 
     def __init__(self) -> None:
         Path.mkdir(Setting.temp_image_path, exist_ok=True)
