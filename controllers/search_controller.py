@@ -37,9 +37,9 @@ class SearchController:
         self.__nav_debounce_timer: str | None = None
         self.__show_toast_timer: str | None = None
 
-    def env_init(self, only_preview_widget: bool = False) -> None:
+    def env_init(self, only_preview_widgets: bool = False) -> None:
         tab = self.app.view.search_tab
-        if only_preview_widget:
+        if only_preview_widgets:
             for w in (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view):
                 w.bind("<Button-3>", lambda e, w=w: self.app.menu_controller.show_selected_image_menu(e, w))
                 w.bind("<Double-Button-1>", lambda e, w=w: self.app.menu_controller.double_click_open_file(e, w))
@@ -51,6 +51,7 @@ class SearchController:
             tab.preview_view.bind("<KeyRelease>", shortcut.track_modifiers, add="+")
             tab.preview_view.bind("<KeyPress>", self.app.menu_controller.on_custom_shortcut, add="+")
             return
+        tab = self.app.view.search_tab
         tab.search_by_browser_btn.config(command=self.search_by_browser)
         tab.search_by_clipboard_btn.config(command=self.search_image_by_clipboard)
         tab.nav_prev.config(command=lambda: self.__debounce_navigate(-1))
@@ -158,10 +159,10 @@ class SearchController:
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
         if self.__queue_total > 0:
             tab.set_nav_visible(True)
-        self.env_init(only_preview_widget=True)
+        self.env_init(only_preview_widgets=True)
         for result in results:
             img_path, *extra_info = result
-            tab.preview_view.append(img_path, *extra_info)
+            tab.preview_view.append(str(img_path), *extra_info)
         tab.preview_view.selection_set(*current_selection)
 
     def show_toast(self, message: str, duration: int = 1500) -> None:
@@ -173,8 +174,12 @@ class SearchController:
             self.app.view.after_cancel(self.__show_toast_timer)
         self.__show_toast_timer = self.app.view.after(duration, lambda: toast.place_forget())
 
+    def _append_preview_result(self, results) -> None:
+        for result in results:
+            self.app.view.search_tab.preview_view.append(*result)
+
     @staticmethod
-    def generate_extra_info(image_path: Path, similarity: float) -> tuple:
+    def _generate_extra_info(image_path: Path, similarity: float) -> tuple:
         st = image_path.stat()
         mtime = datetime.datetime.fromtimestamp(st.st_mtime)
         content = (
@@ -183,10 +188,6 @@ class SearchController:
             f"{similarity:.2f}%"
         )
         return content
-
-    def append_preview_result(self, results) -> None:
-        for result in results:
-            self.app.view.search_tab.preview_view.append(*result)
 
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools
@@ -208,17 +209,8 @@ class SearchController:
             tab.set_nav_visible(True)
         else:
             tab.set_nav_visible(False)
-        if isinstance(input_data, str):
-            tab.preview_canvas1.clear()
-            self.__last_search_content = input_data
-        elif isinstance(input_data, Image.Image):
-            tab.search_entry.delete(0, tk.END)
-            tab.search_entry.insert(0, source_path or "")
-            tab.search_entry.xview_moveto(1.0)
-            if source_path and Path(source_path).is_file():
-                tab.preview_canvas1.append(source_path, input_data)
-            self.__last_search_content = Path(source_path) if source_path is not None else ""
-        else:
+
+        if not self.__setup_search_ui(input_data, source_path):
             return
         try:
             tab.preview_view.clear()
@@ -227,22 +219,14 @@ class SearchController:
             try:
                 first_result = next(results)
             except StopIteration:
-                status = self.app.search_tools.checkout_status
-                if status == SearchStatus.EMPTY_INDEX:
-                    messagebox.showinfo(_("提示"), _("索引中还没有任何图像，也许\n你还没有点击更新索引目录？"))
-                elif status == SearchStatus.EMPTY_INPUT:
-                    pass
-                elif status == SearchStatus.NO_RESULTS:
-                    messagebox.showinfo(_("提示"), _("筛选条件过于严格，没有匹配到任何图像！"))
-                else:
-                    messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
+                self.__handle_empty_result(self.app.search_tools.checkout_status)
                 return
             first_img_path, first_sim = first_result
             if first_img_path.exists():
-                first_extra_info = self.generate_extra_info(first_img_path, first_sim)
+                first_extra_info = self._generate_extra_info(first_img_path, first_sim)
                 item = tab.preview_view.append(str(first_img_path), *first_extra_info)
                 tab.preview_view.selection_set(item)
-            smooth_preview_ctrl = SmoothPreviewController(self, results)
+            SmoothPreviewController(self, results)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
@@ -264,7 +248,33 @@ class SearchController:
                     return False
                 if self.app.index_controller.is_updating:
                     self.app.search_tools.force_stop_update = True
-        return True 
+        return True
+
+    def __setup_search_ui(self, input_data: Image.Image | str | None, source_path: str | None) -> bool:
+        tab = self.app.view.search_tab
+        if isinstance(input_data, str):
+            tab.preview_canvas1.clear()
+            self.__last_search_content = input_data
+        elif isinstance(input_data, Image.Image):
+            tab.search_entry.delete(0, tk.END)
+            tab.search_entry.insert(0, source_path or "")
+            tab.search_entry.xview_moveto(1.0)
+            if source_path and Path(source_path).is_file():
+                tab.preview_canvas1.append(source_path, input_data)
+            self.__last_search_content = Path(source_path) if source_path is not None else ""
+        else:
+            return False
+        return True
+
+    def __handle_empty_result(self, status: SearchStatus) -> None:
+        if status == SearchStatus.EMPTY_INDEX:
+            messagebox.showinfo(_("提示"), _("索引中还没有任何图像，也许\n你还没有点击更新索引目录？"))
+        elif status == SearchStatus.EMPTY_INPUT:
+            messagebox.showinfo(_("提示"), _("请输入搜索内容！"))
+        elif status == SearchStatus.NO_RESULTS:
+            messagebox.showinfo(_("提示"), _("筛选条件过于严格，没有匹配到任何图像！"))
+        elif status == SearchStatus.ENCODE_FAILED:
+            messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
 
     def __write_queue_file(self, paths: list[str]) -> None:
         linecache.clearcache()
@@ -315,13 +325,13 @@ class SmoothPreviewController:
         self.__preview_batch_buffer = []
         self.__preview_iter = results_iter
         self.__process_next_batch()
-        
+
     @staticmethod
     def smooth_batch_size(k, B_min=1, B_max=30, r=0.4, m=15):
         raw = B_min + (B_max - B_min) / (1 + math.exp(-r * (k - m)))
         return max(1, round(raw))
-        
-    def __process_next_batch(self):
+
+    def __process_next_batch(self) -> None:
         if self.__preview_iter is None:
             return
         batch_size = self.smooth_batch_size(self.__preview_batch_k)
@@ -331,19 +341,19 @@ class SmoothPreviewController:
                 img_path, similarity = next(self.__preview_iter)
                 if not img_path.exists():
                     continue
-                extra_info = self.search_ctrl.generate_extra_info(img_path, similarity)
+                extra_info = self.search_ctrl._generate_extra_info(img_path, similarity)
                 buffer.append((img_path, *extra_info))
         except StopIteration:
             if buffer:
-                self.search_ctrl.append_preview_result(buffer)
+                self.search_ctrl._append_preview_result(buffer)
             self.__preview_iter = None
             self.__preview_batch_buffer = []
             return
-        self.search_ctrl.append_preview_result(buffer)
+        self.search_ctrl._append_preview_result(buffer)
         self.__preview_batch_k += 1
         self.__preview_batch_buffer = []
         self.search_ctrl.app.view.after(10, self.__process_next_batch)
-    
+
 
 @dataclass(slots=True)
 class FilterSnapshot:
@@ -397,7 +407,7 @@ class FilterController:
             if value is None:
                 return None
             return value / 1024 if unit == "KB" else value
-        
+
         fp = self.app.view.search_tab.filter_panel
         threshold = fp.sim_scale.get()
         ext = fp.ext_combo.get()

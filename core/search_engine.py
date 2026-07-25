@@ -26,7 +26,6 @@ class SearchStatus(str, Enum):
     EMPTY_INDEX = "empty_index"
     EMPTY_INPUT = "empty_input"
     ENCODE_FAILED = "encode_failed"
-    HNSW_EMPTY = "hnsw_empty"
     NO_RESULTS = "no_results"
 
 
@@ -291,10 +290,6 @@ class SearchTool:
 
         sim_list, ids_list = self.__vec_idx_mgr.match(fv, self.__name_idx_mgr.results_count)
         name_index_len = len(self.__name_idx_mgr.name_index)
-        if len(ids_list) == 0:
-            logging.error("搜索失败：HNSW向量索引为空，请自行添加索引目录并更新")
-            self.__checkout_status = SearchStatus.HNSW_EMPTY
-            return
 
         yield from self._filter_and_yield_results(
             ids_list, sim_list, threshold, name_index_len, file_ext_label, 
