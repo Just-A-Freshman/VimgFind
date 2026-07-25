@@ -44,8 +44,7 @@ def parse_image_from_url(url: str) -> Image.Image | None:
     url_lower = url.lower()
     is_likely_image = any(url_lower.endswith(ext) for ext in Setting.accepted_exts)
     try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        with internet.fetch_url(url, timeout=10, headers=headers) as response:
+        with internet.fetch_url(url, timeout=10) as response:
             content_type = response.headers.get('Content-Type', '').lower()
             is_image_by_content = content_type.startswith('image/')
             if not is_image_by_content and not is_likely_image:

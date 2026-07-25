@@ -17,6 +17,9 @@ import zipfile
 from . import file_ops
 
 
+DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+
+
 def fetch_url(
     url: str,
     timeout: int = 10,
@@ -26,7 +29,9 @@ def fetch_url(
 ):
     if validate and not validate_url_safe(url):
         raise ValueError(f"不安全的 URL，已拦截: {url}")
-    req = request.Request(url, headers=headers or {}, method=method)
+    headers = dict(headers or {})
+    headers.setdefault('User-Agent', DEFAULT_USER_AGENT)
+    req = request.Request(url, headers=headers, method=method)
     return request.urlopen(req, timeout=timeout)
 
 
