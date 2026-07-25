@@ -4,12 +4,11 @@ from pathlib import Path
 import json
 import logging
 import time
-import urllib.error
-import urllib.request as request
 import zipfile
 
 from config.settings import Setting
 from config.types import ModelConfig
+from . import internet
 
 
 def validate_unknown_zip(zip_path: Path, model_id: str) -> ModelConfig:
@@ -57,15 +56,14 @@ def fetch_remote_manifest(
     if now - cache.get("timestamp", 0) < cache_ttl:
         return cache.get("models")
     try:
-        req = request.Request(url, headers={"Accept": "application/json"},)
-        with request.urlopen(req, timeout=5) as resp:
+        with internet.fetch_url(url, timeout=5, validate=True) as resp:
             models: list[dict] = json.loads(json.loads(resp.read().decode("utf-8"))["raw_content"])
-        
+
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         with open(cache_path, "w", encoding="utf-8") as f:
             json.dump({"timestamp": now, "models": models}, f, indent=2)
         return models
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, OSError) as e:
+    except (OSError, ValueError, json.JSONDecodeError) as e:
         logging.error(f"获取远程模型失败：{str(e)}")
         return cache.get("models")
 

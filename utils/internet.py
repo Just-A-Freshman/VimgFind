@@ -3,7 +3,6 @@ from __future__ import annotations
 from enum import Enum, auto
 from pathlib import Path
 from typing import Callable
-from urllib.error import URLError
 import urllib.request as request
 import ipaddress
 import logging
@@ -16,6 +15,19 @@ import time
 import zipfile
 
 from . import file_ops
+
+
+def fetch_url(
+    url: str,
+    timeout: int = 10,
+    headers: dict | None = None,
+    method: str | None = None,
+    validate: bool = False,
+):
+    if validate and not validate_url_safe(url):
+        raise ValueError(f"不安全的 URL，已拦截: {url}")
+    req = request.Request(url, headers=headers or {}, method=method)
+    return request.urlopen(req, timeout=timeout)
 
 
 def validate_url_safe(url: str) -> bool:
@@ -73,12 +85,11 @@ class MultiThreadDownloader:
         self._cancel_event = threading.Event()
 
     def _get_file_info(self) -> None:
-        req = request.Request(self.url, method='HEAD')
         try:
-            with request.urlopen(req, timeout=30) as resp:
+            with fetch_url(self.url, timeout=30, method='HEAD', validate=True) as resp:
                 self.file_size = int(resp.headers.get('Content-Length', 0))
                 self.accept_ranges = resp.headers.get('Accept-Ranges', '').lower() == 'bytes'
-        except URLError as e:
+        except (OSError, ValueError) as e:
             raise RuntimeError(f"无法获取文件信息: {e}")
 
         if self.file_size == 0:
@@ -119,9 +130,8 @@ class MultiThreadDownloader:
             self.part_files.append(part_file)
 
         headers = {'Range': f'bytes={start}-{end}'}
-        req = request.Request(self.url, headers=headers)
         try:
-            with request.urlopen(req, timeout=60) as resp:
+            with fetch_url(self.url, timeout=60, headers=headers, validate=True) as resp:
                 with open(part_file, 'wb') as f:
                     while True:
                         if self._has_error:

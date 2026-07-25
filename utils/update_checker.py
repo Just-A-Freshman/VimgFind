@@ -5,10 +5,9 @@ from typing import cast
 import json
 import re
 import sys
-import urllib.error
-import urllib.request
 
 from config.settings import WinInfo
+from . import internet
 
 UpdateCheckResult = namedtuple(
     "UpdateCheckResult",
@@ -56,20 +55,20 @@ def _match_download_url(assets: list[dict], version: str) -> str | None:
 
 def check(timeout: int = 5) -> UpdateCheckResult:
     try:
-        req = urllib.request.Request(
-            API_URL,
+        with internet.fetch_url(
+            API_URL, timeout=timeout,
             headers={
                 "User-Agent": f"VimgFind/{WinInfo.version}",
                 "Accept": "application/vnd.github.v3+json",
             },
-        )
-        with urllib.request.urlopen(req, timeout=timeout) as response:
+        ) as response:
             data = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        return UpdateCheckResult(
-            False, "", "", "", "", WinInfo.version, f"HTTP {e.code}: {e.reason}"
-        )
-    except (urllib.error.URLError, OSError) as e:
+    except OSError as e:
+        code = getattr(e, 'code', None)
+        if code is not None:
+            return UpdateCheckResult(
+                False, "", "", "", "", WinInfo.version, f"HTTP {code}: {e}"
+            )
         return UpdateCheckResult(
             False, "", "", "", "", WinInfo.version, f"网络错误: {e}"
         )
