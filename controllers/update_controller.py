@@ -12,7 +12,7 @@ from config.settings import ROOT
 from views import UpdateDialog
 from utils.i18n import _
 import utils.file_ops as file_ops
-import utils.model_checker as model_checker
+import utils.internet as internet
 
 if TYPE_CHECKING:
     from app_controller import AppController
@@ -22,7 +22,7 @@ class UpdateController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self._dialog: UpdateDialog | None = None
-        self._downloader: model_checker.MultiThreadDownloader | None = None
+        self._downloader: internet.MultiThreadDownloader | None = None
         self._temp_dir: Path | None = None
         self._cancelled = False
 
@@ -69,7 +69,7 @@ class UpdateController:
                     pct = int(downloaded * 100 / total)
                     dialog.after(0, lambda: dialog.progressbar.config(value=pct))
 
-            downloader = model_checker.MultiThreadDownloader(
+            downloader = internet.MultiThreadDownloader(
                 url=download_url,
                 save_path=str(zip_path),
                 num_threads=16,

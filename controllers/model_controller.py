@@ -14,6 +14,7 @@ from config.types import ModelConfig
 from utils.i18n import _
 import utils.file_ops as file_ops
 import utils.model_checker as model_checker
+import utils.internet as internet
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -25,7 +26,7 @@ class ModelController:
         self.app = app_controller
         self._model_cache: dict[str, ModelConfig] = {}
         self.__editing_model_id: str | None = None
-        self.__current_download: model_checker.DownloadTask | None = None
+        self.__current_download: internet.DownloadTask | None = None
 
     def env_init(self) -> None:
         self.__load_model_list()
@@ -247,12 +248,12 @@ class ModelController:
             return
 
         if self.__current_download is not None and self.__current_download.state in (
-            model_checker.DownloadState.DOWNLOADING, model_checker.DownloadState.PAUSED,
+            internet.DownloadState.DOWNLOADING, internet.DownloadState.PAUSED,
         ):
             return
 
         model_id = cfg.meta.id or iid
-        self.__current_download = model_checker.DownloadTask(
+        self.__current_download = internet.DownloadTask(
             url=cfg.meta.download_url,
             dest_dir=self.app.setting.models_dir / model_id,
             model_id=model_id,
@@ -268,10 +269,10 @@ class ModelController:
         if task is None:
             return
         btn = self.app.view.model_tab.download_control_btn
-        if task.state == model_checker.DownloadState.DOWNLOADING:
+        if task.state == internet.DownloadState.DOWNLOADING:
             task.pause()
             btn.config(text=_("继续"))
-        elif task.state == model_checker.DownloadState.PAUSED:
+        elif task.state == internet.DownloadState.PAUSED:
             task.resume()
             btn.config(text=_("暂停"))
 
@@ -311,9 +312,9 @@ class ModelController:
         task = self.__current_download
         if task is None:
             return
-        if task.state in (model_checker.DownloadState.COMPLETED, model_checker.DownloadState.ERROR, model_checker.DownloadState.CANCELLED):
-            success = task.state == model_checker.DownloadState.COMPLETED
-            cancelled = task.state == model_checker.DownloadState.CANCELLED
+        if task.state in (internet.DownloadState.COMPLETED, internet.DownloadState.ERROR, internet.DownloadState.CANCELLED):
+            success = task.state == internet.DownloadState.COMPLETED
+            cancelled = task.state == internet.DownloadState.CANCELLED
             self.__finish_download(success, cancelled, model_id, view)
             self.__current_download = None
             return
@@ -324,7 +325,7 @@ class ModelController:
         view.download_progress_label.config(text=_("准备下载..."))
         view.download_progressbar.config(value=0)
         view.download_progress_label.place(relx=0.05, rely=0.87, relwidth=0.58, anchor=tk.W)
-        is_paused = self.__current_download and self.__current_download.state == model_checker.DownloadState.PAUSED
+        is_paused = self.__current_download and self.__current_download.state == internet.DownloadState.PAUSED
         view.download_control_btn.config(text=_("继续") if is_paused else _("暂停"))
         view.download_control_btn.place(relx=0.65, rely=0.87, anchor=tk.W)
         view.download_cancel_btn.place(relx=0.78, rely=0.87, anchor=tk.W)
