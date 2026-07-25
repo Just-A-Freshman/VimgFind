@@ -309,7 +309,7 @@ class SearchTool:
         yielded_count = 0
         threshold -= THRESHOLD_EPSILON
         prev_similarity: float | None = None
-        prev_size: int | None = None
+        prev_sizes: list[int] = []
 
         for img_id, similarity in zip(ids_list, sim_list):
             if similarity < threshold:
@@ -340,11 +340,17 @@ class SearchTool:
                     continue
 
             if dedup:
-                if prev_similarity is not None and prev_size is not None and \
-                    abs(similarity - prev_similarity) < THRESHOLD_EPSILON and st_size == prev_size:
-                    continue
-                prev_similarity = similarity
-                prev_size = st_size
+                if prev_similarity is None:
+                    prev_similarity = similarity
+                    prev_sizes = [st_size]
+                elif abs(similarity - prev_similarity) < THRESHOLD_EPSILON:
+                    if st_size in prev_sizes:
+                        prev_sizes.append(st_size)
+                        continue
+                    prev_sizes.append(st_size)
+                else:
+                    prev_similarity = similarity
+                    prev_sizes = [st_size]
 
             yielded_count += 1
             yield (file_path, similarity)
