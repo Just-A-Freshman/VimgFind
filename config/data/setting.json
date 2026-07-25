@@ -12,5 +12,7 @@
     "schedule_index_save_interval": 600,
     "maximize_window": false,
     "topmost_window": false,
-    "locale": "en"
+    "locale": "zh-CN",
+    "custom_menu_items": [],
+    "other_config_path": ""
 }
