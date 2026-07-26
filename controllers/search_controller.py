@@ -4,14 +4,15 @@ from pathlib import Path
 from tkinter import filedialog, messagebox
 from typing import TYPE_CHECKING, Literal
 from dataclasses import dataclass
+from threading import Event
 import tkinter as tk
 import datetime
 import logging
 import math
 
-from core import SearchStatus
 from PIL import Image
 
+from core import SearchStatus
 from config.settings import Setting, TkS
 from utils.i18n import _
 from views.widgets import DetailListView, ThumbnailGridView
@@ -29,7 +30,7 @@ class SearchController:
         self.app = app_controller
         self.__last_search_content: Path | str = ""
         self.__last_save_dir: Path | None = None
-        self.__is_finish_search: bool = True
+        self.__is_finish_search: Event = Event()
         self.__current_page: int = 0
         self.__queue_paths: list[str] = []
         self.__preview_timer: str | None = None
@@ -44,6 +45,7 @@ class SearchController:
             (["Ctrl", "←"], lambda _: self.__debounce_navigate(-1)),
             (["Ctrl", "→"], lambda _: self.__debounce_navigate(1)),
         )
+        self.__is_finish_search.set()
         if only_preview_widgets:
             for w in (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view):
                 w.bind("<Button-3>", lambda e, w=w: self.app.menu_controller.show_selected_image_menu(e, w))
@@ -64,7 +66,7 @@ class SearchController:
         tab.filter_panel.confirm_btn.config(command=self.app.filter_controller.confirm_filter)
         tab.filter_panel.cancel_btn.config(command=self.app.filter_controller.cancel_filter)
         tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.toggle_filter_panel())
-        tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())      
+        tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())   
 
     @decorators.send_task
     def search_by_browser(self, image_paths: list[str] | None = None) -> None:
@@ -202,7 +204,7 @@ class SearchController:
         assert self.app.search_tools
         if not self.__is_allow_to_search():
             return
-        self.__is_finish_search = False
+        self.__is_finish_search.clear()
         tab = self.app.view.search_tab
         if len(self.__queue_paths) > 0 or input_data is None:
             tab.set_nav_state(self.__current_page > 0, self.__current_page < len(self.__queue_paths) - 1)
@@ -229,7 +231,7 @@ class SearchController:
                 first_result = next(results)
             except StopIteration:
                 self.__handle_empty_result(self.app.search_tools.checkout_status)
-                self.__is_finish_search = True
+                self.__is_finish_search.set()
                 return
             first_img_path, first_sim = first_result
             if first_img_path.exists():
@@ -240,14 +242,14 @@ class SearchController:
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
-            self.__is_finish_search = True
+            self.__is_finish_search.set()
 
     def __is_allow_to_search(self) -> bool:
         assert self.app.search_tools
         if not self.app.setting.model.index.search_dir:
             messagebox.showinfo(_("提示"), _("请在索引选项卡索引至少一个目录！"))
             return False
-        if not self.__is_finish_search:
+        if not self.__is_finish_search.is_set():
             return False
         if self.app.index_controller.is_updating:
             if self.app.index_controller.is_auto_updating:
@@ -312,7 +314,7 @@ class SearchController:
                     self.__append_preview_results(buffer)
                 preview_iter = None
                 preview_batch_buffer = []
-                self.__is_finish_search = True
+                self.__is_finish_search.set()
                 return
             self.__append_preview_results(buffer)
             preview_batch_k += 1
@@ -327,17 +329,20 @@ class SearchController:
                 self.app.view.search_tab.preview_view.append(*res)
         except Exception as e:
             logging.error(f"插入搜索结果时出现异常：{e}")
-            self.__is_finish_search = True
+            self.__is_finish_search.set()
             raise RuntimeError("强制终止搜索")
 
     def __debounce_navigate(self, direction: int) -> None:
-        def do_navigate() -> None:
-            self.__nav_debounce_timer = None
-            if not self.__is_finish_search:
-                return
+        @decorators.send_task
+        def wait_to_finish_search():
+            self.__is_finish_search.wait()
             if 0 <= self.__current_page < len(self.__queue_paths):
                 self.__search_image()
-
+        
+        def do_navigate() -> None:
+            self.__nav_debounce_timer = None
+            wait_to_finish_search()
+            
         tab = self.app.view.search_tab
         self.__current_page = max(0, min(self.__current_page + direction, len(self.__queue_paths) - 1))
         tab.set_nav_state(self.__current_page > 0, self.__current_page < len(self.__queue_paths) - 1)
