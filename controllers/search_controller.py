@@ -40,6 +40,12 @@ class SearchController:
 
     def env_init(self, only_preview_widgets: bool = False) -> None:
         tab = self.app.view.search_tab
+        inner_shortcut = (
+            (["Ctrl", "A"], lambda _: self.app.view.search_tab.preview_view.selection_set(tk.ALL)),
+            (["Ctrl", "V"], lambda _: self.search_image_by_clipboard()),
+            (["Ctrl", "←"], lambda _: self.__debounce_navigate(-1)),
+            (["Ctrl", "→"], lambda _: self.__debounce_navigate(1)),
+        )
         if only_preview_widgets:
             for w in (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view):
                 w.bind("<Button-3>", lambda e, w=w: self.app.menu_controller.show_selected_image_menu(e, w))
@@ -49,7 +55,7 @@ class SearchController:
             tab.preview_view.bind("<KeyPress>", shortcut.track_modifiers, add="+")
             tab.preview_view.bind("<KeyRelease>", shortcut.track_modifiers, add="+")
             tab.preview_view.bind("<KeyPress>", self.app.menu_controller.on_custom_shortcut, add="+")
-            tab.preview_view.bind("<KeyPress>", lambda e: self.app.setting_controller.on_inner_shortcut(e, self.inner_shortcut), add="+")
+            tab.preview_view.bind("<KeyPress>", lambda e: self.app.setting_controller.on_inner_shortcut(e, inner_shortcut), add="+")
             return
         tab = self.app.view.search_tab
         tab.search_by_browser_btn.config(command=self.search_by_browser)
@@ -61,16 +67,7 @@ class SearchController:
         tab.filter_panel.cancel_btn.config(command=self.app.filter_controller.cancel_filter)
         tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.toggle_filter_panel())
         tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())
-        self.__is_finish_search.set()
-
-    @property
-    def inner_shortcut(self) -> tuple[tuple[list[str], Callable], ...]:
-        return (
-            (["Ctrl", "A"], lambda _: self.app.view.search_tab.preview_view.selection_set(tk.ALL)),
-            (["Ctrl", "V"], lambda _: self.search_image_by_clipboard()),
-            (["Ctrl", "←"], lambda _: self.__debounce_navigate(-1)),
-            (["Ctrl", "→"], lambda _: self.__debounce_navigate(1)),
-        )
+        self.__is_finish_search.set()        
 
     @decorators.send_task
     def search_by_browser(self, image_paths: list[str] | None = None) -> None:

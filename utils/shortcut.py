@@ -1,6 +1,6 @@
 import tkinter as tk
 
-INNER_SHORTCUT = (["Ctrl", "A"], ["Ctrl", "V"], ["Ctrl", "←"], ["Ctrl", "→"], ["←"], ["→"])
+INNER_SHORTCUT = (["Ctrl", "A"], ["Ctrl", "V"], ["Ctrl", "←"], ["Ctrl", "→"], ["↑"], ["↓"], ["←"], ["→"])
 
 MODIFIER_KEYS: dict[str, str] = {
     "Control_L": "Ctrl", "Control_R": "Ctrl",

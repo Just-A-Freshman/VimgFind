@@ -43,7 +43,6 @@ class Setting:
     temp_image_path = ROOT / "temp"
     setting_path = config_path / "setting.json"
     models_dir = config_path / "models"
-    temp_multi_search_queue = temp_image_path / "multi_search_queue.txt"
     manifest_cache = models_dir / "_manifest_cache.json"
     error_log = config_path / "error.log"
     ext_group_map: OrderedDict[str, set[str]] = OrderedDict({
