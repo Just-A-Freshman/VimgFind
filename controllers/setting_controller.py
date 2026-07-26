@@ -203,6 +203,7 @@ class CustomMenuController:
             e, tab.shortcut_entry, lambda _: self.__sync_item_property("shortcut")), add="+"
         )
         tab.shortcut_entry.unbind("<Enter>")
+        tab.shortcut_entry.bind("<FocusOut>", lambda e: tab.shortcut_warning_tooltip.hide_tip(), add="+")
         tab.command_text.bind("<KeyRelease>", lambda _: self.__sync_item_property("command"))
         tab.bind("<Destroy>", lambda _: self.__save_item_data())
         self.__save_item_data(schedule=True)
