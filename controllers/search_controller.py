@@ -30,9 +30,9 @@ class SearchController:
         self.app = app_controller
         self.__last_search_content: Path | str = ""
         self.__last_save_dir: Path | None = None
-        # self.__is_finish_search: bool = True
         self.__is_finish_search: Event = Event()
-        self.__queue_index: int = 0
+        self.__finish_search_index: int = 0
+        self.__pending_nav_index: int = 0
         self.__queue_paths: list[str] = []
         self.__preview_timer: str | None = None
         self.__nav_debounce_timer: str | None = None
@@ -78,11 +78,11 @@ class SearchController:
 
         if len(image_paths) > 1:
             self.__queue_paths = image_paths
-            self.__queue_index = 0
+            self.__finish_search_index = self.__pending_nav_index = 0
             self.__search_image()
         else:
             self.__queue_paths = []
-            self.__queue_index = 0
+            self.__finish_search_index = self.__pending_nav_index = 0
             image_path = image_paths[0]
             if not Path(image_path).is_file():
                 return
@@ -109,7 +109,7 @@ class SearchController:
                 valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix in accept_exts]
                 if len(valid_paths) > 1:
                     self.__queue_paths = valid_paths
-                    self.__queue_index = 0
+                    self.__finish_search_index = self.__pending_nav_index = 0
                     self.__search_image()
                     return
                 elif len(valid_paths) == 1:
@@ -134,14 +134,14 @@ class SearchController:
             image_obj.save(image_path)
 
         self.__queue_paths = []
-        self.__queue_index = 0
+        self.__finish_search_index = 0
         self.__search_image(image_obj, source_path=str(image_path.absolute()))
 
     @decorators.send_task
     def search_image_by_text(self) -> None:
         text = self.app.view.search_tab.search_entry.get().strip()
         self.__queue_paths = []
-        self.__queue_index = 0
+        self.__finish_search_index = 0
         self.__search_image(text)
 
     def resend_last_search(self) -> None:
@@ -203,11 +203,11 @@ class SearchController:
         self.__is_finish_search.clear()
         tab = self.app.view.search_tab
         if len(self.__queue_paths) > 0 or input_data is None:
-            tab.set_nav_state(self.__queue_index > 0, self.__queue_index < len(self.__queue_paths) - 1)
-            tab.set_nav_page_label(self.__queue_index + 1, len(self.__queue_paths))
-            source_path = self.__queue_paths[self.__queue_index]
+            tab.set_nav_state(self.__finish_search_index > 0, self.__finish_search_index < len(self.__queue_paths) - 1)
+            tab.set_nav_page_label(self.__finish_search_index + 1, len(self.__queue_paths))
+            source_path = self.__queue_paths[self.__finish_search_index]
             if not source_path or not Path(source_path).is_file():
-                messagebox.showinfo(_("提示"), _("第 {n} 张图片不存在或已被删除！", n=self.__queue_index + 1))
+                messagebox.showinfo(_("提示"), _("第 {n} 张图片不存在或已被删除！", n=self.__finish_search_index + 1))
                 return
             input_data = image_ops.parse_image_from_path(source_path)
             if input_data is None:
@@ -228,6 +228,7 @@ class SearchController:
             except StopIteration:
                 self.__handle_empty_result(self.app.search_tools.checkout_status)
                 self.__is_finish_search.set()
+                self.__maybe_navigate_pending()
                 return
             first_img_path, first_sim = first_result
             if first_img_path.exists():
@@ -239,6 +240,7 @@ class SearchController:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
             self.__is_finish_search.set()
+            self.__maybe_navigate_pending()
 
     def __is_allow_to_search(self) -> bool:
         assert self.app.search_tools
@@ -288,7 +290,7 @@ class SearchController:
         preview_batch_buffer = []
         preview_iter = results_iter
 
-        def smooth_batch_size(k, B_min=1, B_max=50, r=0.4, m=10):
+        def smooth_batch_size(k, B_min=1, B_max=50, r=0.4, m=15):
             raw = B_min + (B_max - B_min) / (1 + math.exp(-r * (k - m)))
             return max(1, round(raw))
 
@@ -311,6 +313,7 @@ class SearchController:
                 preview_iter = None
                 preview_batch_buffer = []
                 self.__is_finish_search.set()
+                self.__maybe_navigate_pending()
                 return
             self.__append_preview_results(buffer)
             preview_batch_k += 1
@@ -326,19 +329,32 @@ class SearchController:
         except Exception as e:
             logging.error(f"插入搜索结果时出现异常：{e}")
             self.__is_finish_search.set()
+            self.__maybe_navigate_pending()
             raise RuntimeError("强制终止搜索")
 
     def __debounce_navigate(self, direction: int) -> None:
         def do_navigate() -> None:
             self.__nav_debounce_timer = None
-            if 0 <= self.__queue_index < len(self.__queue_paths):
+            if not self.__is_finish_search.is_set():
+                return
+            if 0 <= self.__pending_nav_index < len(self.__queue_paths):
+                self.__finish_search_index = self.__pending_nav_index
                 self.__search_image()
         tab = self.app.view.search_tab
-        self.__queue_index = max(0, min(self.__queue_index + direction, len(self.__queue_paths) - 1))
-        self.__search_image()
+        self.__pending_nav_index = max(0, min(self.__pending_nav_index + direction, len(self.__queue_paths) - 1))
+        tab.set_nav_state(self.__pending_nav_index > 0, self.__pending_nav_index < len(self.__queue_paths) - 1)
+        tab.set_nav_page_label(self.__pending_nav_index + 1, len(self.__queue_paths))
         if self.__nav_debounce_timer is not None:
             tab.after_cancel(self.__nav_debounce_timer)
-        self.__nav_debounce_timer = tab.after(50, do_navigate)
+        self.__nav_debounce_timer = tab.after(200, do_navigate)
+
+    def __maybe_navigate_pending(self) -> None:
+        if not self.__queue_paths:
+            return
+        if self.__pending_nav_index == self.__finish_search_index:
+            return
+        self.__finish_search_index = self.__pending_nav_index
+        self.app.view.after(0, lambda: self.__search_image())
 
     def __preview_found_image(self) -> None:
         @decorators.send_task
