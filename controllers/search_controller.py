@@ -66,7 +66,7 @@ class SearchController:
     @property
     def inner_shortcut(self) -> tuple[tuple[list[str], Callable], ...]:
         return (
-            (["Ctrl", "A"], lambda _: self.app.view.search_tab.preview_view.selection_set(tk.ALL)), 
+            (["Ctrl", "A"], lambda _: self.app.view.search_tab.preview_view.selection_set(tk.ALL)),
             (["Ctrl", "V"], lambda _: self.search_image_by_clipboard()),
             (["Ctrl", "←"], lambda _: self.__debounce_navigate(-1)),
             (["Ctrl", "→"], lambda _: self.__debounce_navigate(1)),

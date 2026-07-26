@@ -81,7 +81,7 @@ class MenuController:
 
         for item in self.app.setting.app.custom_menu_items:
             item = CustomMenuItem.from_dict(item)
-            if item.shortcut == custom_shortcut:
+            if item.shortcut == custom_shortcut and item.shortcut not in shortcut.INNER_SHORTCUT:
                 paths = [Path(pv.item(fid)[0]) for fid in selected_ids]
                 paths = [p for p in paths if p.exists()]
                 if paths:
@@ -239,7 +239,7 @@ class MenuController:
     def __create_single_file_menu(self, widget, selected_file: Path) -> Menu:
         menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3), bd=0)
         self.__append_custom_menu(menu, [selected_file])
-        menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
+        menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_files(selected_file))
         menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
         menu.add_command(label=_("图片另存为"), command=lambda: self.save_as_image(selected_file))
         menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(selected_file, widget=widget))

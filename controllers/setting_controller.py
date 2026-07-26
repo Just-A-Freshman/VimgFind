@@ -202,6 +202,7 @@ class CustomMenuController:
         tab.shortcut_entry.bind("<KeyPress>", lambda e: shortcut.on_shortcut_key(
             e, tab.shortcut_entry, lambda _: self.__sync_item_property("shortcut")), add="+"
         )
+        tab.shortcut_entry.unbind("<Enter>")
         tab.command_text.bind("<KeyRelease>", lambda _: self.__sync_item_property("command"))
         tab.bind("<Destroy>", lambda _: self.__save_item_data())
         self.__save_item_data(schedule=True)
@@ -264,7 +265,10 @@ class CustomMenuController:
         elif property == "batch_mode":
             self.__items_data[iid]["batch_mode"] = tab.batch_mode_checkbutton.instate(["selected"])
         elif property == "shortcut":
-            self.__items_data[iid]["shortcut"] = [s.strip() for s in tab.shortcut_entry.get().split("＋") if s.strip()]
+            grab_shortcut = [s.strip() for s in tab.shortcut_entry.get().split("＋") if s.strip()]
+            if grab_shortcut in shortcut.INNER_SHORTCUT:
+                tab.shortcut_warning_tooltip.show_tip()
+            self.__items_data[iid]["shortcut"] = grab_shortcut
         else:
             self.__items_data[iid]["command"] = tab.command_text.get("1.0", tk.END).strip()
         
