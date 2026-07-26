@@ -12,6 +12,7 @@ from .image_loader import ImageLoader
 from config.settings import TkS
 from utils.i18n import _
 import utils.file_ops as file_ops
+import utils.shortcut as shortcut
 
 
 class ThumbnailGridView(BasicImagePreviewView):
@@ -141,7 +142,7 @@ class ThumbnailGridView(BasicImagePreviewView):
 
     def _on_keyboard_click(self, event: tk.Event) -> None:
         monitor_key = ["Left", "KP_Left", "Right", "KP_Right", "Up", "KP_Up", "Down", "KP_Down"]
-        if event.keysym not in monitor_key:
+        if event.keysym not in monitor_key or len(shortcut._active_modifiers) != 0:
             return
         items_list = list(self._results.keys())
         if not items_list or self._cols == 0:
