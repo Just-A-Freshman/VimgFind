@@ -189,7 +189,7 @@ class CustomMenuTab(Frame):
         self.batch_mode_checkbutton = Checkbutton(edit_frame, text=_("批量模式"))
         self.shortcut_tip_label = Label(edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True, text=_("内置快捷键，无法占用。"))
+        self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
         self.command_tip_label = Label(edit_frame, text=_("执行命令："))
         self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_variable_tip)
         self.command_text = Text(edit_frame)

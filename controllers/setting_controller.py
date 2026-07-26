@@ -265,8 +265,14 @@ class CustomMenuController:
         elif property == "batch_mode":
             self.__items_data[iid]["batch_mode"] = tab.batch_mode_checkbutton.instate(["selected"])
         elif property == "shortcut":
+            tab.shortcut_warning_tooltip.hide_tip()
             grab_shortcut = [s.strip() for s in tab.shortcut_entry.get().split("＋") if s.strip()]
+            has_registered = [i["shortcut"] for i in self.__items_data.values()]
             if grab_shortcut in shortcut.INNER_SHORTCUT:
+                tab.shortcut_warning_tooltip.text = _("内置快捷键，无法占用。")
+                tab.shortcut_warning_tooltip.show_tip()
+            elif grab_shortcut not in [self.__items_data[iid]["shortcut"], [], ["??"]] and grab_shortcut in has_registered:
+                tab.shortcut_warning_tooltip.text = _("该快键键已被你注册过。")
                 tab.shortcut_warning_tooltip.show_tip()
             self.__items_data[iid]["shortcut"] = grab_shortcut
         else:
