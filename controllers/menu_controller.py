@@ -283,7 +283,7 @@ class MenuController:
         else:
             for model in self.app.model_controller.get_downloaded_models():
                 model_menu.add_command(
-                    label=model.meta.name,
+                    label=(model.meta.name + "✓") if model.meta.id == self.app.setting.app.current_model else model.meta.name,
                     command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True),
                 )
         return menu
