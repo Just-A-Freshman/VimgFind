@@ -347,6 +347,8 @@ class SearchController:
                 self.__search_image()
         tab = self.app.view.search_tab
         self.__pending_nav_index = max(0, min(self.__pending_nav_index + direction, len(self.__queue_paths) - 1))
+        if self.__pending_nav_index == self.__finish_search_index:
+            return
         tab.set_nav_state(self.__pending_nav_index > 0, self.__pending_nav_index < len(self.__queue_paths) - 1)
         tab.set_nav_page_label(self.__pending_nav_index + 1, len(self.__queue_paths))
         if self.__nav_debounce_timer is not None:
