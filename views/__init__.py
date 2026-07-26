@@ -5,5 +5,5 @@ from .index_page import IndexFrame
 from .main_window import WinGUI
 from .model_page import ModelFrame
 from .search_page import SearchFrame, FilterPanel
-from .setting_dialog import SettingDialog, GeneralTab, CustomMenuTab, UpdateTab
+from .setting_dialog import SettingDialog, GeneralTab, CustomMenuTab
 from .update_dialog import UpdateDialog

@@ -50,10 +50,8 @@ class SettingDialog(tk.Toplevel):
         notebook = Notebook(self, style="sub.TNotebook")
         general_tab = GeneralTab(notebook)
         custom_menu_tab = CustomMenuTab(notebook)
-        update_tab = UpdateTab(notebook)
         notebook.add(general_tab, text=_("  常规  "))
         notebook.add(custom_menu_tab, text=_("  自定义菜单  "))
-        notebook.add(update_tab, text=_("  更新  "))
         notebook.pack(fill=tk.BOTH, expand=True, padx=TkS(5), pady=TkS(5))
         return general_tab, custom_menu_tab
 
@@ -69,12 +67,13 @@ class GeneralTab(Frame):
     change_config_btn: Button
     help_btn: Button
     error_log_btn: Button
+    check_update_btn: Button
     __slots__ = (
         "locale_combobox", "theme_combobox",
         "maximize_checkbutton", "topmost_checkbutton",
         "config_path_entry", "open_folder_btn",
         "open_config_btn", "change_config_btn",
-        "help_btn", "error_log_btn",
+        "help_btn", "error_log_btn", "check_update_btn",
     )
 
     def __init__(self, parent) -> None:
@@ -86,7 +85,7 @@ class GeneralTab(Frame):
         config_label_frame = self.__set_config_labelframe()
         self.config_path_entry = self.__set_config_path_entry(config_label_frame)
         self.open_folder_btn, self.open_config_btn, self.change_config_btn = self.__set_config_buttons(config_label_frame)
-        self.help_btn, self.error_log_btn = self.__set_bottom_buttons()
+        self.help_btn, self.error_log_btn, self.check_update_btn = self.__set_bottom_buttons()
 
     def __set_locale_combobox(self) -> Combobox:
         frame = Frame(self)
@@ -121,7 +120,7 @@ class GeneralTab(Frame):
     
     def __set_config_labelframe(self):
         config_labelframe = Labelframe(self, text=_("配置文件存储位置"))
-        config_labelframe.grid(row=3, column=0, padx=TkS(10), pady=TkS(15), columnspan=8, sticky=tk.EW)
+        config_labelframe.grid(row=3, column=0, padx=TkS(10), pady=(TkS(15), 0), columnspan=8, sticky=tk.EW)
         return config_labelframe
 
     def __set_config_path_entry(self, parent):
@@ -138,14 +137,16 @@ class GeneralTab(Frame):
         open_config_btn.pack(side=tk.RIGHT, padx=(0, TkS(4)), pady=TkS(3))
         return open_folder_btn, open_config_btn, change_config_btn
 
-    def __set_bottom_buttons(self) -> tuple[Button, Button]:
+    def __set_bottom_buttons(self) -> tuple[Button, Button, Button]:
         bottom_frame = Frame(self)
-        bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(5))
+        bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10), pady=TkS(10))
         help_btn = Button(bottom_frame, text=_("帮助文档"), style=LINK, cursor="hand2", takefocus=False)
         error_log_btn = Button(bottom_frame, text=_("错误日志"), style=LINK, cursor="hand2", takefocus=False)
+        check_update_btn = Button(bottom_frame, text=_("检查更新"), style=LINK, cursor="hand2", takefocus=False)
         help_btn.pack(side=tk.LEFT)
-        error_log_btn.pack(side=tk.RIGHT)
-        return help_btn, error_log_btn
+        error_log_btn.pack(side=tk.LEFT)
+        check_update_btn.pack(side=tk.RIGHT)
+        return help_btn, error_log_btn, check_update_btn
 
 
 class CustomMenuTab(Frame):
@@ -257,8 +258,3 @@ class CustomMenuTab(Frame):
             w.grid_forget()
         self.name_edit_tip_label.config(text=_("选择菜单配置详细信息"))
         self.name_edit_tip_label.grid(row=3, column=1, padx=TkS(20))
-
-
-class UpdateTab(Frame):
-    pass
-

@@ -6,18 +6,19 @@ from tkinter import filedialog, messagebox
 from tkinter.font import nametofont
 import tkinter as tk
 from typing import Literal, TYPE_CHECKING
+import threading
 
+from .update_controller import UpdateController
 from config.settings import Setting, WinInfo, TkS
 from views import SettingDialog
 from utils.i18n import I18n, _
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
-import utils.decorators as decorators
 import utils.update_checker as update_checker
 
 if TYPE_CHECKING:
     from .app_controller import AppController
-    from views import SettingDialog, GeneralTab, CustomMenuTab, UpdateTab
+    from views import SettingDialog, GeneralTab, CustomMenuTab
 
 
 class SettingController:
@@ -58,8 +59,6 @@ class SettingController:
         self.dialog = SettingDialog(self.app.view)
         general_ctrl = GeneralController(self.dialog.general_tab, self.app)
         custom_menu_ctrl = CustomMenuController(self.dialog.custom_menu_tab, self.app)
-        # self.update_ctrl = UpdateController(dialog, self.app)
-        # dialog.general_tab.topmost_checkbutton.bind("<Button-1>", lambda _: dialog.lift())
         general_ctrl.env_init()
         custom_menu_ctrl.env_init()
         self.dialog.protocol("WM_DELETE_WINDOW", destroy)
@@ -90,6 +89,7 @@ class GeneralController:
         tab.change_config_btn.config(command=self.__change_config_path)
         tab.help_btn.config(command=lambda: None)
         tab.error_log_btn.config(command=lambda: file_ops.open_file(Setting.error_log))
+        tab.check_update_btn.config(command=self.__check_update)
         idx = self.LOCALE_MAP.get(self.app.setting.app.locale, 0)
         tab.locale_combobox.current(idx)
 
@@ -139,6 +139,29 @@ class GeneralController:
         messagebox.showinfo(_("提示"), _("配置文件已切换，需要重启后才能生效。"))
         self.app.setting.app.other_config_path = path
         self.app.destroy()
+
+    def __check_update(self) -> None:
+        def on_check_result(result: update_checker.UpdateCheckResult) -> None:
+            if result.error:
+                messagebox.showerror(_("检查更新失败"), result.error)
+            elif not result.has_update:
+                messagebox.showinfo(_("检查更新"), _(
+                    "当前版本：v{current}\n你使用的已是最新版本！\n\n仓库地址：{repo}", 
+                    current=result.current_version, repo=WinInfo.repo_url)
+                )
+            else:
+                msg = _("发现新版本 v{latest}（当前版本 v{current}）\n\n是否下载更新？",
+                        latest=result.latest_version, current=result.current_version)
+                if messagebox.askyesno(_("发现新版本"), msg):
+                    UpdateController(self.app).do_update(result.download_url, result.latest_version)
+            self.general_tab.check_update_btn.config(state="normal", text=_("检查更新"))
+        
+        self.general_tab.check_update_btn.config(state="disabled", text=_("正在检查..."))
+        def _check():
+            result = update_checker.check()
+            self.general_tab.after(0, lambda: on_check_result(result))
+
+        threading.Thread(target=_check, daemon=True).start()
 
 
 class CustomMenuController:
@@ -242,40 +265,4 @@ class CustomMenuController:
         self.app.setting.app.custom_menu_items = list(self.__items_data.values())
         if schedule:
             self.custom_menu_tab.after(3000, self.__save_item_data, schedule)
-
-
-class UpdateController:
-    pass
-    # def open_setting_dialog(self) -> None:
-    #     @decorators.send_task
-    #     def check_for_update() -> None:
-    #         result = update_checker.check()
-    #         if result.error is not None:
-    #             messagebox.showerror(
-    #                 _("检查更新失败"),
-    #                 _("无法检查更新：{error}\n\n请检查网络连接后重试。", error=result.error),
-    #             )
-    #             return
-    #         if result.has_update:
-    #             answer = messagebox.askyesno(
-    #                 _("检查更新"),
-    #                 _("发现新版本：v{version}\n是否立即更新？", version=result.latest_version),
-    #             )
-    #             if not answer:
-    #                 return
-    #             from .update_controller import UpdateController
-    #             dialog.destroy()
-    #             update_ctrl = UpdateController(self.app)
-    #             self.app.view.after(0, lambda: update_ctrl.do_update(result.download_url, result.latest_version))
-    #         else:
-    #             messagebox.showinfo(
-    #                 _("检查更新"),
-    #                 _("当前版本：v{version}\n你使用的已是最新版本！\n\n仓库地址：{url}",
-    #                   version=WinInfo.version, url=WinInfo.repo_url),
-    #             )
-
-    #     dialog = SettingDialog(self.app.view)
-    #     self.general_ctrl = GeneralController(dialog, self.app)
-    #     self.custom_menu_ctrl = CustomMenuController(dialog, self.app)
-    #     dialog.protocol("WM_DELETE_WINDOW", lambda: self._on_close_setting(dialog))
 
