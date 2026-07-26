@@ -200,7 +200,6 @@ class SearchController:
         assert self.app.search_tools
         if not self.__is_allow_to_search():
             return
-        # self.__is_finish_search = False
         self.__is_finish_search.clear()
         tab = self.app.view.search_tab
         if len(self.__queue_paths) > 0 or input_data is None:
@@ -228,7 +227,6 @@ class SearchController:
                 first_result = next(results)
             except StopIteration:
                 self.__handle_empty_result(self.app.search_tools.checkout_status)
-                # self.__is_finish_search = True
                 self.__is_finish_search.set()
                 return
             first_img_path, first_sim = first_result
@@ -240,7 +238,6 @@ class SearchController:
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
-            # self.__is_finish_search = True
             self.__is_finish_search.set()
 
     def __is_allow_to_search(self) -> bool:
@@ -291,7 +288,7 @@ class SearchController:
         preview_batch_buffer = []
         preview_iter = results_iter
 
-        def smooth_batch_size(k, B_min=1, B_max=30, r=0.4, m=15):
+        def smooth_batch_size(k, B_min=1, B_max=50, r=0.4, m=10):
             raw = B_min + (B_max - B_min) / (1 + math.exp(-r * (k - m)))
             return max(1, round(raw))
 
