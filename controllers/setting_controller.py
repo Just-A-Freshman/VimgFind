@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from tkinter import filedialog, messagebox
 from tkinter.font import nametofont
 import tkinter as tk
-from typing import Literal, TYPE_CHECKING
+from typing import Literal, Callable, TYPE_CHECKING
 import threading
 
 from .update_controller import UpdateController
@@ -14,6 +13,7 @@ from views import SettingDialog
 from utils.i18n import I18n, _
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
+import utils.shortcut as shortcut
 import utils.update_checker as update_checker
 
 if TYPE_CHECKING:
@@ -62,6 +62,13 @@ class SettingController:
         general_ctrl.env_init()
         custom_menu_ctrl.env_init()
         self.dialog.protocol("WM_DELETE_WINDOW", destroy)
+
+    def on_inner_shortcut(self, event, shortcut_map: tuple[tuple[list[str], Callable], ...]) -> str | None:
+        grab_shortcut = shortcut.build_shortcut(event)
+        for inner_shortcut, command in shortcut_map:
+            if grab_shortcut == inner_shortcut:
+                command(event)
+                break
 
 
 class GeneralController:

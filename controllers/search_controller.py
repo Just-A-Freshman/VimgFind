@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Callable, Literal
 from threading import Event
 from dataclasses import dataclass
 import tkinter as tk
@@ -45,12 +45,11 @@ class SearchController:
                 w.bind("<Button-3>", lambda e, w=w: self.app.menu_controller.show_selected_image_menu(e, w))
                 w.bind("<Double-Button-1>", lambda e, w=w: self.app.menu_controller.double_click_open_file(e, w))
             tab.preview_view.bind("<<ItemviewSelect>>", lambda _: self.__preview_found_image())
-            tab.preview_view.bind("<Control-a>", lambda _: tab.preview_view.selection_set(tk.ALL))
-            tab.preview_view.bind("<Control-v>", lambda _: self.search_image_by_clipboard())
             tab.preview_view.bind("<FocusIn>", lambda _: shortcut.reset_modifiers(), add="+")
             tab.preview_view.bind("<KeyPress>", shortcut.track_modifiers, add="+")
             tab.preview_view.bind("<KeyRelease>", shortcut.track_modifiers, add="+")
             tab.preview_view.bind("<KeyPress>", self.app.menu_controller.on_custom_shortcut, add="+")
+            tab.preview_view.bind("<KeyPress>", lambda e: self.app.setting_controller.on_inner_shortcut(e, self.inner_shortcut), add="+")
             return
         tab = self.app.view.search_tab
         tab.search_by_browser_btn.config(command=self.search_by_browser)
@@ -63,6 +62,15 @@ class SearchController:
         tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.toggle_filter_panel())
         tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())
         self.__is_finish_search.set()
+
+    @property
+    def inner_shortcut(self) -> tuple[tuple[list[str], Callable], ...]:
+        return (
+            (["Ctrl", "A"], lambda _: self.app.view.search_tab.preview_view.selection_set(tk.ALL)), 
+            (["Ctrl", "V"], lambda _: self.search_image_by_clipboard()),
+            (["Ctrl", "←"], lambda _: self.__debounce_navigate(-1)),
+            (["Ctrl", "→"], lambda _: self.__debounce_navigate(1)),
+        )
 
     @decorators.send_task
     def search_by_browser(self, image_paths: list[str] | None = None) -> None:
@@ -320,7 +328,7 @@ class SearchController:
             preview_batch_buffer = []
             self.app.view.after(10, process_next_batch)
         
-        return process_next_batch()        
+        return process_next_batch()
 
     def __append_preview_results(self, results) -> None:
         try:
