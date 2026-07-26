@@ -345,6 +345,8 @@ class SearchController:
             
         tab = self.app.view.search_tab
         self.__current_page = max(0, min(self.__current_page + direction, len(self.__queue_paths) - 1))
+        if self.__current_page == 0 or self.__current_page == len(self.__queue_paths) - 1:
+            return
         tab.set_nav_state(self.__current_page > 0, self.__current_page < len(self.__queue_paths) - 1)
         tab.set_nav_page_label(self.__current_page + 1, len(self.__queue_paths))
         if self.__nav_debounce_timer is not None:
