@@ -183,7 +183,7 @@ class SearchController:
     def show_toast(self, message: str, duration: int = 1500) -> None:
         toast = self.app.view.search_tab.toast_label
         toast.config(text=message)
-        toast.place(relx=1.0, rely=1.0, anchor=tk.SE, height=TkS(30))
+        toast.place(relx=1.0, rely=1.0, anchor=tk.SE, y=-self.app.view.search_tab.nav_frame.winfo_height(), height=TkS(30))
         toast.lift()
         if self.__show_toast_timer is not None:
             self.app.view.after_cancel(self.__show_toast_timer)
