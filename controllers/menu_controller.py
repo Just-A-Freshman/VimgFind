@@ -51,9 +51,9 @@ class CustomMenuItem:
             batch_mode=data.get("batch_mode", False),
             command=data.get("command", ""),
         )
-    
+
     def resolve_ask(self) -> bool:
-        tokens = shlex.split(self.command)
+        tokens = self.__strip_outer_quotes(shlex.split(self.command))
         for token in tokens:
             for m in CustomMenuItem.VAR_RE.finditer(token):
                 name = m.group(1)
@@ -67,7 +67,7 @@ class CustomMenuItem:
         return True
 
     def resolve(self, file_paths: list[Path]) -> list[str]:
-        tokens = shlex.split(self.command)
+        tokens = self.__strip_outer_quotes(shlex.split(self.command))
         file_vals = self._compute_file_values(file_paths)
         result: list[str] = []
         for token in tokens:
@@ -94,6 +94,16 @@ class CustomMenuItem:
                 if i < len(s) and s[i] == '|':
                     i += 1
             return mods
+
+    @staticmethod
+    def __strip_outer_quotes(tokens: list[str]) -> list[str]:
+        result = []
+        for t in tokens:
+            if len(t) >= 2 and t[0] == t[-1] and t[0] in ('"', "'"):
+                result.append(t[1:-1])
+            else:
+                result.append(t)
+        return result
 
     def _compute_file_values(self, file_paths: list[Path]) -> dict[str, str | list[str]]:
         if self.batch_mode:
