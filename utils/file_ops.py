@@ -159,9 +159,9 @@ def rmtree(target_dir: str | Path) -> None:
         logging.error(f"删除失败：{str(target_dir)}，原因：{str(e)}")
 
 
-def run_cmd(cmd):
+def run_cmd(cmd: str | list[str]) -> tuple[int, str, str]:
     try:
-        result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
+        result = subprocess.run(cmd, shell=isinstance(cmd, str), text=True, capture_output=True)
         return result.returncode, result.stdout, result.stderr
     except FileNotFoundError as e:
         return -1, "", str(e)
