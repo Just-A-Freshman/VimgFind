@@ -105,8 +105,8 @@ class SearchController:
             try:
                 copy_text = self.app.view.clipboard_get()
                 lines = copy_text.splitlines()
-                if len(lines) > 1000:
-                    lines = lines[:1000]
+                if len(lines) > 3000:
+                    lines = lines[:3000]
                     logging.info("剪切板中的路径过多：大于3000行，已自动截断。")
                 accept_exts = set(Setting.accepted_exts)
                 all_paths = [Path(l.strip()) for l in lines if l.strip()]
