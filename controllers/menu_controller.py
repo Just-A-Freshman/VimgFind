@@ -26,8 +26,7 @@ if TYPE_CHECKING:
 
 class CustomMenuItem:
     VAR_RE = re.compile(r'\{(\w+)((?:\|[^}]+)*)\}')
-    ASK_VARS = frozenset({'ask_dir', 'ask_file', 'ask_files', 'ask_input', 'ask_int', 'ask_float',})
-    
+    ASK_VARS = frozenset({'ask_dir', 'ask_file', 'ask_files', 'ask_input', 'ask_int', 'ask_float'})
     def __init__(
         self,
         label: str = "",
@@ -41,6 +40,7 @@ class CustomMenuItem:
         self.shortcut = shortcut or []
         self.batch_mode = batch_mode
         self.command = command
+        self.__ask_values: dict[str, str | list[str]] = {}
 
     @classmethod
     def from_dict(cls, data: dict) -> CustomMenuItem:
@@ -52,56 +52,56 @@ class CustomMenuItem:
             command=data.get("command", ""),
         )
     
-    @staticmethod
-    def __parse_modifiers(mod_str: str) -> dict[str, str]:
-        if not mod_str:
-            return {}
-        s = mod_str.lstrip('|')
-        mods: dict[str, str] = {}
-        i = 0
-        while i < len(s):
-            if s[i:].startswith('raw'):
-                mods['raw'] = ''
-                i += 3
-            elif s[i:].startswith('sep='):
-                mods['sep'] = s[i + 4:]
-                i = len(s)
-                continue
-            else:
-                i += 1
-            if i < len(s) and s[i] == '|':
-                i += 1
-        return mods
-
-    def resolve_tokens(
-        self,
-        tokens: list[str],
-        file_paths: list[Path],
-        ask_values: dict[str, str] | None = None,
-    ) -> list[str]:
-        ask = ask_values or {}
-        file_vals = CustomMenuItem._compute_file_values(file_paths)
-        result: list[str] = []
-        for token in tokens:
-            result.extend(self._resolve_token(token, file_vals, ask))
-        return result
-
-    @staticmethod
-    def resolve_ask_variables(tokens: list[str]) -> dict[str, str] | None:
-        found: dict[str, str] = {}
+    def resolve_ask(self) -> bool:
+        tokens = shlex.split(self.command)
         for token in tokens:
             for m in CustomMenuItem.VAR_RE.finditer(token):
                 name = m.group(1)
-                if name not in CustomMenuItem.ASK_VARS or name in found:
+                if name not in CustomMenuItem.ASK_VARS or name in self.__ask_values:
                     continue
-                val = CustomMenuItem._prompt_ask(name)
+                val = self.__prompt_ask(name)
                 if val is None:
-                    return None
-                found[name] = val
-        return found
+                    self.__ask_values.clear()
+                    return False
+                self.__ask_values[name] = val
+        return True
 
+    def resolve(self, file_paths: list[Path]) -> list[str]:
+        tokens = shlex.split(self.command)
+        file_vals = self._compute_file_values(file_paths)
+        result: list[str] = []
+        for token in tokens:
+            result.extend(self.__resolve_token(token, file_vals))
+        return result
+    
     @staticmethod
-    def _compute_file_values(file_paths: list[Path]) -> dict[str, str | list[str]]:
+    def __parse_modifiers(mod_str: str) -> dict[str, str]:
+            if not mod_str:
+                return {}
+            s = mod_str.lstrip('|')
+            mods: dict[str, str] = {}
+            i = 0
+            while i < len(s):
+                if s[i:].startswith('raw'):
+                    mods['raw'] = ''
+                    i += 3
+                elif s[i:].startswith('sep='):
+                    mods['sep'] = s[i + 4:]
+                    i = len(s)
+                    continue
+                else:
+                    i += 1
+                if i < len(s) and s[i] == '|':
+                    i += 1
+            return mods
+
+    def _compute_file_values(self, file_paths: list[Path]) -> dict[str, str | list[str]]:
+        if self.batch_mode:
+            return {
+                'paths':[str(p) for p in file_paths],
+                'first_dir':str(file_paths[0].parent),
+                'count':str(len(file_paths)),
+            }
         first = file_paths[0]
         return {
             'path':str(first),
@@ -109,19 +109,16 @@ class CustomMenuItem:
             'name':first.name,
             'noext':first.stem,
             'ext':first.suffix,
-            'paths':[str(p) for p in file_paths],
-            'first_dir':str(file_paths[0].parent),
-            'count':str(len(file_paths)),
         }
 
-    def _resolve_token(self, token: str, file_vals: dict, ask: dict[str, str]) -> list[str]:
+    def __resolve_token(self, token: str, file_vals: dict) -> list[str]:
         matches = list(CustomMenuItem.VAR_RE.finditer(token))
         if not matches:
             return [token]
 
         if len(matches) == 1 and matches[0].group(0) == token:
             name = matches[0].group(1)
-            val = self._lookup_var(name, file_vals, ask, matches[0].group(2))
+            val = self.__lookup_var(name, file_vals, matches[0].group(2))
             if val is None:
                 return [token]
             if isinstance(val, list):
@@ -131,16 +128,16 @@ class CustomMenuItem:
         result = token
         for m in matches:
             name = m.group(1)
-            val = self._lookup_var(name, file_vals, ask, m.group(2))
+            val = self.__lookup_var(name, file_vals, m.group(2))
             if val is None:
                 continue
             replacement = ' '.join(str(v) for v in val) if isinstance(val, list) else str(val)
             result = result.replace(m.group(0), replacement, 1)
         return [result]
 
-    def _lookup_var(self, name: str, file_vals: dict, ask: dict[str, str], mod_str: str) -> str | list[str] | None:
-        if name in ask:
-            val = ask[name]
+    def __lookup_var(self, name: str, file_vals: dict, mod_str: str) -> str | list[str] | None:
+        if name in self.__ask_values:
+            val = self.__ask_values[name]
         elif name in file_vals:
             val = file_vals[name]
         else:
@@ -154,8 +151,7 @@ class CustomMenuItem:
             return mods['sep'].join(val)
         return val
 
-    @staticmethod
-    def _prompt_ask(var_name: str) -> str | list[str] | None:
+    def __prompt_ask(self, var_name: str) -> str | list[str] | None:
         if var_name == 'ask_dir':
             v = filedialog.askdirectory(title=_("选择文件夹"))
             return v if v else None
@@ -308,16 +304,11 @@ class MenuController:
 
     @decorators.send_task
     def __run_custom_command(self, selected_files: list[Path], menu_item: CustomMenuItem) -> None:
-        tokens = shlex.split(menu_item.command)
-        if not tokens:
-            return
-
-        ask_values = menu_item.resolve_ask_variables(tokens)
-        if ask_values is None:
+        if not menu_item.resolve_ask():
             return
 
         if menu_item.batch_mode:
-            cmd = menu_item.resolve_tokens(tokens, selected_files, ask_values)
+            cmd = menu_item.resolve(selected_files)
             returncode, stdout, stderr = file_ops.run_cmd(cmd)
             if returncode != 0:
                 logging.error(f"执行命令：{cmd}, 命令输出：{stdout}, 错误原因：{stderr}")
@@ -329,7 +320,7 @@ class MenuController:
         else:
             error_count = 0
             for file_path in selected_files:
-                cmd = menu_item.resolve_tokens(tokens, [file_path], ask_values)
+                cmd = menu_item.resolve([file_path])
                 returncode, stdout, stderr = file_ops.run_cmd(cmd)
                 if returncode != 0:
                     logging.error(f"执行命令失败：{cmd}, 错误原因：{stderr}")
