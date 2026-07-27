@@ -336,7 +336,7 @@ class MenuController:
                     logging.error(f"执行命令失败：{cmd}, 错误原因：{stderr}")
                     error_count += 1
             self.app.search_controller.show_toast(
-                _("命令执行成功！") if error_count == 0
+                _("{label}成功！", label=menu_item.label) if error_count == 0
                 else _("{count}张图片的命令执行失败。", count=error_count)
             )
 
