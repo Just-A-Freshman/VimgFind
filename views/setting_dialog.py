@@ -161,12 +161,24 @@ class CustomMenuTab(Frame):
     name_edit_tip_label: Label
     name_edit_entry: Entry
     command_variable_tip = _(
-        "命令将在命令行中执行，有以下变量可用：\n"
-        "$image_path\t图像路径\n"
-        "$image_dir\t图像所在文件夹路径\n"
-        "$filename\t图像的名称（带后缀）\n"
-        "$basename\t图像的名称（无后缀）\n"
-        "$ext\t\t图像的后缀名"
+        "命令以参数数组形式执行。可用变量：\n"
+        "{path}\t图像路径\n"
+        "{dir}\t图像所在文件夹路径\n"
+        "{name}\t图像名称（含后缀）\n"
+        "{noext}\t图像主名（不含后缀）\n"
+        "{ext}\t\t图像后缀名\n\n"
+        "批量模式额外变量：\n"
+        "{paths}\t所有文件路径（默认展开多个参数）\n"
+        "{paths|sep=X}\t以 X 分隔合并\n"
+        "{first_dir}\t首个文件所在目录\n"
+        "{count}\t\t文件总数\n\n"
+        "用户注入变量（弹框收集）：\n"
+        "{ask_dir}\t选择文件夹\n"
+        "{ask_file}\t选择文件\n"
+        "{ask_files}\t选择多个文件\n"
+        "{ask_input}\t文本输入\n"
+        "{ask_int}\t整数输入\n"
+        "{ask_float}\t数字输入"
     )
     __slots__ = (
         "add_button", "delete_button",
