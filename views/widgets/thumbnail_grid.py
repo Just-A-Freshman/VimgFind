@@ -12,7 +12,6 @@ from .image_loader import ImageLoader
 from config.settings import TkS
 from utils.i18n import _
 import utils.file_ops as file_ops
-import utils.shortcut as shortcut
 
 
 class ThumbnailGridView(BasicImagePreviewView):
@@ -62,8 +61,8 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._canvas.configure(
             takefocus=1,
             background=self.theme_color.inputbg,
-            highlightthickness=TkS(1),
-            highlightbackground=self.theme_color.primary,
+            highlightthickness=TkS(0.5),
+            highlightbackground=self.theme_color.selectbg,
             highlightcolor=self.theme_color.primary
         )
         self._canvas.update()
@@ -87,7 +86,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._canvas.bind("<Enter>", lambda e: self._canvas.config(highlightbackground=self.theme_color.primary))
         self._canvas.bind("<Leave>", lambda e: self._canvas.config(highlightbackground=self.theme_color.selectbg))
         self._canvas.bind("<FocusIn>", lambda e: self._canvas.config(highlightthickness=TkS(1)))
-        self._canvas.bind("<FocusOut>", lambda e: self._canvas.config(highlightthickness=TkS(1)))
+        self._canvas.bind("<FocusOut>", lambda e: self._canvas.config(highlightbackground=self.theme_color.selectbg, highlightthickness=TkS(0.5)))
 
     def _change_theme(self) -> None:
         super()._change_theme()
@@ -141,8 +140,10 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._schedule_load()
 
     def _on_keyboard_click(self, event: tk.Event) -> None:
+        if int(event.state) & (0x0001 | 0x0004 | 0x0008):
+            return
         monitor_key = ["Left", "KP_Left", "Right", "KP_Right", "Up", "KP_Up", "Down", "KP_Down"]
-        if event.keysym not in monitor_key or len(shortcut._active_modifiers) != 0:
+        if event.keysym not in monitor_key:
             return
         items_list = list(self._results.keys())
         if not items_list or self._cols == 0:
