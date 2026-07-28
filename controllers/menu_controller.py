@@ -53,7 +53,7 @@ class CustomMenuItem:
         )
 
     def resolve_ask(self) -> bool:
-        tokens = self.__strip_outer_quotes(shlex.split(self.command))
+        tokens = self.__strip_outer_quotes(shlex.split(self.command, posix=False))
         for token in tokens:
             for m in CustomMenuItem.VAR_RE.finditer(token):
                 name = m.group(1)
@@ -67,7 +67,7 @@ class CustomMenuItem:
         return True
 
     def resolve(self, file_paths: list[Path]) -> list[str]:
-        tokens = self.__strip_outer_quotes(shlex.split(self.command))
+        tokens = self.__strip_outer_quotes(shlex.split(self.command, posix=False))
         file_vals = self._compute_file_values(file_paths)
         result: list[str] = []
         for token in tokens:
