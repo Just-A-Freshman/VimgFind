@@ -60,7 +60,7 @@ class IndexFrame(Frame):
 
     def __set_index_dataset_table(self) -> DragReorderTreeview:
         columns = [" ", _("图库目录")]
-        table = DragReorderTreeview(self, show="headings", columns=columns)
+        table = DragReorderTreeview(self, show="headings", columns=columns, ghost_column=1)
         table.heading(0, text=columns[0], anchor=tk.CENTER)
         table.column(0, width=TkS(15), anchor=tk.CENTER, stretch=False)
         table.heading(1, text=columns[1], anchor=tk.CENTER)

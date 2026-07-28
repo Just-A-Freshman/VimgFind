@@ -3,10 +3,11 @@ from __future__ import annotations
 import tkinter as tk
 
 from ttkbootstrap.constants import LINK
-from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Treeview, Scrollbar, Notebook, Text
+from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Scrollbar, Notebook, Text
 from ttkbootstrap.widgets import ToolTip
 
 from config.settings import WinInfo, TkS
+from .widgets import DragReorderTreeview
 from utils.i18n import _
 
 
@@ -152,7 +153,7 @@ class GeneralTab(Frame):
 class CustomMenuTab(Frame):
     add_button: Button
     delete_button: Button
-    custom_menu_tree: Treeview
+    custom_menu_tree: DragReorderTreeview
     is_visible_checkbutton: Checkbutton
     shortcut_tip_label: Label
     shortcut_entry: Entry
@@ -223,9 +224,9 @@ class CustomMenuTab(Frame):
         del_btn.pack(side=tk.LEFT, ipadx=TkS(10))
         return add_btn, del_btn
 
-    def __set_custom_menu_tree(self, parent: Frame) -> Treeview:
+    def __set_custom_menu_tree(self, parent: Frame) -> DragReorderTreeview:
         columns = {_("菜单名称"): TkS(80), _("是否显示"): TkS(80)}
-        treeview = Treeview(parent, show="headings", columns=list(columns), padding=TkS(1))
+        treeview = DragReorderTreeview(parent, show="headings", columns=list(columns), padding=TkS(1))
         for text, width in columns.items():
             treeview.heading(text, text=text, anchor=tk.CENTER)
             treeview.column(text, anchor=tk.CENTER, width=width, stretch=True)
