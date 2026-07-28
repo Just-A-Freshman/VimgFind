@@ -204,7 +204,7 @@ class CustomMenuTab(Frame):
         self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
         self.command_tip_label = Label(edit_frame, text=_("执行命令："))
         self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_variable_tip)
-        self.command_text = Text(edit_frame)
+        self.command_text = Text(edit_frame, undo=True)
         self.show_default()
 
     def __set_column_frames(self) -> tuple[Frame, Frame]:
@@ -265,6 +265,7 @@ class CustomMenuTab(Frame):
             self.batch_mode_checkbutton.invoke()
         self.command_text.delete('1.0', tk.END)
         self.command_text.insert(tk.END, command)
+        self.command_text.edit_reset()
         
     def show_default(self) -> None:
         for w in self.name_edit_tip_label.master.children.values():
