@@ -8,7 +8,7 @@ from config.settings import TkS
 
 
 class DragReorderTreeview(Treeview):
-    def __init__(self, parent, on_reorder: Callable = lambda: None, ghost_column: int = 0, **kwargs):
+    def __init__(self, parent, on_reorder: Callable | None = None, ghost_column: int = 0, **kwargs):
         super().__init__(parent, **kwargs)
         self.__on_reorder = on_reorder
         self.__ghost_column = ghost_column
