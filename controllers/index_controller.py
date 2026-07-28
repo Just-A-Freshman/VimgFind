@@ -39,7 +39,7 @@ class IndexController:
             tab.auto_update_checkbutton.invoke()
 
         # bind event
-        tab.index_dataset_table.on_reorder = self.__on_reorder
+        tab.index_dataset_table.config(callback=self.__on_reorder)
         tab.add_index_button.config(command=self.add_search_dir)
         tab.clean_excluded_button.config(command=self.__clean_excluded)
         tab.update_index_button.config(command=self.__sync_index)
@@ -111,6 +111,9 @@ class IndexController:
         search_dirs: list = self.app.setting.model.index.search_dir
         dir_to_move = search_dirs.pop(source_idx)
         search_dirs.insert(target_idx, dir_to_move)
+        tree = self.app.view.index_tab.index_dataset_table
+        for idx, item in enumerate(tree.get_children(""), 1):
+            self.app.view.index_tab.index_dataset_table.set(item, "#1", idx)
         self.app.filter_controller.refresh_folder_filter()
 
     def __switch_model(self, event) -> None:
