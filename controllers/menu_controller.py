@@ -10,9 +10,10 @@ from typing import TYPE_CHECKING
 import tkinter as tk
 import logging
 
-from ttkbootstrap import Treeview, Menu
+from ttkbootstrap import Menu
 
 from config.settings import TkS, Setting
+from config.types import MenuItemDef
 from utils.i18n import _
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
 import utils.shortcut as shortcut
@@ -27,33 +28,12 @@ if TYPE_CHECKING:
 class CustomMenuItem:
     VAR_RE = re.compile(r'\{(\w+)((?:\|[^}]+)*)\}')
     ASK_VARS = frozenset({'ask_dir', 'ask_file', 'ask_files', 'ask_input', 'ask_int', 'ask_float'})
-    def __init__(
-        self,
-        label: str = "",
-        is_visible: bool = False,
-        shortcut: list[str] | None = None,
-        batch_mode: bool = False,
-        command: str = "",
-    ) -> None:
-        self.label = label
-        self.is_visible = is_visible
-        self.shortcut = shortcut or []
-        self.batch_mode = batch_mode
-        self.command = command
+    def __init__(self, menu_item: MenuItemDef) -> None:
+        self.menu_item = menu_item
         self.__ask_values: dict[str, str | list[str]] = {}
 
-    @classmethod
-    def from_dict(cls, data: dict) -> CustomMenuItem:
-        return cls(
-            label=data.get("label", ""),
-            is_visible=data.get("is_visible", False),
-            shortcut=data.get("shortcut", []),
-            batch_mode=data.get("batch_mode", False),
-            command=data.get("command", ""),
-        )
-
     def resolve_ask(self) -> bool:
-        tokens = self.__strip_outer_quotes(shlex.split(self.command, posix=False))
+        tokens = self.__strip_outer_quotes(shlex.split(self.menu_item.command, posix=False))
         for token in tokens:
             for m in CustomMenuItem.VAR_RE.finditer(token):
                 name = m.group(1)
@@ -67,7 +47,7 @@ class CustomMenuItem:
         return True
 
     def resolve(self, file_paths: list[Path]) -> list[str]:
-        tokens = self.__strip_outer_quotes(shlex.split(self.command, posix=False))
+        tokens = self.__strip_outer_quotes(shlex.split(self.menu_item.command, posix=False))
         file_vals = self._compute_file_values(file_paths)
         result: list[str] = []
         for token in tokens:
@@ -106,7 +86,7 @@ class CustomMenuItem:
         return result
 
     def _compute_file_values(self, file_paths: list[Path]) -> dict[str, str | list[str]]:
-        if self.batch_mode:
+        if self.menu_item.batch_mode:
             return {
                 'paths':[str(p) for p in file_paths],
                 'first_dir':str(file_paths[0].parent),
@@ -188,42 +168,36 @@ class MenuController:
         self.__last_single_image_save_dir: Path | None = None
         self.__last_multi_image_save_dir: Path | None = None
 
-    def on_custom_shortcut(self, event) -> str | None:
+    def on_menu_shortcut(self, event) -> str | None:
         custom_shortcut = shortcut.build_shortcut(event)
-        pv = self.app.view.search_tab.preview_view
-        selected_ids = pv.selection()
+        preview_view = self.app.view.search_tab.preview_view
+        selected_ids = preview_view.selection()
         if not selected_ids:
             return
 
-        for item in self.app.setting.app.custom_menu_items:
-            item = CustomMenuItem.from_dict(item)
+        for item in self.app.setting.app.menu_items:
+            if item.type == "separator":
+                continue
             if item.shortcut == custom_shortcut and item.shortcut not in shortcut.INNER_SHORTCUT:
-                paths = [Path(pv.item(fid)[0]) for fid in selected_ids]
+                paths = [Path(preview_view.item(fid)[0]) for fid in selected_ids]
                 paths = [p for p in paths if p.exists()]
                 if paths:
                     self.__run_custom_command(paths, item)
                     return "break"
 
-    def show_selected_image_menu(self, event: tk.Event, widget=None) -> None:
-        if widget is None:
-            widget = event.widget
-        if not isinstance(widget, BasicImagePreviewView):
-            return
-        selected_files = self.__get_item_files(event, widget)
+    def show_context_menu(self, event: tk.Event) -> None:
+        selected_files = self.__get_item_files(event)
         if len(selected_files) == 0:
             return
         exists_files: list[Path] = [f for f in selected_files if f.exists()]
-        if len(selected_files) == 1 and len(exists_files) == 1:
-            menu = self.__create_single_file_menu(widget, selected_files[0])
-        elif len(selected_files) > 1 and len(exists_files) != 0:
-            menu = self.__create_multi_file_menu(widget, selected_files)
-        else:
+        if len(exists_files) == 0:
             messagebox.showinfo(_("提示"), _("选中文件不存在！"))
             return
+        menu = self.__create_context_menu(event, exists_files)
         menu.post(event.x_root, event.y_root)
         menu.bind("<Unmap>", lambda e: menu.destroy())
 
-    def show_adjustment_menu(self, widget) -> None:
+    def show_adjustment_menu(self, event: tk.Event) -> None:
         def get_label(i) -> str:
             try:
                 return adjustment_menu.entrycget(i, 'label')
@@ -231,27 +205,18 @@ class MenuController:
                 return ""
 
         adjustment_menu = self.__create_adjustment_menu()
-        winfo_right = widget.winfo_rootx() + widget.winfo_width()
+        winfo_right = event.widget.winfo_rootx() + event.widget.winfo_width()
         menu_font = tkfont.Font(font=adjustment_menu.cget("font"))
         menu_width = max(menu_font.measure(get_label(i)) for i in range(adjustment_menu.index(tk.END) or 0 + 1)) + TkS(65)
-        adjustment_menu.post(winfo_right - menu_width, widget.winfo_rooty() + TkS(25))
+        adjustment_menu.post(winfo_right - menu_width, event.widget.winfo_rooty() + TkS(25))
         adjustment_menu.bind("<Unmap>", lambda e: adjustment_menu.destroy())
 
-    def double_click_open_file(self, event: tk.Event, widget=None) -> None:
-        if widget is None:
-            widget = event.widget
-        if isinstance(widget, BasicImagePreviewView):
-            selected_files = self.__get_item_files(event, widget)
-        elif isinstance(widget, Treeview):
-            selected_files = [Path(widget.item(widget.selection()[0], "values")[1])]
-        else:
-            selected_files = []
-        if len(selected_files) == 0:
+    def double_click_open_file(self, event: tk.Event) -> None:
+        if not isinstance(event.widget, BasicImagePreviewView):
             return
-        selected_file = selected_files[0]
+        selected_file = Path(event.widget.item(event.widget.selection()[0])[0])
         if not selected_file.exists():
             messagebox.showinfo(_("提示"), _("文件不存在！"))
-            return
         else:
             file_ops.open_file(selected_file)
 
@@ -273,15 +238,16 @@ class MenuController:
                 self.__last_multi_image_save_dir = Path(save_dir)
                 file_ops.save_to_dir(*src_paths, dest_dir=self.__last_multi_image_save_dir, is_binary=True, inplace=False)
 
-    def delete_files(self, *file_paths: str | Path, widget: BasicImagePreviewView) -> None:
+    def delete_files(self, event: tk.Event, selected_files: list[Path]) -> None:
         assert self.app.search_tools
         tab = self.app.view.search_tab
-        answer = messagebox.askokcancel(_("提示"), _("你确定要删除这{count}张图片吗？", count=len(file_paths)))
+        if not isinstance(event.widget, BasicImagePreviewView):
+            return
+        answer = messagebox.askokcancel(_("提示"), _("你确定要删除这{count}张图片吗？", count=len(selected_files)))
         if not answer:
             return
-
-        selection = widget.selection()
-        if isinstance(widget, PreviewCanvasView):
+        selection = event.widget.selection()
+        if isinstance(event.widget, PreviewCanvasView):
             try:
                 tab.preview_view.delete(*selection)
             except tk.TclError:
@@ -290,35 +256,47 @@ class MenuController:
                 tab.preview_canvas1.clear()
                 tab.preview_canvas2.clear()
             else:
-                widget.delete(*selection)
+                event.widget.delete(*selection)
         else:
             for i in (tab.preview_canvas1, tab.preview_canvas2):
                 if len(i.selection()) != 0 and i.selection()[0] in selection:
                     i.clear()
-            widget.delete(*selection)
-
-        for file_path in file_paths:
+            event.widget.delete(*selection)
+        for file_path in selected_files:
             file_ops.delete_file(file_path, hard=False)
-        self.app.search_tools.remove_files(list(map(str, file_paths)))
+        self.app.search_tools.remove_files(list(map(str, selected_files)))
         self.app.index_controller.update_index_tip()
 
-    def __get_item_files(self, event: tk.Event, preview_widget: BasicImagePreviewView) -> list[Path]:
-        selected_items = preview_widget.selection()
-        current_selected_item = preview_widget.identify_item(event)
+    def __get_item_files(self, event: tk.Event) -> list[Path]:
+        if not isinstance(event.widget, BasicImagePreviewView):
+            return []
+        selected_items = event.widget.selection()
+        current_selected_item = event.widget.identify_item(event)
         if current_selected_item == "":
             return []
         if current_selected_item in selected_items:
-            return [Path(preview_widget.item(item)[0]) for item in selected_items]
-        preview_widget.selection_set(current_selected_item)
-        return [Path(preview_widget.item(current_selected_item)[0])]
+            return [Path(event.widget.item(item)[0]) for item in selected_items]
+        event.widget.selection_set(current_selected_item)
+        return [Path(event.widget.item(current_selected_item)[0])]
 
+    def __get_embeded_command(self, event: tk.Event, selected_files: list[Path]):
+        return {
+            "copy_image": lambda f=selected_files: file_ops.copy_files(*f),
+            "copy_path": lambda f=selected_files: file_ops.copy_filepaths(*f, tk=self.app.view),
+            "save_as": lambda f=selected_files: self.save_as_image(*f),
+            "delete_image": lambda f=selected_files: self.delete_files(event, f),
+            "open_file": lambda: file_ops.open_file(selected_files[0]),
+            "open_folder": lambda: file_ops.open_file(selected_files[0], True)
+        }
+    
     @decorators.send_task
-    def __run_custom_command(self, selected_files: list[Path], menu_item: CustomMenuItem) -> None:
-        if not menu_item.resolve_ask():
+    def __run_custom_command(self, selected_files: list[Path], menu_item: MenuItemDef) -> None:
+        custom_menu_item = CustomMenuItem(menu_item)
+        if not custom_menu_item.resolve_ask():
             return
 
         if menu_item.batch_mode:
-            cmd = menu_item.resolve(selected_files)
+            cmd = custom_menu_item.resolve(selected_files)
             returncode, stdout, stderr = file_ops.run_cmd(cmd)
             if returncode != 0:
                 logging.error(f"执行命令：{cmd}, 命令输出：{stdout}, 错误原因：{stderr}")
@@ -326,54 +304,35 @@ class MenuController:
                     _("{count}张图片的命令执行失败。", count=len(selected_files))
                 )
             else:
-                self.app.search_controller.show_toast(_("{label}成功！", label=menu_item.label))
+                self.app.search_controller.show_toast(_("{label}成功！", label=menu_item.id))
         else:
             error_count = 0
             for file_path in selected_files:
-                cmd = menu_item.resolve([file_path])
+                cmd = custom_menu_item.resolve([file_path])
                 returncode, stdout, stderr = file_ops.run_cmd(cmd)
                 if returncode != 0:
                     logging.error(f"执行命令失败：{cmd}, 错误原因：{stderr}")
                     error_count += 1
             self.app.search_controller.show_toast(
-                _("{label}成功！", label=menu_item.label) if error_count == 0
+                _("{label}成功！", label=menu_item.id) if error_count == 0
                 else _("{count}张图片的命令执行失败。", count=error_count)
             )
-
-    def __append_custom_menu(self, menu: Menu, selected_files: list[Path]) -> None:
-        custom_items = self.app.setting.app.custom_menu_items
-        if not custom_items:
-            return
-        for item in custom_items:
-            item = CustomMenuItem.from_dict(item)
-            if not item.is_visible:
-                continue
-            menu.add_command(
-                label=item.label,
-                command=lambda f=selected_files, m=item: self.__run_custom_command(f, m),
-            )
-        if menu.index(tk.END) is not None:
-            menu.add_separator()
-
-    def __create_single_file_menu(self, widget, selected_file: Path) -> Menu:
+    
+    def __create_context_menu(self, event: tk.Event, selected_files: list[Path]) -> Menu:
         menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3), bd=0)
-        self.__append_custom_menu(menu, [selected_file])
-        menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_files(selected_file))
-        menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(selected_file, tk=self.app.view))
-        menu.add_command(label=_("图片另存为"), command=lambda: self.save_as_image(selected_file))
-        menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(selected_file, widget=widget))
-        menu.add_separator()
-        menu.add_command(label=_("打开图片"), command=lambda: file_ops.open_file(selected_file))
-        menu.add_command(label=_("打开文件夹"), command=lambda: file_ops.open_file(selected_file, True))
-        return menu
-
-    def __create_multi_file_menu(self, widget, selected_files: list[Path]) -> Menu:
-        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
-        self.__append_custom_menu(menu, selected_files)
-        menu.add_command(label=_("复制图片"), command=lambda: file_ops.copy_files(*selected_files))
-        menu.add_command(label=_("复制路径"), command=lambda: file_ops.copy_filepaths(*selected_files, tk=self.app.view))
-        menu.add_command(label=_("图片另存为"), command=lambda: self.save_as_image(*selected_files))
-        menu.add_command(label=_("删除图片"), command=lambda: self.delete_files(*selected_files, widget=widget))
+        id_command_map = self.__get_embeded_command(event, selected_files)
+        for item_def in self.app.setting.app.menu_items:
+            if not item_def.is_visible:
+                continue
+            if item_def.type == "embedded":
+                if item_def.id not in id_command_map:
+                    continue
+                if len(selected_files) == 1 or item_def.id not in ["open_file", "open_folder"]:
+                    menu.add_command(label=item_def.id, command=id_command_map[item_def.id])
+            elif item_def.type == "custom":
+                menu.add_command(label=item_def.id, command=lambda f=selected_files, m=item_def: self.__run_custom_command(f, m))
+            elif item_def.type == "separator":
+                menu.add_separator()
         return menu
 
     def __create_adjustment_menu(self) -> Menu:
