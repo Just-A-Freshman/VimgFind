@@ -3,10 +3,11 @@ from __future__ import annotations
 import tkinter as tk
 
 from ttkbootstrap.constants import LINK
-from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Scrollbar, Notebook, Text
+from ttkbootstrap import Style, Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Scrollbar, Notebook, Text
 from ttkbootstrap.widgets import ToolTip
 
 from config.settings import WinInfo, TkS
+from config.types import MenuItemDef
 from .widgets import DragReorderTreeview
 from utils.i18n import _
 
@@ -152,6 +153,7 @@ class GeneralTab(Frame):
 
 class CustomMenuTab(Frame):
     add_button: Button
+    add_sep_btn: Button
     delete_button: Button
     custom_menu_tree: DragReorderTreeview
     is_visible_checkbutton: Checkbutton
@@ -161,51 +163,31 @@ class CustomMenuTab(Frame):
     command_text: Text
     name_edit_tip_label: Label
     name_edit_entry: Entry
-    command_variable_tip = _(
-        "命令以参数数组形式执行。可用变量：\n"
-        "{path}\t图像路径\n"
-        "{dir}\t图像所在文件夹路径\n"
-        "{name}\t图像名称（含后缀）\n"
-        "{noext}\t图像主名（不含后缀）\n"
-        "{ext}\t\t图像后缀名\n\n"
-        "批量模式额外变量：\n"
-        "{paths}\t所有文件路径（默认展开多个参数）\n"
-        "{paths|sep=X}\t以 X 分隔合并\n"
-        "{first_dir}\t首个文件所在目录\n"
-        "{count}\t\t文件总数\n\n"
-        "用户注入变量（弹框收集）：\n"
-        "{ask_dir}\t选择文件夹\n"
-        "{ask_file}\t选择文件\n"
-        "{ask_files}\t选择多个文件\n"
-        "{ask_input}\t文本输入\n"
-        "{ask_int}\t整数输入\n"
-        "{ask_float}\t数字输入"
-    )
     __slots__ = (
-        "add_button", "delete_button",
+        "add_button", "add_sep_btn", "delete_button",
         "custom_menu_tree", "help_btn",
         "batch_mode_checkbutton", "is_visible_checkbutton",
         "name_edit_tip_label", "name_edit_entry",
-        "shortcut_tip_label", "shortcut_entry", "shortcut_warning_tooltip",
+        "shortcut_tip_label", "shortcut_entry", "shortcut_warning_tooltip", 
         "command_tip_label", "command_text", "command_tooltip"
     )
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
         left_frame, right_frame = self.__set_column_frames()
-        self.add_button, self.delete_button = self.__set_menu_buttons(left_frame)
+        self.add_button, self.add_sep_btn, self.delete_button = self.__set_menu_buttons(left_frame)
         self.custom_menu_tree = self.__set_custom_menu_tree(left_frame)
-        self.help_btn, edit_frame = self.__set_help_edit_frame(right_frame)
-        self.name_edit_tip_label = Label(edit_frame)
-        self.name_edit_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        self.is_visible_checkbutton = Checkbutton(edit_frame, text=_("显示"))
-        self.batch_mode_checkbutton = Checkbutton(edit_frame, text=_("批量模式"))
-        self.shortcut_tip_label = Label(edit_frame, text=_("快捷键："))
-        self.shortcut_entry = Entry(edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        self.help_btn, self.edit_frame = self.__set_help_edit_frame(right_frame)
+        self.name_edit_tip_label = Label(self.edit_frame)
+        self.name_edit_entry = Entry(self.edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        self.is_visible_checkbutton = Checkbutton(self.edit_frame, text=_("显示"))
+        self.batch_mode_checkbutton = Checkbutton(self.edit_frame, text=_("批量模式"))
+        self.shortcut_tip_label = Label(self.edit_frame, text=_("快捷键："))
+        self.shortcut_entry = Entry(self.edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
-        self.command_tip_label = Label(edit_frame, text=_("执行命令："))
-        self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text=CustomMenuTab.command_variable_tip)
-        self.command_text = Text(edit_frame, undo=True)
+        self.command_tip_label = Label(self.edit_frame)
+        self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="")
+        self.command_text = Text(self.edit_frame, undo=True)
         self.show_default()
 
     def __set_column_frames(self) -> tuple[Frame, Frame]:
@@ -214,15 +196,17 @@ class CustomMenuTab(Frame):
         right_frame = Frame(self)
         right_frame.place(relx=0.51, rely=0, relheight=1, relwidth=0.48)
         return left_frame, right_frame
-    
-    def __set_menu_buttons(self, parent: Frame) -> tuple[Button, Button]:
+
+    def __set_menu_buttons(self, parent: Frame) -> tuple[Button, Button, Button]:
         btn_frame = Frame(parent)
         btn_frame.pack(fill=tk.X, padx=TkS(3), pady=(TkS(10), 0))
         add_btn = Button(btn_frame, text=_("新建"), takefocus=False, cursor="hand2")
         add_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(10))
+        add_sep_btn = Button(btn_frame, text=_("分隔线"), takefocus=False, cursor="hand2")
+        add_sep_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(10))
         del_btn = Button(btn_frame, text=_("删除"), takefocus=False, cursor="hand2")
         del_btn.pack(side=tk.LEFT, ipadx=TkS(10))
-        return add_btn, del_btn
+        return add_btn, add_sep_btn, del_btn
 
     def __set_custom_menu_tree(self, parent: Frame) -> DragReorderTreeview:
         columns = {_("菜单名称"): TkS(80), _("是否显示"): TkS(80)}
@@ -236,38 +220,59 @@ class CustomMenuTab(Frame):
         treeview.configure(yscrollcommand=scroll.set)
         treeview.pack(fill=tk.BOTH, expand=True, pady=TkS(5))
         return treeview
-    
+
     def __set_help_edit_frame(self, parent) -> tuple[Button, Labelframe]:
         help_btn = Button(parent, text=_("帮助文档"), takefocus=False, cursor="hand2", style="link")
         help_btn.pack(side=tk.TOP, anchor=tk.E, pady=(TkS(5), 0))
         edit_frame = Labelframe(parent, text=_("配置编辑"))
         edit_frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(1), TkS(5)))
-        edit_frame.grid_rowconfigure(3, weight=1)
         edit_frame.grid_columnconfigure(1, weight=1)
+        edit_frame.grid_rowconfigure(3, weight=1)
         return help_btn, edit_frame
 
-    def show_detail(self, label: str, is_visible: bool, batch_mode: bool, shortcut: list[str], command: str) -> None:
+    def show_detail(self, menu_item: MenuItemDef) -> None:
+        if menu_item.is_visible != self.is_visible_checkbutton.instate(["selected"]):
+            self.is_visible_checkbutton.invoke()
+        self.is_visible_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
+
+        if menu_item.type == "separator":
+            self.name_edit_tip_label.grid_forget()
+            self.name_edit_entry.grid_forget()
+            self.shortcut_tip_label.grid_forget()
+            self.shortcut_entry.grid_forget()
+            self.batch_mode_checkbutton.grid_forget()
+            self.command_text.grid_forget()
+            self.command_tip_label.config(text=_("这是一条分隔线"))
+            self.command_tip_label.place(relx=0.25, rely=0.45)
+            return
+        
         self.name_edit_tip_label.config(text=_("名称："))
         self.name_edit_tip_label.grid(row=0, column=0, padx=TkS(5), sticky=tk.W)
         self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)))
+        self.name_edit_entry.config(state=tk.NORMAL)
         self.name_edit_entry.delete(0, tk.END)
-        self.name_edit_entry.insert(tk.END, label)
-        self.is_visible_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
-        if is_visible != self.is_visible_checkbutton.instate(["selected"]):
-            self.is_visible_checkbutton.invoke()
+        self.name_edit_entry.insert(tk.END, menu_item.id)
         self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=TkS(10), sticky=tk.W)
         self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
         self.shortcut_entry.delete(0, tk.END)
-        self.shortcut_entry.insert(tk.END, " + ".join(shortcut))
-        self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=2, sticky=tk.W)
-        self.batch_mode_checkbutton.grid(row=2, column=1, columnspan=2, sticky=tk.E, padx=TkS(5))
-        self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=3, padx=TkS(5), pady=(0, TkS(5)))
-        if batch_mode != self.batch_mode_checkbutton.instate(["selected"]): 
-            self.batch_mode_checkbutton.invoke()
-        self.command_text.delete('1.0', tk.END)
-        self.command_text.insert(tk.END, command)
-        self.command_text.edit_reset()
+        self.shortcut_entry.insert(tk.END, " + ".join(menu_item.shortcut))
         
+        if menu_item.type == "embedded":
+            self.batch_mode_checkbutton.grid_forget()
+            self.command_text.grid_forget()
+            self.name_edit_entry.config(state="readonly")
+            self.command_tip_label.config(text=_("这是一个内置菜单项"))
+            self.command_tip_label.place(relx=0.2, rely=0.5)
+        else:
+            self.command_tip_label.config(text=_("执行命令："))
+            self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=2, sticky=tk.W)
+            self.batch_mode_checkbutton.grid(row=2, column=1, columnspan=2, sticky=tk.E, padx=TkS(5))
+            self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=3, padx=TkS(5), pady=(0, TkS(5)))
+            if menu_item.batch_mode != self.batch_mode_checkbutton.instate(["selected"]): 
+                self.batch_mode_checkbutton.invoke()
+            self.command_text.delete('1.0', tk.END)
+            self.command_text.insert(tk.END, menu_item.command)
+
     def show_default(self) -> None:
         for w in self.name_edit_tip_label.master.children.values():
             w.grid_forget()
