@@ -199,13 +199,13 @@ class CustomMenuTab(Frame):
 
     def __set_menu_buttons(self, parent: Frame) -> tuple[Button, Button, Button]:
         btn_frame = Frame(parent)
-        btn_frame.pack(fill=tk.X, padx=TkS(3), pady=(TkS(10), 0))
+        btn_frame.pack(fill=tk.X, padx=TkS(1), pady=(TkS(10), 0))
         add_btn = Button(btn_frame, text=_("新建"), takefocus=False, cursor="hand2")
-        add_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(10))
+        add_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(12))
         add_sep_btn = Button(btn_frame, text=_("分隔线"), takefocus=False, cursor="hand2")
-        add_sep_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(10))
+        add_sep_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(12))
         del_btn = Button(btn_frame, text=_("删除"), takefocus=False, cursor="hand2")
-        del_btn.pack(side=tk.LEFT, ipadx=TkS(10))
+        del_btn.pack(side=tk.LEFT, ipadx=TkS(12), padx=0)
         return add_btn, add_sep_btn, del_btn
 
     def __set_custom_menu_tree(self, parent: Frame) -> DragReorderTreeview:
@@ -233,7 +233,7 @@ class CustomMenuTab(Frame):
     def show_detail(self, menu_item: MenuItemDef) -> None:
         if menu_item.is_visible != self.is_visible_checkbutton.instate(["selected"]):
             self.is_visible_checkbutton.invoke()
-        self.is_visible_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5))
+        self.is_visible_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5), pady=TkS(10))
 
         if menu_item.type == "separator":
             self.name_edit_tip_label.grid_forget()
@@ -244,6 +244,7 @@ class CustomMenuTab(Frame):
             self.command_text.grid_forget()
             self.command_tip_label.config(text=_("这是一条分隔线"))
             self.command_tip_label.place(relx=0.25, rely=0.45)
+            self.command_tooltip.text = _("分隔线：用于从视觉上分离不同类型的菜单项")
             return
         
         self.name_edit_tip_label.config(text=_("名称："))
@@ -252,7 +253,7 @@ class CustomMenuTab(Frame):
         self.name_edit_entry.config(state=tk.NORMAL)
         self.name_edit_entry.delete(0, tk.END)
         self.name_edit_entry.insert(tk.END, menu_item.id)
-        self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=TkS(10), sticky=tk.W)
+        self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=(0, TkS(10)), sticky=tk.W)
         self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
         self.shortcut_entry.delete(0, tk.END)
         self.shortcut_entry.insert(tk.END, " + ".join(menu_item.shortcut))
@@ -263,6 +264,7 @@ class CustomMenuTab(Frame):
             self.name_edit_entry.config(state="readonly")
             self.command_tip_label.config(text=_("这是一个内置菜单项"))
             self.command_tip_label.place(relx=0.2, rely=0.5)
+            self.command_tooltip.text = _("内置菜单，无法修改它的名称或执行的命令。")
         else:
             self.command_tip_label.config(text=_("执行命令："))
             self.command_tip_label.grid(row=2, column=0, padx=TkS(5), columnspan=2, sticky=tk.W)
@@ -272,6 +274,7 @@ class CustomMenuTab(Frame):
                 self.batch_mode_checkbutton.invoke()
             self.command_text.delete('1.0', tk.END)
             self.command_text.insert(tk.END, menu_item.command)
+            self.command_tooltip.text = _("可用变量列表")
 
     def show_default(self) -> None:
         for w in self.name_edit_tip_label.master.children.values():
