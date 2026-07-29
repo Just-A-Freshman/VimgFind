@@ -199,7 +199,7 @@ class CustomMenuTab(Frame):
 
     def __set_menu_buttons(self, parent: Frame) -> tuple[Button, Button, Button]:
         btn_frame = Frame(parent)
-        btn_frame.pack(fill=tk.X, padx=(TkS(1), 0), pady=(TkS(10), 0))
+        btn_frame.pack(fill=tk.X, padx=TkS(0.5), pady=(TkS(10), 0))
         add_btn = Button(btn_frame, text=_("新建"), takefocus=False, cursor="hand2")
         add_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(12))
         add_sep_btn = Button(btn_frame, text=_("分隔线"), takefocus=False, cursor="hand2")
