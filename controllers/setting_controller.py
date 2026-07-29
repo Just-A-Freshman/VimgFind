@@ -217,7 +217,9 @@ class CustomMenuController:
         if item:
             self.custom_menu_tab.show_detail(item)
 
-    def __add_menu_item(self, default: MenuItemDef = MenuItemDef()) -> None:
+    def __add_menu_item(self, default: MenuItemDef | None = None) -> None:
+        if default is None:
+            default = MenuItemDef()
         tab = self.custom_menu_tab
         for iid, item in self.__items_data.items():
             item.name = item.name or default.name
