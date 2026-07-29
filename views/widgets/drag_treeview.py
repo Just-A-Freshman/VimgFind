@@ -22,7 +22,7 @@ class DragReorderTreeview(Treeview):
         self.bind("<ButtonRelease-1>", self.__drag_end)
 
     def config(self, *args, **kwargs):
-        self.__callback = kwargs.get("callback")
+        self.__callback = kwargs.pop("callback")
         Treeview.config(self, *args, **kwargs)
 
     def __drag_start(self, event: tk.Event) -> None:

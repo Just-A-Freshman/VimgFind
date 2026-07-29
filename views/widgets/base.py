@@ -23,9 +23,11 @@ class BasicImagePreviewView:
 
     def _generate_unique_path_item(self, path: str) -> str:
         norm_path = file_ops.normalize_path(path)
-        while norm_path in self._results:
+        hash_key = hashlib.md5(norm_path.encode()).hexdigest()[:16]
+        while hash_key in self._results:
             norm_path += "#"
-        return hashlib.md5(norm_path.encode()).hexdigest()[:16]
+            hash_key = hashlib.md5(norm_path.encode()).hexdigest()[:16]
+        return hash_key
 
     def _get_theme_colors(self) -> ThemeColor:
         style = Style()
