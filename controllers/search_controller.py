@@ -48,8 +48,8 @@ class SearchController:
         self.__is_finish_search.set()
         if only_preview_widgets:
             for w in (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view):
-                w.bind("<Button-3>", lambda e, w=w: self.app.menu_controller.show_selected_image_menu(e, w))
-                w.bind("<Double-Button-1>", lambda e, w=w: self.app.menu_controller.double_click_open_file(e, w))
+                w.bind("<Button-3>", self.app.menu_controller.show_context_menu)
+                w.bind("<Double-Button-1>", self.app.menu_controller.double_click_open_file)
             tab.preview_view.bind("<<ItemviewSelect>>", lambda _: self.__preview_found_image())
             tab.preview_view.bind("<FocusIn>", lambda _: shortcut.reset_modifiers(), add="+")
             tab.preview_view.bind("<KeyPress>", shortcut.track_modifiers, add="+")
@@ -62,9 +62,9 @@ class SearchController:
         tab.search_by_clipboard_btn.config(command=self.search_image_by_clipboard)
         tab.nav_prev.config(command=lambda: self.__debounce_navigate(-1))
         tab.nav_next.config(command=lambda: self.__debounce_navigate(1))
-        tab.more_options_button.config(command=lambda: self.app.menu_controller.show_adjustment_menu(tab.more_options_button))
         tab.filter_panel.confirm_btn.config(command=self.app.filter_controller.confirm_filter)
         tab.filter_panel.cancel_btn.config(command=self.app.filter_controller.cancel_filter)
+        tab.more_options_button.bind("<ButtonPress-1>", self.app.menu_controller.show_adjustment_menu)
         tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.toggle_filter_panel())
         tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())   
 
@@ -183,7 +183,7 @@ class SearchController:
     def show_toast(self, message: str, duration: int = 1500) -> None:
         toast = self.app.view.search_tab.toast_label
         toast.config(text=message)
-        toast.place(relx=1.0, rely=1.0, anchor=tk.SE, y=-self.app.view.search_tab.nav_frame.winfo_height(), height=TkS(30))
+        toast.place(in_=self.app.view.search_tab.preview_view, relx=1.0, rely=1.0, anchor=tk.SE, height=TkS(30))
         toast.lift()
         if self.__show_toast_timer is not None:
             self.app.view.after_cancel(self.__show_toast_timer)
