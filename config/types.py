@@ -63,7 +63,7 @@ class MenuItemDef:
     id: str = ""
     type: Literal["embedded", "separator", "custom"] = "custom"
     is_visible: bool = False
-    shortcut: list[str] = []
+    shortcut: list[str] = field(default_factory=list)
     batch_mode: bool = False
     command: str = ""
 
