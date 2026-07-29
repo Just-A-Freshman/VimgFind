@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Callable
 from tkinter.ttk import Treeview
 import tkinter as tk
 
