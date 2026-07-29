@@ -59,6 +59,16 @@ class ModelConfig:
 
 
 @dataclass(slots=True)
+class MenuItemDef:
+    id: str = ""
+    type: Literal["embedded", "separator", "custom"] = "custom"
+    is_visible: bool = False
+    shortcut: list[str] = []
+    batch_mode: bool = False
+    command: str = ""
+
+
+@dataclass(slots=True)
 class AppSettings:
     max_work_thread: int = 10
     max_match_count: int = 10
@@ -74,11 +84,24 @@ class AppSettings:
     maximize_window: bool = False
     topmost_window: bool = False
     locale: str = "zh-CN"
-    custom_menu_items: list[dict] = field(default_factory=list)
+    menu_items: list[MenuItemDef] = field(default_factory=list)
     other_config_path: str = ""
 
     @classmethod
     def from_dict(cls, data: dict) -> AppSettings:
         valid = {f.name for f in fields(cls)}
-        return cls(**{k: v for k, v in data.items() if k in valid})
+        result = cls(**{k: v for k, v in data.items() if k in valid})
+        if "menu_items" not in data:
+            result.menu_items = cls.default_menu_items()
+        else:
+            valid_menu_keys = {f.name for f in fields(MenuItemDef)}
+            result.menu_items = [
+                MenuItemDef(**{k: v for k, v in item.items() if k in valid_menu_keys})
+                for item in data["menu_items"]
+            ]
+        return result
     
+    @classmethod
+    def default_menu_items(cls) -> list[MenuItemDef]:
+        default_ids = ["copy_image", "copy_path", "save_as", "delete_image", "open_file", "open_folder"]
+        return [MenuItemDef(id=id) for id in default_ids]
