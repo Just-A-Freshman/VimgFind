@@ -142,6 +142,7 @@ class Setting:
     def save(self) -> None:
         with open(Setting.setting_path, "w", encoding="utf-8") as f:
             app_dict = {f.name: getattr(self._app, f.name) for f in fields(AppSettings)}
+            app_dict["menu_items"] = [asdict(item) for item in self._app.menu_items]
             json.dump(app_dict, f, indent=4, ensure_ascii=False)
         for mid, cfg in self._model_cache.items():
             model_dir = self.models_dir / mid
