@@ -225,6 +225,7 @@ class CustomMenuController:
                 tab.custom_menu_tree.selection_set(iid)
                 tab.custom_menu_tree.focus(iid)
                 tab.show_detail(item)
+                tab.custom_menu_tree.see(iid)
                 return
 
         new_item = default
@@ -233,6 +234,7 @@ class CustomMenuController:
         tab.custom_menu_tree.selection_set(iid)
         tab.custom_menu_tree.focus(iid)
         tab.show_detail(new_item)
+        tab.custom_menu_tree.see(iid)
 
     def __delete_menu_item(self) -> None:
         selection = self.custom_menu_tab.custom_menu_tree.selection()
