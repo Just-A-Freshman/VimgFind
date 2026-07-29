@@ -24,7 +24,7 @@ class DragReorderTreeview(Treeview):
 
     def config(self, *args, **kwargs):
         self.__callback = kwargs.get("callback")
-        self.config(*args, **kwargs)
+        Treeview.config(self, *args, **kwargs)
 
     def __drag_start(self, event: tk.Event) -> None:
         item = self.identify_row(event.y)
