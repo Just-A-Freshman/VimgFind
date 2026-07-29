@@ -182,14 +182,14 @@ class CustomMenuController:
         tab = self.custom_menu_tab
         for item in self.app.setting.app.menu_items:
             iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=(
-                item.id, _("是") if item.is_visible else _("否"),
+                item.name, _("是") if item.is_visible else _("否"),
             ))
             self.__items_data[iid] = item
         for i in range(2):
             tab.is_visible_checkbutton.invoke()
             tab.batch_mode_checkbutton.invoke()
         tab.add_button.config(command=self.__add_menu_item)
-        tab.add_sep_btn.config(command=lambda: self.__add_menu_item(default=MenuItemDef(id="——————————", type="separator")))
+        tab.add_sep_btn.config(command=lambda: self.__add_menu_item(default=MenuItemDef(name="——————————", type="separator")))
         tab.delete_button.config(command=self.__delete_menu_item)
         tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
         tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("id"))
@@ -220,7 +220,7 @@ class CustomMenuController:
     def __add_menu_item(self, default: MenuItemDef = MenuItemDef()) -> None:
         tab = self.custom_menu_tab
         for iid, item in self.__items_data.items():
-            item.id = item.id or default.id
+            item.name = item.name or default.name
             if item == default:
                 tab.custom_menu_tree.selection_set(iid)
                 tab.custom_menu_tree.focus(iid)
@@ -228,7 +228,7 @@ class CustomMenuController:
                 return
 
         new_item = default
-        iid = tab.custom_menu_tree.insert("", tk.END, values=(new_item.id, _("否")))
+        iid = tab.custom_menu_tree.insert("", tk.END, values=(new_item.name, _("否")))
         self.__items_data[iid] = new_item
         tab.custom_menu_tree.selection_set(iid)
         tab.custom_menu_tree.focus(iid)
@@ -261,8 +261,8 @@ class CustomMenuController:
         if menu_item.type == "separator" and property != "is_visible":
             return
         if property == "id":
-            self.__items_data[iid].id = tab.name_edit_entry.get().strip()
-            tab.custom_menu_tree.set(iid, column="#1", value=self.__items_data[iid].id)
+            self.__items_data[iid].name = tab.name_edit_entry.get().strip()
+            tab.custom_menu_tree.set(iid, column="#1", value=self.__items_data[iid].name)
         elif property == "is_visible":
             self.__items_data[iid].is_visible = tab.is_visible_checkbutton.instate(["selected"])
             tab.custom_menu_tree.set(

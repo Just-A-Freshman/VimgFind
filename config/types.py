@@ -60,7 +60,7 @@ class ModelConfig:
 
 @dataclass(slots=True)
 class MenuItemDef:
-    id: str = "未命名"
+    name: str = "未命名"
     type: Literal["embedded", "separator", "custom"] = "custom"
     is_visible: bool = False
     shortcut: list[str] = field(default_factory=list)
@@ -92,7 +92,7 @@ class AppSettings:
         valid = {f.name for f in fields(cls)}
         result = cls(**{k: v for k, v in data.items() if k in valid})
         if "menu_items" not in data:
-            result.menu_items = [MenuItemDef(id=id) for id in ["复制图片", "复制路径", "图片另存为", "删除图片", "打开图片", "打开文件夹"]]
+            result.menu_items = [MenuItemDef(name=id) for id in ["复制图片", "复制路径", "图片另存为", "删除图片", "打开图片", "打开文件夹"]]
         else:
             valid_menu_keys = {f.name for f in fields(MenuItemDef)}
             result.menu_items = [

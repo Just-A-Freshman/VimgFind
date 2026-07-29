@@ -252,7 +252,7 @@ class CustomMenuTab(Frame):
         self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)))
         self.name_edit_entry.config(state=tk.NORMAL)
         self.name_edit_entry.delete(0, tk.END)
-        self.name_edit_entry.insert(tk.END, menu_item.id)
+        self.name_edit_entry.insert(tk.END, menu_item.name)
         self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=(0, TkS(10)), sticky=tk.W)
         self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
         self.shortcut_entry.delete(0, tk.END)

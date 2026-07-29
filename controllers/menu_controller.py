@@ -183,9 +183,9 @@ class MenuController:
             if not paths:
                 continue
             if item.type == "embedded":
-                self.__get_embeded_command(event, paths).get(item.id, lambda: None)()
-                if item.id in ["复制图片", "复制路径"]:
-                    self.app.search_controller.show_toast(_("{label}成功！", label=item.id))
+                self.__get_embeded_command(event, paths).get(item.name, lambda: None)()
+                if item.name in ["复制图片", "复制路径"]:
+                    self.app.search_controller.show_toast(_("{label}成功！", label=item.name))
             else:
                 self.__run_custom_command(paths, item)
             return "break"
@@ -305,7 +305,7 @@ class MenuController:
                     _("{count}张图片的命令执行失败。", count=len(selected_files))
                 )
             else:
-                self.app.search_controller.show_toast(_("{label}成功！", label=menu_item.id))
+                self.app.search_controller.show_toast(_("{label}成功！", label=menu_item.name))
         else:
             error_count = 0
             for file_path in selected_files:
@@ -315,7 +315,7 @@ class MenuController:
                     logging.error(f"执行命令失败：{cmd}, 错误原因：{stderr}")
                     error_count += 1
             self.app.search_controller.show_toast(
-                _("{label}成功！", label=menu_item.id) if error_count == 0
+                _("{label}成功！", label=menu_item.name) if error_count == 0
                 else _("{count}张图片的命令执行失败。", count=error_count)
             )
     
@@ -325,10 +325,10 @@ class MenuController:
         for item_def in self.app.setting.app.menu_items:
             if not item_def.is_visible:
                 continue
-            if item_def.type == "embedded" and item_def.id in id_command_map:
-                menu.add_command(label=_(item_def.id), command=id_command_map[item_def.id])
+            if item_def.type == "embedded" and item_def.name in id_command_map:
+                menu.add_command(label=_(item_def.name), command=id_command_map[item_def.name])
             elif item_def.type == "custom":
-                menu.add_command(label=item_def.id, command=lambda f=selected_files, m=item_def: self.__run_custom_command(f, m))
+                menu.add_command(label=item_def.name, command=lambda f=selected_files, m=item_def: self.__run_custom_command(f, m))
             elif item_def.type == "separator":
                 menu.add_separator()
         return menu
