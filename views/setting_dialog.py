@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 
 from ttkbootstrap.constants import LINK
-from ttkbootstrap import Style, Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Scrollbar, Notebook, Text
+from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Scrollbar, Notebook, Text
 from ttkbootstrap.widgets import ToolTip
 
 from config.settings import WinInfo, TkS
