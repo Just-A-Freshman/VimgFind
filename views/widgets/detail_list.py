@@ -54,7 +54,7 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
 
     def clear(self) -> None:
         self._results.clear()
-        self.delete(*self.get_children())
+        Treeview.delete(self, *self.get_children())
 
     def delete(self, *items) -> None:
         Treeview.delete(self, *items)
