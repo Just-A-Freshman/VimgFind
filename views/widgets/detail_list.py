@@ -11,75 +11,70 @@ from config.settings import TkS
 from utils.i18n import _
 
 
-class DetailListView(BasicImagePreviewView):
-    __slots__ = ("__treeview", "__scrollbar")
+class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
+    __slots__ = ("__scrollbar", )
 
-    def __init__(self, parent: tk.Widget, extra_columns: dict[str, int]) -> None:
-        super().__init__(parent)
-        self._create_treeview(extra_columns)
-        self.parent.after(50, self._create_scrollbar)
-
-    def _create_treeview(self, extra_columns: dict[str, int]) -> None:
+    def __init__(self, master: tk.Widget, extra_columns: dict[str, int]) -> None:
         columns = {_("名称"): TkS(80), **extra_columns}
-        self.__treeview = Treeview(self.parent, show="headings", columns=list(columns), padding=TkS(1))
+        Treeview.__init__(self, master, show="headings", columns=list(columns), padding=TkS(1))
+        BasicImagePreviewView.__init__(self, master)
+        self.__env_init(columns)
+        
+    def __env_init(self, columns: dict[str, int]) -> None:
+        def create_scrollbar() -> None:
+            scrollbar = Scrollbar(self, orient=tk.VERTICAL, cursor="hand2")
+            scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
+            scrollbar.config(command=self.yview)
+            self.configure(yscrollcommand=scrollbar.set)
         for text, width in columns.items():
-            self.__treeview.heading(text, text=text, anchor=tk.CENTER)
-            self.__treeview.column(text, anchor=tk.CENTER, width=width, stretch=True)
-        self.__treeview.grid(row=0, column=0, sticky=tk.NSEW)
-        self.parent.grid_rowconfigure(0, weight=1)
-        self.parent.grid_columnconfigure(0, weight=1)
-        self.__treeview.grid_columnconfigure(0, weight=1)
-        self.__treeview.grid_rowconfigure(0, weight=1)
-        for column in self.__treeview["columns"]:
-            self.__treeview.heading(column, command=lambda column=column: self._sort_column(column, False))
+            self.heading(text, text=text, anchor=tk.CENTER)
+            self.column(text, anchor=tk.CENTER, width=width, stretch=True)
+        self.grid(row=0, column=0, sticky=tk.NSEW)
+        self.master.grid_rowconfigure(0, weight=1)
+        self.master.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        for column in self["columns"]:
+            self.heading(column, command=lambda column=column: self.__sort_column(column, False))
+        self.master.after(50, create_scrollbar)
 
-    def _create_scrollbar(self) -> None:
-        self.__scrollbar = Scrollbar(self.__treeview, orient=tk.VERTICAL, cursor="hand2")
-        self.__scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
-        self.__scrollbar.config(command=self.__treeview.yview)
-        self.__treeview.configure(yscrollcommand=self.__scrollbar.set)
-
-    def _sort_column(self, col: str, reverse: bool) -> None:
-        data = [(self.__treeview.set(k, col), k) for k in self.__treeview.get_children("")]
+    def __sort_column(self, col: str, reverse: bool) -> None:
+        data = [(self.set(k, col), k) for k in self.get_children("")]
         if col == _("相似度") or col == _("大小"):
             data.sort(key=lambda x: float(x[0].rstrip("MB%")), reverse=reverse)
         else:
             data.sort(reverse=reverse)
         for index, (tmp, k) in enumerate(data):
-            self.__treeview.move(k, "", index)
-        self.__treeview.heading(col, command=lambda: self._sort_column(col, not reverse))
+            self.move(k, "", index)
+        self.heading(col, command=lambda: self.__sort_column(col, not reverse))
 
     def append(self, image_path: str, *extra_info: str | int) -> str:
         iid = self._generate_unique_path_item(image_path)
         content = (os.path.basename(image_path), *extra_info)
         self._results[iid] = (image_path, *extra_info)
-        return self.__treeview.insert('', tk.END, values=content, iid=iid, text=image_path)    
+        return self.insert('', tk.END, values=content, iid=iid, text=image_path)    
 
     def clear(self) -> None:
         self._results.clear()
-        self.__treeview.delete(*self.__treeview.get_children())
+        self.delete(*self.get_children())
 
     def delete(self, *items) -> None:
-        self.__treeview.delete(*items)
+        Treeview.delete(self, *items)
         for item in items:
-            self._results.pop(item)
+            self._results.pop(str(item))
 
     def selection(self) -> tuple[str, ...]:
-        return self.__treeview.selection()
+        return Treeview.selection(self)
 
-    def selection_set(self, *items: str) -> None:
-        if not items:
-            return
-        self.__treeview.selection_set(self.__treeview.get_children("") if items[0] == tk.ALL else items)
+    def selection_set(self, *args, **kwargs) -> None:
+        Treeview.selection_set(self, *args, **kwargs)
 
     def identify_item(self, event: tk.Event) -> str:
-        return self.__treeview.identify_row(event.y)
+        return Treeview.identify_row(self, event.y)
 
-    def bind(self, sequence: str, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:
-        if sequence == "<<ItemviewSelect>>":
-            sequence = "<<TreeviewSelect>>"
-        self.__treeview.bind(sequence, func, add)
+    def bind(self, sequence: str | None, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:   # type: ignore
+        sequence = "<<TreeviewSelect>>" if sequence == "<<ItemviewSelect>>" else sequence
+        Treeview.bind(self, sequence, func, add)
 
     def destroy(self) -> None:
-        self.__scrollbar.destroy()
-        self.__treeview.destroy()
+        Treeview.destroy(self)
