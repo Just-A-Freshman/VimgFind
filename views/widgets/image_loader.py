@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import logging
 from collections import namedtuple
 import queue
 
 from concurrent.futures import ThreadPoolExecutor
 from PIL import ImageTk, ImageOps
 
+from utils.i18n import _
 import utils.image_ops as image_ops
+
 
 LoaderResult = namedtuple("LoaderResult", ["item", "size", "photo", "error"])
 
@@ -26,19 +29,20 @@ class ImageLoader:
         img = image_ops.parse_image_from_path(image_path)
         if img is None:
             self._result_queue.put(LoaderResult(
-                item=item, size=(0, 0), photo=None, error="加载图片失败！"
+                item=item, size=(0, 0), photo=None, error=_("加载图片失败！")
             ))
-        else:
+            return
+        try:
             if img.mode == 'P':
                 img = img.convert('RGBA')
             img = ImageOps.exif_transpose(img) or img
             width, height = img.size
             img.thumbnail((thumbnail_size, thumbnail_size))
+            self._result_queue.put(LoaderResult(item=item, size=(width, height), photo=img, error=""))
+        except Exception as e:
+            logging.exception(f"图片处理失败:{image_path}")
             self._result_queue.put(LoaderResult(
-                item=item,
-                size=(width, height),
-                photo=img,
-                error=""
+                item=item, size=(0, 0), photo=None, error=_("图片处理失败！")
             ))
 
     def get_results(self) -> list[LoaderResult]:
