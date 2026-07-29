@@ -54,7 +54,7 @@ class SearchController:
             tab.preview_view.bind("<FocusIn>", lambda _: shortcut.reset_modifiers(), add="+")
             tab.preview_view.bind("<KeyPress>", shortcut.track_modifiers, add="+")
             tab.preview_view.bind("<KeyRelease>", shortcut.track_modifiers, add="+")
-            tab.preview_view.bind("<KeyPress>", self.app.menu_controller.on_custom_shortcut, add="+")
+            tab.preview_view.bind("<KeyPress>", self.app.menu_controller.on_menu_shortcut, add="+")
             tab.preview_view.bind("<KeyPress>", lambda e: self.app.setting_controller.on_inner_shortcut(e, inner_shortcut), add="+")
             return
         tab = self.app.view.search_tab
