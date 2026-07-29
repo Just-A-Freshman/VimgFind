@@ -12,6 +12,7 @@ from views import ExcludeDialog
 from config.settings import RANGE_LABEL
 from .exclude_controller import ExcludePreviewController
 from utils.i18n import _
+import utils.file_ops as file_ops
 import utils.decorators as decorators
 import utils.idle_tracker as idle_tracker
 
@@ -48,7 +49,7 @@ class IndexController:
         tab.auto_update_checkbutton.config(command=self.__toggle_auto_update)
         tab.exclude_button.config(command=self.__open_exclude_dialog)
 
-        tab.index_dataset_table.bind("<Double-Button-1>", self.app.menu_controller.double_click_open_file)
+        tab.index_dataset_table.bind("<Double-Button-1>", self.__open_dataset_folder)
         tab.switch_model_combobox.bind("<<ComboboxSelected>>", self.__switch_model)
         tab.switch_model_combobox.bind("<MouseWheel>", lambda _: "break")
         tab.update_range_combobox.bind(
@@ -225,6 +226,16 @@ class IndexController:
         dialog.preview_tree.bind("<Double-Button-1>", controller.on_preview_double_click)
         dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
         controller.load_rules_into_view()
+
+    def __open_dataset_folder(self, event: tk.Event) -> None:
+        selection = self.app.view.index_tab.index_dataset_table.selection()
+        if not selection:
+            return
+        try:
+            dir_path = self.app.view.index_tab.index_dataset_table.item(selection[0], "values")[1]
+            file_ops.open_file(dir_path)
+        except (IndexError, FileNotFoundError) as e:
+            logging.warning(f"打开目录失败: {str(e)}")
 
     @decorators.send_task
     @decorators.redirect_output
