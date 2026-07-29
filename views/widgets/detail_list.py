@@ -12,8 +12,6 @@ from utils.i18n import _
 
 
 class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
-    __slots__ = ("__scrollbar", )
-
     def __init__(self, master: tk.Widget, extra_columns: dict[str, int]) -> None:
         columns = {_("名称"): TkS(80), **extra_columns}
         Treeview.__init__(self, master, show="headings", columns=list(columns), padding=TkS(1))
@@ -72,6 +70,9 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
     def identify_item(self, event: tk.Event) -> str:
         return Treeview.identify_row(self, event.y)
 
+    def item(self, item: str, option: Literal["values"] = "values") -> tuple:      # type: ignore
+        return BasicImagePreviewView.item(self, item, option)
+    
     def bind(self, sequence: str | None, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:   # type: ignore
         sequence = "<<TreeviewSelect>>" if sequence == "<<ItemviewSelect>>" else sequence
         Treeview.bind(self, sequence, func, add)

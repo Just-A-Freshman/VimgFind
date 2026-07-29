@@ -28,7 +28,7 @@ class ThumbnailGridView(BasicImagePreviewView):
     def __init__(self, parent: tk.Widget, thumbnail_size: int = 110) -> None:
         super().__init__(parent)
         self._create_canvas()
-        self.parent.after(50, self._create_scrollbar)
+        self.master.after(50, self._create_scrollbar)
         self._thumbnail_size = TkS(thumbnail_size)
         self._characters_size = int(self._thumbnail_size / TkS(8))
 
@@ -52,10 +52,10 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._check_results()
 
     def _create_canvas(self) -> None:
-        self._canvas = tk.Canvas(self.parent)
+        self._canvas = tk.Canvas(self.master)
         self._canvas.grid(row=0, column=0, sticky=tk.NSEW)
-        self.parent.grid_rowconfigure(0, weight=1)
-        self.parent.grid_columnconfigure(0, weight=1)
+        self.master.grid_rowconfigure(0, weight=1)
+        self.master.grid_columnconfigure(0, weight=1)
         self._canvas.grid_columnconfigure(0, weight=1)
         self._canvas.grid_rowconfigure(0, weight=1)
         self._canvas.configure(
@@ -116,16 +116,16 @@ class ThumbnailGridView(BasicImagePreviewView):
                 return
             self._load_visible_images()
             if self._is_scrollbar_dragging:
-                self._scrollbar_drag_timer = self.parent.after(50, _on_scrollbar_drag_update)
+                self._scrollbar_drag_timer = self.master.after(50, _on_scrollbar_drag_update)
         self._is_scrollbar_dragging = True
         if self._scrollbar_drag_timer:
-            self.parent.after_cancel(self._scrollbar_drag_timer)
-        self._scrollbar_drag_timer = self.parent.after(50, _on_scrollbar_drag_update)
+            self.master.after_cancel(self._scrollbar_drag_timer)
+        self._scrollbar_drag_timer = self.master.after(50, _on_scrollbar_drag_update)
 
     def _on_scrollbar_release(self, event: tk.Event) -> None:
         self._is_scrollbar_dragging = False
         if self._scrollbar_drag_timer:
-            self.parent.after_cancel(self._scrollbar_drag_timer)
+            self.master.after_cancel(self._scrollbar_drag_timer)
             self._scrollbar_drag_timer = None
         self._schedule_load()
 
@@ -184,8 +184,8 @@ class ThumbnailGridView(BasicImagePreviewView):
             self._load_visible_images()
             self._scroll_timer = None
         if self._scroll_timer:
-            self.parent.after_cancel(self._scroll_timer)
-        self._scroll_timer = self.parent.after(100, delayed_resize)
+            self.master.after_cancel(self._scroll_timer)
+        self._scroll_timer = self.master.after(100, delayed_resize)
 
     def _on_canvas_click(self, event: tk.Event) -> None:
         self._canvas.focus_set()
@@ -238,8 +238,8 @@ class ThumbnailGridView(BasicImagePreviewView):
 
     def _schedule_load(self) -> None:
         if self._scroll_timer:
-            self.parent.after_cancel(self._scroll_timer)
-        self._scroll_timer = self.parent.after(100, self._load_visible_images)
+            self.master.after_cancel(self._scroll_timer)
+        self._scroll_timer = self.master.after(100, self._load_visible_images)
 
     def _check_results(self) -> None:
         if self._is_destroy:
@@ -253,13 +253,13 @@ class ThumbnailGridView(BasicImagePreviewView):
             self._visible_image_data[item] = {'photo': result.photo, 'size': result.size, 'error': result.error}
             if item in self._canvas_items:
                 self._create_canvas_item(item)
-        self.parent.after(100, self._check_results)
+        self.master.after(100, self._check_results)
 
     def _cancel_timer(self) -> None:
         if self._scroll_timer:
-            self.parent.after_cancel(self._scroll_timer)
+            self.master.after_cancel(self._scroll_timer)
         if self._scrollbar_drag_timer:
-            self.parent.after_cancel(self._scrollbar_drag_timer)
+            self.master.after_cancel(self._scrollbar_drag_timer)
 
     def _get_item_index(self, item: str) -> int:
         if item not in self._canvas_items:
@@ -400,7 +400,7 @@ class ThumbnailGridView(BasicImagePreviewView):
         self._results[item] = (image_path, *extra_info)
         self._update_layout()
         self._create_placeholder(item)
-        self.parent.after(100, self._load_visible_images)
+        self.master.after(100, self._load_visible_images)
         return item
     
     def clear(self) -> None:

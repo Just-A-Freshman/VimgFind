@@ -14,10 +14,10 @@ ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
 
 
 class BasicImagePreviewView:
-    __slots__ = ("parent", "_results", "theme_color")
+    __slots__ = ("master", "_results", "theme_color")
 
-    def __init__(self, parent: tk.Widget) -> None:
-        self.parent = parent
+    def __init__(self, master: tk.Widget) -> None:
+        self.master = master
         self._results: OrderedDict[str, tuple] = OrderedDict(dict())
         self.theme_color = self._get_theme_colors()
 
@@ -43,25 +43,25 @@ class BasicImagePreviewView:
         return list(self._results.values())
 
     def clear(self) -> None:
-        pass
+        ...
 
     def delete(self, *items: str) -> None:
-        pass
+        ...
 
     def selection(self) -> tuple[str, ...]:
         return ()
 
     def selection_set(self, *items: str) -> None:
-        pass
+        ...
 
     def identify_item(self, event: tk.Event) -> str:
         return ""
 
-    def item(self, item) -> tuple:
+    def item(self, item: str, option: Literal["values"] = "values") -> tuple:
         return self._results[item]
 
-    def bind(self, sequence: str, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:
-        pass
+    def bind(self, sequence: str | None = None, func: Callable | None = None, add: bool | Literal['', '+'] | None = None) -> None:
+        ...
 
     def destroy(self) -> None:
-        pass
+        ...
