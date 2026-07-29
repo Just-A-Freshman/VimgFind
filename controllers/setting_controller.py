@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal, Callable, TYPE_CHECKING
 from tkinter import filedialog, messagebox
 from tkinter.font import nametofont
 import tkinter as tk
-from typing import Literal, Callable, TYPE_CHECKING
 import threading
 
-from .update_controller import UpdateController
 from config.settings import Setting, WinInfo, TkS
+from config.types import MenuItemDef
+from .update_controller import UpdateController
 from views import SettingDialog
 from utils.i18n import I18n, _
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
-import utils.shortcut as shortcut
 import utils.update_checker as update_checker
 
 if TYPE_CHECKING:
@@ -51,6 +51,7 @@ class SettingController:
         def destroy():
             self.app.setting.save()
             if self.dialog is not None:
+                custom_menu_ctrl.save_item_data()
                 self.dialog.destroy()
                 self.dialog = None
 
@@ -172,28 +173,26 @@ class GeneralController:
 
 
 class CustomMenuController:
-    DEFAULT_ITEM = {"label": _("未命名"), "is_visible": False, "batch_mode": False, "shortcut": [], "command": ""}
-
     def __init__(self, custom_menu_tab: CustomMenuTab, app_controller: AppController) -> None:
         self.custom_menu_tab = custom_menu_tab
         self.app = app_controller
-        self.__items_data: dict[str, dict] = {}
+        self.__items_data: dict[str, MenuItemDef] = {}
 
     def env_init(self) -> None:
         tab = self.custom_menu_tab
-        for item in self.app.setting.app.custom_menu_items:
-            full_item = {**self.DEFAULT_ITEM, **item}
+        for item in self.app.setting.app.menu_items:
             iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=(
-                full_item["label"], _("是") if full_item["is_visible"] else _("否"),
+                item.id, _("是") if item.is_visible else _("否"),
             ))
-            self.__items_data[iid] = full_item
+            self.__items_data[iid] = item
         for i in range(2):
             tab.is_visible_checkbutton.invoke()
             tab.batch_mode_checkbutton.invoke()
         tab.add_button.config(command=self.__add_menu_item)
+        tab.add_sep_btn.config(command=lambda: self.__add_menu_item(default=MenuItemDef(id="——————————", type="separator")))
         tab.delete_button.config(command=self.__delete_menu_item)
         tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
-        tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("label"))
+        tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("id"))
         tab.is_visible_checkbutton.config(command=lambda: self.__sync_item_property("is_visible"))
         tab.batch_mode_checkbutton.config(command=lambda: self.__sync_item_property("batch_mode"))
         tab.shortcut_entry.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")
@@ -205,8 +204,7 @@ class CustomMenuController:
         tab.shortcut_entry.unbind("<Enter>")
         tab.shortcut_entry.bind("<FocusOut>", lambda e: tab.shortcut_warning_tooltip.hide_tip(), add="+")
         tab.command_text.bind("<KeyRelease>", lambda _: self.__sync_item_property("command"))
-        tab.bind("<Destroy>", lambda _: self.__save_item_data())
-        self.__save_item_data(schedule=True)
+        self.save_item_data(schedule=True)
         self.__on_tree_select()
 
     def __on_tree_select(self) -> None:
@@ -217,29 +215,33 @@ class CustomMenuController:
         iid = selection[0]
         item = self.__items_data.get(iid)
         if item:
-            self.custom_menu_tab.show_detail(**item)
+            self.custom_menu_tab.show_detail(item)
 
-    def __add_menu_item(self) -> None:
+    def __add_menu_item(self, default: MenuItemDef = MenuItemDef()) -> None:
         tab = self.custom_menu_tab
         for iid, item in self.__items_data.items():
-            item["label"] = item["label"] or self.DEFAULT_ITEM["label"]
-            if item == self.DEFAULT_ITEM:
+            item.id = item.id or default.id
+            if item == default:
                 tab.custom_menu_tree.selection_set(iid)
                 tab.custom_menu_tree.focus(iid)
-                tab.show_detail(**item)
+                tab.show_detail(item)
                 return
 
-        new_item = self.DEFAULT_ITEM.copy()
-        iid = tab.custom_menu_tree.insert("", tk.END, values=(new_item["label"], _("否")))
+        new_item = default
+        iid = tab.custom_menu_tree.insert("", tk.END, values=(new_item.id, _("否")))
         self.__items_data[iid] = new_item
         tab.custom_menu_tree.selection_set(iid)
         tab.custom_menu_tree.focus(iid)
-        tab.show_detail(**new_item)
+        tab.show_detail(new_item)
 
     def __delete_menu_item(self) -> None:
         selection = self.custom_menu_tab.custom_menu_tree.selection()
         if not selection:
             return
+        for iid in selection:
+            if self.__items_data[iid].type == "embedded":
+                messagebox.showwarning(_("提示"), _("内置菜单项无法删除"))
+                return
         if not messagebox.askyesno(_("删除"), _("确定要删除选中的菜单项吗？")):
             return
         self.custom_menu_tab.custom_menu_tree.delete(*selection)
@@ -247,40 +249,45 @@ class CustomMenuController:
             self.__items_data.pop(iid, None)
         self.custom_menu_tab.show_default()
 
-    def __sync_item_property(self, property: Literal["label", "is_visible", "batch_mode", "shortcut", "command"]):
+    def __sync_item_property(self, property: Literal["id", "is_visible", "batch_mode", "shortcut", "command"]):
         selection = self.custom_menu_tab.custom_menu_tree.selection()
         if not selection:
             return
         tab = self.custom_menu_tab
         iid = selection[0]
-        if iid not in self.__items_data:
+        menu_item = self.__items_data[iid]
+        if menu_item.type == "embedded" and property not in ("is_visible", "shortcut"):
             return
-        if property == "label":
-            self.__items_data[iid]["label"] = tab.name_edit_entry.get().strip()
-            tab.custom_menu_tree.set(iid, column="#1", value=self.__items_data[iid]["label"])
+        if menu_item.type == "separator" and property != "is_visible":
+            return
+        if property == "id":
+            self.__items_data[iid].id = tab.name_edit_entry.get().strip()
+            tab.custom_menu_tree.set(iid, column="#1", value=self.__items_data[iid].id)
         elif property == "is_visible":
-            self.__items_data[iid]["is_visible"] = tab.is_visible_checkbutton.instate(["selected"])
+            self.__items_data[iid].is_visible = tab.is_visible_checkbutton.instate(["selected"])
             tab.custom_menu_tree.set(
-                iid, column="#2", value=_("是") if self.__items_data[iid]["is_visible"] else _("否")
+                iid, column="#2", value=_("是") if menu_item.is_visible else _("否")
             )
         elif property == "batch_mode":
-            self.__items_data[iid]["batch_mode"] = tab.batch_mode_checkbutton.instate(["selected"])
+            self.__items_data[iid].batch_mode = tab.batch_mode_checkbutton.instate(["selected"])
         elif property == "shortcut":
             tab.shortcut_warning_tooltip.hide_tip()
             grab_shortcut = [s.strip() for s in tab.shortcut_entry.get().split("＋") if s.strip()]
-            has_registered = [i["shortcut"] for i in self.__items_data.values()]
+            has_registered = [i.shortcut for i in self.__items_data.values()]
             if grab_shortcut in shortcut.INNER_SHORTCUT:
                 tab.shortcut_warning_tooltip.text = _("内置快捷键，无法占用。")
                 tab.shortcut_warning_tooltip.show_tip()
-            elif grab_shortcut not in [self.__items_data[iid]["shortcut"], [], ["??"]] and grab_shortcut in has_registered:
+            elif grab_shortcut not in [menu_item.shortcut, [], ["??"]] and grab_shortcut in has_registered:
                 tab.shortcut_warning_tooltip.text = _("该快键键已被你注册过。")
                 tab.shortcut_warning_tooltip.show_tip()
-            self.__items_data[iid]["shortcut"] = grab_shortcut
+            self.__items_data[iid].shortcut = grab_shortcut
         else:
-            self.__items_data[iid]["command"] = tab.command_text.get("1.0", tk.END).strip()
-        
-    def __save_item_data(self, schedule: bool = False) -> None:
-        self.app.setting.app.custom_menu_items = list(self.__items_data.values())
+            self.__items_data[iid].command = tab.command_text.get("1.0", tk.END).strip()
+
+    def save_item_data(self, schedule: bool = False) -> None:
+        self.app.setting.app.menu_items = [
+            self.__items_data[k] for k in self.custom_menu_tab.custom_menu_tree.get_children("")
+        ]
         if schedule:
-            self.custom_menu_tab.after(3000, self.__save_item_data, schedule)
+            self.custom_menu_tab.after(1000, self.save_item_data, schedule)
 

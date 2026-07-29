@@ -5,7 +5,7 @@ import shlex
 from pathlib import Path
 from tkinter import font as tkfont
 from tkinter import messagebox, filedialog, simpledialog
-from typing import TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 import tkinter as tk
 import logging
@@ -176,19 +176,32 @@ class MenuController:
             return
 
         for item in self.app.setting.app.menu_items:
-            if item.type == "separator":
+            if item.type == "separator" or item.shortcut in shortcut.INNER_SHORTCUT or item.shortcut != custom_shortcut:
                 continue
-            if item.shortcut == custom_shortcut and item.shortcut not in shortcut.INNER_SHORTCUT:
-                paths = [Path(preview_view.item(fid)[0]) for fid in selected_ids]
-                paths = [p for p in paths if p.exists()]
-                if paths:
-                    self.__run_custom_command(paths, item)
-                    return "break"
+            paths = [Path(preview_view.item(fid)[0]) for fid in selected_ids]
+            paths = [p for p in paths if p.exists()]
+            if not paths:
+                continue
+            if item.type == "embedded":
+                self.__get_embeded_command(event, paths).get(item.id, lambda: None)()
+                if item.id in ["复制图片", "复制路径"]:
+                    self.app.search_controller.show_toast(_("{label}成功！", label=item.id))
+            else:
+                self.__run_custom_command(paths, item)
+            return "break"
 
     def show_context_menu(self, event: tk.Event) -> None:
-        selected_files = self.__get_item_files(event)
-        if len(selected_files) == 0:
+        if not isinstance(event.widget, BasicImagePreviewView):
             return
+        selected_items = event.widget.selection()
+        current_selected_item = event.widget.identify_item(event)
+        if current_selected_item == "":
+            return
+        if current_selected_item in selected_items:
+            selected_files = [Path(event.widget.item(item)[0]) for item in selected_items]
+        else:
+            event.widget.selection_set(current_selected_item)
+            selected_files = [Path(event.widget.item(current_selected_item)[0])]
         exists_files: list[Path] = [f for f in selected_files if f.exists()]
         if len(exists_files) == 0:
             messagebox.showinfo(_("提示"), _("选中文件不存在！"))
@@ -267,26 +280,14 @@ class MenuController:
         self.app.search_tools.remove_files(list(map(str, selected_files)))
         self.app.index_controller.update_index_tip()
 
-    def __get_item_files(self, event: tk.Event) -> list[Path]:
-        if not isinstance(event.widget, BasicImagePreviewView):
-            return []
-        selected_items = event.widget.selection()
-        current_selected_item = event.widget.identify_item(event)
-        if current_selected_item == "":
-            return []
-        if current_selected_item in selected_items:
-            return [Path(event.widget.item(item)[0]) for item in selected_items]
-        event.widget.selection_set(current_selected_item)
-        return [Path(event.widget.item(current_selected_item)[0])]
-
-    def __get_embeded_command(self, event: tk.Event, selected_files: list[Path]):
+    def __get_embeded_command(self, event: tk.Event, selected_files: list[Path]) -> dict[str, Callable]:
         return {
-            "copy_image": lambda f=selected_files: file_ops.copy_files(*f),
-            "copy_path": lambda f=selected_files: file_ops.copy_filepaths(*f, tk=self.app.view),
-            "save_as": lambda f=selected_files: self.save_as_image(*f),
-            "delete_image": lambda f=selected_files: self.delete_files(event, f),
-            "open_file": lambda: file_ops.open_file(selected_files[0]),
-            "open_folder": lambda: file_ops.open_file(selected_files[0], True)
+            "复制图片": lambda f=selected_files: file_ops.copy_files(*f),
+            "复制路径": lambda f=selected_files: file_ops.copy_filepaths(*f, tk=self.app.view),
+            "图片另存为": lambda f=selected_files: self.save_as_image(*f),
+            "删除图片": lambda f=selected_files: self.delete_files(event, f),
+            "打开图片": lambda: file_ops.open_file(selected_files[0]),
+            "打开文件夹": lambda: file_ops.open_file(selected_files[0], True)
         }
     
     @decorators.send_task
@@ -324,11 +325,8 @@ class MenuController:
         for item_def in self.app.setting.app.menu_items:
             if not item_def.is_visible:
                 continue
-            if item_def.type == "embedded":
-                if item_def.id not in id_command_map:
-                    continue
-                if len(selected_files) == 1 or item_def.id not in ["open_file", "open_folder"]:
-                    menu.add_command(label=item_def.id, command=id_command_map[item_def.id])
+            if item_def.type == "embedded" and item_def.id in id_command_map:
+                menu.add_command(label=_(item_def.id), command=id_command_map[item_def.id])
             elif item_def.type == "custom":
                 menu.add_command(label=item_def.id, command=lambda f=selected_files, m=item_def: self.__run_custom_command(f, m))
             elif item_def.type == "separator":
