@@ -92,7 +92,7 @@ class AppSettings:
         valid = {f.name for f in fields(cls)}
         result = cls(**{k: v for k, v in data.items() if k in valid})
         if "menu_items" not in data:
-            result.menu_items = cls.default_menu_items()
+            result.menu_items = [MenuItemDef(id=id) for id in ["复制图片", "复制路径", "图片另存为", "删除图片", "打开图片", "打开文件夹"]]
         else:
             valid_menu_keys = {f.name for f in fields(MenuItemDef)}
             result.menu_items = [
@@ -100,8 +100,3 @@ class AppSettings:
                 for item in data["menu_items"]
             ]
         return result
-    
-    @classmethod
-    def default_menu_items(cls) -> list[MenuItemDef]:
-        default_ids = ["copy_image", "copy_path", "save_as", "delete_image", "open_file", "open_folder"]
-        return [MenuItemDef(id=id) for id in default_ids]
