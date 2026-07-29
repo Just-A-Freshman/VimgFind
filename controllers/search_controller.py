@@ -64,7 +64,7 @@ class SearchController:
         tab.nav_next.config(command=lambda: self.__debounce_navigate(1))
         tab.filter_panel.confirm_btn.config(command=self.app.filter_controller.confirm_filter)
         tab.filter_panel.cancel_btn.config(command=self.app.filter_controller.cancel_filter)
-        tab.more_options_button.bind("<ButtonPress-1>", self.app.menu_controller.show_adjustment_menu)
+        tab.more_options_button.bind("<ButtonPress-1>", lambda e: (self.app.menu_controller.show_adjustment_menu(e), "break")[1])
         tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.toggle_filter_panel())
         tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())   
 
