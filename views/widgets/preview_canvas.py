@@ -10,23 +10,19 @@ from .base import BasicImagePreviewView
 from utils.i18n import _
 
 
-class PreviewCanvasView(BasicImagePreviewView):
-    __slots__ = ("_canvas", "_tooltip")
+class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
+    __slots__ = ("__tooltip", )
 
-    def __init__(self, parent) -> None:
-        super().__init__(parent)
-        self._canvas = self._create_canvas(parent)
-        self._tooltip = ToolTip(self._canvas, text=_("没有文件"), delay=500, topmost=True)
-
-    def _create_canvas(self, parent) -> tk.Canvas:
-        canvas = tk.Canvas(parent, highlightthickness=0, cursor="hand2")
-        canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
-        return canvas
+    def __init__(self, master) -> None:
+        tk.Canvas.__init__(self, master, highlightthickness=0, cursor="hand2")
+        BasicImagePreviewView.__init__(self, master)
+        self.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.__tooltip = ToolTip(self, text=_("没有文件"), delay=500, topmost=True)
 
     def append(self, image_path: str, image_obj: Image.Image) -> str:
         iid = self._generate_unique_path_item(image_path)
-        canvas_width = max(self._canvas.winfo_width(), 100)
-        canvas_height = max(self._canvas.winfo_height(), 80)
+        canvas_width = max(self.winfo_width(), 100)
+        canvas_height = max(self.winfo_height(), 80)
         x = canvas_width // 2
         y = canvas_height // 2
         try:
@@ -37,8 +33,8 @@ class PreviewCanvasView(BasicImagePreviewView):
             return ""
         self.clear()
         self._results[iid] = (image_path, imgtk)
-        self._canvas.create_image(x, y, anchor=tk.CENTER, image=imgtk)
-        self._tooltip.text = image_path
+        self.create_image(x, y, anchor=tk.CENTER, image=imgtk)
+        self.__tooltip.text = image_path
         return iid
     
     def delete(self, *items) -> None:
@@ -46,8 +42,8 @@ class PreviewCanvasView(BasicImagePreviewView):
 
     def clear(self) -> None:
         self._results.clear()
-        self._canvas.delete(tk.ALL)
-        self._tooltip.text = _("没有文件")
+        tk.Canvas.delete(self, tk.ALL)
+        self.__tooltip.text = _("没有文件")
 
     def selection(self) -> tuple[str, ...]:
         return tuple(self._results.keys())
@@ -55,9 +51,9 @@ class PreviewCanvasView(BasicImagePreviewView):
     def identify_item(self, event: tk.Event) -> str:
         return list(self._results.keys())[0] if self._results else ""
 
-    def bind(self, sequence: str, func: Callable, add: bool | Literal['', '+'] | None = None) -> None:
-        self._canvas.bind(sequence, func, add)
+    def bind(self, sequence: str | None = None, func: Callable | None = None, add: bool | Literal['', '+'] | None = None):    # type: ignore
+        tk.Canvas.bind(self, sequence, func, add)
 
     def destroy(self) -> None:
         self._results.clear()
-        self._canvas.destroy()
+        tk.Canvas.destroy(self)
