@@ -60,7 +60,7 @@ class ModelConfig:
 
 @dataclass(slots=True)
 class MenuItemDef:
-    id: str = ""
+    id: str = "未命名"
     type: Literal["embedded", "separator", "custom"] = "custom"
     is_visible: bool = False
     shortcut: list[str] = field(default_factory=list)
