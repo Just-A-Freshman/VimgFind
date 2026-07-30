@@ -1,0 +1,95 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+import tkinter as tk
+
+from ttkbootstrap import Button, Frame, Label, Labelframe, Treeview, Scrollbar
+from ttkbootstrap.constants import LINK
+
+from config.settings import WinInfo, TkS
+from config.types import MenuItemDef
+from utils.i18n import _
+
+
+@dataclass
+class TestResultItem:
+    file_name: str
+    resolved_cmd: str
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+class TestResultDialog(tk.Toplevel):
+    def __init__(self, parent, results: list[TestResultItem], menu_item: MenuItemDef) -> None:
+        super().__init__(parent)
+        self.withdraw()
+        self.__results = results
+        self.__menu_items = menu_item
+        self.open_tempdir_btn = self.__set_summary_bar()
+        self.file_tree = self.__set_execution_list()
+        self.detail_text = self.__set_detail_panel()
+        self.__win(parent)
+
+    def __win(self, parent) -> None:
+        self.transient(parent)
+        self.title(_("命令测试结果"))
+        win_w = TkS(480)
+        win_h = TkS(400)
+        x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
+        y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
+        self.geometry(f"{win_w}x{win_h}+{x}+{y}")
+        self.transient(parent)
+        self.minsize(TkS(400), TkS(320))
+        self.deiconify()
+
+    def __set_summary_bar(self) -> Button:
+        bar = Frame(self)
+        bar.pack(fill=tk.X, padx=TkS(10), pady=(TkS(8), 0))
+        success = sum(1 for r in self.__results if r.returncode == 0)
+        failed = len(self.__results) - success
+        open_btn = Button(bar, text=_("打开临时文件夹"), style=LINK, cursor="hand2", takefocus=False,)
+        open_btn.pack(side=tk.RIGHT)
+        summary = Label(bar, text=_("共{total}条  ✓{ok}  ✗{fail}",total=len(self.__results), ok=success, fail=failed))
+        summary.pack(side=tk.LEFT)
+        return open_btn
+
+    def __set_execution_list(self) -> Treeview:
+        column_info = (("status", "", TkS(40)), ("filename", _("副本文件"), TkS(300)), ("retcode", _("返回码"), TkS(60)))
+        tree = Treeview(self, columns=[i[0] for i in column_info], show="headings", selectmode="browse", cursor="hand2", height=4)
+        for i, (column, text, width) in enumerate(column_info):
+            tree.heading(column, text=text, anchor=tk.CENTER)
+            tree.column(column, width=width, stretch=i == 1, anchor=tk.CENTER)
+        tree.pack(fill=tk.X, padx=TkS(10), pady=(TkS(6), 0))
+        if self.__results:
+            for i, r in enumerate(self.__results):
+                tree.insert("", tk.END, iid=str(i), values=("✓" if r.returncode == 0 else "✗", r.file_name, r.returncode))
+            tree.selection_set(0)
+        return tree
+
+    def __set_detail_panel(self) -> tk.Text:
+        frame = Labelframe(self, text=_("命令详情"))
+        frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(6), TkS(8)))
+        text = tk.Text(
+            frame, wrap=tk.WORD, height=8, font=(WinInfo.default_font_family, WinInfo.default_font_size),
+            state=tk.DISABLED, relief=tk.FLAT, borderwidth=0, padx=TkS(1), pady=TkS(4),
+        )
+        text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar = Scrollbar(text, orient=tk.VERTICAL, command=text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        text.config(yscrollcommand=scrollbar.set)
+        return text
+
+    def show_result(self) -> None:
+        selection = self.file_tree.selection()
+        if not selection:
+            return
+        r = self.__results[int(selection[0])]
+        text = (
+            f"{_('[原始模板]')}\n{self.__menu_items.command}\n\n{_('[实际执行]')}\n{r.resolved_cmd}\n\n"
+            f"{'[标准输出]'}\n{r.stdout or _('无输出')}\n{_('[错误输出]')}\n{r.stderr or _('(无输出)')}"
+        )
+        self.detail_text.config(state=tk.NORMAL)
+        self.detail_text.delete("1.0", tk.END)
+        self.detail_text.insert("1.0", text)
+        self.detail_text.config(state=tk.DISABLED)
