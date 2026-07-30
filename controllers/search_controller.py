@@ -292,7 +292,7 @@ class SearchController:
         preview_batch_buffer = []
         preview_iter = results_iter
 
-        def smooth_batch_size(k, B_min=1, B_max=100, r=0.8, m=15):
+        def smooth_batch_size(k, B_min=1, B_max=100, r=0.8, m=10):
             raw = B_min + (B_max - B_min) / (1 + math.exp(-r * (k - m)))
             return max(1, round(raw))
 
@@ -397,7 +397,10 @@ class FilterController:
         fp = self.app.view.search_tab.filter_panel
         for i in range(2):
             fp.dedup_check.invoke()
-        fp.folder_select_all.config(command=self.__on_folder_select_all)
+        fp.folder_select_all.config(
+            command=lambda: fp.folder_listbox.select_set(0, tk.END) 
+            if fp.folder_select_all.instate(["selected"]) else fp.folder_listbox.selection_clear(0, tk.END)
+        )
         fp.sim_scale.config(command=lambda value: (fp.sim_value.config(text=f"{int(float(value))}%")))
         fp.folder_listbox.bind("<<ListboxSelect>>", lambda _: fp.folder_select_all.state(
             ['selected'] if len(fp.folder_listbox.curselection()) == fp.folder_listbox.size() else ['!selected']
@@ -445,7 +448,17 @@ class FilterController:
         if fp.winfo_viewable():
             fp.place_forget()
         else:
-            self.__save_filter_state()
+            self._saved_state = FilterSnapshot(
+                threshold=fp.sim_scale.get(),
+                ext=fp.ext_combo.get(),
+                size_min=fp.size_min.get(),
+                size_min_unit=fp.size_min_unit.get(),
+                size_max=fp.size_max.get(),
+                size_max_unit=fp.size_max_unit.get(),
+                folder_selection=fp.folder_listbox.curselection(),
+                folder_all=fp.folder_select_all.instate(["selected"]),
+                dedup=fp.dedup_check.instate(['selected']),
+            )
             fp.update_idletasks()
             fp.place(relx=0.005, rely=0.094, relwidth=0.4, height=fp.winfo_reqheight())
             fp.lift()
@@ -488,24 +501,3 @@ class FilterController:
                 return
             w = w.master
         self.cancel_filter()
-
-    def __on_folder_select_all(self) -> None:
-        fp = self.app.view.search_tab.filter_panel
-        if fp.folder_select_all.instate(["selected"]):
-            fp.folder_listbox.selection_set(0, tk.END)
-        else:
-            fp.folder_listbox.selection_clear(0, tk.END)
-
-    def __save_filter_state(self) -> None:
-        fp = self.app.view.search_tab.filter_panel
-        self._saved_state = FilterSnapshot(
-            threshold=fp.sim_scale.get(),
-            ext=fp.ext_combo.get(),
-            size_min=fp.size_min.get(),
-            size_min_unit=fp.size_min_unit.get(),
-            size_max=fp.size_max.get(),
-            size_max_unit=fp.size_max_unit.get(),
-            folder_selection=fp.folder_listbox.curselection(),
-            folder_all=fp.folder_select_all.instate(["selected"]),
-            dedup=fp.dedup_check.instate(['selected']),
-        )
