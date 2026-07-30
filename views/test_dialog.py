@@ -18,6 +18,7 @@ class TestResultItem:
     returncode: int
     stdout: str
     stderr: str
+    time_consuming: float
 
 
 class TestResultDialog(tk.Toplevel):
@@ -48,9 +49,13 @@ class TestResultDialog(tk.Toplevel):
         bar.pack(fill=tk.X, padx=TkS(10), pady=(TkS(8), 0))
         success = sum(1 for r in self.__results if r.returncode == 0)
         failed = len(self.__results) - success
+        time_consuming = self.__results[0].time_consuming if self.__menu_items.batch_mode else sum(i.time_consuming for i in self.__results)
         open_btn = Button(bar, text=_("打开临时文件夹"), style=LINK, cursor="hand2", takefocus=False,)
         open_btn.pack(side=tk.RIGHT)
-        summary = Label(bar, text=_("共{total}条  ✓{ok}  ✗{fail}",total=len(self.__results), ok=success, fail=failed))
+        summary = Label(bar, text=_(
+            "共{total}条  ✓{ok}  ✗{fail}，耗时：{time_consuming:.3f}s",
+            total=len(self.__results), ok=success, fail=failed, time_consuming=time_consuming)
+        )
         summary.pack(side=tk.LEFT)
         return open_btn
 
