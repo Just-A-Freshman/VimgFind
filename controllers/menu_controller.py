@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-import re
-import shlex
 from pathlib import Path
 from tkinter import font as tkfont
 from tkinter import messagebox, filedialog, simpledialog
 from typing import Callable, TYPE_CHECKING
-
 import tkinter as tk
 import logging
+import shutil
+import copy
+import tempfile
+import shlex
+import re
 
 from ttkbootstrap import Menu
 
@@ -16,6 +18,7 @@ from config.settings import TkS, Setting
 from config.types import MenuItemDef
 from utils.i18n import _
 from views.widgets import BasicImagePreviewView, PreviewCanvasView
+from views.test_dialog import TestResultDialog, TestResultItem
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
@@ -290,35 +293,6 @@ class MenuController:
             "打开文件夹": lambda: file_ops.open_file(selected_files[0], True)
         }
     
-    @decorators.send_task
-    def __run_custom_command(self, selected_files: list[Path], menu_item: MenuItemDef) -> None:
-        custom_menu_item = CustomMenuItem(menu_item)
-        if not custom_menu_item.resolve_ask():
-            return
-
-        if menu_item.batch_mode:
-            cmd = custom_menu_item.resolve(selected_files)
-            returncode, stdout, stderr = file_ops.run_cmd(cmd)
-            if returncode != 0:
-                logging.error(f"执行命令：{cmd}, 命令输出：{stdout}, 错误原因：{stderr}")
-                self.app.search_controller.show_toast(
-                    _("{count}张图片的命令执行失败。", count=len(selected_files))
-                )
-            else:
-                self.app.search_controller.show_toast(_("{label}成功！", label=menu_item.name))
-        else:
-            error_count = 0
-            for file_path in selected_files:
-                cmd = custom_menu_item.resolve([file_path])
-                returncode, stdout, stderr = file_ops.run_cmd(cmd)
-                if returncode != 0:
-                    logging.error(f"执行命令失败：{cmd}, 错误原因：{stderr}")
-                    error_count += 1
-            self.app.search_controller.show_toast(
-                _("{label}成功！", label=menu_item.name) if error_count == 0
-                else _("{count}张图片的命令执行失败。", count=error_count)
-            )
-    
     def __create_context_menu(self, event: tk.Event, selected_files: list[Path]) -> Menu:
         menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3), bd=0)
         id_command_map = self.__get_embeded_command(event, selected_files)
@@ -363,3 +337,78 @@ class MenuController:
                     command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True),
                 )
         return menu
+    
+    def __run_custom_command(self, selected_files: list[Path], menu_item: MenuItemDef) -> None:
+        @decorators.send_task
+        def exec_custom_command(cmd_item: CustomMenuItem, test_mode: bool) -> None:
+            def show_test_dialog(items) -> None:
+                assert temp_dir is not None and clean_menu_item is not None
+                dialog = TestResultDialog(self.app.view, items, clean_menu_item)
+                dialog.file_tree.bind("<<TreeviewSelect>>", lambda _: dialog.show_result())
+                dialog.file_tree.bind("<Double-Button-1>", lambda _: file_ops.open_file(dialog.file_tree.item(dialog.file_tree.selection()[0], "values")[1]))
+                dialog.open_tempdir_btn.config(command=lambda: file_ops.open_file(str(temp_dir)))
+                dialog.protocol("WM_DELETE_WINDOW", lambda: file_ops.rmtree(str(temp_dir)) or dialog.destroy())
+                dialog.show_result()
+            temp_dir = None
+            work_files = selected_files
+            if test_mode:
+                temp_dir = Path(tempfile.mkdtemp(prefix="vimgfind_test_"))
+                for i, f in enumerate(selected_files[:10]):
+                    shutil.copy2(f, temp_dir / f"{i:02d}_{f.name}")
+                work_files = [temp_dir / f"{i:02d}_{f.name}" for i, f in enumerate(selected_files)]
+
+            exec_results = self.__exec_work_files(cmd_item, work_files)
+            if test_mode:
+                results = [TestResultItem(str(work_file), *res) for work_file, res in zip(work_files, exec_results)]
+                self.app.view.after(0, show_test_dialog, results)
+                return
+            error_count = 0
+            if menu_item.batch_mode:
+                cmd, ret, out, err = exec_results[0]
+                if ret != 0:
+                    logging.error(f"执行命令：{cmd}, 命令输出：{out}, 错误原因：{err}")
+                    error_count = len(selected_files)
+            else:
+                for tokens, ret, out, err in exec_results:
+                    if ret != 0:
+                        logging.error(f"执行命令失败：{tokens}, 错误原因：{err}")
+                        error_count += 1
+            if error_count == 0:
+                self.app.search_controller.show_toast(_("{label}成功！", label=menu_item.name))
+            else:
+                self.app.search_controller.show_toast(_("{count}张图片的命令执行失败。", count=error_count))
+
+        clean_menu_item = self.__resolve_test_item(menu_item)
+        if clean_menu_item is None:
+            return
+        cmd_item = CustomMenuItem(clean_menu_item)
+        if not cmd_item.resolve_ask():
+            return
+        exec_custom_command(cmd_item, clean_menu_item != menu_item)
+
+    def __resolve_test_item(self, menu_item: MenuItemDef) -> MenuItemDef | None:
+        lines = menu_item.command.strip().split('\n')
+        test_mode = lines[0].strip() == "#test"
+        if not test_mode:
+            return menu_item
+
+        clean = '\n'.join(lines[1:]).strip()
+        if not clean:
+            messagebox.showinfo(_("提示"), _("#test 模式已开启，但未输入实际命令。"))
+            return None
+        new_menu_item = copy.deepcopy(menu_item)
+        new_menu_item.command = clean
+        return new_menu_item
+
+    @staticmethod
+    def __exec_work_files(cmd_item: CustomMenuItem,  work_files: list[Path]) -> list[tuple[str, int, str, str]]:
+        if cmd_item.menu_item.batch_mode:
+            cmd = shlex.join(cmd_item.resolve(work_files))
+            ret, out, err = file_ops.run_cmd(cmd)
+            return [(cmd, ret, out, err)] * len(work_files)
+        results = []
+        for f in work_files:
+            cmd = shlex.join(cmd_item.resolve([f]))
+            ret, out, err = file_ops.run_cmd(cmd)
+            results.append((cmd, ret, out, err))
+        return results
