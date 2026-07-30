@@ -36,6 +36,7 @@ class SettingController:
         style.configure("sub.TNotebook")
         style.configure('sub.TNotebook.Tab', font=(WinInfo.default_font_family, WinInfo.default_font_size))
         style.configure("Treeview", rowheight=TkS(30))
+        style.configure('inner.Link.TButton', background=style.colors.get("inputbg"), borderwidth=0, foreground=style.colors.get("info"))  # type:ignore
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family=WinInfo.default_font_family, size=WinInfo.default_font_size)
         self.app.view.search_tab.search_entry.config(style="Search.TEntry")

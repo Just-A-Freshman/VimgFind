@@ -186,8 +186,8 @@ class CustomMenuTab(Frame):
         self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
         self.command_tip_label = Label(self.edit_frame)
         self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="")
-        self.command_text = Text(self.edit_frame, undo=True, blockcursor=True, insertofftime=0, )
-        self.state_show_btn = Button(self.command_text, style="link", takefocus=False, cursor="hand2")
+        self.command_text = Text(self.edit_frame, undo=True, blockcursor=True, insertofftime=0, insertunfocussed="hollow")  # type:ignore
+        self.state_show_btn = Button(self.command_text, style="inner.Link.TButton", takefocus=False, cursor="hand2")
         self.show_default()
 
     def __set_column_frames(self) -> tuple[Frame, Frame]:
