@@ -6,9 +6,10 @@ from tkinter import messagebox, filedialog, simpledialog
 from typing import Callable, TYPE_CHECKING
 import tkinter as tk
 import logging
+import tempfile
 import shutil
 import copy
-import tempfile
+import time
 import shlex
 import re
 
@@ -355,7 +356,7 @@ class MenuController:
                 temp_dir = Path(tempfile.mkdtemp(prefix="vimgfind_test_"))
                 for i, f in enumerate(selected_files[:10]):
                     shutil.copy2(f, temp_dir / f"{i:02d}_{f.name}")
-                work_files = [temp_dir / f"{i:02d}_{f.name}" for i, f in enumerate(selected_files)]
+                work_files = [temp_dir / f"{i:02d}_{f.name}" for i, f in enumerate(selected_files[:10])]
 
             exec_results = self.__exec_work_files(cmd_item, work_files)
             if test_mode:
@@ -364,12 +365,12 @@ class MenuController:
                 return
             error_count = 0
             if menu_item.batch_mode:
-                cmd, ret, out, err = exec_results[0]
+                cmd, ret, out, err, time_consuming = exec_results[0]
                 if ret != 0:
                     logging.error(f"执行命令：{cmd}, 命令输出：{out}, 错误原因：{err}")
                     error_count = len(selected_files)
             else:
-                for tokens, ret, out, err in exec_results:
+                for tokens, ret, out, err, time_consuming in exec_results:
                     if ret != 0:
                         logging.error(f"执行命令失败：{tokens}, 错误原因：{err}")
                         error_count += 1
@@ -401,14 +402,16 @@ class MenuController:
         return new_menu_item
 
     @staticmethod
-    def __exec_work_files(cmd_item: CustomMenuItem,  work_files: list[Path]) -> list[tuple[str, int, str, str]]:
+    def __exec_work_files(cmd_item: CustomMenuItem,  work_files: list[Path]) -> list[tuple[str, int, str, str, float]]:
         if cmd_item.menu_item.batch_mode:
             cmd = shlex.join(cmd_item.resolve(work_files))
+            start = time.perf_counter()
             ret, out, err = file_ops.run_cmd(cmd)
-            return [(cmd, ret, out, err)] * len(work_files)
+            return [(cmd, ret, out, err, time.perf_counter() - start)] * len(work_files)
         results = []
         for f in work_files:
             cmd = shlex.join(cmd_item.resolve([f]))
+            start = time.perf_counter()
             ret, out, err = file_ops.run_cmd(cmd)
-            results.append((cmd, ret, out, err))
+            results.append((cmd, ret, out, err, time.perf_counter() - start))
         return results
