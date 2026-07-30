@@ -385,6 +385,9 @@ class SearchTool:
         try:
             self.remove_nonexists()
             self.remove_duplicate()
+            for image_dir in image_dirs:
+                self.remove_files(self.__get_changed_files(image_dir))
+                
             if not self.verify_index_match():
                 self.reset_index()
 
