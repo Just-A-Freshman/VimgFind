@@ -65,7 +65,7 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
         return Treeview.selection(self)
 
     def selection_set(self, *args, **kwargs) -> None:
-        Treeview.selection_set(self, *args, **kwargs)
+        Treeview.selection_set(self, self.get_children("")) if args[0] == tk.ALL else Treeview.selection_set(self, *args, **kwargs)
 
     def identify_item(self, event: tk.Event) -> str:
         return Treeview.identify_row(self, event.y)
