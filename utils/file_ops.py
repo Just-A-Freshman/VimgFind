@@ -57,7 +57,7 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
     file_path = Path(file_path).resolve()
     if not file_path.exists():
-        raise FileNotFoundError(f"文件不存在：{file_path}")
+        logging.error(f"文件不存在：{file_path}，无法打开！")
 
     command: list[str] = []
     if highlight:
