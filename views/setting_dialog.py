@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from ttkbootstrap.constants import LINK
 from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Scrollbar, Notebook, Text
 from ttkbootstrap.widgets import ToolTip
 
@@ -94,7 +93,7 @@ class GeneralTab(Frame):
         frame.grid(row=0, column=0, padx=TkS(10), pady=TkS(12), sticky=tk.W)
         Label(frame, text=_("显示语言：")).pack(side=tk.LEFT)
         locale_combobox = Combobox(
-            frame, values=["中文", "English"], state="readonly", width=TkS(6), 
+            frame, values=["中文", "English"], state="readonly", width=TkS(6),
             font=(WinInfo.default_font_family, WinInfo.default_font_size),
         )
         locale_combobox.pack(side=tk.LEFT)
@@ -142,9 +141,9 @@ class GeneralTab(Frame):
     def __set_bottom_buttons(self) -> tuple[Button, Button, Button]:
         bottom_frame = Frame(self)
         bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10), pady=TkS(10))
-        help_btn = Button(bottom_frame, text=_("帮助文档"), style=LINK, cursor="hand2", takefocus=False)
-        error_log_btn = Button(bottom_frame, text=_("错误日志"), style=LINK, cursor="hand2", takefocus=False)
-        check_update_btn = Button(bottom_frame, text=_("检查更新"), style=LINK, cursor="hand2", takefocus=False)
+        help_btn = Button(bottom_frame, text=_("帮助文档"), style="link", cursor="hand2", takefocus=False)
+        error_log_btn = Button(bottom_frame, text=_("错误日志"), style="link", cursor="hand2", takefocus=False)
+        check_update_btn = Button(bottom_frame, text=_("检查更新"), style="link", cursor="hand2", takefocus=False)
         help_btn.pack(side=tk.LEFT)
         error_log_btn.pack(side=tk.LEFT)
         check_update_btn.pack(side=tk.RIGHT)
@@ -187,7 +186,7 @@ class CustomMenuTab(Frame):
         self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
         self.command_tip_label = Label(self.edit_frame)
         self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="")
-        self.command_text = Text(self.edit_frame, undo=True)
+        self.command_text = Text(self.edit_frame, undo=True, blockcursor=True, insertofftime=0, )
         self.state_show_btn = Button(self.command_text, style="link", takefocus=False, cursor="hand2")
         self.show_default()
 

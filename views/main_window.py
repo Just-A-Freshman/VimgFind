@@ -24,7 +24,7 @@ class WinGUI(Window, TkinterDnD.Tk):
 
     def __init__(self, full_screen: bool = False, topmost: bool = False) -> None:
         enable_high_dpi_awareness()
-        super().__init__()
+        super().__init__(iconphoto=None)
         self.__win(full_screen, topmost)
         self.switch_tab = self.__set_notebook(self)
 
