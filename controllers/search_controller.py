@@ -40,7 +40,7 @@ class SearchController:
     def env_init(self, only_preview_widgets: bool = False) -> None:
         tab = self.app.view.search_tab
         inner_shortcut = (
-            (["Ctrl", "A"], lambda _: tab.preview_view.selection_set(tab.preview_view.get_children(""))),    # type:ignore
+            (["Ctrl", "A"], lambda _: tab.preview_view.selection_set(tk.ALL)),
             (["Ctrl", "V"], lambda _: self.search_image_by_clipboard()),
             (["Ctrl", "←"], lambda _: self.__debounce_navigate(-1)),
             (["Ctrl", "→"], lambda _: self.__debounce_navigate(1)),
