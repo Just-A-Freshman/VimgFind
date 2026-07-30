@@ -68,6 +68,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
             highlightbackground=self.theme_color.selectbg,
             highlightcolor=self.theme_color.primary
         )
+        self.update_idletasks()
 
         # bind event
         self.bind("<Configure>", self._on_canvas_configure)
