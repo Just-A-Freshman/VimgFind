@@ -169,7 +169,7 @@ class CustomMenuTab(Frame):
         "batch_mode_checkbutton", "is_visible_checkbutton",
         "name_edit_tip_label", "name_edit_entry",
         "shortcut_tip_label", "shortcut_entry", "shortcut_warning_tooltip", 
-        "command_tip_label", "command_text", "command_tooltip"
+        "command_tip_label", "command_text", "command_tooltip", "state_show_btn"
     )
 
     def __init__(self, parent) -> None:
@@ -188,6 +188,7 @@ class CustomMenuTab(Frame):
         self.command_tip_label = Label(self.edit_frame)
         self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="")
         self.command_text = Text(self.edit_frame, undo=True)
+        self.state_show_btn = Button(self.command_text, style="link", takefocus=False, cursor="hand2")
         self.show_default()
 
     def __set_column_frames(self) -> tuple[Frame, Frame]:
@@ -242,6 +243,7 @@ class CustomMenuTab(Frame):
             self.shortcut_entry.grid_forget()
             self.batch_mode_checkbutton.grid_forget()
             self.command_text.grid_forget()
+            self.state_show_btn.place_forget()
             self.command_tip_label.config(text=_("这是一条分隔线"))
             self.command_tip_label.place(relx=0.25, rely=0.45)
             self.command_tooltip.text = _("分隔线：用于从视觉上分离不同类型的菜单项")
@@ -261,6 +263,7 @@ class CustomMenuTab(Frame):
         if menu_item.type == "embedded":
             self.batch_mode_checkbutton.grid_forget()
             self.command_text.grid_forget()
+            self.state_show_btn.place_forget()
             self.name_edit_entry.config(state="readonly")
             self.command_tip_label.config(text=_("这是一个内置菜单项"))
             self.command_tip_label.place(relx=0.2, rely=0.5)
@@ -275,9 +278,12 @@ class CustomMenuTab(Frame):
             self.command_text.delete('1.0', tk.END)
             self.command_text.insert(tk.END, menu_item.command)
             self.command_tooltip.text = _("可用变量列表")
+            self.state_show_btn.config(text=_("◍测试") if self.command_text.get("1.0", "1.0 lineend").strip() == "#test" else _("●正常"))
+            self.state_show_btn.place(relx=1.0, rely=1.0, anchor=tk.SE)
 
     def show_default(self) -> None:
         for w in self.name_edit_tip_label.master.children.values():
             w.grid_forget()
         self.name_edit_tip_label.config(text=_("选择菜单配置详细信息"))
         self.name_edit_tip_label.grid(row=3, column=1, padx=TkS(20))
+        self.state_show_btn.place_forget()

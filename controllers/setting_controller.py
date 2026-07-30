@@ -204,6 +204,7 @@ class CustomMenuController:
         tab.shortcut_entry.unbind("<Enter>")
         tab.shortcut_entry.bind("<FocusOut>", lambda e: tab.shortcut_warning_tooltip.hide_tip(), add="+")
         tab.command_text.bind("<KeyRelease>", lambda _: self.__sync_item_property("command"))
+        tab.state_show_btn.config(command=lambda: self.__toggle_test_mode(tab))
         self.save_item_data(schedule=True)
         self.__on_tree_select()
 
@@ -287,6 +288,17 @@ class CustomMenuController:
             self.__items_data[iid].shortcut = grab_shortcut
         else:
             self.__items_data[iid].command = tab.command_text.get("1.0", tk.END).strip()
+            tab.state_show_btn.config(text=_("◍测试") if tab.command_text.get("1.0", "1.0 lineend").strip() == "#test" else _("●正常"))
+
+    def __toggle_test_mode(self, tab: CustomMenuTab) -> None:
+        first_line = tab.command_text.get("1.0", "1.0 lineend").strip()
+        if first_line == "#test":
+            tab.command_text.delete("1.0", "2.0")
+            if tab.command_text.get("1.0", "1.0 lineend").strip() == "":
+                tab.command_text.delete("1.0", "2.0")
+        else:
+            tab.command_text.insert("1.0", "#test\n")
+        self.__sync_item_property("command")
 
     def save_item_data(self, schedule: bool = False) -> None:
         self.app.setting.app.menu_items = [
