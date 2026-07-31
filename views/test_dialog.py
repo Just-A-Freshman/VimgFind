@@ -54,7 +54,7 @@ class TestResultDialog(tk.Toplevel):
         open_btn = Button(bar, text=_("打开临时文件夹"), style=LINK, cursor="hand2", takefocus=False,)
         open_btn.pack(side=tk.RIGHT)
         summary = Label(bar, text=_(
-            "共{total}条  ✓{ok}  ✗{fail}，耗时：{time_consuming:.3f}s",
+            "共{total}条  成功: {ok}  失败: {fail}，耗时：{time_consuming:.3f}s",
             total=len(self.__results), ok=success, fail=failed, time_consuming=time_consuming)
         )
         summary.pack(side=tk.LEFT)
