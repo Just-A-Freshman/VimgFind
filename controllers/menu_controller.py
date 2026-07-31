@@ -279,22 +279,23 @@ class CustomCommandExecutor:
         return values
 
     def __prompt_ask(self, var_name: str) -> str | list[str] | None:
+        parent = self.app.view
         if var_name == 'ask_dir':
-            v = filedialog.askdirectory(title=_("选择文件夹"))
+            v = filedialog.askdirectory(parent=parent, title=_("选择文件夹"))
             return v if v else None
         elif var_name == 'ask_file':
-            v = filedialog.askopenfilename(title=_("选择文件"))
+            v = filedialog.askopenfilename(parent=parent, title=_("选择文件"))
             return v if v else None
         elif var_name == 'ask_files':
-            v = filedialog.askopenfilenames(title=_("选择文件"))
+            v = filedialog.askopenfilenames(parent=parent, title=_("选择文件"))
             return list(v) if v else None
         elif var_name == 'ask_string':
-            return simpledialog.askstring(_("输入"), _("请输入："))
+            return simpledialog.askstring(_("输入"), _("请输入文本："), parent=parent)
         elif var_name == 'ask_int':
-            v = simpledialog.askinteger(_("输入"), _("请输入整数："))
+            v = simpledialog.askinteger(_("输入"), _("请输入整数："), parent=parent)
             return str(v) if v is not None else None
         elif var_name == 'ask_float':
-            v = simpledialog.askfloat(_("输入"), _("请输入数字："))
+            v = simpledialog.askfloat(_("输入"), _("请输入数字："), parent=parent)
             return str(v) if v is not None else None
         return None
 
