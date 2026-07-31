@@ -91,12 +91,22 @@ class AppSettings:
     def from_dict(cls, data: dict) -> AppSettings:
         valid = {f.name for f in fields(cls)}
         result = cls(**{k: v for k, v in data.items() if k in valid})
+        default_items = [MenuItemDef(name=id, type="embedded", is_visible=True) for id in ["复制图片", "复制路径", "图片另存为", "删除图片", "打开图片", "打开文件夹"]]
         if "menu_items" not in data:
-            result.menu_items = [MenuItemDef(name=id) for id in ["复制图片", "复制路径", "图片另存为", "删除图片", "打开图片", "打开文件夹"]]
+            result.menu_items = default_items
         else:
             valid_menu_keys = {f.name for f in fields(MenuItemDef)}
-            result.menu_items = [
-                MenuItemDef(**{k: v for k, v in item.items() if k in valid_menu_keys})
-                for item in data["menu_items"]
-            ]
+            raw_embedded_items = set()
+            filter_items = []
+            for item in data["menu_items"]:
+                menu_item = MenuItemDef(**{k: v for k, v in item.items() if k in valid_menu_keys})
+                if menu_item.type != "embedded":
+                    filter_items.append(menu_item)
+                elif menu_item.name not in raw_embedded_items:
+                    filter_items.append(menu_item)
+                    raw_embedded_items.add(menu_item.name)
+            for default in default_items:
+                if default.name not in raw_embedded_items:
+                    filter_items.append(default)
+            result.menu_items = filter_items
         return result
