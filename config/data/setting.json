@@ -1,11 +1,11 @@
 {
-    "max_work_thread": 4,
+    "max_work_thread": 12,
     "max_match_count": 10,
-    "preview_mode": "big_ico",
+    "preview_mode": "detail_info",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
-    "ui_style": "superhero",
+    "ui_style": "morph",
     "current_model": "chinese-clip",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
@@ -13,6 +13,79 @@
     "maximize_window": false,
     "topmost_window": false,
     "locale": "zh-CN",
-    "custom_menu_items": [],
+    "menu_items": [
+        {
+            "name": "复制图片",
+            "type": "embedded",
+            "is_visible": true,
+            "shortcut": [],
+            "batch_mode": false,
+            "command": ""
+        },
+        {
+            "name": "复制路径",
+            "type": "embedded",
+            "is_visible": true,
+            "shortcut": [],
+            "batch_mode": false,
+            "command": ""
+        },
+        {
+            "name": "图片另存为",
+            "type": "embedded",
+            "is_visible": true,
+            "shortcut": [],
+            "batch_mode": false,
+            "command": ""
+        },
+        {
+            "name": "删除图片",
+            "type": "embedded",
+            "is_visible": true,
+            "shortcut": [],
+            "batch_mode": false,
+            "command": ""
+        },
+        {
+            "name": "——————————",
+            "type": "separator",
+            "is_visible": true,
+            "shortcut": [],
+            "batch_mode": false,
+            "command": ""
+        },
+        {
+            "name": "打开图片",
+            "type": "embedded",
+            "is_visible": true,
+            "shortcut": [],
+            "batch_mode": false,
+            "command": ""
+        },
+        {
+            "name": "打开文件夹",
+            "type": "embedded",
+            "is_visible": true,
+            "shortcut": [],
+            "batch_mode": false,
+            "command": ""
+        },
+        {
+            "name": "测试",
+            "type": "custom",
+            "is_visible": false,
+            "shortcut": [],
+            "batch_mode": true,
+            "command": "#test\ncmd /c echo {paths|sep=\\n|wrap=\"} | clip"
+        },
+        {
+            "name": "打印测试",
+            "type": "custom",
+            "is_visible": true,
+            "shortcut": [],
+            "batch_mode": true,
+            "command": "#test\ncmd /c \"(for %A in ({paths}) do echo %A) > temp.txt\""
+        }
+    ],
     "other_config_path": ""
 }
