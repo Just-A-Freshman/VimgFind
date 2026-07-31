@@ -22,7 +22,7 @@ import utils.shortcut as shortcut
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.decorators as decorators
-from utils import cmd_parser
+import utils.cmd_parser as cmd_parser
 
 if TYPE_CHECKING:
     from .app_controller import AppController
