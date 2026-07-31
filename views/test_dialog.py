@@ -35,6 +35,7 @@ class TestResultDialog(tk.Toplevel):
     def __win(self, parent) -> None:
         self.transient(parent)
         self.title(_("命令测试结果"))
+        self.iconbitmap(WinInfo.ico_path)
         win_w = TkS(480)
         win_h = TkS(400)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
@@ -64,7 +65,7 @@ class TestResultDialog(tk.Toplevel):
         tree = Treeview(self, columns=[i[0] for i in column_info], show="headings", selectmode="browse", cursor="hand2", height=4)
         for i, (column, text, width) in enumerate(column_info):
             tree.heading(column, text=text, anchor=tk.CENTER)
-            tree.column(column, width=width, stretch=i == 1, anchor=tk.CENTER)
+            tree.column(column, width=width, stretch=i == 1, anchor=tk.W if i == 1 else tk.CENTER)
         tree.pack(fill=tk.X, padx=TkS(10), pady=(TkS(6), 0))
         if self.__results:
             for i, r in enumerate(self.__results):
@@ -97,6 +98,8 @@ class TestResultDialog(tk.Toplevel):
             f"{_('[原始模板]')}\n{self.__menu_items.command}\n\n{_('[实际执行]')}\n{r.resolved_cmd}\n\n"
             f"{'[标准输出]'}\n{r.stdout or _('无输出')}\n{_('[错误输出]')}\n{r.stderr or _('(无输出)')}"
         )
+        if text.strip() == self.detail_text.get("1.0", tk.END).strip():
+            return
         self.detail_text.config(state=tk.NORMAL)
         self.detail_text.delete("1.0", tk.END)
         self.detail_text.insert("1.0", text)
