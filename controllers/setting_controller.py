@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal, Callable, TYPE_CHECKING
 from tkinter import filedialog, messagebox
 from tkinter.font import nametofont
+from ttkbootstrap.style import Colors
 import tkinter as tk
 import threading
 
@@ -31,22 +32,21 @@ class SettingController:
         valid_theme_names = style.theme_names()
         self.app.setting.app.ui_style = target_theme if target_theme in valid_theme_names else "superhero"
         style.theme_use(self.app.setting.app.ui_style)
+        colors: Colors = style.colors   # type:ignore
         style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
         style.configure('TNotebook.Tab', font=(WinInfo.default_font_family, TkS(-18)))
         style.configure("sub.TNotebook")
         style.configure('sub.TNotebook.Tab', font=(WinInfo.default_font_family, WinInfo.default_font_size))
         style.configure("Treeview", rowheight=TkS(30))
-        style.configure('inner.Link.TButton', background=style.colors.get("inputbg"), borderwidth=0, foreground=style.colors.get("info"))  # type:ignore
+        style.configure('inner.Link.TButton', background=colors.get("inputbg"), borderwidth=0, foreground=colors.get("info"))
+        style.map('inner.Link.TButton', background=[('active', colors.get("bg") if colors.hex_to_rgb(colors.get("bg")) != colors.hex_to_rgb(colors.get("inputbg")) else colors.get("active"))])   # type:ignore
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family=WinInfo.default_font_family, size=WinInfo.default_font_size)
         self.app.view.search_tab.search_entry.config(style="Search.TEntry")
-        self.app.view.search_tab.filter_btn.config(bg=style.colors.get("inputbg"), fg=style.colors.get("inputfg")) # type: ignore
+        self.app.view.search_tab.filter_btn.config(bg=colors.get("inputbg"), fg=colors.get("inputfg"))   # type: ignore
         self.app.view.search_tab.nav_page_label.config(font=("", TkS(-18)))
         self.app.view.index_tab.index_tip_label.config(font=(WinInfo.default_font_family, TkS(-18)))
-        self.app.view.model_tab.detail_desc_text.config(
-            bg=style.colors.get('bg'), fg=style.colors.get('fg'),      # type: ignore
-            selectbackground=style.colors.get('selectbg'),             # type: ignore
-        )
+        self.app.view.model_tab.detail_desc_text.config(bg=colors.get("bg"), fg=colors.get("fg"), selectbackground=colors.get('selectbg'))   # type:ignore
 
     def show_dialog(self) -> None:
         def destroy():
