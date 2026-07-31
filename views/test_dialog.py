@@ -14,7 +14,7 @@ from utils.i18n import _
 @dataclass
 class TestResultItem:
     file_name: str
-    resolved_cmd: str
+    resolved_cmd: list[str]
     returncode: int
     stdout: str
     stderr: str
@@ -94,9 +94,13 @@ class TestResultDialog(tk.Toplevel):
         if not selection:
             return
         r = self.__results[int(selection[0])]
+        params_block = "\n" + "\n".join(f"  [{i}] {arg}" for i, arg in enumerate(r.resolved_cmd[1:], start=1)) if len(r.resolved_cmd) > 1 else _("无参数")
+        show_execute = f"{_('命令本体')}: {r.resolved_cmd[0]}\n{_('参数清单')}: {params_block}"
         text = (
-            f"{_('[原始模板]')}\n{self.__menu_items.command}\n\n{_('[实际执行]')}\n{r.resolved_cmd}\n\n"
-            f"{'[标准输出]'}\n{r.stdout or _('无输出')}\n{_('[错误输出]')}\n{r.stderr or _('(无输出)')}"
+            f"{_('[原始模板]')}\n{self.__menu_items.command}\n\n"
+            f"{_('[解析结果]')}\n{show_execute}\n\n"
+            f"{_('[标准输出]')}\n{r.stdout or _('无输出')}\n\n"
+            f"{_('[错误输出]')}\n{r.stderr or _('(无输出)')}"
         )
         if text.strip() == self.detail_text.get("1.0", tk.END).strip():
             return
