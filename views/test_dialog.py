@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import tkinter as tk
 
-from ttkbootstrap import Button, Frame, Label, Labelframe, Treeview, Scrollbar
+from ttkbootstrap import Button, Frame, Label, Labelframe, Treeview, Text, Scrollbar
 from ttkbootstrap.constants import LINK
 
 from config.settings import WinInfo, TkS
@@ -29,7 +29,7 @@ class TestResultDialog(tk.Toplevel):
         self.__menu_items = menu_item
         self.open_tempdir_btn = self.__set_summary_bar()
         self.file_tree = self.__set_execution_list()
-        self.detail_text = self.__set_detail_panel()
+        self.detail_text, self.copy_btn = self.__set_detail_panel()
         self.__win(parent)
 
     def __win(self, parent) -> None:
@@ -72,10 +72,10 @@ class TestResultDialog(tk.Toplevel):
             tree.selection_set(0)
         return tree
 
-    def __set_detail_panel(self) -> tk.Text:
+    def __set_detail_panel(self) -> tuple[tk.Text, Button]:
         frame = Labelframe(self, text=_("命令详情"))
         frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(6), TkS(8)))
-        text = tk.Text(
+        text = Text(
             frame, wrap=tk.WORD, height=8, font=(WinInfo.default_font_family, WinInfo.default_font_size),
             state=tk.DISABLED, relief=tk.FLAT, borderwidth=0, padx=TkS(1), pady=TkS(4),
         )
@@ -83,7 +83,9 @@ class TestResultDialog(tk.Toplevel):
         scrollbar = Scrollbar(text, orient=tk.VERTICAL, command=text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         text.config(yscrollcommand=scrollbar.set)
-        return text
+        copy_btn = Button(text, text=_("复制"), style="inner.Link.TButton", takefocus=False, cursor="hand2")
+        copy_btn.pack(side=tk.BOTTOM, anchor=tk.SE)
+        return text, copy_btn
 
     def show_result(self) -> None:
         selection = self.file_tree.selection()
