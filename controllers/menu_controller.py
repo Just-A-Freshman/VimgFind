@@ -10,183 +10,28 @@ import tempfile
 import shutil
 import copy
 import time
-import shlex
-import re
 
 from ttkbootstrap import Menu
 
 from config.settings import TkS, Setting
 from config.types import MenuItemDef
-from utils.i18n import _
 from views.widgets import BasicImagePreviewView, PreviewCanvasView, simpledialog
 from views.test_dialog import TestResultDialog, TestResultItem
+from utils.i18n import _
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.decorators as decorators
+from utils import cmd_parser
 
 if TYPE_CHECKING:
     from .app_controller import AppController
 
 
-class CustomMenuItem:
-    VAR_RE = re.compile(r'\{(\w+)((?:\|[^}]+)*)\}')
-    ASK_VARS = frozenset({'ask_dir', 'ask_file', 'ask_files', 'ask_string', 'ask_int', 'ask_float'})
-    def __init__(self, menu_item: MenuItemDef) -> None:
-        self.menu_item = menu_item
-        self.__ask_values: dict[str, str | list[str]] = {}
-
-    def resolve_ask(self) -> bool:
-        tokens = self.__strip_outer_quotes(shlex.split(self.menu_item.command, posix=False))
-        for token in tokens:
-            for m in CustomMenuItem.VAR_RE.finditer(token):
-                name = m.group(1)
-                if name not in CustomMenuItem.ASK_VARS or name in self.__ask_values:
-                    continue
-                val = self.__prompt_ask(name)
-                if val is None:
-                    self.__ask_values.clear()
-                    return False
-                self.__ask_values[name] = val
-        return True
-
-    def resolve(self, file_paths: list[Path]) -> list[str]:
-        tokens = self.__strip_outer_quotes(shlex.split(self.menu_item.command, posix=False))
-        file_vals = self._compute_file_values(file_paths)
-        result: list[str] = []
-        for token in tokens:
-            result.extend(self.__resolve_token(token, file_vals))
-        return result
-    
-    @staticmethod
-    def __parse_modifiers(mod_str: str) -> dict[str, str]:
-            if not mod_str:
-                return {}
-            s = mod_str.lstrip('|')
-            mods: dict[str, str] = {}
-            i = 0
-            while i < len(s):
-                if s[i:].startswith('raw'):
-                    mods['raw'] = ''
-                    i += 3
-                elif s[i:].startswith('sep='):
-                    j = i + 4
-                    end = len(s)
-                    while j < len(s):
-                        rest = s[j + 1:]
-                        if s[j] == '|' and (rest.startswith('raw') or rest.startswith('sep=') or rest.startswith('wrap=')):
-                            end = j
-                            break
-                        j += 1
-                    mods['sep'] = CustomMenuItem.__unescape_mod_value(s[i + 4:end])
-                    i = end
-                elif s[i:].startswith('wrap='):
-                    end = s.find('|', i + 5)
-                    mods['wrap'] = CustomMenuItem.__unescape_mod_value(s[i + 5:] if end == -1 else s[i + 5:end])
-                    i = end if end != -1 else len(s)
-                else:
-                    i += 1
-                if i < len(s) and s[i] == '|':
-                    i += 1
-            return mods
-
-    @staticmethod
-    def __unescape_mod_value(value: str) -> str:
-        return value.replace('\\n', '\n').replace('\\t', '\t')
-
-    @staticmethod
-    def __strip_outer_quotes(tokens: list[str]) -> list[str]:
-        result = []
-        for t in tokens:
-            if len(t) >= 2 and t[0] == t[-1] and t[0] in ('"', "'"):
-                result.append(t[1:-1])
-            else:
-                result.append(t)
-        return result
-
-    def _compute_file_values(self, file_paths: list[Path]) -> dict[str, str | list[str]]:
-        if self.menu_item.batch_mode:
-            return {
-                'paths':[str(p) for p in file_paths],
-                'first_dir':str(file_paths[0].parent),
-                'count':str(len(file_paths)),
-            }
-        first = file_paths[0]
-        return {
-            'path':str(first),
-            'dir':str(first.parent),
-            'name':first.name,
-            'noext':first.stem,
-            'ext':first.suffix,
-        }
-
-    def __resolve_token(self, token: str, file_vals: dict) -> list[str]:
-        matches = list(CustomMenuItem.VAR_RE.finditer(token))
-        if not matches:
-            return [token]
-
-        if len(matches) == 1 and matches[0].group(0) == token:
-            name = matches[0].group(1)
-            val = self.__lookup_var(name, file_vals, matches[0].group(2))
-            if val is None:
-                return [token]
-            if isinstance(val, list):
-                return val
-            return [str(val)]
-
-        result = token
-        for m in matches:
-            name = m.group(1)
-            val = self.__lookup_var(name, file_vals, m.group(2))
-            if val is None:
-                continue
-            replacement = ' '.join(str(v) for v in val) if isinstance(val, list) else str(val)
-            result = result.replace(m.group(0), replacement, 1)
-        return [result]
-
-    def __lookup_var(self, name: str, file_vals: dict, mod_str: str) -> str | list[str] | None:
-        if name in self.__ask_values:
-            val = self.__ask_values[name]
-        elif name in file_vals:
-            val = file_vals[name]
-        else:
-            return None
-
-        mods = self.__parse_modifiers(mod_str)
-        if 'wrap' in mods:
-            w = mods['wrap']
-            if isinstance(val, list):
-                val = [f'{w}{v}{w}' for v in val]
-            else:
-                val = f'{w}{val}{w}'
-        if isinstance(val, list) and 'sep' in mods:
-            return mods['sep'].join(val)
-        return val
-
-    def __prompt_ask(self, var_name: str) -> str | list[str] | None:
-        if var_name == 'ask_dir':
-            v = filedialog.askdirectory(title=_("选择文件夹"))
-            return v if v else None
-        elif var_name == 'ask_file':
-            v = filedialog.askopenfilename(title=_("选择文件"))
-            return v if v else None
-        elif var_name == 'ask_files':
-            v = filedialog.askopenfilenames(title=_("选择文件"))
-            return list(v) if v else None
-        elif var_name == 'ask_string':
-            return simpledialog.askstring(_("输入"), _("请输入："))
-        elif var_name == 'ask_int':
-            v = simpledialog.askinteger(_("输入"), _("请输入整数："))
-            return str(v) if v is not None else None
-        elif var_name == 'ask_float':
-            v = simpledialog.askfloat(_("输入"), _("请输入数字："))
-            return str(v) if v is not None else None
-        return None
-
-
 class MenuController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
+        self.executor = CustomCommandExecutor(app_controller)
         self.__last_single_image_save_dir: Path | None = None
         self.__last_multi_image_save_dir: Path | None = None
 
@@ -205,11 +50,11 @@ class MenuController:
             if not paths:
                 continue
             if item.type == "embedded":
-                self.__get_embeded_command(event, paths).get(item.name, lambda: None)()
+                self.embeded_command(event, paths).get(item.name, lambda: None)()
                 if item.name in ["复制图片", "复制路径"]:
                     self.app.search_controller.show_toast(_("{label}成功！", label=item.name))
             else:
-                self.__run_custom_command(paths, item)
+                self.executor.run(paths, item)
             return "break"
 
     def show_context_menu(self, event: tk.Event) -> None:
@@ -302,7 +147,7 @@ class MenuController:
         self.app.search_tools.remove_files(list(map(str, selected_files)))
         self.app.index_controller.update_index_tip()
 
-    def __get_embeded_command(self, event: tk.Event, selected_files: list[Path]) -> dict[str, Callable]:
+    def embeded_command(self, event: tk.Event, selected_files: list[Path]) -> dict[str, Callable]:
         return {
             "复制图片": lambda f=selected_files: file_ops.copy_files(*f),
             "复制路径": lambda f=selected_files: file_ops.copy_filepaths(*f, tk=self.app.view),
@@ -314,14 +159,14 @@ class MenuController:
     
     def __create_context_menu(self, event: tk.Event, selected_files: list[Path]) -> Menu:
         menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3), bd=0)
-        id_command_map = self.__get_embeded_command(event, selected_files)
+        id_command_map = self.embeded_command(event, selected_files)
         for item_def in self.app.setting.app.menu_items:
             if not item_def.is_visible:
                 continue
             if item_def.type == "embedded" and item_def.name in id_command_map:
                 menu.add_command(label=_(item_def.name), command=id_command_map[item_def.name])
             elif item_def.type == "custom":
-                menu.add_command(label=item_def.name, command=lambda f=selected_files, m=item_def: self.__run_custom_command(f, m))
+                menu.add_command(label=item_def.name, command=lambda f=selected_files, m=item_def: self.executor.run(f, m))
             elif item_def.type == "separator":
                 menu.add_separator()
         return menu
@@ -357,18 +202,26 @@ class MenuController:
                 )
         return menu
     
-    def __run_custom_command(self, selected_files: list[Path], menu_item: MenuItemDef) -> None:
+
+class CustomCommandExecutor:
+    def __init__(self, app_controller: AppController) -> None:
+        self.app = app_controller
+
+    def run(self, selected_files: list[Path], menu_item: MenuItemDef) -> None:
+        clean_menu_item = self.__resolve_test_item(menu_item)
+        if clean_menu_item is None:
+            return
+        test_mode = clean_menu_item != menu_item
+        parse_result = cmd_parser.parse(clean_menu_item.command)
+        if parse_result.errors:
+            messagebox.showerror(_("命令语法错误"), "\n".join(f"{e.message}（第{e.line + test_mode}行，第{e.col}列）" for e in parse_result.errors))
+            return
+        ask_values = self.__collect_ask_values(parse_result.asks)
+        if ask_values is None:
+            return
+        
         @decorators.send_task
-        def exec_custom_command(cmd_item: CustomMenuItem, test_mode: bool) -> None:
-            def show_test_dialog(items) -> None:
-                assert temp_dir is not None and clean_menu_item is not None
-                dialog = TestResultDialog(self.app.view, items, clean_menu_item)
-                dialog.file_tree.bind("<<TreeviewSelect>>", lambda _: dialog.show_result())
-                dialog.file_tree.bind("<Double-Button-1>", lambda _: file_ops.open_file(dialog.file_tree.item(dialog.file_tree.selection()[0], "values")[1]))
-                dialog.open_tempdir_btn.config(command=lambda: file_ops.open_file(str(temp_dir)))
-                dialog.copy_btn.config(command=lambda: file_ops.copy_filepaths(dialog.detail_text.get("1.0", tk.END), tk=self.app.view))
-                dialog.protocol("WM_DELETE_WINDOW", lambda: file_ops.rmtree(str(temp_dir)) or dialog.destroy())
-                dialog.show_result()
+        def exec_custom_command() -> None:
             temp_dir = None
             work_files = selected_files
             if test_mode:
@@ -377,11 +230,13 @@ class MenuController:
                     shutil.copy2(f, temp_dir / f"{i:02d}_{f.name}")
                 work_files = [temp_dir / f"{i:02d}_{f.name}" for i, f in enumerate(selected_files[:10])]
 
-            exec_results = self.__exec_work_files(cmd_item, work_files, cwd=str(temp_dir))
+            # 执行结果展示 / 记录
+            exec_results = self.__exec_work_files(clean_menu_item, work_files, ask_values, cwd=str(temp_dir) if temp_dir is not None else None)
             if test_mode:
                 results = [TestResultItem(str(work_file), *res) for work_file, res in zip(work_files, exec_results)]
-                self.app.view.after(0, show_test_dialog, results)
+                self.app.view.after(0, self.__show_test_dialog, results, clean_menu_item, temp_dir)
                 return
+            
             error_count = 0
             if menu_item.batch_mode:
                 cmd, ret, out, err, time_consuming = exec_results[0]
@@ -397,14 +252,8 @@ class MenuController:
                 self.app.search_controller.show_toast(_("{label}成功！", label=menu_item.name))
             else:
                 self.app.search_controller.show_toast(_("{count}张图片的命令执行失败。", count=error_count))
-
-        clean_menu_item = self.__resolve_test_item(menu_item)
-        if clean_menu_item is None:
-            return
-        cmd_item = CustomMenuItem(clean_menu_item)
-        if not cmd_item.resolve_ask():
-            return
-        exec_custom_command(cmd_item, clean_menu_item != menu_item)
+        
+        exec_custom_command()
 
     def __resolve_test_item(self, menu_item: MenuItemDef) -> MenuItemDef | None:
         lines = menu_item.command.strip().split('\n')
@@ -420,17 +269,72 @@ class MenuController:
         new_menu_item.command = clean
         return new_menu_item
 
+    def __collect_ask_values(self, asks: list[str]) -> dict[str, str | list[str]] | None:
+        values: dict[str, str | list[str]] = {}
+        for name in asks:
+            val = self.__prompt_ask(name)
+            if val is None:
+                return None
+            values[name] = val
+        return values
+
+    def __prompt_ask(self, var_name: str) -> str | list[str] | None:
+        if var_name == 'ask_dir':
+            v = filedialog.askdirectory(title=_("选择文件夹"))
+            return v if v else None
+        elif var_name == 'ask_file':
+            v = filedialog.askopenfilename(title=_("选择文件"))
+            return v if v else None
+        elif var_name == 'ask_files':
+            v = filedialog.askopenfilenames(title=_("选择文件"))
+            return list(v) if v else None
+        elif var_name == 'ask_string':
+            return simpledialog.askstring(_("输入"), _("请输入："))
+        elif var_name == 'ask_int':
+            v = simpledialog.askinteger(_("输入"), _("请输入整数："))
+            return str(v) if v is not None else None
+        elif var_name == 'ask_float':
+            v = simpledialog.askfloat(_("输入"), _("请输入数字："))
+            return str(v) if v is not None else None
+        return None
+
     @staticmethod
-    def __exec_work_files(cmd_item: CustomMenuItem,  work_files: list[Path], cwd: str | None = None) -> list[tuple[list[str], int, str, str, float]]:
-        if cmd_item.menu_item.batch_mode:
-            cmd = cmd_item.resolve(work_files)
+    def __exec_work_files(menu_item: MenuItemDef, work_files: list[Path], ask_values: dict[str, str | list[str]], cwd: str | None = None) -> list[tuple[list[str], int, str, str, float]]:
+        def build_vars(paths: list[Path]) -> dict[str, str | list[str]]:
+            first = paths[0]
+            vars: dict[str, str | list[str]] = {
+                "path": str(first),
+                "paths": [str(p) for p in paths],
+                "dir": str(first.parent),
+                "name": first.name,
+                "noext": first.stem,
+                "ext": first.suffix,
+                "count": str(len(paths)),
+            }
+            vars.update(ask_values)
+            return vars
+
+        if menu_item.batch_mode:
+            cmd = cmd_parser.resolve(menu_item.command, build_vars(work_files))
+            assert not cmd.errors and cmd.argv is not None
             start = time.perf_counter()
-            ret, out, err = file_ops.run_cmd(cmd, cwd=cwd)
-            return [(cmd, ret, out, err, time.perf_counter() - start)] * len(work_files)
+            ret, out, err = file_ops.run_cmd(cmd.argv, cwd=cwd if cwd is not None else str(work_files[0].parent))
+            return [(cmd.argv, ret, out, err, time.perf_counter() - start)] * len(work_files)
         results = []
         for f in work_files:
-            cmd = cmd_item.resolve([f])
+            cmd = cmd_parser.resolve(menu_item.command, build_vars([f]))
+            assert not cmd.errors and cmd.argv is not None
             start = time.perf_counter()
-            ret, out, err = file_ops.run_cmd(cmd, cwd=cwd)
-            results.append((cmd, ret, out, err, time.perf_counter() - start))
+            ret, out, err = file_ops.run_cmd(cmd.argv, cwd=cwd if cwd is not None else str(f.parent))
+            results.append((cmd.argv, ret, out, err, time.perf_counter() - start))
         return results
+
+    def __show_test_dialog(self, items, clean_menu_item, temp_dir) -> None:
+        assert temp_dir is not None and clean_menu_item is not None
+        dialog = TestResultDialog(self.app.view, items, clean_menu_item)
+        dialog.file_tree.bind("<<TreeviewSelect>>", lambda _: dialog.show_result())
+        dialog.file_tree.bind("<Double-Button-1>", lambda _: file_ops.open_file(dialog.file_tree.item(dialog.file_tree.selection()[0], "values")[1]))
+        dialog.open_tempdir_btn.config(command=lambda: file_ops.open_file(str(temp_dir)))
+        dialog.copy_btn.config(command=lambda: file_ops.copy_filepaths(dialog.detail_text.get("1.0", tk.END), tk=self.app.view))
+        dialog.protocol("WM_DELETE_WINDOW", lambda: file_ops.rmtree(str(temp_dir)) or dialog.destroy())
+        dialog.show_result()
