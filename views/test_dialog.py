@@ -78,7 +78,7 @@ class TestResultDialog(tk.Toplevel):
         frame = Labelframe(self, text=_("命令详情"))
         frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(6), TkS(8)))
         text = Text(
-            frame, wrap=tk.WORD, height=8, font=(WinInfo.default_font_family, WinInfo.default_font_size),
+            frame, wrap=tk.CHAR, height=8, font=(WinInfo.default_font_family, WinInfo.default_font_size),
             state=tk.DISABLED, relief=tk.FLAT, borderwidth=0, padx=TkS(1), pady=TkS(4),
         )
         text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
