@@ -348,6 +348,7 @@ class MenuController:
                 dialog.file_tree.bind("<<TreeviewSelect>>", lambda _: dialog.show_result())
                 dialog.file_tree.bind("<Double-Button-1>", lambda _: file_ops.open_file(dialog.file_tree.item(dialog.file_tree.selection()[0], "values")[1]))
                 dialog.open_tempdir_btn.config(command=lambda: file_ops.open_file(str(temp_dir)))
+                dialog.copy_btn.config(command=lambda: file_ops.copy_filepaths(dialog.detail_text.get("1.0", tk.END), tk=self.app.view))
                 dialog.protocol("WM_DELETE_WINDOW", lambda: file_ops.rmtree(str(temp_dir)) or dialog.destroy())
                 dialog.show_result()
             temp_dir = None
