@@ -85,6 +85,7 @@ class TestResultDialog(tk.Toplevel):
         text.config(yscrollcommand=scrollbar.set)
         copy_btn = Button(text, text=_("复制"), style="inner.Link.TButton", takefocus=False, cursor="hand2")
         copy_btn.pack(side=tk.BOTTOM, anchor=tk.SE)
+        copy_btn.bind("<ButtonRelease-1>", lambda e: copy_btn.config(text="✓") or self.after(1000, lambda: copy_btn.config(text=_("复制"))))
         return text, copy_btn
 
     def show_result(self) -> None:
