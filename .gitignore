@@ -234,6 +234,8 @@ error.log
 
 # Test dir
 test/
+tests/
+docs/*.md
 
 # vscode config
 .vscode/
