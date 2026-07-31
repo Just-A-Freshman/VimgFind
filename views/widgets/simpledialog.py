@@ -1,5 +1,6 @@
 from ttkbootstrap import Frame, Button
 from tkinter import simpledialog
+import tkinter as tk
 
 from config.settings import TkS, WinInfo
 from utils.i18n import _
@@ -8,7 +9,7 @@ from utils.i18n import _
 class BasicDialog(simpledialog.Dialog):
     def buttonbox(self) -> None:
         box = Frame(self)
-        box.pack(expand=True, fill='x', pady=10)
+        box.pack(expand=True, fill=tk.X, pady=10)
         btn_save = Button(box, text=_("确定"), width=TkS(5), command=self.ok)
         btn_cancel = Button(box, text=_("取消"), width=TkS(5), command=self.cancel, style="secondary")
         box.grid_columnconfigure(0, weight=1)
