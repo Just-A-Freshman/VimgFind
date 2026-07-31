@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tkinter import font as tkfont
-from tkinter import messagebox, filedialog, simpledialog
+from tkinter import messagebox, filedialog
 from typing import Callable, TYPE_CHECKING
 import tkinter as tk
 import logging
@@ -18,7 +18,7 @@ from ttkbootstrap import Menu
 from config.settings import TkS, Setting
 from config.types import MenuItemDef
 from utils.i18n import _
-from views.widgets import BasicImagePreviewView, PreviewCanvasView
+from views.widgets import BasicImagePreviewView, PreviewCanvasView, simpledialog
 from views.test_dialog import TestResultDialog, TestResultItem
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 class CustomMenuItem:
     VAR_RE = re.compile(r'\{(\w+)((?:\|[^}]+)*)\}')
-    ASK_VARS = frozenset({'ask_dir', 'ask_file', 'ask_files', 'ask_input', 'ask_int', 'ask_float'})
+    ASK_VARS = frozenset({'ask_dir', 'ask_file', 'ask_files', 'ask_string', 'ask_int', 'ask_float'})
     def __init__(self, menu_item: MenuItemDef) -> None:
         self.menu_item = menu_item
         self.__ask_values: dict[str, str | list[str]] = {}
@@ -155,7 +155,7 @@ class CustomMenuItem:
         elif var_name == 'ask_files':
             v = filedialog.askopenfilenames(title=_("选择文件"))
             return list(v) if v else None
-        elif var_name == 'ask_input':
+        elif var_name == 'ask_string':
             return simpledialog.askstring(_("输入"), _("请输入："))
         elif var_name == 'ask_int':
             v = simpledialog.askinteger(_("输入"), _("请输入整数："))
