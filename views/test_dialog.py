@@ -99,7 +99,7 @@ class TestResultDialog(tk.Toplevel):
         text = (
             f"{_('[原始模板]')}\n{self.__menu_items.command}\n\n"
             f"{_('[解析结果]')}\n{show_execute}\n\n"
-            f"{_('[标准输出]')}\n{r.stdout or _('无输出')}\n\n"
+            f"{_('[标准输出]')}\n{r.stdout or _('(无输出)')}\n\n"
             f"{_('[错误输出]')}\n{r.stderr or _('(无输出)')}"
         )
         if text.strip() == self.detail_text.get("1.0", tk.END).strip():
