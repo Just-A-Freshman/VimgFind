@@ -403,15 +403,15 @@ class MenuController:
         return new_menu_item
 
     @staticmethod
-    def __exec_work_files(cmd_item: CustomMenuItem,  work_files: list[Path]) -> list[tuple[str, int, str, str, float]]:
+    def __exec_work_files(cmd_item: CustomMenuItem,  work_files: list[Path]) -> list[tuple[list[str], int, str, str, float]]:
         if cmd_item.menu_item.batch_mode:
-            cmd = shlex.join(cmd_item.resolve(work_files))
+            cmd = cmd_item.resolve(work_files)
             start = time.perf_counter()
             ret, out, err = file_ops.run_cmd(cmd)
             return [(cmd, ret, out, err, time.perf_counter() - start)] * len(work_files)
         results = []
         for f in work_files:
-            cmd = shlex.join(cmd_item.resolve([f]))
+            cmd = cmd_item.resolve([f])
             start = time.perf_counter()
             ret, out, err = file_ops.run_cmd(cmd)
             results.append((cmd, ret, out, err, time.perf_counter() - start))
