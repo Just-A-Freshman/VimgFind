@@ -55,7 +55,8 @@ class TestResultDialog(tk.Toplevel):
         open_btn.pack(side=tk.RIGHT)
         summary = Label(bar, text=_(
             "共{total}条  成功: {ok}  失败: {fail}，耗时：{time_consuming:.3f}s",
-            total=len(self.__results), ok=success, fail=failed, time_consuming=time_consuming)
+            total=len(self.__results), ok=success, fail=failed, time_consuming=time_consuming),
+            font=(WinInfo.default_font_family, WinInfo.default_font_size, "bold")
         )
         summary.pack(side=tk.LEFT)
         return open_btn
