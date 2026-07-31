@@ -70,14 +70,29 @@ class CustomMenuItem:
                     mods['raw'] = ''
                     i += 3
                 elif s[i:].startswith('sep='):
-                    mods['sep'] = s[i + 4:]
-                    i = len(s)
-                    continue
+                    j = i + 4
+                    end = len(s)
+                    while j < len(s):
+                        rest = s[j + 1:]
+                        if s[j] == '|' and (rest.startswith('raw') or rest.startswith('sep=') or rest.startswith('wrap=')):
+                            end = j
+                            break
+                        j += 1
+                    mods['sep'] = CustomMenuItem.__unescape_mod_value(s[i + 4:end])
+                    i = end
+                elif s[i:].startswith('wrap='):
+                    end = s.find('|', i + 5)
+                    mods['wrap'] = CustomMenuItem.__unescape_mod_value(s[i + 5:] if end == -1 else s[i + 5:end])
+                    i = end if end != -1 else len(s)
                 else:
                     i += 1
                 if i < len(s) and s[i] == '|':
                     i += 1
             return mods
+
+    @staticmethod
+    def __unescape_mod_value(value: str) -> str:
+        return value.replace('\\n', '\n').replace('\\t', '\t')
 
     @staticmethod
     def __strip_outer_quotes(tokens: list[str]) -> list[str]:
@@ -137,11 +152,14 @@ class CustomMenuItem:
         else:
             return None
 
-        if not isinstance(val, list):
-            return val
-
         mods = self.__parse_modifiers(mod_str)
-        if 'sep' in mods:
+        if 'wrap' in mods:
+            w = mods['wrap']
+            if isinstance(val, list):
+                val = [f'{w}{v}{w}' for v in val]
+            else:
+                val = f'{w}{val}{w}'
+        if isinstance(val, list) and 'sep' in mods:
             return mods['sep'].join(val)
         return val
 
@@ -359,7 +377,7 @@ class MenuController:
                     shutil.copy2(f, temp_dir / f"{i:02d}_{f.name}")
                 work_files = [temp_dir / f"{i:02d}_{f.name}" for i, f in enumerate(selected_files[:10])]
 
-            exec_results = self.__exec_work_files(cmd_item, work_files)
+            exec_results = self.__exec_work_files(cmd_item, work_files, cwd=str(temp_dir))
             if test_mode:
                 results = [TestResultItem(str(work_file), *res) for work_file, res in zip(work_files, exec_results)]
                 self.app.view.after(0, show_test_dialog, results)
@@ -403,16 +421,16 @@ class MenuController:
         return new_menu_item
 
     @staticmethod
-    def __exec_work_files(cmd_item: CustomMenuItem,  work_files: list[Path]) -> list[tuple[list[str], int, str, str, float]]:
+    def __exec_work_files(cmd_item: CustomMenuItem,  work_files: list[Path], cwd: str | None = None) -> list[tuple[list[str], int, str, str, float]]:
         if cmd_item.menu_item.batch_mode:
             cmd = cmd_item.resolve(work_files)
             start = time.perf_counter()
-            ret, out, err = file_ops.run_cmd(cmd)
+            ret, out, err = file_ops.run_cmd(cmd, cwd=cwd)
             return [(cmd, ret, out, err, time.perf_counter() - start)] * len(work_files)
         results = []
         for f in work_files:
             cmd = cmd_item.resolve([f])
             start = time.perf_counter()
-            ret, out, err = file_ops.run_cmd(cmd)
+            ret, out, err = file_ops.run_cmd(cmd, cwd=cwd)
             results.append((cmd, ret, out, err, time.perf_counter() - start))
         return results
