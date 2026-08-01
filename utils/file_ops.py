@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import unicodedata
 import uuid
+import time
 
 from send2trash import send2trash
 import win32clipboard
@@ -202,12 +203,34 @@ def generate_unique_filename(target_dir: Path, suffix: str) -> Path:
 
 
 def generate_copy_name(file_path: str | Path) -> Path:
-    orig_file_path = curr_file_path = Path(file_path)
-    suffix_num = 2
-    while curr_file_path.exists():
-        curr_file_path = orig_file_path.with_stem(f"{orig_file_path.stem} ({suffix_num})")
-        suffix_num += 1
-    return curr_file_path
+    orig = file_path if isinstance(file_path, Path) else Path(file_path)
+    if not orig.exists():
+        return orig
+    
+    stem = orig.stem
+    candidate = orig.with_stem(f"{stem}(2)")
+    if not candidate.exists():
+        return candidate
+    low, high = 2, 4
+    while True:
+        candidate = orig.with_stem(f"{stem}({high})")
+        if not candidate.exists():
+            break
+        low = high
+        high *= 2
+        if high > 1024:
+            ts = int(time.time() * 1000)
+            return orig.with_stem(f"{stem}_{ts}")
+
+    while low + 1 < high:
+        mid = (low + high) // 2
+        candidate = orig.with_stem(f"{stem}({mid})")
+        if candidate.exists():
+            low = mid
+        else:
+            high = mid
+
+    return orig.with_stem(f"{stem}({high})")
 
 
 def extract_file_paths(text: str) -> list[str]:
