@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from tkinter import filedialog
+from tkinter import filedialog, font
 import tkinter as tk
 import logging
 import os
@@ -346,7 +346,7 @@ class ExcludePreviewController:
             self.dialog.preview_tree.insert("", tk.END, values=("\U0001f4c2" + rel,))
         for rel in files:
             self.dialog.preview_tree.insert("", tk.END, values=("\U0001f4c4" + rel,))
-
+        self.__auto_fit_treeview_columns()
         self.dialog.preview_status_label.configure(foreground="")
         if self.__preview_truncated:
             self.dialog.preview_status_label.config(text=_("排除项过多，仅展示前 {max} 条，建议缩小预览范围", max=MAX_PREVIEW_ITEMS))
@@ -355,3 +355,13 @@ class ExcludePreviewController:
             self.dialog.preview_status_label.config(text=_("显示排除：0 个目录，0 个文件 — 当前规则无匹配项"))
         else:
             self.dialog.preview_status_label.config(text=_("显示排除：{dirs} 个目录，{files} 个文件", dirs=len(dirs), files=len(files)))
+    
+    def __auto_fit_treeview_columns(self):
+        default_font = font.nametofont("TkTextFont")
+        max_width = default_font.measure(self.dialog.preview_tree.heading("path", 'text'))
+        for item in self.dialog.preview_tree.get_children(''):
+            cell_text = self.dialog.preview_tree.set(item, "path")
+            width = default_font.measure(str(cell_text))
+            if width > max_width:
+                max_width = width
+        self.dialog.preview_tree.column("path", width=max(max_width, self.dialog.preview_tree.winfo_width()))

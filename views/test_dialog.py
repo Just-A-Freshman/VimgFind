@@ -36,7 +36,7 @@ class TestResultDialog(tk.Toplevel):
         self.transient(parent)
         self.title(_("命令测试结果"))
         self.iconbitmap(WinInfo.ico_path)
-        win_w = TkS(480)
+        win_w = TkS(450)
         win_h = TkS(400)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2

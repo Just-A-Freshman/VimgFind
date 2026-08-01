@@ -22,8 +22,7 @@ class ExcludeDialog(tk.Toplevel):
     __slots__ = (
         "add_rule_btn", "del_rule_btn", "help_btn",
         "rules_tree", "preview_path_entry", "browse_btn",
-        "preview_status_label", "stop_btn", "preview_tree",
-        "parent"
+        "preview_status_label", "stop_btn", "preview_tree"
     )
 
     def __init__(self, parent) -> None:
@@ -49,8 +48,8 @@ class ExcludeDialog(tk.Toplevel):
     def __win(self, parent: tk.Tk) -> None:
         self.update_idletasks()
         self.title(_("排除设置"))
-        win_w = TkS(480)
-        win_h = TkS(420)
+        win_w = TkS(450)
+        win_h = TkS(400)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
@@ -61,12 +60,12 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_edit_rules_frame(self) -> Labelframe:
         frame = Labelframe(self, text=_("排除规则"))
-        frame.place(relx=0.04, rely=0.03, relwidth=0.92, relheight=0.40)
+        frame.place(relx=0.02, rely=0.01, relwidth=0.96, relheight=0.45)
         return frame
 
     def __set_edit_frame(self, parent) -> Frame:
         btn_frame = Frame(parent)
-        btn_frame.pack(fill=tk.X, padx=TkS(2), pady=(TkS(1), TkS(5)))
+        btn_frame.pack(fill=tk.X, padx=TkS(2), pady=(TkS(1), TkS(2)))
         return btn_frame
 
     def __set_rules_tree(self, parent) -> Treeview:
@@ -95,7 +94,7 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_preview_rules_frame(self) -> Labelframe:
         frame = Labelframe(self, text=_("选择任意文件夹预览排除效果"))
-        frame.place(relx=0.04, rely=0.46, relwidth=0.92, relheight=0.53)
+        frame.place(relx=0.02, rely=0.47, relwidth=0.96, relheight=0.53)
         return frame
 
     def __set_preview_path_entry(self, parent: Frame) -> Entry:
@@ -114,12 +113,12 @@ class ExcludeDialog(tk.Toplevel):
         return preview_status_label
 
     def __set_preview_tree(self, parent: Labelframe) -> Treeview:
-        preview_tree = Treeview(parent, columns=("path",), show="", cursor="hand2")
-        preview_tree.column("path", stretch=False, width=TkS(1500))
+        preview_tree = Treeview(parent, columns=("path",), show="", cursor="hand2", height=5)
+        preview_tree.column("path", stretch=False, width=0)
         preview_tree.pack(fill=tk.BOTH, expand=True, padx=TkS(2))
 
         preview_scroll_v = Scrollbar(preview_tree, orient=tk.VERTICAL, command=preview_tree.yview)
-        preview_scroll_v.pack(fill=tk.Y, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
+        preview_scroll_v.pack(fill=tk.Y, side=tk.RIGHT, padx=(0, TkS(1)), pady=TkS(1))
         preview_scroll_h = Scrollbar(preview_tree, orient=tk.HORIZONTAL, command=preview_tree.xview)
         preview_scroll_h.pack(fill=tk.X, side=tk.BOTTOM, padx=(TkS(1), 0), pady=TkS(1))
         preview_tree.configure(yscrollcommand=preview_scroll_v.set, xscrollcommand=preview_scroll_h.set)
