@@ -49,8 +49,8 @@ class ExcludeDialog(tk.Toplevel):
     def __win(self, parent: tk.Tk) -> None:
         self.update_idletasks()
         self.title(_("排除设置"))
-        win_w = TkS(620)
-        win_h = TkS(520)
+        win_w = TkS(480)
+        win_h = TkS(420)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
@@ -80,12 +80,12 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_add_rule_btn(self, parent: Frame) -> Button:
         add_rule_btn = Button(parent, text=_("新建规则"), takefocus=False, cursor="hand2")
-        add_rule_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(9), ipady=TkS(6))
+        add_rule_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(6), ipady=TkS(3))
         return add_rule_btn
 
     def __set_del_rule_btn(self, parent: Frame) -> Button:
         del_rule_btn = Button(parent, text=_("删除规则"), takefocus=False, cursor="hand2")
-        del_rule_btn.pack(side=tk.LEFT, ipadx=TkS(9), ipady=TkS(6))
+        del_rule_btn.pack(side=tk.LEFT, ipadx=TkS(6), ipady=TkS(3))
         return del_rule_btn
 
     def __set_help_btn(self, parent: Frame) -> Button:
@@ -100,12 +100,12 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_preview_path_entry(self, parent: Frame) -> Entry:
         preview_path_entry = Entry(parent, font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(2)), ipady=TkS(6))
+        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(2)), ipady=TkS(3))
         return preview_path_entry
 
     def __set_browse_btn(self, parent: Frame) -> Button:
         browse_btn = Button(parent, text=_("浏览"), takefocus=False, cursor="hand2")
-        browse_btn.pack(side=tk.RIGHT, ipadx=TkS(9) * 2, ipady=TkS(6))
+        browse_btn.pack(side=tk.RIGHT, ipadx=TkS(12), ipady=TkS(3))
         return browse_btn
 
     def __set_preview_status_label(self, parent: Frame) -> Label:
