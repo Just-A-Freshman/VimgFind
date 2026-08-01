@@ -433,7 +433,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self._update_layout()
         
     def selection(self) -> tuple[str, ...]:
-        return tuple(self.__selected_items)
+        return tuple([item for item in self._results if item in self.__selected_items])
 
     def selection_set(self, *items: str) -> None:
         if not items:
