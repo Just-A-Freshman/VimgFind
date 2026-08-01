@@ -11,7 +11,7 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 from pathspec import PathSpec
 from ttkbootstrap import Style
 
-from config import Setting, TkS
+from config.settings import Setting, TkS
 from utils.i18n import _
 from views.exclude_dialog import ExcludeDialog
 import utils.exclude_rules as exclude_rules

@@ -10,12 +10,12 @@ import threading
 
 from config.settings import Setting, WinInfo, TkS
 from config.types import MenuItemDef
-from .update_controller import UpdateController
+from .update_controller import UpdateController, UpdateCheckResult
 from views import SettingDialog
 from utils.i18n import I18n, _
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
-import utils.update_checker as update_checker
+import utils.decorators as decorators
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -149,28 +149,28 @@ class GeneralController:
         self.app.setting.app.other_config_path = path
         self.app.destroy()
 
+    @decorators.send_task
     def __check_update(self) -> None:
-        def on_check_result(result: update_checker.UpdateCheckResult) -> None:
+        def on_check_result(result: UpdateCheckResult) -> None:
             if result.error:
                 messagebox.showerror(_("检查更新失败"), result.error)
             elif not result.has_update:
                 messagebox.showinfo(_("检查更新"), _(
                     "当前版本：v{current}\n你使用的已是最新版本！\n\n仓库地址：{repo}", 
-                    current=result.current_version, repo=WinInfo.repo_url)
-                )
+                    current=result.current_version, repo=WinInfo.repo_url
+                ))
             else:
-                msg = _("发现新版本 v{latest}（当前版本 v{current}）\n\n是否下载更新？",
-                        latest=result.latest_version, current=result.current_version)
-                if messagebox.askyesno(_("发现新版本"), msg):
-                    UpdateController(self.app).do_update(result.download_url, result.latest_version)
+                if messagebox.askyesno(_("发现新版本"), _(
+                    "发现新版本 v{latest}（当前版本 v{current}）\n\n是否下载更新？",
+                    latest=result.latest_version, current=result.current_version
+                )):
+                    update_controller.do_update(result.download_url, result.latest_version)
             self.general_tab.check_update_btn.config(state="normal", text=_("检查更新"))
         
         self.general_tab.check_update_btn.config(state="disabled", text=_("正在检查..."))
-        def _check():
-            result = update_checker.check()
-            self.general_tab.after(0, lambda: on_check_result(result))
-
-        threading.Thread(target=_check, daemon=True).start()
+        update_controller = UpdateController(self.app)
+        result = update_controller.check()
+        self.general_tab.after(0, lambda: on_check_result(result))
 
 
 class CustomMenuController:
