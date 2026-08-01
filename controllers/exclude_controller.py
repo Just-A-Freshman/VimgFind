@@ -44,6 +44,8 @@ class ExcludePreviewController:
         return rules
 
     def on_rule_select(self, event=None) -> None:
+        if len(self.__preview_cache) == 0:
+            return
         if self.__debounce_timer is not None:
             self.dialog.after_cancel(self.__debounce_timer)
         self.__debounce_timer = self.dialog.after(500, self.__refresh_preview_tree)
