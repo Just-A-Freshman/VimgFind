@@ -107,10 +107,10 @@ class SearchController:
                 lines = copy_text.splitlines()
                 if len(lines) > 3000:
                     lines = lines[:3000]
-                    logging.info("剪切板中的路径过多：大于3000行，已自动截断。")
+                    self.show_toast(_("内容过长，已截断到3000行。"))
                 accept_exts = set(Setting.accepted_exts)
                 all_paths = [Path(l.strip()) for l in lines if l.strip()]
-                valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix in accept_exts]
+                valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix.lower() in accept_exts]
                 if len(valid_paths) > 1:
                     self.__queue_paths = valid_paths
                     self.__current_page = 0
