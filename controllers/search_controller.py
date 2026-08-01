@@ -292,7 +292,7 @@ class SearchController:
         preview_batch_buffer = []
         preview_iter = results_iter
 
-        def smooth_batch_size(k, B_min=1, B_max=100, r=0.8, m=10):
+        def smooth_batch_size(k, B_min=10, B_max=100, r=0.8, m=5):
             raw = B_min + (B_max - B_min) / (1 + math.exp(-r * (k - m)))
             return max(1, round(raw))
 
