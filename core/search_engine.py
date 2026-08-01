@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+from threading import Event
 from enum import Enum
 from pathlib import Path
 from re import sub
-from threading import Thread, Event
 from typing import Iterator
 import logging
 import os
 import random
 
-from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from PIL import Image
 from tqdm import tqdm
 import numpy as np
@@ -20,6 +20,8 @@ from config.settings import Setting
 import utils.exclude_rules as exclude_rules
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
+import utils.decorators as decorators
+
 
 class SearchStatus(str, Enum):
     OK = "ok"
@@ -43,8 +45,9 @@ class SearchTool:
         self.__checkout_status: SearchStatus = SearchStatus.OK
         self.__setting = setting
         self.force_stop_update: bool = False
-        Thread(target=self.__async_init, daemon=True).start()
+        self.__async_init()
 
+    @decorators.send_task
     def __async_init(self) -> None:
         self.__name_idx_mgr = NameIndexManager(
             self.__setting.model.index.name_index_path,
