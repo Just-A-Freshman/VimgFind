@@ -215,7 +215,7 @@ class IndexController:
     def __open_exclude_dialog(self) -> None:
         dialog = ExcludeDialog(self.app.view)
         controller = ExcludePreviewController(dialog, self.app.setting)
-        dialog.help_btn.config(command=controller.open_help_doc)
+        dialog.help_btn.config(command=lambda: file_ops.open_file(Path(__file__).parent.parent / "docs" / "exclude_rules.html"))
         dialog.stop_btn.config(command=controller.stop_scan)
         dialog.add_rule_btn.config(command=controller.on_add_name)
         dialog.del_rule_btn.config(command=controller.on_delete_selected)

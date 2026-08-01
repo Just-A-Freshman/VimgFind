@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from threading import Thread
 from tkinter import filedialog
 import tkinter as tk
 import logging
@@ -16,6 +15,8 @@ from utils.i18n import _
 from views.exclude_dialog import ExcludeDialog
 import utils.exclude_rules as exclude_rules
 import utils.file_ops as file_ops
+import utils.decorators as decorators
+
 
 MAX_PREVIEW_ITEMS = 100000
 PROGRESS_INTERVAL = 500
@@ -25,18 +26,14 @@ class ExcludePreviewController:
     def __init__(self, dialog: ExcludeDialog, setting: Setting) -> None:
         self.dialog = dialog
         self.setting = setting
-        self._original_rules: list[str] = (self.setting.model.index.exclude_rules or [])
-        self._cancel_scan = False
-        self._scan_thread: Thread | None = None
-        self._preview_cache: list[tuple[str, bool]] = []
-        self._scan_cache: list[tuple[str, bool]] = []
-        self._preview_total = 0
-        self._preview_excluded = 0
-        self._debounce_timer: str | None = None
-        self._rule_entry = None
-        self._closed = False
-        self._preview_truncated = False
-        self._edit_lock = False
+        self.__cancel_scan = False
+        self.__preview_cache: list[tuple[str, bool]] = []
+        self.__scan_cache: list[tuple[str, bool]] = []
+        self.__debounce_timer: str | None = None
+        self.__rule_entry = None
+        self.__closed = False
+        self.__preview_truncated = False
+        self.__edit_lock = False
 
     def collect_rules(self) -> list[str]:
         rules: list[str] = []
@@ -47,38 +44,9 @@ class ExcludePreviewController:
         return rules
 
     def on_rule_select(self, event=None) -> None:
-        if self._debounce_timer is not None:
-            self.dialog.after_cancel(self._debounce_timer)
-        self._debounce_timer = self.dialog.after(500, self._refresh_preview_tree)
-
-    def _compute_excluded(
-        self,
-        scan_cache: list[tuple[str, bool]],
-        excl_rules,
-        target_dir: str,
-        max_items: int = MAX_PREVIEW_ITEMS,
-    ) -> tuple[list[tuple[str, bool]], int, bool]:
-        """对 scan_cache 应用 excl_rules，返回（被排除列表, 排除数, 是否截断）"""
-        excluded: list[tuple[str, bool]] = []
-        count = 0
-        truncated = False
-        for rel, is_dir in scan_cache:
-            if count >= max_items:
-                truncated = True
-                break
-            full_path = os.path.join(target_dir, rel)
-            if is_dir:
-                if excl_rules.should_skip_dir(full_path, target_dir):
-                    excluded.append((rel, True))
-                    count += 1
-            else:
-                if excl_rules.should_skip_file(full_path, target_dir):
-                    excluded.append((rel, False))
-                    count += 1
-        return excluded, count, truncated
-
-    def stop_scan(self) -> None:
-        self._cancel_scan = True
+        if self.__debounce_timer is not None:
+            self.dialog.after_cancel(self.__debounce_timer)
+        self.__debounce_timer = self.dialog.after(500, self.__refresh_preview_tree)
 
     def on_delete_selected(self) -> None:
         selected = self.dialog.rules_tree.selection()
@@ -94,22 +62,121 @@ class ExcludePreviewController:
             self.trigger_preview()
 
     def on_add_name(self) -> None:
-        if self._edit_lock:
+        if self.__edit_lock:
             return
         iid = self.dialog.rules_tree.insert("", tk.END, values=("",))
         self.dialog.rules_tree.yview_moveto(1.0)
-        self._edit_item(iid, "")
+        self.__edit_item(iid, "")
 
     def on_item_double_click(self, event: tk.Event) -> None:
         iid = self.dialog.rules_tree.identify_row(event.y)
         if not iid:
             return
         text = self.dialog.rules_tree.item(iid, "values")[0]
-        self._edit_item(iid, text)
+        self.__edit_item(iid, text)
 
-    def _edit_item(self, iid: str, initial_text: str = "") -> None:
-        if self._rule_entry is not None:
-            self._rule_entry.destroy()
+    def on_preview_double_click(self, event: tk.Event) -> None:
+        item = self.dialog.preview_tree.identify_row(event.y)
+        if not item:
+            return
+        raw = self.dialog.preview_tree.item(item, "values")[0].strip()
+        path = raw[1:] if len(raw) > 1 else raw
+        preview_dir = self.dialog.preview_path_entry.get().strip()
+        if preview_dir and path:
+            full_path = os.path.join(preview_dir, path)
+            if Path(full_path).exists():
+                file_ops.open_file(full_path)
+
+    def on_save(self) -> None:
+        self.__closed = True
+        self.__cancel_scan = True
+
+        try:
+            self.setting.model.index.exclude_rules = self.collect_rules()
+            self.setting.save()
+            self.dialog.destroy()
+        except Exception as e:
+            logging.error("on_save error: %s", e, exc_info=True)
+            try:
+                self.dialog.destroy()
+            except Exception:
+                pass
+
+    def refilter_preview(self) -> None:
+        if not self.__scan_cache:
+            return
+        target_dir = self.dialog.preview_path_entry.get().strip()
+        if not target_dir:
+            return
+
+        rules = self.collect_rules()
+        rules_obj = exclude_rules.compile_rules(rules)
+        if not rules_obj:
+            self.__preview_cache.clear()
+            self.__refresh_preview_tree()
+            return
+
+        excluded_cache, truncated = self.__compute_excluded(
+            self.__scan_cache, rules_obj, target_dir
+        )
+
+        self.__preview_cache = excluded_cache
+        self.__preview_truncated = truncated
+
+        self.dialog.stop_btn.pack_forget()
+        self.__refresh_preview_tree()
+
+    def load_rules_into_view(self) -> None:
+        rules = self.setting.model.index.exclude_rules or []
+        for rule in rules:
+            self.dialog.rules_tree.insert("", tk.END, values=(rule,))
+        self.dialog.preview_status_label.config(text=_("被排除索引的文件夹/文件"))
+
+    def trigger_preview(self) -> None:
+        self.__cancel_scan = True
+        self.dialog.stop_btn.pack(side=tk.RIGHT, padx=(TkS(10), 0))
+        self.__preview_cache.clear()
+        self.__scan_cache.clear()
+
+        dir_path = self.dialog.preview_path_entry.get().strip()
+        if not dir_path or not Path(dir_path).is_dir():
+            self.dialog.stop_btn.pack_forget()
+            return
+
+        self.dialog.preview_tree.delete(*self.dialog.preview_tree.get_children())
+        self.dialog.preview_status_label.config(text=_("正在扫描目录结构...（点击停止终止扫描）"))
+
+        rules = self.collect_rules()
+        self.__cancel_scan = False
+        self.__do_preview(dir_path, rules)
+
+    def stop_scan(self) -> None:
+        self.__cancel_scan = True
+
+    def __compute_excluded(
+        self,
+        scan_cache: list[tuple[str, bool]],
+        excl_rules,
+        target_dir: str,
+        max_items: int = MAX_PREVIEW_ITEMS,
+    ) -> tuple[list[tuple[str, bool]], bool]:
+        excluded: list[tuple[str, bool]] = []
+        truncated = False
+        for rel, is_dir in scan_cache:
+            if len(excluded) >= max_items:
+                truncated = True
+                break
+            full_path = os.path.join(target_dir, rel)
+            if is_dir:
+                if excl_rules.should_skip_dir(full_path, target_dir):
+                    excluded.append((rel, True))
+            elif excl_rules.should_skip_file(full_path, target_dir):
+                excluded.append((rel, False))
+        return excluded, truncated
+
+    def __edit_item(self, iid: str, initial_text: str = "") -> None:
+        if self.__rule_entry is not None:
+            self.__rule_entry.destroy()
 
         tree = self.dialog.rules_tree
         tree.selection_remove(*tree.selection())
@@ -132,8 +199,8 @@ class ExcludePreviewController:
         entry.insert(0, initial_text)
         entry.select_range(0, tk.END)
         entry.icursor(tk.END)
-        self._rule_entry = entry
-        self._edit_lock = True
+        self.__rule_entry = entry
+        self.__edit_lock = True
 
         _confirming = False
         def on_confirm(event=None):
@@ -149,7 +216,7 @@ class ExcludePreviewController:
                 self.refilter_preview()
             elif not initial_text:
                 tree.delete(iid)
-            self._edit_lock = False
+            self.__edit_lock = False
             entry.master.after_idle(lambda e=entry: e.destroy())
 
         def on_cancel(event=None):
@@ -159,7 +226,7 @@ class ExcludePreviewController:
             _confirming = True
             if not initial_text:
                 tree.delete(iid)
-            self._edit_lock = False
+            self.__edit_lock = False
             entry.master.after_idle(lambda e=entry: e.destroy())
 
         entry.place(x=entry_x, y=entry_y, width=entry_w, height=entry_h)
@@ -168,30 +235,8 @@ class ExcludePreviewController:
         entry.bind("<FocusOut>", on_confirm)
         entry.bind("<Escape>", on_cancel)
 
-    def trigger_preview(self) -> None:
-        self._cancel_scan = True
-        self.dialog.stop_btn.pack(side=tk.RIGHT, padx=(TkS(10), 0))
-        self._preview_cache.clear()
-        self._scan_cache.clear()
-        self._preview_total = 0
-        self._preview_excluded = 0
-
-        dir_path = self.dialog.preview_path_entry.get().strip()
-        if not dir_path or not Path(dir_path).is_dir():
-            self.dialog.stop_btn.pack_forget()
-            return
-
-        self.dialog.preview_tree.delete(*self.dialog.preview_tree.get_children())
-        self.dialog.preview_status_label.config(text=_("正在扫描目录结构...（点击停止终止扫描）"))
-
-        rules = self.collect_rules()
-        self._cancel_scan = False
-        self._scan_thread = Thread(
-            target=self._do_preview, args=(dir_path, rules), daemon=True
-        )
-        self._scan_thread.start()
-
-    def _do_preview(self, target_dir: str, rules: list[str]) -> None:
+    @decorators.send_task
+    def __do_preview(self, target_dir: str, rules: list[str]) -> None:
         pre_rules = exclude_rules.compile_rules([])
         excl_rules = exclude_rules.compile_rules(rules)
 
@@ -203,7 +248,7 @@ class ExcludePreviewController:
             try:
                 with os.scandir(path) as it:
                     for entry in it:
-                        if self._cancel_scan:
+                        if self.__cancel_scan:
                             return
 
                         rel = os.path.relpath(entry.path, target_dir).replace("\\", "/")
@@ -220,9 +265,11 @@ class ExcludePreviewController:
 
                         if total % PROGRESS_INTERVAL == 0:
                             try:
-                                self.dialog.after(
-                                    0, lambda t=total: self._update_status(t, 0)
-                                )
+                                self.dialog.after(0, lambda t=total: (
+                                    None if self.__closed else self.dialog.preview_status_label.config(
+                                        text=_("已排除 {excluded} 项（共扫描 {total} 项）", excluded=0, total=t)
+                                    )
+                                ))
                             except Exception:
                                 pass
             except PermissionError:
@@ -230,37 +277,27 @@ class ExcludePreviewController:
 
         _walk(target_dir)
 
-        excluded_cache, excluded_count, truncated = self._compute_excluded(
+        excluded_cache, truncated = self.__compute_excluded(
             scan_cache, excl_rules, target_dir
-        ) if excl_rules else ([], 0, False)
+        ) if excl_rules else ([], False)
 
         try:
-            self.dialog.after(0, lambda: self._preview_complete(
-                excluded_cache, scan_cache, total, excluded_count, truncated
-            ))
+            self.dialog.after(0, lambda: self.__preview_complete(excluded_cache, scan_cache, truncated))
         except Exception:
             pass
 
-    def _update_status(self, total: int, excluded: int) -> None:
-        if self._closed:
+    def __preview_complete(self, cache, scan_cache, truncated) -> None:
+        if self.__closed:
             return
-        self.dialog.preview_status_label.config(text=_("已排除 {excluded} 项（共扫描 {total} 项）", excluded=excluded, total=total))
-
-    def _preview_complete(self, cache, scan_cache, total, excluded, truncated) -> None:
-        if self._closed:
-            return
-        self._preview_cache = cache
-        self._scan_cache = scan_cache
-        self._preview_total = total
-        self._preview_excluded = excluded
-        self._preview_truncated = truncated
-
+        self.__preview_cache = cache
+        self.__scan_cache = scan_cache
+        self.__preview_truncated = truncated
         self.dialog.stop_btn.pack_forget()
 
-        self._refresh_preview_tree()
+        self.__refresh_preview_tree()
 
     @staticmethod
-    def _filter_topmost(dirs: list[str], files: list[str]) -> tuple[list[str], list[str]]:
+    def __filter_topmost(dirs: list[str], files: list[str]) -> tuple[list[str], list[str]]:
         kept_dirs = []
         prefixes = set()
         for d in dirs:
@@ -270,9 +307,9 @@ class ExcludePreviewController:
         kept_files = [f for f in files if not any(f.startswith(p + "/") for p in prefixes)]
         return kept_dirs, kept_files
 
-    def _refresh_preview_tree(self) -> None:
+    def __refresh_preview_tree(self) -> None:
         selected = self.dialog.rules_tree.selection()
-        filtered = self._preview_cache
+        filtered = self.__preview_cache
 
         if selected:
             rule_text = self.dialog.rules_tree.item(selected[0], "values")[0].strip()
@@ -282,10 +319,10 @@ class ExcludePreviewController:
                 return
             if exclude_rules.ExcludeRules.SPECIAL_RULE_PATTERN.match(rule_text):
                 target_dir = self.dialog.preview_path_entry.get().strip()
-                if target_dir and self._scan_cache:
+                if target_dir and self.__scan_cache:
                     single_excl = exclude_rules.compile_rules([rule_text])
                     if single_excl:
-                        filtered = self._compute_excluded(self._scan_cache, single_excl, target_dir)[0]
+                        filtered = self.__compute_excluded(self.__scan_cache, single_excl, target_dir)[0]
                     else:
                         filtered = []
                 else:
@@ -294,94 +331,27 @@ class ExcludePreviewController:
                 try:
                     single_spec = PathSpec.from_lines(GitWildMatchPattern, [rule_text.lower()])
                     filtered = [
-                        (rel, is_dir) for rel, is_dir in self._preview_cache
+                        (rel, is_dir) for rel, is_dir in self.__preview_cache
                         if single_spec.match_file(rel.lower() + ("/" if is_dir else ""))
                     ]
                 except Exception:
-                    filtered = self._preview_cache
+                    filtered = self.__preview_cache
 
         self.dialog.preview_tree.delete(*self.dialog.preview_tree.get_children())
         dirs = sorted(rel for rel, is_dir in filtered if is_dir)
         files = sorted(rel for rel, is_dir in filtered if not is_dir)
-        dirs, files = self._filter_topmost(dirs, files)
+        dirs, files = self.__filter_topmost(dirs, files)
 
         for rel in dirs:
             self.dialog.preview_tree.insert("", tk.END, values=("\U0001f4c2" + rel,))
         for rel in files:
             self.dialog.preview_tree.insert("", tk.END, values=("\U0001f4c4" + rel,))
 
-        dir_count = len(dirs)
-        file_count = len(files)
         self.dialog.preview_status_label.configure(foreground="")
-        if self._preview_truncated:
+        if self.__preview_truncated:
             self.dialog.preview_status_label.config(text=_("排除项过多，仅展示前 {max} 条，建议缩小预览范围", max=MAX_PREVIEW_ITEMS))
-        elif dir_count == 0 and file_count == 0:
+        elif len(dirs) == 0 and len(files) == 0:
             self.dialog.preview_status_label.configure(foreground="red")
             self.dialog.preview_status_label.config(text=_("显示排除：0 个目录，0 个文件 — 当前规则无匹配项"))
         else:
-            self.dialog.preview_status_label.config(text=_("显示排除：{dirs} 个目录，{files} 个文件", dirs=dir_count, files=file_count))
-
-    def refilter_preview(self) -> None:
-        if not self._scan_cache:
-            return
-        target_dir = self.dialog.preview_path_entry.get().strip()
-        if not target_dir:
-            return
-
-        rules = self.collect_rules()
-        rules_obj = exclude_rules.compile_rules(rules)
-        if not rules_obj:
-            self._preview_cache.clear()
-            self._preview_excluded = 0
-            self._refresh_preview_tree()
-            return
-
-        excluded_cache, excluded_count, truncated = self._compute_excluded(
-            self._scan_cache, rules_obj, target_dir
-        )
-
-        self._preview_cache = excluded_cache
-        self._preview_excluded = excluded_count
-        self._preview_total = len(self._scan_cache)
-        self._preview_truncated = truncated
-
-        self.dialog.stop_btn.pack_forget()
-        self._refresh_preview_tree()
-
-    def load_rules_into_view(self) -> None:
-        rules = self.setting.model.index.exclude_rules or []
-        for rule in rules:
-            self.dialog.rules_tree.insert("", tk.END, values=(rule,))
-        self.dialog.preview_status_label.config(text=_("被排除索引的文件夹/文件"))
-
-    @staticmethod
-    def open_help_doc() -> None:
-        doc_path = Path(__file__).parent.parent / "docs" / "exclude_rules.html"
-        file_ops.open_file(doc_path)
-
-    def on_preview_double_click(self, event: tk.Event) -> None:
-        item = self.dialog.preview_tree.identify_row(event.y)
-        if not item:
-            return
-        raw = self.dialog.preview_tree.item(item, "values")[0].strip()
-        path = raw[1:] if len(raw) > 1 else raw
-        preview_dir = self.dialog.preview_path_entry.get().strip()
-        if preview_dir and path:
-            full_path = os.path.join(preview_dir, path)
-            if Path(full_path).exists():
-                file_ops.open_file(full_path)
-
-    def on_save(self) -> None:
-        self._closed = True
-        self._cancel_scan = True
-
-        try:
-            self.setting.model.index.exclude_rules = self.collect_rules()
-            self.setting.save()
-            self.dialog.destroy()
-        except Exception as e:
-            logging.error("on_save error: %s", e, exc_info=True)
-            try:
-                self.dialog.destroy()
-            except Exception:
-                pass
+            self.dialog.preview_status_label.config(text=_("显示排除：{dirs} 个目录，{files} 个文件", dirs=len(dirs), files=len(files)))
