@@ -6,7 +6,6 @@ from tkinter import filedialog, messagebox
 from tkinter.font import nametofont
 from ttkbootstrap.style import Colors
 import tkinter as tk
-import threading
 
 from config.settings import Setting, WinInfo, TkS
 from config.types import MenuItemDef
