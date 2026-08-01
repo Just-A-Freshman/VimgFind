@@ -32,8 +32,7 @@ class MenuController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self.executor = CustomCommandExecutor(app_controller)
-        self.__last_single_image_save_dir: Path | None = None
-        self.__last_multi_image_save_dir: Path | None = None
+        self.__last_image_save_dir: Path | None = None
 
     def on_menu_shortcut(self, event) -> str | None:
         custom_shortcut = shortcut.build_shortcut(event)
@@ -101,23 +100,20 @@ class MenuController:
             file_ops.open_file(selected_file)
 
     def save_as_image(self, *src_paths: Path) -> None:
-        if len(src_paths) == 1:
+        self.__last_image_save_dir = self.__last_image_save_dir or src_paths[0].parent 
+        for src_path in src_paths:
             save_path = filedialog.asksaveasfilename(
                 filetypes=[(f"{i}(*{i})", f"*{i}") for i in Setting.accepted_exts if i not in [".psd"]],
-                initialfile=src_paths[0].name,
-                initialdir=self.__last_single_image_save_dir,
-                defaultextension=src_paths[0].suffix
+                initialfile=file_ops.generate_copy_name(self.__last_image_save_dir / src_path.name).name,
+                initialdir=self.__last_image_save_dir,
+                defaultextension=src_path.suffix
             )
-            if save_path:
-                dest_path = Path(save_path)
-                self.__last_single_image_save_dir = dest_path.parent
-                image_ops.save_as_image(src_paths[0], dest_path)
-        else:
-            save_dir = filedialog.askdirectory(initialdir=self.__last_multi_image_save_dir)
-            if save_dir:
-                self.__last_multi_image_save_dir = Path(save_dir)
-                file_ops.save_to_dir(*src_paths, dest_dir=self.__last_multi_image_save_dir, is_binary=True, inplace=False)
-
+            if not save_path:
+                break
+            dest_path = Path(save_path)
+            self.__last_image_save_dir = dest_path.parent
+            image_ops.save_as_image(src_path, dest_path)
+        
     def delete_files(self, event: tk.Event, selected_files: list[Path]) -> None:
         assert self.app.search_tools
         tab = self.app.view.search_tab

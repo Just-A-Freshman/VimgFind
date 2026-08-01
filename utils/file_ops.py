@@ -138,20 +138,6 @@ def save_as(src_path: str | Path, dest_path: str | Path, is_binary: bool = False
         return False
 
 
-def save_to_dir(*src_paths: str | Path, dest_dir: str | Path, is_binary: bool = False, inplace=True) -> bool:
-    if dest_dir == "":
-        return False
-    dest_dir = Path(dest_dir)
-    if not dest_dir.exists() or not dest_dir.is_dir():
-        return False
-    all_finish = True
-    for src_path in src_paths:
-        ans = save_as(src_path, dest_dir / Path(src_path).name, is_binary, inplace)
-        if not ans:
-            all_finish = False
-    return all_finish
-
-
 def rmtree(target_dir: str | Path) -> None:
     try:
         shutil.rmtree(target_dir)
