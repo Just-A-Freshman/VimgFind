@@ -109,9 +109,9 @@ def copy_files(*file_paths: str | Path) -> None:
         win32clipboard.CloseClipboard()
 
 
-def copy_filepaths(*file_paths: str | Path, tk: Tk) -> None:
+def copy_text(*text: str | Path, tk: Tk) -> None:
     tk.clipboard_clear()
-    tk.clipboard_append("\n".join([str(i) for i in file_paths]))
+    tk.clipboard_append("\n".join([str(i) for i in text]))
 
 
 def delete_file(file_path: str | Path, hard=True) -> None:

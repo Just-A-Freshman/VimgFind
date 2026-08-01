@@ -146,7 +146,7 @@ class MenuController:
     def embeded_command(self, event: tk.Event, selected_files: list[Path]) -> dict[str, Callable]:
         return {
             "复制图片": lambda f=selected_files: file_ops.copy_files(*f),
-            "复制路径": lambda f=selected_files: file_ops.copy_filepaths(*f, tk=self.app.view),
+            "复制路径": lambda f=selected_files: file_ops.copy_text(*f, tk=self.app.view),
             "图片另存为": lambda f=selected_files: self.save_as_image(*f),
             "删除图片": lambda f=selected_files: self.delete_files(event, f),
             "打开图片": lambda: file_ops.open_file(selected_files[0]),
@@ -332,6 +332,6 @@ class CustomCommandExecutor:
         dialog.file_tree.bind("<<TreeviewSelect>>", lambda _: dialog.show_result())
         dialog.file_tree.bind("<Double-Button-1>", lambda _: file_ops.open_file(dialog.file_tree.item(dialog.file_tree.selection()[0], "values")[1]))
         dialog.open_tempdir_btn.config(command=lambda: file_ops.open_file(str(temp_dir)))
-        dialog.copy_btn.config(command=lambda: file_ops.copy_filepaths(dialog.detail_text.get("1.0", tk.END), tk=self.app.view))
+        dialog.copy_btn.config(command=lambda: file_ops.copy_text(dialog.detail_text.get("1.0", tk.END), tk=self.app.view))
         dialog.protocol("WM_DELETE_WINDOW", lambda: file_ops.rmtree(str(temp_dir)) or dialog.destroy())
         dialog.show_result()
