@@ -55,7 +55,6 @@ class ExcludeDialog(tk.Toplevel):
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.iconbitmap(WinInfo.ico_path)
         self.transient(parent)
-        self.grab_set()
         self.deiconify()
 
     def __set_edit_rules_frame(self) -> Labelframe:
@@ -94,7 +93,7 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_preview_rules_frame(self) -> Labelframe:
         frame = Labelframe(self, text=_("选择任意文件夹预览排除效果"))
-        frame.place(relx=0.02, rely=0.47, relwidth=0.96, relheight=0.53)
+        frame.place(relx=0.02, rely=0.48, relwidth=0.96, relheight=0.52)
         return frame
 
     def __set_preview_path_entry(self, parent: Frame) -> Entry:
@@ -113,7 +112,7 @@ class ExcludeDialog(tk.Toplevel):
         return preview_status_label
 
     def __set_preview_tree(self, parent: Labelframe) -> Treeview:
-        preview_tree = Treeview(parent, columns=("path",), show="", cursor="hand2", height=5)
+        preview_tree = Treeview(parent, columns=("path",), show="", cursor="hand2")
         preview_tree.column("path", stretch=False, width=0)
         preview_tree.pack(fill=tk.BOTH, expand=True, padx=TkS(2))
 
