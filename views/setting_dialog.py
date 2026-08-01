@@ -269,7 +269,7 @@ class CustomMenuTab(Frame):
             self.command_tooltip.text = _("内置菜单，无法修改它的名称或执行的命令。")
         else:
             self.command_tip_label.config(text=_("执行命令："))
-            self.command_tip_label.grid(row=2, column=0, padx=TkS(5), pady=TkS(3), columnspan=2, sticky=tk.W)
+            self.command_tip_label.grid(row=2, column=0, padx=TkS(5), pady=TkS(4), columnspan=2, sticky=tk.W)
             self.batch_mode_checkbutton.grid(row=2, column=1, columnspan=2, sticky=tk.E, padx=TkS(5))
             self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=3, padx=TkS(5), pady=(0, TkS(5)))
             if menu_item.batch_mode != self.batch_mode_checkbutton.instate(["selected"]): 
