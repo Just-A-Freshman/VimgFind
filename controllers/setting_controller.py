@@ -4,8 +4,10 @@ from pathlib import Path
 from typing import Literal, Callable, TYPE_CHECKING
 from tkinter import filedialog, messagebox
 from tkinter.font import nametofont
-from ttkbootstrap.style import Colors
 import tkinter as tk
+import webbrowser
+
+from ttkbootstrap.style import Colors
 
 from config.settings import Setting, WinInfo, TkS
 from config.types import MenuItemDef
@@ -95,7 +97,7 @@ class GeneralController:
         tab.open_folder_btn.config(command=lambda: file_ops.open_file(self.app.setting.get_active_config_path().parent))
         tab.open_config_btn.config(command=lambda: file_ops.open_file(self.app.setting.get_active_config_path().absolute()))
         tab.change_config_btn.config(command=self.__change_config_path)
-        tab.help_btn.config(command=lambda: None)
+        tab.help_btn.config(command=lambda: self.app.setting.link_to_docs())
         tab.error_log_btn.config(command=lambda: file_ops.open_file(Setting.error_log))
         tab.check_update_btn.config(command=self.__check_update)
         idx = self.LOCALE_MAP.get(self.app.setting.app.locale, 0)
@@ -181,9 +183,8 @@ class CustomMenuController:
     def env_init(self) -> None:
         tab = self.custom_menu_tab
         for item in self.app.setting.app.menu_items:
-            iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=(
-                item.name, _("是") if item.is_visible else _("否"),
-            ))
+            values = (item.name, _("是") if item.is_visible else _("否"),)
+            iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=values)
             self.__items_data[iid] = item
         for i in range(2):
             tab.is_visible_checkbutton.invoke()
@@ -191,6 +192,7 @@ class CustomMenuController:
         tab.add_button.config(command=self.__add_menu_item)
         tab.add_sep_btn.config(command=lambda: self.__add_menu_item(default=MenuItemDef(name="——————————", type="separator")))
         tab.delete_button.config(command=self.__delete_menu_item)
+        tab.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("自定义菜单命令")))
         tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
         tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("id"))
         tab.is_visible_checkbutton.config(command=lambda: self.__sync_item_property("is_visible"))

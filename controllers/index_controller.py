@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from tkinter import messagebox, filedialog
 from typing import TYPE_CHECKING
-import logging
+from tkinter import messagebox, filedialog
 import tkinter as tk
+import logging
 
 from tqdm import tqdm
-from views import ExcludeDialog
 
 from config.settings import RANGE_LABEL
 from .exclude_controller import ExcludePreviewController
+from views import ExcludeDialog
 from utils.i18n import _
 import utils.file_ops as file_ops
 import utils.decorators as decorators
@@ -215,7 +215,7 @@ class IndexController:
     def __open_exclude_dialog(self) -> None:
         dialog = ExcludeDialog(self.app.view)
         controller = ExcludePreviewController(dialog, self.app.setting)
-        dialog.help_btn.config(command=lambda: file_ops.open_file(Path(__file__).parent.parent / "docs" / "exclude_rules.html"))
+        dialog.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("排除规则")))
         dialog.stop_btn.config(command=controller.stop_scan)
         dialog.add_rule_btn.config(command=controller.on_add_name)
         dialog.del_rule_btn.config(command=controller.on_delete_selected)
