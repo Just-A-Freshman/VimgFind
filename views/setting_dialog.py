@@ -93,7 +93,7 @@ class GeneralTab(Frame):
         frame.grid(row=0, column=0, padx=TkS(10), pady=TkS(12), sticky=tk.W)
         Label(frame, text=_("显示语言：")).pack(side=tk.LEFT)
         locale_combobox = Combobox(
-            frame, values=["中文", "English"], state="readonly", width=TkS(6),
+            frame, state="readonly", width=TkS(8),
             font=(WinInfo.default_font_family, WinInfo.default_font_size),
         )
         locale_combobox.pack(side=tk.LEFT)
