@@ -19,9 +19,9 @@ import utils.decorators as decorators
 class AppController:
     def __init__(self) -> None:
         self.setting = Setting()
+        I18n().load(self.setting.app.locale)
         self.view = WinGUI(self.setting.app.maximize_window, self.setting.app.topmost_window)
         self.search_tools: SearchTool | None = None
-        
         self.setting_controller = SettingController(self)
         self.search_controller = SearchController(self)
         self.filter_controller = FilterController(self)
@@ -48,7 +48,6 @@ class AppController:
         self.model_controller.env_init()
         self.index_controller.env_init()
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
-        I18n().load(self.setting.app.locale)
 
     def __on_drop(self, event) -> None:
         file_paths_str: str = getattr(event, "data")

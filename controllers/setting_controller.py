@@ -75,12 +75,13 @@ class SettingController:
 
 
 class GeneralController:
-    LOCALE_MAP = {"zh-CN": 0, "en-US": 1}
-    REVERSE_LOCALE_MAP = {0: "zh-CN", 1: "en-US"}
-
     def __init__(self, general_tab: GeneralTab, app_controller: AppController) -> None:
         self.general_tab = general_tab
         self.app = app_controller
+        # 语言列表不再硬编码，根据 locales 目录中的翻译文件动态生成
+        locales = I18n.available_locales()
+        self.LOCALE_MAP: dict[str, int] = {loc: i for i, loc in enumerate(locales)}
+        self.REVERSE_LOCALE_MAP: dict[int, str] = {i: loc for i, loc in enumerate(locales)}
 
     def env_init(self) -> None:
         tab = self.general_tab
@@ -100,6 +101,7 @@ class GeneralController:
         tab.help_btn.config(command=lambda: self.app.setting.link_to_docs())
         tab.error_log_btn.config(command=lambda: file_ops.open_file(Setting.error_log))
         tab.check_update_btn.config(command=self.__check_update)
+        tab.locale_combobox.config(values=[I18n.locale_name(loc) for loc in I18n.available_locales()])
         idx = self.LOCALE_MAP.get(self.app.setting.app.locale, 0)
         tab.locale_combobox.current(idx)
 
