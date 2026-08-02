@@ -1,0 +1,2602 @@
+<!doctype html>
+<html style='font-size:18px !important'>
+<head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
+
+<style type='text/css'>html {overflow-x: initial !important;}:root { --bg-color:#ffffff; --text-color:#333333; --select-text-bg-color:#B5D6FC; --select-text-font-color:auto; --monospace:"Lucida Console",Consolas,"Courier",monospace; --title-bar-height:20px; }
+.mac-os-11 { --title-bar-height:28px; }
+html { font-size: 14px; background-color: var(--bg-color); color: var(--text-color); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+body { margin: 0px; padding: 0px; height: auto; inset: 0px; font-size: 1rem; line-height: 1.42857; overflow-x: hidden; background: inherit; tab-size: 4; }
+iframe { margin: auto; }
+a.url { word-break: break-all; }
+a:active, a:hover { outline: 0px; }
+.in-text-selection, ::selection { text-shadow: none; background: var(--select-text-bg-color); color: var(--select-text-font-color); }
+#write { margin: 0px auto; height: auto; width: inherit; word-break: normal; overflow-wrap: break-word; position: relative; white-space: normal; overflow-x: visible; padding-top: 36px; }
+#write.first-line-indent p { text-indent: 2em; }
+#write.first-line-indent li p, #write.first-line-indent p * { text-indent: 0px; }
+#write.first-line-indent li { margin-left: 2em; }
+.for-image #write { padding-left: 8px; padding-right: 8px; }
+body.typora-export { padding-left: 30px; padding-right: 30px; }
+.typora-export .footnote-line, .typora-export li, .typora-export p { white-space: pre-wrap; }
+.typora-export .task-list-item input { pointer-events: none; }
+@media screen and (max-width: 500px) {
+  body.typora-export { padding-left: 0px; padding-right: 0px; }
+  #write { padding-left: 20px; padding-right: 20px; }
+  .CodeMirror-sizer { margin-left: 0px !important; }
+  .CodeMirror-gutters { display: none !important; }
+}
+#write li > figure:last-child { margin-bottom: 0.5rem; }
+#write ol, #write ul { position: relative; }
+img { max-width: 100%; vertical-align: middle; image-orientation: from-image; }
+button, input, select, textarea { color: inherit; font: inherit; }
+input[type="checkbox"], input[type="radio"] { line-height: normal; padding: 0px; }
+*, ::after, ::before { box-sizing: border-box; }
+#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p, #write pre { width: inherit; }
+#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p { position: relative; }
+p { line-height: inherit; }
+h1, h2, h3, h4, h5, h6 { break-after: avoid-page; break-inside: avoid; orphans: 4; }
+p { orphans: 4; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.6rem; }
+h4 { font-size: 1.4rem; }
+h5 { font-size: 1.2rem; }
+h6 { font-size: 1rem; }
+.md-math-block, .md-rawblock, h1, h2, h3, h4, h5, h6, p { margin-top: 1rem; margin-bottom: 1rem; }
+.hidden { display: none; }
+.md-blockmeta { color: rgb(204, 204, 204); font-weight: 700; font-style: italic; }
+a { cursor: pointer; }
+sup.md-footnote { padding: 2px 4px; background-color: rgba(238, 238, 238, 0.7); color: rgb(85, 85, 85); border-radius: 4px; cursor: pointer; }
+sup.md-footnote a, sup.md-footnote a:hover { color: inherit; text-transform: inherit; text-decoration: inherit; }
+#write input[type="checkbox"] { cursor: pointer; width: inherit; height: inherit; }
+figure { overflow-x: auto; margin: 1.2em 0px; max-width: calc(100% + 16px); padding: 0px; }
+figure > table { margin: 0px; }
+tr { break-inside: avoid; break-after: auto; }
+thead { display: table-header-group; }
+table { border-collapse: collapse; border-spacing: 0px; width: 100%; overflow: auto; break-inside: auto; text-align: left; }
+table.md-table td { min-width: 32px; }
+.CodeMirror-gutters { border-right: 0px; background-color: inherit; }
+.CodeMirror-linenumber { user-select: none; }
+.CodeMirror { text-align: left; }
+.CodeMirror-placeholder { opacity: 0.3; }
+.CodeMirror pre { padding: 0px 4px; }
+.CodeMirror-lines { padding: 0px; }
+div.hr:focus { cursor: none; }
+#write pre { white-space: pre-wrap; }
+#write.fences-no-line-wrapping pre { white-space: pre; }
+#write pre.ty-contain-cm { white-space: normal; }
+.CodeMirror-gutters { margin-right: 4px; }
+.md-fences { font-size: 0.9rem; display: block; break-inside: avoid; text-align: left; overflow: visible; white-space: pre; background: inherit; position: relative !important; }
+.md-fences-adv-panel { width: 100%; margin-top: 10px; text-align: center; padding-top: 0px; padding-bottom: 8px; overflow-x: auto; }
+#write .md-fences.mock-cm { white-space: pre-wrap; }
+.md-fences.md-fences-with-lineno { padding-left: 0px; }
+#write.fences-no-line-wrapping .md-fences.mock-cm { white-space: pre; overflow-x: auto; }
+.md-fences.mock-cm.md-fences-with-lineno { padding-left: 8px; }
+.CodeMirror-line, twitterwidget { break-inside: avoid; }
+.footnotes { opacity: 0.8; font-size: 0.9rem; margin-top: 1em; margin-bottom: 1em; }
+.footnotes + .footnotes { margin-top: 0px; }
+.md-reset { margin: 0px; padding: 0px; border: 0px; outline: 0px; vertical-align: top; background: 0px 0px; text-decoration: none; text-shadow: none; float: none; position: static; width: auto; height: auto; white-space: nowrap; cursor: inherit; -webkit-tap-highlight-color: transparent; line-height: normal; font-weight: 400; text-align: left; box-sizing: content-box; direction: ltr; }
+li div { padding-top: 0px; }
+blockquote { margin: 1rem 0px; }
+li .mathjax-block, li p { margin: 0.5rem 0px; }
+li blockquote { margin: 1rem 0px; }
+li { margin: 0px; position: relative; }
+blockquote > :last-child { margin-bottom: 0px; }
+blockquote > :first-child, li > :first-child { margin-top: 0px; }
+.footnotes-area { color: rgb(136, 136, 136); margin-top: 0.714rem; padding-bottom: 0.143rem; white-space: normal; }
+#write .footnote-line { white-space: pre-wrap; }
+@media print {
+  body, html { border: 1px solid transparent; height: 99%; break-after: avoid; break-before: avoid; font-variant-ligatures: no-common-ligatures; }
+  #write { margin-top: 0px; padding-top: 0px; border-color: transparent !important; }
+  .typora-export * { -webkit-print-color-adjust: exact; }
+  .typora-export #write { break-after: avoid; }
+  .typora-export #write::after { height: 0px; }
+  .is-mac table { break-inside: avoid; }
+  .typora-export-show-outline .typora-export-sidebar { display: none; }
+}
+.footnote-line { margin-top: 0.714em; font-size: 0.7em; }
+a img, img a { cursor: pointer; }
+pre.md-meta-block { font-size: 0.8rem; min-height: 0.8rem; white-space: pre-wrap; background: rgb(204, 204, 204); display: block; overflow-x: hidden; }
+p > .md-image:only-child:not(.md-img-error) img, p > img:only-child { display: block; margin: auto; }
+#write.first-line-indent p > .md-image:only-child:not(.md-img-error) img { left: -2em; position: relative; }
+p > .md-image:only-child { display: inline-block; width: 100%; }
+#write .MathJax_Display { margin: 0.8em 0px 0px; }
+.md-math-block { width: 100%; }
+.md-math-block:not(:empty)::after { display: none; }
+.MathJax_ref { fill: currentcolor; }
+[contenteditable="true"]:active, [contenteditable="true"]:focus, [contenteditable="false"]:active, [contenteditable="false"]:focus { outline: 0px; box-shadow: none; }
+.md-task-list-item { position: relative; list-style-type: none; }
+.task-list-item.md-task-list-item { padding-left: 0px; }
+.md-task-list-item > input { position: absolute; top: 0px; left: 0px; margin-left: -1.2em; margin-top: calc(1em - 10px); border: none; }
+.math { font-size: 1rem; }
+.md-toc { min-height: 3.58rem; position: relative; font-size: 0.9rem; border-radius: 10px; }
+.md-toc-content { position: relative; margin-left: 0px; }
+.md-toc-content::after, .md-toc::after { display: none; }
+.md-toc-item { display: block; color: rgb(65, 131, 196); }
+.md-toc-item a { text-decoration: none; }
+.md-toc-inner:hover { text-decoration: underline; }
+.md-toc-inner { display: inline-block; cursor: pointer; }
+.md-toc-h1 .md-toc-inner { margin-left: 0px; font-weight: 700; }
+.md-toc-h2 .md-toc-inner { margin-left: 2em; }
+.md-toc-h3 .md-toc-inner { margin-left: 4em; }
+.md-toc-h4 .md-toc-inner { margin-left: 6em; }
+.md-toc-h5 .md-toc-inner { margin-left: 8em; }
+.md-toc-h6 .md-toc-inner { margin-left: 10em; }
+@media screen and (max-width: 48em) {
+  .md-toc-h3 .md-toc-inner { margin-left: 3.5em; }
+  .md-toc-h4 .md-toc-inner { margin-left: 5em; }
+  .md-toc-h5 .md-toc-inner { margin-left: 6.5em; }
+  .md-toc-h6 .md-toc-inner { margin-left: 8em; }
+}
+a.md-toc-inner { font-size: inherit; font-style: inherit; font-weight: inherit; line-height: inherit; }
+.footnote-line a:not(.reversefootnote) { color: inherit; }
+.md-attr { display: none; }
+.md-fn-count::after { content: "."; }
+code, pre, samp, tt { font-family: var(--monospace); }
+kbd { margin: 0px 0.1em; padding: 0.1em 0.6em; font-size: 0.8em; color: rgb(36, 39, 41); background: rgb(255, 255, 255); border: 1px solid rgb(173, 179, 185); border-radius: 3px; box-shadow: rgba(12, 13, 14, 0.2) 0px 1px 0px, rgb(255, 255, 255) 0px 0px 0px 2px inset; white-space: nowrap; vertical-align: middle; }
+.md-comment { color: rgb(162, 127, 3); opacity: 0.6; font-family: var(--monospace); }
+code { text-align: left; vertical-align: initial; }
+a.md-print-anchor { white-space: pre !important; border-width: initial !important; border-style: none !important; border-color: initial !important; display: inline-block !important; position: absolute !important; width: 1px !important; right: 0px !important; outline: 0px !important; background: 0px 0px !important; text-decoration: initial !important; text-shadow: initial !important; }
+.os-windows.monocolor-emoji .md-emoji { font-family: "Segoe UI Symbol", sans-serif; }
+.md-diagram-panel > svg { max-width: 100%; }
+[lang="flow"] svg, [lang="mermaid"] svg { max-width: 100%; height: auto; }
+[lang="mermaid"] .node text { font-size: 1rem; }
+table tr th { border-bottom: 0px; }
+video { max-width: 100%; display: block; margin: 0px auto; }
+iframe { max-width: 100%; width: 100%; border: none; }
+.highlight td, .highlight tr { border: 0px; }
+mark { background: rgb(255, 255, 0); color: rgb(0, 0, 0); }
+.md-html-inline .md-plain, .md-html-inline strong, mark .md-inline-math, mark strong { color: inherit; }
+.md-expand mark .md-meta { opacity: 0.3 !important; }
+mark .md-meta { color: rgb(0, 0, 0); }
+@media print {
+  .typora-export h1, .typora-export h2, .typora-export h3, .typora-export h4, .typora-export h5, .typora-export h6 { break-inside: avoid; }
+}
+.md-diagram-panel .messageText { stroke: none !important; }
+.md-diagram-panel .start-state { fill: var(--node-fill); }
+.md-diagram-panel .edgeLabel rect { opacity: 1 !important; }
+.md-fences.md-fences-math { font-size: 1em; }
+.md-fences-advanced:not(.md-focus) { padding: 0px; white-space: nowrap; border: 0px; }
+.md-fences-advanced:not(.md-focus) { background: inherit; }
+.typora-export-show-outline .typora-export-content { max-width: 1440px; margin: auto; display: flex; flex-direction: row; }
+.typora-export-sidebar { width: 300px; font-size: 0.8rem; margin-top: 80px; margin-right: 18px; }
+.typora-export-show-outline #write { --webkit-flex:2; flex: 2 1 0%; }
+.typora-export-sidebar .outline-content { position: fixed; top: 0px; max-height: 100%; overflow: hidden auto; padding-bottom: 30px; padding-top: 60px; width: 300px; }
+@media screen and (max-width: 1024px) {
+  .typora-export-sidebar, .typora-export-sidebar .outline-content { width: 240px; }
+}
+@media screen and (max-width: 800px) {
+  .typora-export-sidebar { display: none; }
+}
+.outline-content li, .outline-content ul { margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; list-style: none; }
+.outline-content ul { margin-top: 0px; margin-bottom: 0px; }
+.outline-content strong { font-weight: 400; }
+.outline-expander { width: 1rem; height: 1.42857rem; position: relative; display: table-cell; vertical-align: middle; cursor: pointer; padding-left: 4px; }
+.outline-expander::before { content: ""; position: relative; font-family: Ionicons; display: inline-block; font-size: 8px; vertical-align: middle; }
+.outline-item { padding-top: 3px; padding-bottom: 3px; cursor: pointer; }
+.outline-expander:hover::before { content: ""; }
+.outline-h1 > .outline-item { padding-left: 0px; }
+.outline-h2 > .outline-item { padding-left: 1em; }
+.outline-h3 > .outline-item { padding-left: 2em; }
+.outline-h4 > .outline-item { padding-left: 3em; }
+.outline-h5 > .outline-item { padding-left: 4em; }
+.outline-h6 > .outline-item { padding-left: 5em; }
+.outline-label { cursor: pointer; display: table-cell; vertical-align: middle; text-decoration: none; color: inherit; }
+.outline-label:hover { text-decoration: underline; }
+.outline-item:hover { border-color: rgb(245, 245, 245); background-color: var(--item-hover-bg-color); }
+.outline-item:hover { margin-left: -28px; margin-right: -28px; border-left: 28px solid transparent; border-right: 28px solid transparent; }
+.outline-item-single .outline-expander::before, .outline-item-single .outline-expander:hover::before { display: none; }
+.outline-item-open > .outline-item > .outline-expander::before { content: ""; }
+.outline-children { display: none; }
+.info-panel-tab-wrapper { display: none; }
+.outline-item-open > .outline-children { display: block; }
+.typora-export .outline-item { padding-top: 1px; padding-bottom: 1px; }
+.typora-export .outline-item:hover { margin-right: -8px; border-right: 8px solid transparent; }
+.typora-export .outline-expander::before { content: "+"; font-family: inherit; top: -1px; }
+.typora-export .outline-expander:hover::before, .typora-export .outline-item-open > .outline-item > .outline-expander::before { content: "−"; }
+.typora-export-collapse-outline .outline-children { display: none; }
+.typora-export-collapse-outline .outline-item-open > .outline-children, .typora-export-no-collapse-outline .outline-children { display: block; }
+.typora-export-no-collapse-outline .outline-expander::before { content: "" !important; }
+.typora-export-show-outline .outline-item-active > .outline-item .outline-label { font-weight: 700; }
+.md-inline-math-container mjx-container { zoom: 0.95; }
+
+
+.CodeMirror { height: auto; }
+.CodeMirror.cm-s-inner { background: inherit; }
+.CodeMirror-scroll { overflow: auto hidden; z-index: 3; }
+.CodeMirror-gutter-filler, .CodeMirror-scrollbar-filler { background-color: rgb(255, 255, 255); }
+.CodeMirror-gutters { border-right: 1px solid rgb(221, 221, 221); background: inherit; white-space: nowrap; }
+.CodeMirror-linenumber { padding: 0px 3px 0px 5px; text-align: right; color: rgb(153, 153, 153); }
+.cm-s-inner .cm-keyword { color: rgb(119, 0, 136); }
+.cm-s-inner .cm-atom, .cm-s-inner.cm-atom { color: rgb(34, 17, 153); }
+.cm-s-inner .cm-number { color: rgb(17, 102, 68); }
+.cm-s-inner .cm-def { color: rgb(0, 0, 255); }
+.cm-s-inner .cm-variable { color: rgb(0, 0, 0); }
+.cm-s-inner .cm-variable-2 { color: rgb(0, 85, 170); }
+.cm-s-inner .cm-variable-3 { color: rgb(0, 136, 85); }
+.cm-s-inner .cm-string { color: rgb(170, 17, 17); }
+.cm-s-inner .cm-property { color: rgb(0, 0, 0); }
+.cm-s-inner .cm-operator { color: rgb(152, 26, 26); }
+.cm-s-inner .cm-comment, .cm-s-inner.cm-comment { color: rgb(170, 85, 0); }
+.cm-s-inner .cm-string-2 { color: rgb(255, 85, 0); }
+.cm-s-inner .cm-meta { color: rgb(85, 85, 85); }
+.cm-s-inner .cm-qualifier { color: rgb(85, 85, 85); }
+.cm-s-inner .cm-builtin { color: rgb(51, 0, 170); }
+.cm-s-inner .cm-bracket { color: rgb(153, 153, 119); }
+.cm-s-inner .cm-tag { color: rgb(17, 119, 0); }
+.cm-s-inner .cm-attribute { color: rgb(0, 0, 204); }
+.cm-s-inner .cm-header, .cm-s-inner.cm-header { color: rgb(0, 0, 255); }
+.cm-s-inner .cm-quote, .cm-s-inner.cm-quote { color: rgb(0, 153, 0); }
+.cm-s-inner .cm-hr, .cm-s-inner.cm-hr { color: rgb(153, 153, 153); }
+.cm-s-inner .cm-link, .cm-s-inner.cm-link { color: rgb(0, 0, 204); }
+.cm-negative { color: rgb(221, 68, 68); }
+.cm-positive { color: rgb(34, 153, 34); }
+.cm-header, .cm-strong { font-weight: 700; }
+.cm-del { text-decoration: line-through; }
+.cm-em { font-style: italic; }
+.cm-link { text-decoration: underline; }
+.cm-error { color: red; }
+.cm-invalidchar { color: red; }
+.cm-constant { color: rgb(38, 139, 210); }
+.cm-defined { color: rgb(181, 137, 0); }
+div.CodeMirror span.CodeMirror-matchingbracket { color: rgb(0, 255, 0); }
+div.CodeMirror span.CodeMirror-nonmatchingbracket { color: rgb(255, 34, 34); }
+.cm-s-inner .CodeMirror-activeline-background { background: inherit; }
+.CodeMirror { position: relative; overflow: hidden; }
+.CodeMirror-scroll { height: 100%; outline: 0px; position: relative; box-sizing: content-box; background: inherit; }
+.CodeMirror-sizer { position: relative; }
+.CodeMirror-gutter-filler, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-vscrollbar { position: absolute; z-index: 6; display: none; outline: 0px; }
+.CodeMirror-vscrollbar { right: 0px; top: 0px; overflow: hidden; }
+.CodeMirror-hscrollbar { bottom: 0px; left: 0px; overflow: auto hidden; }
+.CodeMirror-scrollbar-filler { right: 0px; bottom: 0px; }
+.CodeMirror-gutter-filler { left: 0px; bottom: 0px; }
+.CodeMirror-gutters { position: absolute; left: 0px; top: 0px; padding-bottom: 10px; z-index: 3; overflow-y: hidden; }
+.CodeMirror-gutter { white-space: normal; height: 100%; box-sizing: content-box; padding-bottom: 30px; margin-bottom: -32px; display: inline-block; }
+.CodeMirror-gutter-wrapper { position: absolute; z-index: 4; background: 0px 0px !important; border: none !important; }
+.CodeMirror-gutter-background { position: absolute; top: 0px; bottom: 0px; z-index: 4; }
+.CodeMirror-gutter-elt { position: absolute; cursor: default; z-index: 4; }
+.CodeMirror-lines { cursor: text; }
+.CodeMirror pre { border-radius: 0px; border-width: 0px; background: 0px 0px; font-family: inherit; font-size: inherit; margin: 0px; white-space: pre; overflow-wrap: normal; color: inherit; z-index: 2; position: relative; overflow: visible; }
+.CodeMirror-wrap pre { overflow-wrap: break-word; white-space: pre-wrap; word-break: normal; }
+.CodeMirror-code pre { border-right: 30px solid transparent; width: fit-content; }
+.CodeMirror-wrap .CodeMirror-code pre { border-right: none; width: auto; }
+.CodeMirror-linebackground { position: absolute; inset: 0px; z-index: 0; }
+.CodeMirror-linewidget { position: relative; z-index: 2; overflow: auto; }
+.CodeMirror-wrap .CodeMirror-scroll { overflow-x: hidden; }
+.CodeMirror-measure { position: absolute; width: 100%; height: 0px; overflow: hidden; visibility: hidden; }
+.CodeMirror-measure pre { position: static; }
+.CodeMirror div.CodeMirror-cursor { position: absolute; visibility: hidden; border-right: none; width: 0px; }
+.CodeMirror div.CodeMirror-cursor { visibility: hidden; }
+.CodeMirror-focused div.CodeMirror-cursor { visibility: inherit; }
+.cm-searching { background: rgba(255, 255, 0, 0.4); }
+span.cm-underlined { text-decoration: underline; }
+span.cm-strikethrough { text-decoration: line-through; }
+.cm-tw-syntaxerror { color: rgb(255, 255, 255); background-color: rgb(153, 0, 0); }
+.cm-tw-deleted { text-decoration: line-through; }
+.cm-tw-header5 { font-weight: 700; }
+.cm-tw-listitem:first-child { padding-left: 10px; }
+.cm-tw-box { border-style: solid; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px; border-color: inherit; border-top-width: 0px !important; }
+.cm-tw-underline { text-decoration: underline; }
+@media print {
+  .CodeMirror div.CodeMirror-cursor { visibility: hidden; }
+}
+
+
+html {
+    font-size: 16px;
+    font-family: "LXGW WenKai"
+}
+
+#write {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 15px;
+    line-height: 2.25;
+    color: #000;
+    letter-spacing: 1.1px;
+    word-break: break-word;
+    word-wrap: break-word;
+    text-align: left;
+    position: relative;
+    z-index: 0
+}
+
+#write::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: -1;
+    background-color: var(--element-color);
+    opacity: .12;
+    -webkit-mask-image: var(--bg-style);
+    mask-image: var(--bg-style);
+    -webkit-mask-size: 20px 20px;
+    mask-size: 20px 20px;
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+    -webkit-mask-position: center;
+    mask-position: center
+}
+
+#write p {
+    color: #333;
+    margin: 10px 10px;
+    font-family: Optima-Regular, Optima, "LXGW WenKai", PingFangSC-light, PingFangTC-light, "PingFang SC", Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
+    font-size: 1rem;
+    word-spacing: 2px
+}
+
+#write h3.md-heading:after,
+h4.md-heading:after,
+h5.md-heading:after,
+h6.md-heading:after {
+    content: " ";
+    display: inline-block;
+    height: 2em;
+    width: 2em;
+    vertical-align: top;
+    margin-left: -2px;
+    background-color: var(--element-color-shallow);
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: 24px 24px;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: 24px 24px
+}
+
+#write h3.md-heading:after {
+    -webkit-mask-image: var(--h3-icon-shape);
+    mask-image: var(--h3-icon-shape)
+}
+
+#write h4.md-heading:after {
+    -webkit-mask-image: var(--h4-icon-shape);
+    mask-image: var(--h4-icon-shape)
+}
+
+#write h5.md-heading:after {
+    -webkit-mask-image: var(--h5-icon-shape);
+    mask-image: var(--h5-icon-shape)
+}
+
+#write h6.md-heading:after {
+    -webkit-mask-image: var(--h6-icon-shape);
+    mask-image: var(--h6-icon-shape)
+}
+
+#write h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 1em auto .8em;
+    line-height: 1.4;
+    width: fit-content;
+    min-width: 120px;
+    min-height: 1.4em;
+    color: #222;
+    position: relative;
+    padding-bottom: 12px;
+    transition: color .3s ease, transform .3s ease;
+    border-bottom: none
+}
+
+#write h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--head-title-h2-background);
+    background-size: 100% auto;
+    transform: translateX(-50%);
+    transition: width .4s cubic-bezier(.25, .8, .25, 1)
+}
+
+#write h1:not(.md-focus):hover {
+    color: var(--head-title-color);
+    transform: translateY(-2px)
+}
+
+#write h1.md-focus::after,
+#write h1:focus::after,
+#write h1:hover::after {
+    width: 100%
+}
+
+#write h2 {
+    color: var(--head-title-h2-color);
+    font-size: 1.4rem;
+    line-height: 1.5;
+    width: fit-content;
+    font-weight: 700;
+    margin: 20px 0;
+    padding: 5px 12px;
+    border-radius: 8px;
+    background: var(--head-title-h2-background);
+    background-size: 200% auto;
+    background-position: 0 center;
+    box-shadow: 0 2px 5px rgba(61, 184, 211, .15);
+    transition: background-position .5s ease-out, transform .4s ease, box-shadow .4s ease
+}
+
+#write h2:hover {
+    background-position: 100% center;
+    transform: scale(1.01);
+    box-shadow: 0 8px 20px rgba(61, 184, 211, .35)
+}
+
+#write h3 {
+    position: relative;
+    width: fit-content;
+    margin: 20px 0;
+    text-align: left;
+    font-size: 1.3rem;
+    padding-left: 10px;
+    transition: all .3s cubic-bezier(.25, .8, .25, 1)
+}
+
+#write h3 {
+    position: relative;
+    width: fit-content;
+    margin: 20px 0;
+    text-align: left;
+    font-size: 1.3rem;
+    padding-left: 10px;
+    transition: all .3s cubic-bezier(.25, .8, .25, 1)
+}
+
+#write h3::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 61%;
+    border-radius: 4px;
+    background-color: var(--head-title-color);
+    transition: all .3s cubic-bezier(.25, .8, .25, 1)
+}
+
+#write h3 span {
+    border-bottom: 2px hidden var(--head-title-color);
+    transition: color .3s ease
+}
+
+#write h3:hover {
+    padding-left: 18px;
+    color: var(--head-title-color);
+    cursor: pointer
+}
+
+#write h3:hover::before {
+    height: 66%;
+    background-color: var(--head-title-color);
+    width: 7px
+}
+
+#write h4,
+#write h5,
+#write h6 {
+    transition: color .3s ease, transform .3s ease
+}
+
+#write h4::before,
+#write h5::before,
+#write h6::before {
+    transition: all .3s cubic-bezier(.34, 1.56, .64, 1)
+}
+
+#write h4 {
+    margin: 20px 0;
+    font-size: 1.15rem;
+    text-align: left
+}
+
+#write h4::before {
+    content: "";
+    margin-right: 7px;
+    display: inline-block;
+    background-color: var(--head-title-color);
+    width: 10px;
+    height: 10px;
+    border-radius: 100%;
+    border: var(--head-title-color) 1px solid;
+    vertical-align: inherit
+}
+
+#write h4:hover::before {
+    transform: scale(1.3);
+    box-shadow: 0 0 0 4px var(--element-color-soo-shallow)
+}
+
+#write h5 {
+    margin: 23px 0;
+    font-size: 1.1rem;
+    text-align: left
+}
+
+#write h5::before {
+    content: "";
+    margin-right: 7px;
+    display: inline-block;
+    background-color: #fff;
+    width: 10px;
+    height: 10px;
+    border-radius: 100%;
+    border: var(--head-title-color) 2px solid;
+    vertical-align: inherit;
+    box-sizing: border-box
+}
+
+#write h5:hover::before {
+    background-color: var(--head-title-color);
+    transform: scale(1.2);
+    box-shadow: 0 0 0 3px var(--element-color-soo-shallow)
+}
+
+#write h6 {
+    margin: 23px 0;
+    font-size: 1.1rem;
+    text-align: left
+}
+
+#write h6::before {
+    content: "-";
+    color: var(--head-title-color);
+    margin-right: 7px;
+    display: inline-block;
+    vertical-align: inherit
+}
+
+#write h6:hover::before {
+    transform: scaleX(1.8) translateX(1px);
+    font-weight: 700
+}
+
+#write h4:hover,
+#write h5:hover,
+#write h6:hover {
+    color: var(--element-color-deep);
+    transform: translateX(6px)
+}
+
+#write {
+    counter-reset: h1
+}
+
+h1 {
+    counter-reset: h2
+}
+
+h2 {
+    counter-reset: h3
+}
+
+h3 {
+    counter-reset: h4
+}
+
+h4 {
+    counter-reset: h5
+}
+
+h5 {
+    counter-reset: h6
+}
+
+.sidebar-content {
+    counter-reset: h1
+}
+
+.outline-content {
+    counter-reset: h1
+}
+
+.outline-h1 {
+    counter-reset: h2
+}
+
+.outline-h2 {
+    counter-reset: h3
+}
+
+.outline-h3 {
+    counter-reset: h4
+}
+
+.outline-h4 {
+    counter-reset: h5
+}
+
+.outline-h5 {
+    counter-reset: h6
+}
+
+.md-toc-content {
+    counter-reset: h1toc
+}
+
+.md-toc-h1 {
+    counter-reset: h2toc
+}
+
+.md-toc-h2 {
+    counter-reset: h3toc
+}
+
+.md-toc-h3 {
+    counter-reset: h4toc
+}
+
+.md-toc-h4 {
+    counter-reset: h5toc
+}
+
+.md-toc-h5 {
+    counter-reset: h6toc
+}
+
+#write h1:before {
+    counter-increment: h1;
+    content: var(--autonum-h1)
+}
+
+#outline-content li.outline-h1>div>span.outline-label:before {
+    counter-increment: h1;
+    content: var(--autonum-h1)
+}
+
+.outline-content .outline-h1>.outline-item>.outline-label:before {
+    counter-increment: h1;
+    content: var(--autonum-h1)
+}
+
+#write span.md-toc-item.md-toc-h1>a:before {
+    counter-increment: h1toc;
+    content: var(--autonum-h1toc)
+}
+
+#write h2:before {
+    counter-increment: h2;
+    content: var(--autonum-h2);
+    color: var(--head-title-h2-color)
+}
+
+.outline-content .outline-h2>.outline-item>.outline-label:before {
+    counter-increment: h2;
+    content: var(--autonum-h2)
+}
+
+li.outline-h2>div>a.outline-label:before {
+    counter-increment: h2;
+    content: var(--autonum-h2)
+}
+
+#write span.md-toc-item.md-toc-h2>a:before {
+    counter-increment: h2toc;
+    content: var(--autonum-h2toc)
+}
+
+#write h3>span:first-of-type::before {
+    counter-increment: h3;
+    content: var(--autonum-h3);
+    color: var(--element-color)
+}
+
+#outline-content li.outline-h3>div>span.outline-label:before {
+    counter-increment: h3;
+    content: var(--autonum-h3)
+}
+
+.outline-content .outline-h3>.outline-item>.outline-label:before {
+    counter-increment: h3;
+    content: var(--autonum-h3)
+}
+
+#write span.md-toc-item.md-toc-h3>a:before {
+    counter-increment: h3toc;
+    content: var(--autonum-h3toc)
+}
+
+#write h4>span:first-of-type::before {
+    counter-increment: h4;
+    content: var(--autonum-h4);
+    color: var(--element-color)
+}
+
+#outline-content li.outline-h4>div>span.outline-label:before {
+    counter-increment: h4;
+    content: var(--autonum-h4)
+}
+
+.outline-content .outline-h4>.outline-item>.outline-label:before {
+    counter-increment: h4;
+    content: var(--autonum-h4)
+}
+
+#write span.md-toc-item.md-toc-h4>a:before {
+    counter-increment: h4toc;
+    content: var(--autonum-h4toc)
+}
+
+#write h5>span:first-of-type::before {
+    counter-increment: h5;
+    content: var(--autonum-h5);
+    color: var(--element-color)
+}
+
+#outline-content li.outline-h5>div>span.outline-label:before {
+    counter-increment: h5;
+    content: var(--autonum-h5)
+}
+
+.outline-content .outline-h5>.outline-item>.outline-label:before {
+    counter-increment: h5;
+    content: var(--autonum-h5)
+}
+
+#write span.md-toc-item.md-toc-h5>a:before {
+    counter-increment: h5toc;
+    content: var(--autonum-h5toc)
+}
+
+#write h6>span:first-of-type::before {
+    counter-increment: h6;
+    content: var(--autonum-h6);
+    color: var(--element-color)
+}
+
+#outline-content li.outline-h6>div>span.outline-label:before {
+    counter-increment: h6;
+    content: var(--autonum-h6)
+}
+
+.outline-content .outline-h6>.outline-item>.outline-label:before {
+    counter-increment: h6;
+    content: var(--autonum-h6)
+}
+
+#write span.md-toc-item.md-toc-h6>a:before {
+    counter-increment: h6toc;
+    content: var(--autonum-h6toc)
+}
+
+::marker {
+    color: var(--element-color-deep)
+}
+
+li.md-list-item {
+    margin: .4rem 0
+}
+
+#write ol,
+#write ul {
+    margin-top: 0;
+    margin-left: 16px;
+    margin-bottom: 8px;
+    padding-left: 13px
+}
+
+#write em {
+    padding: 0 3px 0 0
+}
+
+#write ul {
+    list-style-type: disc
+}
+
+#write ul ul {
+    list-style-type: circle
+}
+
+#write ul ul ul {
+    list-style-type: square
+}
+
+#write ol {
+    list-style-type: decimal
+}
+
+#write ol ol {
+    list-style-type: lower-alpha
+}
+
+#write ol ol ol {
+    list-style-type: lower-roman
+}
+
+#write li section {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    line-height: 1.7rem;
+    text-align: justify;
+    color: #000;
+    font-weight: 500
+}
+
+#write li:before {
+    content: "";
+    height: calc(100% - 45px);
+    top: 35px;
+    position: absolute;
+    border-left: .5px solid var(--element-color);
+    left: -12.5px
+}
+
+#write .task-list-item input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.3rem;
+    height: 1.3rem;
+    position: absolute;
+    top: 3px;
+    left: -22px;
+    outline: 0;
+    cursor: pointer;
+    z-index: 1
+}
+
+#write .task-list-item input::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -2px;
+    left: 18px;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 1px solid var(--element-color-deep, #ffa531);
+    background: #fff;
+    transition: all .4s cubic-bezier(.5, 1.6, .4, .7);
+    box-sizing: border-box
+}
+
+#write .task-list-item input::after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 40%;
+    left: 138%;
+    width: .35rem;
+    height: .65rem;
+    border: solid #fff;
+    border-width: 0 2.5px 2.5px 0;
+    transform: translate(-50%, -60%) rotate(45deg) scale(1);
+    transition: all .3s cubic-bezier(.5, 1.6, .4, .7);
+    opacity: 0
+}
+
+#write .task-list-item input:checked::before {
+    background: var(--element-color, #ffc000);
+    border-color: var(--element-color, #ffc000);
+    transform: scale(1.05);
+    animation: task-pulse .4s forwards
+}
+
+@keyframes task-pulse {
+    0% {
+        transform: scale(1)
+    }
+
+    50% {
+        transform: scale(1.15)
+    }
+
+    100% {
+        transform: scale(1)
+    }
+}
+
+#write .task-list-item input:checked::after {
+    opacity: 1;
+    transform: translate(-50%, -60%) rotate(45deg) scale(1)
+}
+
+#write .task-list-item input[type=checkbox]+p,
+#write .task-list-item input[type=checkbox]+span {
+    position: relative;
+    display: inline;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    transition: color .4s ease;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 50%;
+    background-size: 0 1.5px;
+    background-repeat: no-repeat;
+    transition: background-size .4s cubic-bezier(.25, .8, .25, 1), color .4s ease
+}
+
+#write .task-list-item input[type=checkbox]:checked+p,
+#write .task-list-item input[type=checkbox]:checked+span {
+    color: #bbb;
+    background-size: 100% 1.5px
+}
+
+#write .task-list-item input[type=checkbox]:checked+p>em,
+#write .task-list-item input[type=checkbox]:checked+p>span,
+#write .task-list-item input[type=checkbox]:checked+p>strong {
+    color: inherit
+}
+
+#write blockquote {
+    position: relative;
+    margin: 20px 0;
+    padding: 18px 20px 18px 48px;
+    background-color: var(--element-color-soo-shallow);
+    border: none;
+    border-radius: 16px;
+    color: #555;
+    line-height: 1.6;
+    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), background-color .3s ease
+}
+
+#write blockquote::before {
+    content: "✨";
+    position: absolute;
+    left: 16px;
+    top: 18px;
+    font-size: 20px;
+    line-height: 1;
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif
+}
+
+#write blockquote p {
+    color: #555;
+    margin-bottom: .5em
+}
+
+#write blockquote p:last-child {
+    margin-bottom: 0
+}
+
+#write blockquote:hover {
+    transform: scale(1.02)
+}
+
+#write a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 2px 4px;
+    margin: 0 -2px;
+    border-radius: 4px;
+    background: 0 0;
+    border-bottom: none;
+    transition: all .2s ease
+}
+
+#write p a:not(.md-toc-inner)::before {
+    content: '';
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: 2px;
+    vertical-align: -.15em;
+    background-color: var(--element-color);
+    -webkit-mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Cpath d='M477.934459 330.486594A50.844091 50.844091 0 0 1 406.752731 258.796425L512 152.532274a254.220457 254.220457 0 0 1 359.467726 359.467726L762.66137 618.772592a50.844091 50.844091 0 1 1-71.690168-71.690169l106.772591-106.772592a152.532274 152.532274 0 0 0-215.578947-215.578947z m70.164846 361.501489A50.844091 50.844091 0 1 1 619.789474 762.66137l-107.281033 107.281033A254.220457 254.220457 0 0 1 152.532274 512L259.813307 406.752731a50.844091 50.844091 0 1 1 72.19861 69.656405l-107.789474 107.281033a152.532274 152.532274 0 0 0 215.578947 215.578947z m-126.601788-16.77855a50.844091 50.844091 0 1 1-71.690168-71.690169l251.678252-251.678252a50.844091 50.844091 0 0 1 71.690169 71.690169z'/%3E%3C/svg%3E") no-repeat center/contain;
+    mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Cpath d='M477.934459 330.486594A50.844091 50.844091 0 0 1 406.752731 258.796425L512 152.532274a254.220457 254.220457 0 0 1 359.467726 359.467726L762.66137 618.772592a50.844091 50.844091 0 1 1-71.690168-71.690169l106.772591-106.772592a152.532274 152.532274 0 0 0-215.578947-215.578947z m70.164846 361.501489A50.844091 50.844091 0 1 1 619.789474 762.66137l-107.281033 107.281033A254.220457 254.220457 0 0 1 152.532274 512L259.813307 406.752731a50.844091 50.844091 0 1 1 72.19861 69.656405l-107.789474 107.281033a152.532274 152.532274 0 0 0 215.578947 215.578947z m-126.601788-16.77855a50.844091 50.844091 0 1 1-71.690168-71.690169l251.678252-251.678252a50.844091 50.844091 0 0 1 71.690169 71.690169z'/%3E%3C/svg%3E") no-repeat center/contain;
+    transition: transform .4s cubic-bezier(.25, .8, .25, 1)
+}
+
+#write a:not(.md-toc-inner):hover {
+    color: var(--element-color-deep);
+    background: var(--element-color-soo-shallow)
+}
+
+#write a:hover:not(.md-toc-inner)::before {
+    transform: rotate(180deg);
+    background-color: var(--element-color-deep)
+}
+
+#write a:visited {
+    color: var(--element-color-deep)
+}
+
+#write sup a::before {
+    content: none
+}
+
+#write mark {
+    background-color: transparent;
+    color: inherit;
+    padding: 0 2px;
+    margin: 0;
+    border-radius: 4px;
+    font-weight: inherit;
+    position: relative;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    background-image: linear-gradient(to top, var(--element-color-so-shallow), var(--element-color-so-shallow));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 40%;
+    transition: background-size .3s cubic-bezier(.34, 1.56, .64, 1), color .3s ease, border-radius .3s ease
+}
+
+#write mark::after,
+#write mark::before {
+    content: none !important;
+    display: none !important
+}
+
+#write mark:hover {
+    background-size: 100% 100%;
+    border-radius: 6px
+}
+
+#write mark strong {
+    color: var(--element-color-deep)
+}
+
+#write mark:hover strong {
+    color: var(--element-color-deep);
+    text-shadow: none
+}
+
+#write strong {
+    color: var(--element-color);
+    font-weight: 700;
+    display: inline;
+    position: relative;
+    border-bottom: 2px solid transparent;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    transition: border-color .3s ease, color .3s ease, text-shadow .3s ease
+}
+
+#write strong:hover {
+    color: var(--element-color);
+    border-bottom-color: var(--element-color-shallow);
+    text-shadow: 0 2px 8px var(--element-color-so-shallow)
+}
+
+#write mark:hover strong {
+    color: #fff;
+    text-shadow: none;
+    transform: translateY(-2px) scale(1.1)
+}
+
+@keyframes stitchFlow {
+    from {
+        background-position-x: 0
+    }
+
+    to {
+        background-position-x: 6px
+    }
+}
+
+#write em {
+    font-style: italic;
+    color: #555;
+    text-decoration: none !important;
+    padding: 0 2px 1px;
+    background-repeat: repeat-x;
+    background-position: 0 100%;
+    background-size: 6px 3px;
+    background-image: linear-gradient(-45deg, transparent 35%, var(--element-color-shallow) 35%, var(--element-color-shallow) 65%, transparent 65%);
+    transition: color .2s ease, -webkit-text-stroke .2s ease, background-image .2s ease;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    position: relative;
+    z-index: 0
+}
+
+#write em::after {
+    content: none !important;
+    display: none !important
+}
+
+#write em:hover {
+    color: var(--element-color);
+    font-weight: 400;
+    -webkit-text-stroke: .5px var(--element-color);
+    background-image: linear-gradient(-45deg, transparent 35%, var(--element-color) 35%, var(--element-color) 65%, transparent 65%);
+    animation: stitchFlow .5s linear infinite
+}
+
+#write del {
+    text-decoration: line-through;
+    text-decoration-color: var(--element-color);
+    color: #999;
+    transition: all .3s ease
+}
+
+#write del:hover {
+    opacity: .6;
+    text-decoration-color: var(--element-color-deep);
+    cursor: not-allowed
+}
+
+#write hr {
+    border: none;
+    border-top: 3px dashed var(--element-color-shallow);
+    margin: 30px 0;
+    opacity: .6;
+    transform: scaleX(.8);
+    transition: all .4s ease
+}
+
+#write hr:hover {
+    transform: scaleX(1);
+    border-color: var(--element-color);
+    opacity: 1
+}
+
+#write p:has(img) {
+    text-align: center
+}
+
+#write img {
+    border-radius: 12px;
+    display: inline-block;
+    margin: 15px 5px;
+    object-fit: contain;
+    filter: brightness(1) contrast(1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, .05);
+    transition: all .4s cubic-bezier(.34, 1.56, .64, 1);
+    max-width: 100%;
+    cursor: zoom-in
+}
+
+#write p>img:only-child {
+    display: block;
+    margin: 20px auto
+}
+
+#write img:hover {
+    filter: brightness(1.05) contrast(1.05);
+    transform: scale(1.05);
+    box-shadow: 0 12px 30px -4px var(--element-color-soo-shallow);
+    z-index: 10
+}
+
+#write figcaption {
+    display: block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+    line-height: 1.5;
+    transition: color .3s ease
+}
+
+#write figure:hover>figcaption,
+#write p:hover>img+figcaption {
+    color: var(--element-color-deep)
+}
+
+pre.md-meta-block {
+    padding: 30px 20px 20px;
+    margin: 20px 0;
+    font-family: var(--monospace);
+    font-size: 13px;
+    color: #555;
+    line-height: 1.6;
+    background-color: var(--element-color-soo-shallow);
+    border: 1.5px dashed var(--element-color);
+    border-radius: 8px;
+    position: relative;
+    transition: all .3s ease
+}
+
+pre.md-meta-block::after {
+    content: "YAML";
+    position: absolute;
+    top: 0;
+    right: 20px;
+    background-color: var(--element-color);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .1);
+    pointer-events: none
+}
+
+pre.md-meta-block:hover {
+    background-color: #fff;
+    border-style: solid;
+    border-color: var(--element-color-deep);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+    transform: translateY(-2px)
+}
+
+#write code:not(.md-fencescode) {
+    font-family: CascadiaCode, "Lucida Console", Consolas, Courier, monospace;
+    font-size: .9em;
+    letter-spacing: .5px;
+    color: var(--element-color-linecode);
+    background-color: var(--element-color-linecode-background);
+    padding: 5px 5px;
+    margin: 0 2px;
+    border-radius: 6px;
+    vertical-align: middle;
+    transition: all .2s cubic-bezier(.34, 1.56, .64, 1)
+}
+
+#write code:not(.md-fencescode):hover {
+    background-color: var(--element-color);
+    color: #fff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px var(--element-color-so-shallow);
+    text-decoration: none
+}
+
+.md-diagram {
+    background: 0 0 !important;
+    margin: 20px 0
+}
+
+.node circle,
+.node ellipse,
+.node path,
+.node rect {
+    fill: var(--element-color-so-shallow) !important;
+    stroke: var(--primary-color) !important;
+    stroke-width: 1.5px !important;
+    transition: all .3s ease
+}
+
+.node polygon {
+    fill: color-mix(in srgb, var(--element-color-shallow), transparent 50%) !important;
+    stroke: var(--element-color-deep) !important;
+    stroke-width: 1.5px !important
+}
+
+.edgePath .path,
+.flowchart-link {
+    stroke: var(--element-color-deep) !important;
+    stroke-width: 1.5px !important;
+    opacity: .8 !important
+}
+
+.marker path,
+marker path {
+    fill: var(--element-color-deep) !important;
+    stroke: var(--element-color-deep) !important
+}
+
+.cluster-label text,
+.edgeLabel,
+.labelBkg,
+.node .label {
+    color: var(--appui-color-text) !important;
+    fill: var(--appui-color-text) !important;
+    font-weight: 500 !important;
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff !important;
+    background-color: transparent
+}
+
+.edgeLabel .label,
+.edgeLabel div {
+    background-color: #fff !important;
+    border-radius: 4px
+}
+
+.edgeLabel p,
+.edgeLabel span {
+    background-color: transparent !important;
+    color: var(--appui-color-text) !important
+}
+
+.edgeLabel rect {
+    fill: #fff !important;
+    opacity: 1 !important;
+    stroke: none !important
+}
+
+.labelBkg {
+    fill: #fff !important;
+    background-color: #fff !important;
+    opacity: 1 !important
+}
+
+.cluster rect {
+    fill: color-mix(in srgb, var(--element-color-soo-shallow), transparent 50%) !important;
+    stroke: var(--element-color-shallow) !important;
+    stroke-dasharray: 4px !important
+}
+
+.cluster span,
+.cluster-label text {
+    fill: var(--element-color-deep) !important;
+    color: var(--element-color-deep) !important;
+    background: 0 0 !important;
+    font-weight: 700 !important
+}
+
+.md-fences:not([lang=mermaid])::before {
+    content: attr(lang);
+    font-family: CascadiaCode, "Lucida Console", Consolas, Courier, monospace;
+    text-align: right;
+    padding-right: 15px;
+    color: #7e7e7e;
+    display: block;
+    background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgIHg9IjBweCIgeT0iMHB4IiB3aWR0aD0iNDUwcHgiIGhlaWdodD0iMTMwcHgiPgogIDxlbGxpcHNlIGN4PSI2NSIgY3k9IjY1IiByeD0iNTAiIHJ5PSI1MiIgc3Ryb2tlPSJyZ2IoMjIwLDYwLDU0KSIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJyZ2IoMjM3LDEwOCw5NikiLz4KICA8ZWxsaXBzZSBjeD0iMjI1IiBjeT0iNjUiIHJ4PSI1MCIgcnk9IjUyIiAgc3Ryb2tlPSJyZ2IoMjE4LDE1MSwzMykiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0icmdiKDI0NywxOTMsODEpIi8+CiAgPGVsbGlwc2UgY3g9IjM4NSIgY3k9IjY1IiByeD0iNTAiIHJ5PSI1MiIgIHN0cm9rZT0icmdiKDI3LDE2MSwzNykiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0icmdiKDEwMCwyMDAsODYpIi8+Cjwvc3ZnPg==);
+    height: 32px;
+    width: 100%;
+    background-size: 40px;
+    background-repeat: no-repeat;
+    background-color: #f8f8f8;
+    border-radius: 5px 5px 0 0;
+    background-position: 6px 11px;
+    margin-bottom: 0
+}
+
+.CodeMirror-wrap .CodeMirror-scroll {
+    overflow-x: auto
+}
+
+.md-fences {
+    position: relative;
+    z-index: 1;
+    overflow: visible
+}
+
+.md-fences.md-focus {
+    z-index: 100
+}
+
+.md-fences .cm-s-inner.CodeMirror {
+    margin-top: 0
+}
+
+.cm-s-inner.CodeMirror {
+    padding: 20px 12px 12px 20px;
+    color: #4f5467;
+    font-family: CascadiaCode, "Lucida Console", Consolas, Courier, monospace;
+    border-radius: 10px;
+    background-color: #fa0303;
+    line-height: 1.6rem
+}
+
+.CodeMirror-gutters {
+    border-right: 1px solid #9d9d9d52;
+    background: inherit;
+    white-space: nowrap
+}
+
+pre.CodeMirror-line {
+    padding: 0 1.2rem
+}
+
+.CodeMirror-linenumber {
+    padding: 0 3px 0 5px;
+    text-align: right;
+    color: #a3a3a3
+}
+
+.cm-s-inner.CodeMirror {
+    background: #f8f8f8;
+    border-radius: 0 0 5px 5px;
+    padding: 5px 12px 12px 12px;
+    page-break-before: auto;
+    line-height: 1.8rem
+}
+
+.md-rawblock .md-rawblock-tooltip {
+    inset: auto .3rem auto auto;
+    transform: translateY(-120%)
+}
+
+.cm-keyword {
+    color: #a626a4 !important;
+    font-weight: 700 !important
+}
+
+.cm-variable {
+    color: #b92121 !important
+}
+
+.cm-tag {
+    color: var(--color-cm-keyword) !important;
+    font-weight: 700 !important
+}
+
+.cm-variable-2,
+.cm-variable-3 {
+    color: #7aadad !important;
+    font-weight: 700 !important
+}
+
+.cm-def {
+    color: #c18401 !important
+}
+
+.cm-attribute {
+    color: #8f6aa8 !important
+}
+
+.cm-comment,
+.md-comment,
+.md-meta {
+    color: #9a9a9a !important
+}
+
+.cm-string {
+    color: #50a14f !important;
+    font-variant-ligatures: common-ligatures !important
+}
+
+.cm-link {
+    color: #e46918 !important
+}
+
+.cm-type {
+    color: #626161
+}
+
+.cm-property {
+    color: #800a84 !important
+}
+
+.cm-tag:not(.cm-bracket) {
+    font-weight: 700 !important
+}
+
+.cm-operator {
+    color: #0abe00 !important
+}
+
+.cm-number {
+    color: #1694b6 !important
+}
+
+.cm-meta {
+    color: #4078f2 !important;
+    font-weight: 700 !important
+}
+
+.cm-builtin {
+    color: #fa6060 !important
+}
+
+.cm-s-inner .cm-atom,
+.cm-s-inner.cm-atom {
+    color: #a626a4 !important;
+    font-weight: 700
+}
+
+kbd {
+    display: inline-block;
+    min-width: 1.6em;
+    text-align: center;
+    padding: 3px 6px;
+    margin: 0 4px;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: .9em;
+    line-height: 1.4;
+    font-weight: 600;
+    border-radius: 4px;
+    background-color: #fff;
+    color: var(--element-color-deep);
+    border: 1px solid var(--element-color);
+    border-bottom-width: 3px;
+    box-shadow: 0 2px 0 var(--element-color-so-shallow);
+    transition: all .15s cubic-bezier(.25, .8, .25, 1);
+    transform: translateY(0)
+}
+
+kbd:hover {
+    border-bottom-width: 1px;
+    transform: translateY(2px);
+    background-color: var(--element-color-soo-shallow);
+    box-shadow: 0 0 0 transparent;
+    color: var(--element-color-deep)
+}
+
+#write table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 20px 0;
+    border: 1px solid var(--element-color-shallow);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.6
+}
+
+#write table td,
+#write table th {
+    padding: 8px 12px;
+    color: #333;
+    border-right: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all .2s ease
+}
+
+#write table td:last-child,
+#write table th:last-child {
+    border-right: none
+}
+
+#write table tr:last-child td {
+    border-bottom: none
+}
+
+#write table th {
+    background-color: var(--element-color-soo-shallow);
+    color: var(--element-color-deep);
+    font-weight: 700;
+    white-space: nowrap
+}
+
+#write table tbody tr:hover td {
+    background-color: var(--element-color-soo-shallow)
+}
+
+#write table tbody td:hover {
+    background-color: var(--element-color-soo-shallow);
+    color: var(--element-color-deep);
+    box-shadow: inset 0 0 0 1px var(--element-color-shallow);
+    cursor: default
+}
+
+#write .footnote-word {
+    font-weight: 400;
+    color: #595959
+}
+
+#write .footnote-ref {
+    font-weight: 400;
+    color: #595959
+}
+
+#write .footnote-item em {
+    font-size: 14px;
+    color: #595959;
+    display: block;
+    background: 0 0
+}
+
+#write sup.md-footnote {
+    font-size: 9px;
+    padding: 1px 5px;
+    top: -11px;
+    left: 3px;
+    background-color: rgba(238, 238, 238, .7);
+    color: #555;
+    border-radius: 50%;
+    cursor: pointer
+}
+
+.md-alert {
+    padding: 5px 10px;
+    margin-bottom: 16px;
+    color: #555;
+    border: none !important;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), box-shadow .3s ease, background-color .3s ease
+}
+
+.md-alert:hover {
+    transform: scale(1.01) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .08);
+    z-index: 1
+}
+
+.md-alert-text-container {
+    display: inline-flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, .7);
+    backdrop-filter: blur(2px);
+    padding: 2px 10px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .03);
+    position: relative;
+    z-index: 2
+}
+
+.md-alert-text-container::after {
+    margin-right: 0
+}
+
+.md-alert::after {
+    content: "";
+    position: absolute;
+    right: -10px;
+    bottom: -12px;
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+    font-size: 64px;
+    line-height: 1;
+    opacity: .12;
+    transform: rotate(-15deg);
+    pointer-events: none;
+    z-index: 0;
+    transition: all .4s cubic-bezier(.34, 1.56, .64, 1)
+}
+
+.md-alert:hover::after {
+    transform: rotate(0) scale(1.1);
+    opacity: .2;
+    right: 0;
+    bottom: -4px
+}
+
+.md-alert-text svg {
+    fill: currentColor;
+    position: relative;
+    top: 1px;
+    margin-right: 5px;
+    width: 1em;
+    height: 1em
+}
+
+.md-alert.md-alert-note {
+    background-color: rgba(108, 92, 231, .1)
+}
+
+.md-alert-text-note {
+    color: #6c5ce7
+}
+
+.md-alert.md-alert-note:hover {
+    background-color: rgba(108, 92, 231, .15)
+}
+
+.md-alert.md-alert-note::after {
+    content: "📝"
+}
+
+.md-alert.md-alert-tip {
+    background-color: rgba(0, 184, 148, .1)
+}
+
+.md-alert-text-tip {
+    color: #00b894
+}
+
+.md-alert.md-alert-tip:hover {
+    background-color: rgba(0, 184, 148, .15)
+}
+
+.md-alert.md-alert-tip::after {
+    content: "💡"
+}
+
+.md-alert.md-alert-warning {
+    background-color: rgba(253, 203, 110, .15)
+}
+
+.md-alert-text-warning {
+    color: #e17055
+}
+
+.md-alert.md-alert-warning:hover {
+    background-color: rgba(253, 203, 110, .2)
+}
+
+.md-alert.md-alert-warning::after {
+    content: "⚠️"
+}
+
+.md-alert.md-alert-important {
+    background-color: rgba(255, 118, 117, .12)
+}
+
+.md-alert-text-important {
+    color: #ff7675
+}
+
+.md-alert.md-alert-important:hover {
+    background-color: rgba(255, 118, 117, .18)
+}
+
+.md-alert.md-alert-important::after {
+    content: "📌"
+}
+
+.md-alert.md-alert-caution {
+    background-color: rgba(214, 48, 49, .08)
+}
+
+.md-alert-text-caution {
+    color: #d63031
+}
+
+.md-alert.md-alert-caution:hover {
+    background-color: rgba(214, 48, 49, .12)
+}
+
+.md-alert.md-alert-caution::after {
+    content: "🔥"
+}
+
+.md-toc {
+    margin: 20px;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, .4);
+    background-image: radial-gradient(circle at -22% -42%, var(--element-color-so-shallow), transparent 42%), radial-gradient(circle at 100% 170%, var(--element-color-shallow), transparent 42%);
+    background-repeat: no-repeat;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, .6);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .05);
+    border-radius: 16px;
+    font-size: 15px;
+    color: #555;
+    position: relative;
+    overflow: hidden;
+    transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), box-shadow .3s ease
+}
+
+.md-toc:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .1)
+}
+
+.md-toc:before {
+    content: "目录";
+    display: block;
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--element-color-deep);
+    margin-bottom: 25px;
+    letter-spacing: 2px;
+    border-bottom: 1px dashed rgba(0, 0, 0, .08);
+    padding-bottom: 15px
+}
+
+.md-toc-item {
+    display: block;
+    line-height: 1.8em;
+    color: #666;
+    text-decoration: none;
+    padding: 6px 15px;
+    border-radius: 50px;
+    margin-bottom: 4px;
+    position: relative;
+    transition: all .2s cubic-bezier(.25, .8, .25, 1)
+}
+
+.md-toc-item a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    width: 100%
+}
+
+.md-toc-h1 {
+    font-weight: 600;
+    color: #333;
+    margin-top: 10px;
+    background: rgba(255, 255, 255, .4)
+}
+
+.md-toc-h2 {
+    margin-left: 1em;
+    font-size: .95rem
+}
+
+.md-toc-h3 {
+    margin-left: 2em;
+    font-size: .9rem;
+    color: #777
+}
+
+.md-toc-h4 {
+    margin-left: 3em;
+    font-size: .85em;
+    opacity: .8
+}
+
+.md-toc-h5 {
+    margin-left: 4em;
+    font-size: .85em;
+    opacity: .7
+}
+
+.md-toc-h6 {
+    margin-left: 5em;
+    font-size: .85em;
+    opacity: .6
+}
+
+.md-toc-item:hover {
+    background-color: rgba(255, 255, 255, .95);
+    color: var(--element-color-deep);
+    padding-left: 20px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .05)
+}
+
+.md-tooltip-hide>span {
+    display: none
+}
+
+#typora-sidebar {
+    height: 100%;
+    color: var(--text-color);
+    font-size: .92rem;
+    background-color: var(--bg-color)
+}
+
+#outline-content::-webkit-scrollbar {
+    width: 5px
+}
+
+#file-library::-webkit-scrollbar {
+    width: 5px
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 10px
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: var(--element-color)
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: var(--element-color-shallow)
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 8px
+}
+
+.active-tab-files #info-panel-tab-file .info-panel-tab-border,
+.active-tab-outline #info-panel-tab-outline .info-panel-tab-border,
+.ty-show-search #info-panel-tab-search .info-panel-tab-border {
+    border-radius: 10px;
+    height: 4px;
+    background-color: var(--appui-color)
+}
+
+.file-node-content {
+    line-height: 1.2rem
+}
+
+.file-tree-node.active>.file-node-content {
+    color: var(--appui-color)
+}
+
+span.file-node-title {
+    color: var(--appui-color-text)
+}
+
+.file-node-icon {
+    color: var(--appui-color-icon);
+    padding-right: .2rem
+}
+
+.file-tree-node.active>.file-node-background {
+    font-weight: bolder;
+    border-left: 4px solid var(--appui-color);
+    border-color: var(--appui-color)
+}
+
+.info-panel-tab-title {
+    font-weight: bolder;
+    color: var(--appui-color-text)
+}
+
+#file-library-search-panel {
+    background-color: #fff
+}
+
+#file-library-search-input {
+    border-radius: 3px;
+    border-color: var(--appui-color)
+}
+
+#file-library-search-input:focus {
+    border-width: 2px
+}
+
+#outline-content .outline-h2::after,
+#outline-content .outline-h2>.outline-item::before {
+    content: none !important;
+    display: none !important;
+    border: none !important;
+    background: 0 0 !important
+}
+
+#outline-content .outline-label {
+    border: none !important;
+    background: 0 0 !important;
+    padding-left: 0 !important;
+    margin: 0 !important
+}
+
+#outline-content .outline-item {
+    display: flex !important;
+    align-items: center !important;
+    width: fit-content;
+    max-width: 100%;
+    padding: 6px 12px;
+    margin-bottom: 2px;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 50px;
+    border: none;
+    outline: 0;
+    transition: background-color .2s ease, color .2s ease, padding-right .2s ease, box-shadow .2s ease;
+    position: relative;
+    line-height: 1.6
+}
+
+#outline-content .outline-expander {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+    color: inherit
+}
+
+#outline-content .outline-label {
+    flex: 1;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+#outline-content .outline-h1 {
+    margin-top: 10px;
+    margin-bottom: 4px
+}
+
+#outline-content .outline-h2,
+#outline-content .outline-h3,
+#outline-content .outline-h4,
+#outline-content .outline-h5,
+#outline-content .outline-h6 {
+    border-left: 1.5px solid rgba(0, 0, 0, .06);
+    margin-left: 22px;
+    padding-left: 8px
+}
+
+#outline-content .outline-h1>.outline-item {
+    font-size: larger;
+    font-weight: 700;
+    color: var(--element-color-deep)
+}
+
+#outline-content .outline-item:hover {
+    background-color: var(--element-color-soo-shallow);
+    color: var(--element-color-deep);
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border-left: none !important;
+    border-right: none !important
+}
+
+div.outline-item-active {
+    background-color: var(--element-color) !important;
+    color: #fff !important;
+    font-weight: 600;
+    box-shadow: 0 4px 10px var(--element-color-so-shallow);
+    transform: none;
+    padding-right: 30px !important;
+    padding-left: 12px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border: none !important
+}
+
+#outline-content .outline-item-active::after {
+    content: "✦";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: rgba(255, 255, 255, .9);
+    display: block !important;
+    z-index: 10;
+    animation: outline-twinkle 1.5s infinite alternate
+}
+
+@keyframes outline-twinkle {
+    from {
+        opacity: .7;
+        transform: translateY(-50%) scale(.9)
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.1)
+    }
+}
+
+.typora-export-content .outline-content::before {
+    content: "目录";
+    font-size: 20px;
+    font-weight: 700;
+    position: absolute;
+    top: 22px;
+    left: 15px;
+    z-index: -1
+}
+
+.typora-export-sidebar .outline-content {
+    padding-top: 60px !important;
+    padding-left: 10px !important;
+    height: 100%;
+    overflow-y: auto;
+    padding-bottom: 30px;
+    box-sizing: border-box
+}
+
+.typora-export-sidebar .outline-content::before {
+    content: "目录";
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--element-color-deep);
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    z-index: 10;
+    letter-spacing: 2px
+}
+
+.typora-export-sidebar .outline-h1 {
+    margin-top: 10px !important;
+    margin-bottom: 4px !important;
+    margin-left: 0 !important
+}
+
+.typora-export-sidebar .outline-h1>.outline-item {
+    font-size: 1.1em !important;
+    font-weight: 700 !important;
+    color: var(--element-color-deep) !important
+}
+
+.typora-export-sidebar .outline-h2,
+.typora-export-sidebar .outline-h3,
+.typora-export-sidebar .outline-h4,
+.typora-export-sidebar .outline-h5,
+.typora-export-sidebar .outline-h6 {
+    border-left: 1.5px solid rgba(0, 0, 0, .06) !important;
+    margin-left: 15px !important;
+    padding-left: 8px !important;
+    list-style: none !important
+}
+
+.typora-export-sidebar .outline-item {
+    display: flex !important;
+    align-items: center !important;
+    width: fit-content !important;
+    max-width: 95% !important;
+    padding: 6px 12px !important;
+    margin: 2px 0 !important;
+    color: inherit !important;
+    cursor: pointer;
+    text-decoration: none !important;
+    border-radius: 50px !important;
+    border: none !important;
+    transition: all .2s ease;
+    line-height: 1.6;
+    overflow: visible !important
+}
+
+.typora-export-sidebar .outline-label {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    text-decoration: none !important;
+    color: inherit !important;
+    flex: 0 1 auto !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+.typora-export-sidebar .outline-expander {
+    width: 16px !important;
+    text-align: center;
+    margin-right: 4px;
+    flex-shrink: 0
+}
+
+.typora-export .outline-expander::before {
+    content: "▸" !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 14px !important;
+    color: #999;
+    top: 0 !important;
+    display: inline-block;
+    transition: transform .2s
+}
+
+.typora-export .outline-expander:hover::before,
+.typora-export .outline-item-open>.outline-item>.outline-expander::before {
+    content: "▾" !important;
+    color: var(--element-color-deep)
+}
+
+.typora-export .outline-item-single .outline-expander::before {
+    display: none !important
+}
+
+.typora-export-sidebar .outline-item:hover {
+    background-color: var(--element-color-soo-shallow) !important;
+    color: var(--element-color-deep) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    border: none !important
+}
+
+.typora-export-sidebar .outline-item-wrapper.outline-item-active>.outline-item {
+    background-color: var(--element-color) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 10px var(--element-color-so-shallow);
+    padding-right: 12px !important;
+    padding-left: 12px !important;
+    margin-left: 0 !important;
+    border: none !important
+}
+
+.typora-export-sidebar .outline-item-wrapper.outline-item-active>.outline-item .outline-label {
+    color: #fff !important
+}
+
+.typora-export-sidebar .outline-item-wrapper.outline-item-active>.outline-item .outline-expander::before {
+    color: rgba(255, 255, 255, .8) !important
+}
+
+.typora-export-sidebar .outline-item-wrapper.outline-item-active>.outline-item::after {
+    content: "✦";
+    position: static !important;
+    transform: none !important;
+    margin-left: 8px !important;
+    flex-shrink: 0;
+    display: inline-block !important;
+    line-height: 1;
+    font-size: 10px;
+    font-family: Arial, sans-serif;
+    color: rgba(255, 255, 255, .9);
+    z-index: 10;
+    animation: outline-twinkle 1.5s infinite alternate
+}
+
+@media screen {
+    body.typora-export {
+        background-color: transparent
+    }
+}
+
+.typora-export-sidebar {
+    position: fixed;
+    margin-top: 0 !important;
+    top: 10px;
+    bottom: 10px;
+    left: 20px;
+    width: 320px;
+    background-color: var(--glass-bg-color);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, .6);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .13);
+    z-index: 100;
+    overflow: hidden;
+    color: #555
+}
+
+.typora-export-sidebar .outline-content {
+    padding-top: 60px !important;
+    padding-left: 15px !important;
+    padding-right: 5px !important;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none
+}
+
+.typora-export #write {
+    margin: 20px auto;
+    max-width: 950px;
+    width: 90%;
+    min-height: calc(100vh - 40px);
+    background-color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .1);
+    padding: 60px 80px
+}
+
+.typora-export-sidebar+#write {
+    margin-left: 350px;
+    margin-right: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: auto;
+    max-width: none;
+    min-height: calc(100vh - 20px)
+}
+
+@media screen and (max-width:1200px) {
+    .typora-export-sidebar {
+        display: none
+    }
+
+    .typora-export #write,
+    .typora-export-sidebar+#write {
+        margin: 0;
+        border-radius: 0;
+        width: 100%;
+        max-width: 100%;
+        box-shadow: none;
+        padding: 20px;
+        min-height: 100vh
+    }
+}
+
+@media print {
+    @page {
+        margin: 10mm;
+        size: A4
+    }
+
+    body {
+        background-color: transparent !important
+    }
+
+    body {
+        margin: 0 !important;
+        width: 100% !important
+    }
+
+    .typora-export #write {
+        margin: 0 auto !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: 0 0 !important
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important
+    }
+
+    #write::before {
+        display: block !important;
+        opacity: .1 !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        -webkit-mask-image: var(--bg-style) !important;
+        mask-image: var(--bg-style) !important;
+        background-color: var(--element-color) !important;
+        pointer-events: none;
+        z-index: -1
+    }
+
+    p {
+        line-height: 1.5rem
+    }
+
+    figure,
+    pre {
+        page-break-inside: avoid
+    }
+
+    ol,
+    ul {
+        page-break-inside: auto !important;
+        break-inside: auto !important
+    }
+
+    li {
+        page-break-inside: avoid;
+        break-inside: avoid
+    }
+
+    pre {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+        white-space: pre-wrap
+    }
+
+    blockquote {
+        page-break-inside: auto !important;
+        break-inside: auto !important
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+        page-break-inside: avoid !important
+    }
+
+    p {
+        orphans: 2;
+        widows: 2
+    }
+
+    .md-toc {
+        background-image: none
+    }
+
+    #write li:before {
+        border-color: transparent
+    }
+}
+
+@media print {
+    .page-break {
+        page-break-after: always;
+        break-after: always;
+        height: 0;
+        display: block;
+        visibility: hidden
+    }
+}
+
+.dropdown-menu.context-menu {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    background-color: rgba(255, 255, 255, .85) !important;
+    border: 1px solid rgba(255, 255, 255, .8) !important;
+    border-radius: 12px !important;
+    padding: 6px 0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .04), 0 16px 40px rgba(0, 0, 0, .08) !important
+}
+
+.btn:focus {
+    outline-color: var(--element-color-shallow)
+}
+
+body .md-table-resize-popover {
+    width: max-content !important;
+    max-width: none !important;
+    height: auto !important;
+    padding: 12px !important;
+    background-color: var(--bg-color) !important;
+    border: none;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .12) !important
+}
+
+body .md-table-resize-popover .arrow {
+    display: none !important
+}
+
+body .md-table-resize-popover .md-grid-board-wrap {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 0 !important
+}
+
+body .md-table-resize-popover .md-grid-board {
+    width: auto !important;
+    border-collapse: separate !important;
+    border-spacing: 3px !important;
+    margin: 0 auto 10px auto !important
+}
+
+body .md-table-resize-popover .md-grid-board td {
+    padding: 0 !important;
+    background: 0 0 !important;
+    border: none !important
+}
+
+body .md-table-resize-popover .md-grid-board a {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+    border-radius: 3px !important;
+    background-color: color-mix(in srgb, var(--text-color), transparent 90%) !important;
+    border: 1px solid transparent !important;
+    box-sizing: border-box !important;
+    transition: all .2s cubic-bezier(.34, 1.56, .64, 1) !important
+}
+
+body .md-table-resize-popover .md-grid-board td.md-grid-ext {
+    background: 0 0 !important
+}
+
+body .md-table-resize-popover .md-grid-board td.md-grid-ext a {
+    background-color: var(--primary-color) !important;
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--primary-color), transparent 60%) !important;
+    opacity: .9 !important
+}
+
+body .md-table-resize-popover .md-grid-board td.md-grid-ext a:hover {
+    opacity: 1 !important;
+    transform: scale(1.15) !important;
+    border-radius: 5px !important
+}
+
+body .md-table-resize-popover .popover-title {
+    background: 0 0 !important;
+    border: none !important;
+    border-top: 1px dashed color-mix(in srgb, var(--element-color), var(--text-color) 20%) !important;
+    padding: 10px 0 0 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: var(--element-color) !important;
+    font-size: 13px !important;
+    font-family: var(--monospace, monospace) !important;
+    font-weight: 400 !important
+}
+
+body .md-table-resize-popover input {
+    width: 36px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    text-align: center !important;
+    border: 1px solid var(--element-color-so-shallow) !important;
+    border-radius: 4px !important;
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+    font-family: var(--monospace, monospace) !important;
+    font-size: 14px !important;
+    outline: 0 !important;
+    transition: all .3s ease !important;
+    box-shadow: none !important
+}
+
+body .md-table-resize-popover input:focus {
+    border-color: var(--primary-color) !important;
+    background-color: color-mix(in srgb, var(--primary-color), transparent 95%) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color), transparent 80%) !important
+}@import url();
+
+:root {
+  /* 标题后小图标，借鉴自思源笔记主题——Savor */
+  --h1-icon-shape: url("data:image/svg+xml;utf8,<svg fill='rgba(255, 176, 176, 0.5)' height='24' viewBox='0 0 32 32' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M4.8 29.714v0c-1.371 0-2.514-1.143-2.514-2.514v0c0-1.371 1.143-2.514 2.514-2.514v0c1.371 0 2.514 1.143 2.514 2.514v0c0.114 1.371-1.029 2.514-2.514 2.514z'/></svg>") no-repeat center;
+  --h2-icon-shape: url("data:image/svg+xml;utf8,<svg fill='rgba(255, 176, 176, 0.5)' height='24' viewBox='0 0 32 32' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M11.429 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM4.571 18.286c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286z'/></svg>") no-repeat center;
+  --h3-icon-shape: url("data:image/svg+xml;utf8,<svg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><path d='M4.571 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM4.571 18.286c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM11.429 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286z'/></svg>");
+  --h4-icon-shape: url("data:image/svg+xml;utf8,<svg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><path d='M4.571 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM4.571 18.286c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM11.429 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM11.429 22.857c1.257 0 2.286-1.029 2.286-2.286s-1.029-2.286-2.286-2.286-2.286 1.029-2.286 2.286 1.029 2.286 2.286 2.286z'/></svg>");
+  --h5-icon-shape: url("data:image/svg+xml;utf8,<svg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><path d='M4.571 18.286c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM11.429 22.857c1.257 0 2.286-1.029 2.286-2.286s-1.029-2.286-2.286-2.286-2.286 1.029-2.286 2.286 1.029 2.286 2.286 2.286zM4.571 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM11.429 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM4.571 11.429c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286z'/></svg>");
+  --h6-icon-shape: url("data:image/svg+xml;utf8,<svg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><path d='M4.571 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM4.571 18.286c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM4.571 11.429c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM11.429 18.286c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM11.429 25.143c-1.257 0-2.286 1.029-2.286 2.286s1.029 2.286 2.286 2.286 2.286-1.029 2.286-2.286-1.029-2.286-2.286-2.286zM11.429 16c1.257 0 2.286-1.029 2.286-2.286s-1.029-2.286-2.286-2.286-2.286 1.029-2.286 2.286 1.029 2.286 2.286 2.286z'/></svg>");
+ 
+  /* 文档背景样式 */
+  /* 1. 交叉斜线 */
+  --bg-shape-cross: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h30v30H0z' fill='none'/%3E%3Cpath d='M0 0L15 15M30 0L15 15M0 30L15 15M30 30L15 15' stroke='black' stroke-width='0.4'/%3E%3C/svg%3E");
+  /* 2. 星点图案 */
+  --bg-shape-star: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M10 10l2-6l2 6l6 2l-6 2l-2 6l-2-6l-6-2Z' fill='black'/%3E%3Cpath d='M30 15l1-3l1 3l3 1l-3 1l-1 3l-1-3l-3-1Z' fill='black'/%3E%3Cpath d='M25 30l1.5-4.5l1.5 4.5l4.5 1.5l-4.5 1.5l-1.5 4.5l-1.5-4.5l-4.5-1.5Z' fill='black'/%3E%3C/svg%3E");
+  /* 3. 六边形图案 */
+  --bg-shape-hex: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40v40H0z' fill='none'/%3E%3Cpath d='M10 5l10 0l5 8.66l-5 8.66l-10 0l-5-8.66Z' fill='none' stroke='black' stroke-width='0.4'/%3E%3Cpath d='M20 22.32l10 0l5 8.66l-5 8.66l-10 0l-5-8.66Z' fill='none' stroke='black' stroke-width='0.4'/%3E%3C/svg%3E");
+  /* 4. 十字圆点 */
+  --bg-shape-dot: url("data:image/svg+xml,%3Csvg width='15' height='15' viewBox='0 0 15 15' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='7.5' cy='7.5' r='0.5' fill='black'/%3E%3Ccircle cx='7.5' cy='2.5' r='0.5' fill='black'/%3E%3Ccircle cx='7.5' cy='12.5' r='0.5' fill='black'/%3E%3Ccircle cx='2.5' cy='7.5' r='0.5' fill='black'/%3E%3Ccircle cx='12.5' cy='7.5' r='0.5' fill='black'/%3E%3C/svg%3E");
+  /* 5. 三角形 */
+  --bg-shape-tri: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h30v30H0z' fill='none'/%3E%3Cpath d='M0 0L30 0L15 15Z' fill='black'/%3E%3Cpath d='M30 30L0 30L15 15Z' fill='black'/%3E%3C/svg%3E");
+  /* 6. 方格网 */
+  --bg-shape-grid: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20v20H0z' fill='none'/%3E%3Cpath d='M20 0v20M0 20h20' stroke='black' stroke-width='0.7'/%3E%3C/svg%3E");
+  /* 7. 无背景 (纯白背景) */
+  --bg-shape-none: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
+
+  /* 文档背景样式  none 无背景*/
+  --bg-style: var(--bg-shape-cross);
+
+
+  /* 自动编号格式设置 无需自动编号可全部注释掉或部分注释掉*/
+  --autonum-h1: counter(h1) ". ";
+  --autonum-h2: counter(h1) "." counter(h2) ". ";
+  --autonum-h3: counter(h1) "." counter(h2) "." counter(h3) ". ";
+  --autonum-h4: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) ". ";
+  --autonum-h5: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) "." counter(h5) ". ";
+  --autonum-h6: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) "." counter(h5) "." counter(h6) ". ";
+
+  /* 下面是文章内Toc目录自动编号，与上面一样即可 */
+  --autonum-h1toc: counter(h1toc) ". ";
+  --autonum-h2toc: counter(h1toc) "." counter(h2toc) ". ";
+  --autonum-h3toc: counter(h1toc) "." counter(h2toc) "." counter(h3toc) ". ";
+  --autonum-h4toc: counter(h1toc) "." counter(h2toc) "." counter(h3toc) "." counter(h4toc) ". ";
+  --autonum-h5toc: counter(h1toc) "." counter(h2toc) "." counter(h3toc) "." counter(h4toc) "." counter(h5toc) ". ";
+  --autonum-h6toc: counter(h1toc) "." counter(h2toc) "." counter(h3toc) "." counter(h4toc) "." counter(h5toc) "." counter(h6toc) ". ";
+
+
+  /* 文章区域的最大宽度，可以是多少px也可以是百分比 */
+  --max-width: 950px; 
+
+
+  /* 主题颜色 */
+
+  --head-title-color: #11aa63;
+  /* 标题主色 */
+  --head-title-h2-color: #FFF;
+  --head-title-h2-background: linear-gradient(to right, #43bd84, #68eaad, #43bd84);
+  /* 二级标题主色，因为二级标题是背景色的，所以单独设置 */
+
+  --element-color: #11aa63;
+  /* 元素主色 */
+  --element-color-deep: #009a52;
+  /* 元素深色 */
+  --element-color-shallow: #80c3a4;
+  /* 元素浅色 */
+  --element-color-so-shallow: #43bd8499;
+  /* 元素很浅色 */
+  --element-color-soo-shallow: #6cb19125;
+  /* 元素非常浅色 */
+
+  /* 毛玻璃底色 透明度一定要很低 */
+  --glass-bg-color:#6cb19112;
+
+  --element-color-linecode: #009a52;
+  /* 行内代码文字色 */
+  --element-color-linecode-background: #6cb19125;
+  /* 行内代码背景色 */
+
+  /* 程序主题色 */
+  --appui-color: #008145;
+  --appui-color-icon: #0e874f;
+  --appui-color-text: #333;
+  --primary-color: #008145;
+
+  --rawblock-edit-panel-bd:var(--element-color-soo-shallow);
+}
+
+
+
+</style><title>help</title>
+</head>
+<body class='typora-export os-windows typora-export-show-outline typora-export-collapse-outline'><div class='typora-export-content'>
+<div class="typora-export-sidebar"><div class="outline-content"><li class="outline-item-wrapper outline-h1"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#搜索">搜索</a></div><ul class="outline-children"><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#如何一次选中多张图片">如何一次选中多张图片？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#如何进行搜索过滤">如何进行搜索过滤？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#如何进行多图搜索">如何进行多图搜索？</a></div><ul class="outline-children"></ul></li></ul></li><li class="outline-item-wrapper outline-h1"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#索引">索引</a></div><ul class="outline-children"><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#索引容量不够了怎么办">索引容量不够了怎么办？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#自动更新索引的行为是什么">自动更新索引的行为是什么？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#重建索引到底做了什么">重建索引到底做了什么？</a></div><ul class="outline-children"></ul></li></ul></li><li class="outline-item-wrapper outline-h1"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#模型">模型</a></div><ul class="outline-children"><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#怎么使用自己训练的模型">怎么使用自己训练的模型？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#模型下载失败怎么办">模型下载失败怎么办</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#切换模型后索引内容都没了">切换模型后，索引内容都“没了”？</a></div><ul class="outline-children"></ul></li></ul></li><li class="outline-item-wrapper outline-h1"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#排除规则">排除规则</a></div><ul class="outline-children"><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#排除规则的作用是什么">排除规则的作用是什么？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#如何排除一整个文件夹">如何排除一整个文件夹？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#如何匹配特定文件名模式">如何匹配特定文件名模式？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#排除过头了怎么办">排除“过头”了怎么办？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#怎么按文件大小或修改时间排除">怎么按文件大小或修改时间排除？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#怎么看到规则会排除哪些内容">怎么看到规则会排除哪些内容？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#清理排除图片按钮的用途">“清理排除图片”按钮的用途？</a></div><ul class="outline-children"></ul></li></ul></li><li class="outline-item-wrapper outline-h1"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#自定义菜单命令">自定义菜单命令</a></div><ul class="outline-children"><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#自定义菜单命令能让我做什么">自定义菜单命令能让我做什么？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#一个自定义命令由哪些部分组成">一个自定义命令由哪些部分组成？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#批量模式和常规模式在多图处理时的区别">批量模式和常规模式在多图处理时的区别？</a></div><ul class="outline-children"><li class="outline-item-wrapper outline-h3 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#常规模式默认）">常规模式（默认）</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h3 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#批量模式需要时手动勾选开启）">批量模式（需要时手动勾选开启）</a></div><ul class="outline-children"></ul></li></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#文件列表的分隔符如何指定">文件列表的分隔符如何指定？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#引号的分组作用">引号的分组作用</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#命令执行前手动输入数据">命令执行前手动输入数据</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#写好的命令怎么测试">写好的命令怎么测试？</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#常见错误速查">常见错误速查</a></div><ul class="outline-children"></ul></li><li class="outline-item-wrapper outline-h2 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#如果我需要的功能很复杂命令一行写不下怎么办">如果我需要的功能很复杂，命令一行写不下怎么办？</a></div><ul class="outline-children"></ul></li></ul></li><li class="outline-item-wrapper outline-h1 outline-item-single"><div class="outline-item"><span class="outline-expander"></span><a class="outline-label" href="#用户反馈">用户反馈</a></div><ul class="outline-children"></ul></li></div></div><div id='write'  class=''><p>&nbsp;</p><h1 id='搜索'><span>搜索</span></h1><h2 id='如何一次选中多张图片'><span>如何一次选中多张图片？</span></h2><ol start='' ><li><span>间断选择：按住键盘左下角的</span><code>Ctrl</code><span>键不松手，然后用鼠标就可以选中多张不同的图片，然后执行对应的右键菜单命令了；</span></li><li><span>连续选择：按住键盘左下角的</span><code>Shift</code><span>键不松手，然后鼠标点击一张图片，再随便点击另外一张图片，这样两张图片之间的所有图片都会被选中；</span></li></ol><p><span>实际上，这正是大部分操作系统的一个默认行为的实现而已。但需要指出，选中多张图片右键打开图片或打开文件夹时，始终都只会打开选中的第一张图片和第一张图片所在的文件夹。</span></p><p>&nbsp;</p><h2 id='如何进行搜索过滤'><span>如何进行搜索过滤？</span></h2><p><span>在搜索界面中，搜索框内部的最右侧有一个向下的箭头，点开它，你可以看到一系列过滤选项：</span></p><ol start='' ><li><strong><span>相似度阈值</span></strong><span>：任何相似度小于这个阈值的图片都不会出现在搜索结果中；</span></li><li><strong><span>文件类型</span></strong><span>：通过文件的后缀名选中特定的文件类型。</span></li><li><strong><span>文件大小</span></strong><span>：图片的实际存储占用，有</span><code>KB</code><span>和</span><code>MB</code><span>两种单位。</span></li><li><strong><span>所属文件夹</span></strong><span>：根据图片所属的索引文件夹做筛选</span></li><li><strong><span>去重</span></strong><span>：勾选后，完全相同的图片（图片内容相同且大小相同）仅保留第一张显示；</span></li></ol><p>&nbsp;</p><p><span>需要说明几点：</span></p><ol start='' ><li><p><span>搜索过滤的条件不会保存在配置文件中，因此每次重启程序，搜索过滤的条件都会</span><strong><span>重置</span></strong><span>。这一设计缘由在于，搜索过滤通常是临时的配置，保存在配置文件中可能误导下一次程序启动后的搜索。</span></p></li><li><p><span>搜索过滤是在搜索结果全部返回后再进行的过滤。打个比方，点击右上角“...”的按钮后，选择：</span><code>返回结果数：100</code><span>，那么搜索过滤就是在这100张图片上作进一步过滤，过滤后的显示结果数自然要小于或等于100张。因此，在搜索时设置筛选条件后，如果显示</span><code>筛选条件过于严格，没有匹配到任何图像！</code><span>，那么有两条对策：</span></p><ul><li><span>点击右上角“...”的按钮，将返回的结果数拉大；</span></li><li><span>长远对策：好好观察一下这些不符合条件的图像有什么特征，是否</span><strong><span>永远不希望</span></strong><span>搜索出它们？如果是，尝试编写</span><strong><span>排除规则</span></strong><span>，将它们从索引中永久排除掉；</span></li></ul></li></ol><p>&nbsp;</p><h2 id='如何进行多图搜索'><span>如何进行多图搜索？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我可以同时用多张图片来搜索相似图吗？粘贴几十张会不会崩？</span></p></blockquote><p>&nbsp;</p><p><strong><span>支持。你可以通过拖拽、粘贴，或浏览时多选（</span><code>Ctrl</code><span>/</span><code>Shift</code><span>）来同时输入多张图片进行搜索。</span></strong></p><p><strong><span>实际行为：</span></strong></p><ul><li><span>接收到的图片列表，</span><strong><span>第 1 张会立即执行搜索</span></strong><span>并展示结果。  </span></li><li><span>后续的图片路径会暂存到内存中（只存图片路径，因此占用很小），</span><strong><span>当你翻页浏览后续结果时，才按需执行搜索</span></strong><span>。</span></li></ul><p><strong><span>粘贴限制：</span></strong>
+<span>通过粘贴输入的路径文本，超过 </span><strong><span>3000 行</span></strong><span>时会被截断（右下角会弹出提示），这是为了防止意外粘贴超大文本导致处理阻塞。</span></p><p>&nbsp;</p><h1 id='索引'><span>索引</span></h1><h2 id='索引容量不够了怎么办'><span>索引容量不够了怎么办？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我的图片非常多，会不会有一天索引“装满”了？真装满了怎么办？</span></p></blockquote><p>&nbsp;</p><p><strong><span>默认配置下，索引最多容纳 100 万个槽位。</span></strong>
+<span>注意，这个数字是</span><strong><span>索引内部的容量上限</span></strong><span>，不是你实际索引的图片数（将鼠标悬停在界面上的“已索引图片数”上，可以看到容量占用情况）。</span></p><p><strong><span>如何修改这个上限：</span></strong>
+<span>在模型选项卡中，双击正在使用的模型，打开它的配置文件（</span><code>模型文件夹名/models.json</code><span>），找到：</span></p><pre class="md-fences md-end-block md-fences-with-lineno ty-contain-cm modeLoaded" spellcheck="false" lang="json"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang="json"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 19.1992px; left: 63.5938px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 30px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre><div class="CodeMirror-linenumber CodeMirror-gutter-elt"><div>3</div></div></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: -30px; width: 30px;"></div><div class="CodeMirror-gutter-wrapper CodeMirror-activeline-gutter" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">1</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-string">"index_config"</span>: {</span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt" style="left: 0px; width: 21px;">2</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;<span class="cm-string cm-property">"index_capacity"</span>: <span class="cm-number">1000000</span></span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">3</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 97px;"></div><div class="CodeMirror-gutters" style="height: 97px; left: 0px;"><div class="CodeMirror-gutter CodeMirror-linenumbers" style="width: 29px;"></div></div></div></div></pre><p><span>把数字改成你需要的值，</span><strong><span>重启程序后生效</span></strong><span>。  </span></p><ul><li><span>改大：自动生效，无需重建，索引会随图片新增逐步扩容直到新上限。  </span></li><li><span>改小且图片数不会持续增长：原有索引保留，搜索正常，但若后续图片增加超过新上限，更新时会报错中断。此时执行一次“重建索引”即可按新容量重新分配。</span></li></ul><p><strong><span>如果你的图片量真的远超百万，有两条更根本的对策：</span></strong></p><figure><table><thead><tr><th><span>对策</span></th><th><span>做法</span></th><th><span>好处</span></th></tr></thead><tbody><tr><td><strong><span>用排除规则减少无意义图片</span></strong></td><td><span>在索引前就过滤掉表情包、缩略图、临时文件等（参见《排除规则·快速入门》）</span></td><td><span>索引更干净，体积更小，有时还能加速扫描</span></td></tr><tr><td><strong><span>分模型管理</span></strong></td><td><span>不同模型分管不同文件夹，各司其职</span></td><td><span>突破单模型容量限制，也能发挥不同模型的检索特长</span></td></tr></tbody></table></figure><p><span>原则上，直接修改模型配置是下下策。因为HNSW索引需要将整个索引加载到内存中，索引容量的默认上限本质就是为了限制无限的内存增长。</span></p><p>&nbsp;</p><h2 id='自动更新索引的行为是什么'><span>自动更新索引的行为是什么？</span></h2><p><span>注意，以下行为仅在2.5之后的版本：</span></p><figure><table><thead><tr><th><span>阶段</span></th><th><span>行为</span></th><th><span>目的</span></th></tr></thead><tbody><tr><td><span>启动后</span></td><td><span>自动更新</span><strong><span>不立即执行</span></strong><span>，而是进入空闲监听</span></td><td><span>避免启动峰值时的资源竞争</span></td></tr><tr><td><span>系统空闲达到阈值（默认 300 秒）</span></td><td><span>自动触发索引更新</span></td><td><span>趁你离开时默默更新，不打扰工作</span></td></tr><tr><td><span>更新期间你回来操作电脑</span></td><td><span>更新</span><strong><span>不会暂停</span></strong><span>，继续后台运行</span></td><td><span>允许一次更新完整结束，避免碎片化</span></td></tr><tr><td><span>更新期间你主动搜索</span></td><td><strong><span>自动更新被静默终止</span></strong><span>，搜索优先</span></td><td><span>搜索流畅度不受影响</span></td></tr><tr><td><span>更新被搜索打断后</span></td><td><span>等下一次空闲期再度触发（不是放弃）</span></td><td><span>确保更新总能完成，只是推迟</span></td></tr></tbody></table></figure><p><strong><span>空闲阈值可以自定义：</span></strong>
+<span>在通用设置 → 常规选项卡 → 打开配置文件，修改 </span><code>auto_update_idle_threshold</code><span>（单位：秒）。</span></p><blockquote><p><strong><span>手动更新与自动更新的区别：</span></strong><span>  </span></p><ul><li><span>手动点击“更新索引目录”</span><strong><span>立即执行</span></strong><span>，不受空闲限制。  </span></li><li><span>搜索打断时：手动更新会弹窗询问“是否终止？”给你选择权；自动更新则无提示、直接让路给搜索。</span></li></ul></blockquote><p>&nbsp;</p><p>&nbsp;</p><h2 id='重建索引到底做了什么'><span>重建索引到底做了什么？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>点击“重建索引”是不是要重新把所有图片再扫描一遍？感觉会很久。</span></p></blockquote><p>&nbsp;</p><p><span>重建索引的行为如下（2.5之后的版本）：</span></p><pre class="md-fences md-end-block md-fences-with-lineno ty-contain-cm modeLoaded" spellcheck="false" lang="text"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang="text"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 19.1992px; left: 63.5938px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 30px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre><div class="CodeMirror-linenumber CodeMirror-gutter-elt"><div>5</div></div></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation" style=""><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: -30px; width: 30px;"></div><div class="CodeMirror-gutter-wrapper CodeMirror-activeline-gutter" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">1</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">重建索引开始</span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt" style="left: 0px; width: 21px;">2</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">  ├─ 清理：移除不存在、重复或已改变的向量</span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt" style="left: 0px; width: 21px;">3</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">  ├─ 模型匹配检查：</span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt" style="left: 0px; width: 21px;">4</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">  └─ 匹配 → 复用现有索引，只扫描新增或变化的图片（很快）</span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">5</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"> &nbsp; &nbsp;  不匹配/损坏 → 自动硬重建（全新创建，速度等同于首次索引）</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 162px;"></div><div class="CodeMirror-gutters" style="height: 162px; left: 0px;"><div class="CodeMirror-gutter CodeMirror-linenumbers" style="width: 29px;"></div></div></div></div></pre><p><strong><span>什么情况会导致“不匹配”而硬重建？</span></strong><span>  </span></p><ul><li><span>更换了模型本身（ONNX 文件变了）  </span></li><li><span>修改了 </span><code>models.json</code><span> 中的 </span><code>image_size</code><span>、</span><code>mean/std</code><span>、</span><code>preprocess_type</code><span>、</span><code>normalization</code><span>、</span><code>output_index</code><span>、</span><code>index_dim</code><span>  </span></li><li><span>索引文件物理损坏</span></li></ul><p><strong><span>极少数情况下，你可能需要“手动硬重建”：</span></strong>
+<span>如果因意外导致索引无法正常复用，可以手动删除模型文件夹下的 </span><code>name_index.json</code><span> 和 </span><code>vector_index.bin</code><span> 两个文件，然后</span><strong><span>重启程序</span></strong><span>，再点击“重建索引”。</span></p><blockquote><p><strong><span>一个重要提醒：</span></strong><span> </span>
+<span>修改预处理参数（如 </span><code>mean/std</code><span>）后，</span><strong><span>不要直接点“更新索引目录”</span></strong><span>，因为“更新”不做向量一致性校验，会把新编码的向量混入旧索引，导致搜索结果失真。一定要点“重建索引”，让系统自动检测并执行硬重建。绝大多数情况下重建只是“查漏补缺”，很快；只有模型真正变化时才全量重建。</span></p></blockquote><p>&nbsp;</p><h1 id='模型'><span>模型</span></h1><h2 id='怎么使用自己训练的模型'><span>怎么使用自己训练的模型？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我想用自己微调的模型来搜索，工具支持吗？该怎么做？</span></p></blockquote><p><strong><span>支持，但目前没有一键转换流程，需要你手动准备模型并填写配置。</span></strong>
+<span>简单说就是：准备一个优化过的 </span><strong><span>ONNX 格式模型</span></strong><span>，放在程序模型目录下，再配好 </span><code>models.json</code><span> 文件。</span></p><p><strong><span>模型文件夹的组织方式：</span></strong>
+<span>每个模型一个文件夹，文件夹名就是模型的唯一 ID。该文件夹下必须包含：</span></p><ul><li><span>图像编码模型（</span><code>.onnx</code><span>，默认放在根目录下）</span></li><li><span>文本编码模型（</span><code>.onnx</code><span>，非必须，仅当是多模态模型时需要）</span></li><li><code>models.json</code><span> 配置文件（放在根目录）</span></li></ul><p><span>一个模型文件夹准备好后，将其放置在：</span><code>./config/data/models/</code><span>下就可以直接被识别使用了。当然，你也可以先把模型文件夹压缩成</span><code>.zip</code><span>格式，然后在模型选项卡点击加载本地模型。</span></p><p>&nbsp;</p><p><span>我们着重讲讲</span><code>models.json</code><span>的格式。作为直接参照，你可以在模型选项卡，双击正在使用的模型，即可看到一份标准的</span><code>models.json</code><span>是什么样的。这其中你特别需要关心的参数：</span></p><figure><table><thead><tr><th><span>参数</span></th><th><span>含义</span></th><th><span>填错后果</span></th></tr></thead><tbody><tr><td><code>image_size</code></td><td><span>图像预处理后的大小，如填224意味着预处理后的图像尺寸是</span><code>224 * 224</code></td><td><span>模型无法将预处理后的图像编码成向量，搜索直接奔溃</span></td></tr><tr><td><code>preprocess_type</code></td><td><span>图像预处理方式（</span><code>resize</code><span> / </span><code>resize_crop</code><span> / </span><code>resize_pad</code><span>）；</span></td><td><span>影响输入张量，改了需要重建索引</span></td></tr><tr><td><code>fill_color</code></td><td><span>仅当</span><code>preprocess_type=resize_pad</code><span>时生效，以列表形式传递，例如</span><code>[255, 255, 255]</code></td><td><span>如果</span><code>preprocess_type=resize_pad</code><span>，改动会导致现有索引污染，必须重建</span></td></tr><tr><td><code>context_length</code></td><td><span>文本模型的文本 tokenize 长度，仅当使用多模态模型时生效</span></td><td><span>对于多模态模型，这直接意味着以文搜图功能会直接报错，无法使用</span></td></tr><tr><td><code>mean</code><span> / </span><code>std</code></td><td><span>训练时的 RGB 像素均值和标准差</span></td><td><span>改动会导致现有索引污染，必须重建</span></td></tr><tr><td><code>normalization</code></td><td><span>是否对输出向量做 L2 归一化</span></td><td><span>填反会导致相似度得分失真、重建校验反复失败（详见下文）</span></td></tr><tr><td><code>output_index</code></td><td><span>模型 ONNX 输出列表中第几个是图像特征向量</span></td><td><span>填错会使得索引用错特征，重建时校验失败</span></td></tr><tr><td><code>image_encoder_path</code></td><td><span>以模型文件夹为工作目录，图像编码模型（.onnx）的文件路径。可以使用绝对路径。</span></td><td><span>无法找到对应的图像编码模型，程序直接卡死</span></td></tr><tr><td><code>text_encoder_path</code></td><td><span>以模型文件夹为工作目录，文本编码模型（.onnx）的文件路径。可以使用绝对路径。</span></td><td><span>对于多模态模型，无法找到对应的文本编码模型，以文搜图功能无法使用</span></td></tr><tr><td><code>index_dim</code></td><td><span>模型输出的向量维度</span></td><td><span>无法构建索引，程序直接崩溃</span></td></tr></tbody></table></figure><blockquote><p><span>⚠️ </span><strong><span>尤其注意 </span><code>normalization</code><span>：</span></strong><span>  </span></p><ul><li><span>图像检索模型（如 CLIP 系列）输出多为</span><strong><span>单位向量</span></strong><span>，填 </span><code>true</code><span> 是安全选择。  </span></li><li><span>纯分类网络改造的编码器通常</span><strong><span>未归一化</span></strong><span>，必须填 </span><code>true</code><span> 才能得到正确的余弦相似度；若填 </span><code>false</code><span> 会严重失真，且每次重建时都会被校验拦截，导致反复硬重建。  </span></li><li><span>若不确定你自有模型的性质，填 </span><code>true</code><span> 几乎总是更安全。填</span><code>false</code><span>仅为免去一次</span><strong><span>不必要的归一化</span></strong><span>，加快索引和搜索速度；</span></li></ul></blockquote><p><span>另外，我们非常渴望用户可以尝试贡献转换后的模型。如果你成功完成了模型转换，非常欢迎你在我们的issue中贡献模型。事实上，贡献模型的核心也就是这份</span><code>models.json</code><span>文件。</span></p><p>&nbsp;</p><h2 id='模型下载失败怎么办'><span>模型下载失败怎么办</span></h2><blockquote><p><strong><span>问题：</span></strong><span>在模型选项卡，点击指定模型的下载按钮，结果显示下载失败了，怎么办呢？</span></p></blockquote><p><span>这种情况建议手动下载。在每个模型的详情页面，都显示有一个下载链接。你可以复制这个链接到浏览器或者第三方的下载软件中进行下载。</span></p><p><span>如果因为访问不了Github无法访问对应的链接，建议寻找一下镜像网站进行下载，例如：</span></p><ul><li><a href='https://gh-proxy.com/'><span>GitHub加速下载代理 - 快速访问 GitHub 文件</span></a></li></ul><p><span>手动下载好的模型后，</span><strong><span>不需要解压</span></strong><span>。点击模型界面的</span><code>加载本地模型</code><span>，选择对应的模型，等待数秒即可。</span></p><p>&nbsp;</p><h2 id='切换模型后索引内容都没了'><span>切换模型后，索引内容都“没了”？</span></h2><blockquote><p><strong><span>问题：</span></strong><span>下载多个模型后，在索引选项卡，点击切换模型，结果原来索引的文件夹都不见了？</span></p></blockquote><p><span>这并不是“没了”了，而是：模型和索引的文件内容是一一对应的。</span><strong><span>只要你将模型切换回去</span></strong><span>，就可以看到原来索引的文件夹。</span></p><p><span>每当你新下载一个模型，新模型的索引文件内容总是空的，需要你为这个模型配备对应的索引文件内容。一个好的习惯是，让更擅长特定搜索任务的模型管理索引特定的文件夹，而不是一股脑全部都交给某一个模型管理。</span></p><p><span>另外，如果一个模型被删除掉了，它对应的索引也就真的“没了”。因此在删除一个模型前，请确认它索引的内容已经没有用了。</span></p><p>&nbsp;</p><h1 id='排除规则'><span>排除规则</span></h1><h2 id='排除规则的作用是什么'><span>排除规则的作用是什么？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我的文件夹里什么都有——照片、截图、表情包、临时缓存图、还有各种软件自动生成的缩略图。搜一张正经照片，结果冒出来一堆不相关的东西。有没有办法让这些东西干脆别出现在搜索结果里？</span></p></blockquote><p><strong><span>解答：</span></strong>
+<span>排除规则就是用来</span><strong><span>在索引阶段就排除掉你不想搜到的图片</span></strong><span>。它不是事后过滤，而是从根源上阻止这些文件进入搜索库——一旦被排除，它们永远不会出现在你的搜索结果中。</span></p><p><strong><span>和“搜索结果过滤”的区别：</span></strong></p><figure><table><thead><tr><th>&nbsp;</th><th><span>搜索结果过滤</span></th><th><span>排除规则</span></th></tr></thead><tbody><tr><td><span>作用阶段</span></td><td><span>搜索时筛掉</span></td><td><span>索引时就不收录</span></td></tr><tr><td><span>特点</span></td><td><span>每次都要设置过滤条件</span></td><td><span>根本进不来</span></td></tr><tr><td><span>适合</span></td><td><span>临时想排除某类结果</span></td><td><span>你明确知道“这类东西永远不想搜到”</span></td></tr></tbody></table></figure><p><strong><span>位置：</span></strong></p><p><span>排除规则功能在索引选项卡，点击右下角的“排除规则管理”，在上方的编辑区中编写。点击新建规则即可开始编写。编写的规则可以通过下方选择文件夹，来预览规则的实际匹配效果。</span></p><p>&nbsp;</p><h2 id='如何排除一整个文件夹'><span>如何排除一整个文件夹？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我有个 </span><code>表情包/</code><span> 文件夹，里面几千张图，每次搜正经照片都混进来。怎么让整个文件夹都不被索引？</span></p></blockquote><p><strong><span>直接写文件夹名就行：</span></strong></p><pre class="md-fences md-end-block md-fences-with-lineno ty-contain-cm modeLoaded" spellcheck="false" lang=""><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 19.1992px; left: 63.5938px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 30px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre><div class="CodeMirror-linenumber CodeMirror-gutter-elt"><div>1</div></div></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: -30px; width: 30px;"></div><div class="CodeMirror-gutter-wrapper CodeMirror-activeline-gutter" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">1</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">表情包/</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 32px;"></div><div class="CodeMirror-gutters" style="height: 32px; left: 0px;"><div class="CodeMirror-gutter CodeMirror-linenumbers" style="width: 29px;"></div></div></div></div></pre><p><strong><span>这条规则做了什么：</span></strong><span> 匹配任意层级下名为 </span><code>表情包</code><span> 的文件夹，连同它里面所有图片一起排除。</span></p><p><strong><span>类似的常见场景：</span></strong></p><figure><table><thead><tr><th><span>你想排除的</span></th><th><span>写法</span></th><th><span>说明</span></th></tr></thead><tbody><tr><td><span>某个文件夹</span></td><td><code>缓存/</code></td><td><span>只要文件夹叫“缓存”，无论在哪个子目录，都会排除</span></td></tr><tr><td><span>某类后缀的文件</span></td><td><code>*.gif</code></td><td><span>所有动图不收录</span></td></tr><tr><td><span>某个具体的文件</span></td><td><code>temp.jpg</code></td><td><span>任意位置的 </span><code>temp.jpg</code><span> 都不收录</span></td></tr><tr><td><span>前面加了 </span><code>/</code><span> 的文件夹</span></td><td><code>/人物/</code></td><td><span>只排除根目录下的 </span><code>人物/</code><span>，子目录里同名的不会受影响</span></td></tr></tbody></table></figure><p>&nbsp;</p><h2 id='如何匹配特定文件名模式'><span>如何匹配特定文件名模式？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我想排除的不只是一个固定的文件夹名，而是一类有规律的文件——比如所有 </span><code>temp_</code><span> 开头的、或者文件名里带数字编号的。怎么写？</span></p></blockquote><p><strong><span>用通配符来描述文件名模式：</span></strong></p><figure><table><thead><tr><th><span>你想要的效果</span></th><th><span>写法</span></th><th><span>匹配了什么</span></th></tr></thead><tbody><tr><td><span>所有 PNG 文件</span></td><td><code>*.png</code></td><td><code>截图.png</code><span>、</span><code>图标.png</code></td></tr><tr><td><code>temp_</code><span> 后跟一个字符</span></td><td><code>temp_?.jpg</code></td><td><code>temp_1.jpg</code><span>、</span><code>temp_a.jpg</code></td></tr><tr><td><span>Photo 或 photo 开头</span></td><td><code>[Pp]hoto*.jpg</code></td><td><code>Photo_a.jpg</code><span>、</span><code>photo_123.jpg</code></td></tr><tr><td><span>任意深度（含根目录）</span></td><td><span>**/缩略图.jpg</span></td><td><span>缩略图.jpg（根目录）、a/缩略图.jpg、a/b/缩略图.jpg</span></td></tr></tbody></table></figure><p><strong><span>这些符号的含义：</span></strong></p><figure><table><thead><tr><th><span>符号</span></th><th><span>作用</span></th><th><span>一句话解释</span></th></tr></thead><tbody><tr><td><code>*</code></td><td><span>匹配任意多个字符（不包括 </span><code>/</code><span>）</span></td><td><span>“什么都行，只要不在子目录里”</span></td></tr><tr><td><code>?</code></td><td><span>匹配</span><strong><span>恰好一个</span></strong><span>字符</span></td><td><span>“有一个字符就行，但必须有”</span></td></tr><tr><td><code>[abc]</code></td><td><span>匹配方括号内的任意一个字符</span></td><td><span>“这几个里哪个都行”</span></td></tr><tr><td><code>**</code></td><td><span>匹配零个或多个目录层级</span></td><td><span>“不管在哪个子目录深处，都能找到它”</span></td></tr><tr><td><span>末尾 </span><code>/</code></td><td><span>只匹配目录，不匹配文件</span></td><td><span>“我只要文件夹，不要同名文件”</span></td></tr></tbody></table></figure><p>&nbsp;</p><h2 id='排除过头了怎么办'><span>排除“过头”了怎么办？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我写了 </span><code>*.png</code><span> 把所有 PNG 都排除了，但文件夹里有一个 </span><code>重要图表.png</code><span> 我想保留。怎么办？</span></p></blockquote><p><strong><span>用 </span><code>!</code><span> 开头写一条“重新纳入”的规则，放在排除规则的下方：</span></strong></p><pre class="md-fences md-end-block md-fences-with-lineno ty-contain-cm modeLoaded" spellcheck="false" lang=""><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 19.1992px; left: 63.5938px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 30px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre><div class="CodeMirror-linenumber CodeMirror-gutter-elt"><div>2</div></div></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: -30px; width: 30px;"></div><div class="CodeMirror-gutter-wrapper CodeMirror-activeline-gutter" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">1</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">*.png &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;  ← 先把所有 PNG 排除</span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">2</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">!重要图表.png &nbsp; &nbsp; &nbsp; &nbsp; ← 再把这一张拉回来</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 65px;"></div><div class="CodeMirror-gutters" style="height: 65px; left: 0px;"><div class="CodeMirror-gutter CodeMirror-linenumbers" style="width: 29px;"></div></div></div></div></pre><p><strong><span>关键规则</span></strong><span>：</span></p><ol start='' ><li><p><code>!</code><span> 取反规则必须写在对应排除规则的</span><strong><span>后面</span></strong><span>，顺序很重要。</span></p></li><li><p><span>以下情况情况 </span><code>!</code><span> 不起作用：</span>
+<code>!</code><span> 取反规则</span><strong><span>只对普通的文件名模式生效</span></strong><span>，以下两种情况无法用 </span><code>!</code><span> 拉回：</span></p><figure><table><thead><tr><th style='text-align:left;' ><span>情况</span></th><th style='text-align:left;' ><span>示例</span></th><th style='text-align:left;' ><span>为什么无效</span></th></tr></thead><tbody><tr><td style='text-align:left;' ><span>文件已被</span><strong><span>特殊规则</span></strong><span>排除</span></td><td style='text-align:left;' ><code>#max_size=1kb</code><span> + </span><code>!big.png</code></td><td style='text-align:left;' ><span>特殊规则（大小/时间）在模式匹配前就过滤了，</span><code>!</code><span> 无法抵消</span></td></tr><tr><td style='text-align:left;' ><span>文件的扩展名</span><strong><span>根本不是图片</span></strong></td><td style='text-align:left;' ><code>!readme.txt</code></td><td style='text-align:left;' ><span>索引本身只收录图片格式，非图片文件在匹配前就被忽略。</span></td></tr></tbody></table></figure></li></ol><p>&nbsp;</p><p>&nbsp;</p><h2 id='怎么按文件大小或修改时间排除'><span>怎么按文件大小或修改时间排除？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我想排除那些特别大的文件（比如 50MB 的扫描件），或者排除很久以前的旧照片。文件夹和文件名没法描述这些条件，怎么办？</span></p></blockquote><p><strong><span>用特殊规则，以 </span><code>#</code><span> 开头，后跟关键字和值：</span></strong></p><figure><table><thead><tr><th><span>你想排除的</span></th><th><span>写法</span></th><th><span>效果</span></th></tr></thead><tbody><tr><td><span>小于 100KB 的图（太小，一般是缩略图）</span></td><td><code>#min_size: 100kb</code></td><td><span>排除小于 100KB 的文件</span></td></tr><tr><td><span>大于 10MB 的文件（太大，可能是扫描件）</span></td><td><code>#max_size=10mb</code></td><td><span>排除大于 10MB 的文件</span></td></tr><tr><td><span>2024 年之前的旧照片</span></td><td><code>#min_modified=2024-01-01</code></td><td><span>排除修改时间早于 2024-01-01 的文件</span></td></tr><tr><td><span>某个日期之后的新增文件</span></td><td><code>#max_modified=1704067200</code></td><td><span>排除修改时间晚于指定时间戳的文件</span></td></tr></tbody></table></figure><p><strong><span>值的格式说明：</span></strong></p><figure><table><thead><tr><th><span>类型</span></th><th><span>格式</span></th><th><span>示例</span></th></tr></thead><tbody><tr><td><span>文件大小</span></td><td><span>数值 + 单位（</span><code>b</code><span>/</span><code>kb</code><span>/</span><code>mb</code><span>），不写单位默认为字节</span></td><td><code>500</code><span> = 500 字节，</span><code>1.5mb</code><span> = 1.5 兆</span></td></tr><tr><td><span>修改时间</span></td><td><code>YYYY-MM-DD</code><span> 日期格式，或 Unix 时间戳数字</span></td><td><code>2024-06-15</code><span> 或 </span><code>1718400000</code></td></tr></tbody></table></figure><p><strong><span>关键理解：</span></strong></p><figure><table><thead><tr><th><span>关键字</span></th><th><span>排除逻辑</span></th><th><span>记忆方法</span></th></tr></thead><tbody><tr><td><code>min_size</code></td><td><span>文件</span><strong><span>小于</span></strong><span>这个值 → 排除</span></td><td><span>“最小都得这么大，比这小就不要”</span></td></tr><tr><td><code>max_size</code></td><td><span>文件</span><strong><span>大于</span></strong><span>这个值 → 排除</span></td><td><span>“最大只能这么大，比这大就不要”</span></td></tr><tr><td><code>min_modified</code></td><td><span>时间</span><strong><span>早于</span></strong><span>这个日期 → 排除</span></td><td><span>“最早只能是这天，比这早就不要”</span></td></tr><tr><td><code>max_modified</code></td><td><span>时间</span><strong><span>晚于</span></strong><span>这个日期 → 排除</span></td><td><span>“最晚只能是这天，比这晚就不要”</span></td></tr></tbody></table></figure><blockquote><p><span>⚠️ </span><strong><span>注意：</span></strong><span> </span></p><ol start='' ><li><span>特殊规则以 </span><code>#</code><span> 开头，但它不是注释。只有不以这些关键字开头的 </span><code>#</code><span> 行才是注释。写法不分大小写，</span><code>=</code><span> 和 </span><code>:</code><span> 都行。</span></li><li><strong><span>如果值写错了格式，规则会被静默忽略。</span></strong><span> 例如 </span><code>#min_size: abc</code><span>（无法解析成数值），整条规则将不起作用，不会报错也不会当作注释。编写时请确保值格式正确，否则你可能以为规则生效了，实际上等于没写。</span></li></ol></blockquote><p>&nbsp;</p><h2 id='怎么看到规则会排除哪些内容'><span>怎么看到规则会排除哪些内容？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我写了几条规则，但不太确定它们会不会误伤重要图片，或者漏掉想排除的文件。有没有办法在不实际重建索引的情况下，先预览一下规则的效果？</span></p></blockquote><p><strong><span>用编辑界面下方的预览窗口。</span></strong></p><p><span>排除规则管理界面分为上下两部分：</span></p><figure><table><thead><tr><th><span>区域</span></th><th><span>作用</span></th></tr></thead><tbody><tr><td><strong><span>上方</span></strong></td><td><span>规则编辑列表，你在这里写规则、调整顺序</span></td></tr><tr><td><strong><span>下方</span></strong></td><td><span>效果预览窗口，在这里看规则“如果应用了，会怎样”</span></td></tr></tbody></table></figure><p><strong><span>预览窗口的使用方法：</span></strong></p><ol start='' ><li><span>在下方预览窗口中选择一个你电脑上的</span><strong><span>本地文件夹</span></strong><span>（不需要是当前索引的目录）</span></li><li><span>在上方规则列表中，</span><strong><span>单击选中某一条规则</span></strong><span>（或什么都不选 —— 先点击新增规则，然后点击空白处即可取消所有选中。这样表示应用全部规则）</span></li><li><span>预览窗口会立刻展示：在这个文件夹里，有多少张图片会被你选中的规则（或全部规则）排除</span></li></ol><p><strong><span>它的设计目的：</span></strong></p><figure><table><thead><tr><th><span>你担心的</span></th><th><span>预览功能如何帮你</span></th></tr></thead><tbody><tr><td><span>通配符写得太宽，误伤了正常文件</span></td><td><span>选一个有正常图片的文件夹看看，确认无误再保存</span></td></tr><tr><td><span>规则没写对，根本没匹配到想排除的文件</span></td><td><span>选一个包含目标文件的文件夹，看预览结果是否命中</span></td></tr><tr><td><span>多条规则互相影响，搞不清最终效果</span></td><td><span>逐条预览，或看“全部规则”的汇总效果</span></td></tr></tbody></table></figure><blockquote><p><span>⚠️ </span><strong><span>重要区分：</span></strong><span> 预览窗口只展示规则在你</span><strong><span>手动选择的文件夹</span></strong><span>上的模拟效果，</span><strong><span>不会改动任何索引数据</span></strong><span>。它纯粹是一个安全的“排练场”，让你在实际应用前确认规则是否符合预期。</span></p></blockquote><p>&nbsp;</p><h2 id='清理排除图片按钮的用途'><span>“清理排除图片”按钮的用途？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我一开始没写排除规则，已经索引了一批乱七八糟的图片。后来补充了规则，但之前的垃圾还在库里。怎么办？</span></p></blockquote><p><strong><span>用“清理排除图片”按钮。</span></strong><span>这个按钮位于</span><strong><span>索引选项卡</span></strong><span>的右下角。</span></p><figure><table><thead><tr><th><span>点击后发生了什么</span></th><th><span>目的</span></th></tr></thead><tbody><tr><td><span>根据</span><strong><span>当前的排除规则</span></strong><span>，重新检查所有已被索引的图片</span></td><td><span>找出那些现在应该被排除、但之前已经入库的文件</span></td></tr><tr><td><span>把不属于任何当前索引目录的记录一并移除</span></td><td><span>如果你更改了索引目录设置，旧路径下的残留记录也会被清理，保持索引与当前配置一致。</span></td></tr><tr><td><span>把这些匹配到的图片从索引中移除</span></td><td><span>让搜索结果立刻变干净</span></td></tr><tr><td><span>图片文件本身不会删除，硬盘上依然存在</span></td><td><span>只清理索引记录，不动你的文件</span></td></tr></tbody></table></figure><p><strong><span>什么时候用：</span></strong></p><figure><table><thead><tr><th><span>场景</span></th><th><span>是否需要点这个按钮</span></th></tr></thead><tbody><tr><td><span>刚写好排除规则，之前没索引过</span></td><td><span>不需要，索引时自动应用</span></td></tr><tr><td><span>已经索引了一批图，后补了排除规则</span></td><td><strong><span>需要</span></strong><span>，把之前的漏网之鱼清掉</span></td></tr><tr><td><span>修改了已有的排除规则，想立刻看到效果</span></td><td><strong><span>需要</span></strong><span>，让修改对已索引的图片生效</span></td></tr></tbody></table></figure><p>&nbsp;</p><p>&nbsp;</p><h1 id='自定义菜单命令'><span>自定义菜单命令</span></h1><h2 id='自定义菜单命令能让我做什么'><span>自定义菜单命令能让我做什么？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我已经能用这个工具搜索图片、右键打开、复制、另存为了——那“自定义菜单命令”还能让我多做些什么？</span></p></blockquote><p><strong><span>答案：</span></strong>
+<span>它让你在右键菜单里添加</span><strong><span>你自己的命令</span></strong><span>，对选中的图片直接调用任意外部程序或脚本，完成搜索工具本身不内置的自动化操作。</span></p><p><strong><span>示例：</span></strong>
+<span>你搜到一批截图，想快速把它们全部转成 JPG。如果没有自定义命令，你需要一张张打开、另存为。有了它，你只需在菜单里添加一条命令，之后每次搜索出图片，选中、右键、点击，就自动完成。</span></p><p><strong><span>它和内置菜单的关系：</span></strong></p><figure><table><thead><tr><th><span>内置菜单能做的</span></th><th><span>自定义菜单能额外做的</span></th></tr></thead><tbody><tr><td><span>打开图片、复制、另存为等固定操作</span></td><td><span>调用 ffmpeg、ImageMagick、Python 脚本等任意外部工具</span></td></tr><tr><td><span>功能固定，无法扩展</span></td><td><span>你想对图片做什么，就写什么命令</span></td></tr><tr><td><span>已经够用——直到你发现“还差一步”</span></td><td><span>补上那一步，让工具更贴合你的工作流</span></td></tr></tbody></table></figure><p>&nbsp;</p><h2 id='一个自定义命令由哪些部分组成'><span>一个自定义命令由哪些部分组成？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我决定自己加一条命令了——它到底由什么组成？我需要写什么？</span></p></blockquote><p><strong><span>一个完整的自定义菜单命令只有三样东西：</span></strong></p><ol start='' ><li><span>命令执行的</span><strong><span>主体</span></strong></li><li><span>命令执行的</span><strong><span>参数</span></strong></li><li><span>需要用到的</span><strong><span>变量</span></strong></li></ol><p><span>例如：</span><code>ffmpeg -i {path} {dir}/{noext}.jpg</code></p><p><span>这条命令中，</span><code>ffmpeg</code><span>就是命令执行的</span><strong><span>主体</span></strong><span>，</span><code>-i</code><span> 、</span><code>{path}</code><span>和</span><code>{dir}/{noext}.jpg</code><span>都会被当成</span><strong><span>参数</span></strong><span>处理。而一条命令要想能够对选中的图片执行操作，就必须用变量（它们会在执行命令时实际替换成相应的信息）</span></p><p>&nbsp;</p><p><strong><span>几个入门示例：</span></strong></p><figure><table><thead><tr><th><span>你想做的</span></th><th><span>命令写法</span></th><th><span>说明</span></th></tr></thead><tbody><tr><td><span>PNG 转 JPG</span></td><td><code>ffmpeg -i {path} {dir}/{noext}.jpg</code></td><td><code>{path}</code><span> 是原图，</span><code>{dir}/{noext}.jpg</code><span> 是同文件夹下的新文件</span></td></tr><tr><td><span>用 ImageMagick 加文字水印</span></td><td><code>magick {path} -pointsize 36 -fill white -gravity southeast -annotate 0 &quot;我的水印&quot; {dir}/watermarked_{name}</code></td><td><span>输出文件名前缀加上 </span><code>watermarked_</code><span>，避免覆盖原图</span></td></tr><tr><td><span>调用自己的 Python 脚本</span></td><td><code>python D:/tools/my_script.py {path} {dir}/result.png</code></td><td><span>脚本接收两个参数：输入路径和输出路径，在内部自由处理</span></td></tr></tbody></table></figure><p><strong><span>这些变量是什么意思？</span></strong></p><figure><table><thead><tr><th><span>变量</span></th><th><span>代表什么</span></th></tr></thead><tbody><tr><td><code>{path}</code></td><td><span>选中图片的完整路径，比如 </span><code>D:\照片\2024\IMG_001.png</code></td></tr><tr><td><code>{dir}</code></td><td><span>图片所在的文件夹</span></td></tr><tr><td><code>{name}</code></td><td><span>完整文件名，如 </span><code>IMG_001.png</code></td></tr><tr><td><code>{noext}</code></td><td><span>文件名不含后缀，如 </span><code>IMG_001</code></td></tr><tr><td><code>{ext}</code></td><td><span>后缀名含点，如 </span><code>.png</code></td></tr><tr><td><code>{count}</code></td><td><span>选中图片的数量，注意</span><strong><span>常规模式</span></strong><span>下始终为1，仅在</span><strong><span>批量模式</span></strong><span>下实际计数。</span></td></tr></tbody></table></figure><blockquote><p><strong><span>注意</span></strong><span>：你不需要给 </span><code>{path}</code><span> 加引号，因为工具会自动保证路径作为一个完整参数传递。即使你习惯性地加了引号（如 </span><code>&quot;{path}&quot;</code><span>），它也不会造成错误，只是多余而已。</span></p></blockquote><p>&nbsp;</p><p>&nbsp;</p><h2 id='批量模式和常规模式在多图处理时的区别'><span>批量模式和常规模式在多图处理时的区别？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我经常一次性选中几十张图片进行处理。是用常规模式还是批量模式？</span></p></blockquote><p><strong><span>答案取决于你的任务性质。</span></strong><span> 工具提供两种模式，目的就是让你在“独立性”和“效率”之间做取舍。</span></p><figure><table><thead><tr><th><span>需求</span></th><th><span>推荐模式</span></th><th><span>好处</span></th></tr></thead><tbody><tr><td><span>每张图各自得到一个独立结果</span></td><td><strong><span>常规模式</span></strong><span>（默认）</span></td><td><span>互不干扰，写法不变</span></td></tr><tr><td><span>需要程序一次性看到所有文件</span></td><td><strong><span>批量模式</span></strong></td><td><span>只启动一次程序，效率高</span></td></tr></tbody></table></figure><h3 id='常规模式默认）'><span>常规模式（默认）</span></h3><p><span>你什么都不用管，命令该怎么写还怎么写。选中 50 张图片，工具会自动把你写的命令执行 50 次，每次都会把命令中的变量替换成当前那一张图的信息。</span></p><blockquote><p><strong><span>适用场景：</span></strong><span> 逐张加水印、转格式、调色、生成缩略图……一切“一张进、一张出”的操作。</span></p></blockquote><p>&nbsp;</p><h3 id='批量模式需要时手动勾选开启）'><span>批量模式（需要时手动勾选开启）</span></h3><p><span>命令只执行一次，但你需要使用 </span><code>{paths}</code><span>（注意有个 </span><strong><span>s</span></strong><span>）来接收所有文件的列表。</span></p><blockquote><p><strong><span>适用场景：</span></strong><span> 拼接长图、合并成 PDF、统计所有图片信息……需要程序“总览全局”的操作。</span></p></blockquote><p><strong><span>快速判断法则：</span></strong></p><ul><li><span>命令的逻辑是“一个文件 → 一个文件”：用常规模式，变量用 </span><code>{path}</code></li><li><span>命令的逻辑是“一堆文件 → 一个结果”：用批量模式，变量用 </span><code>{paths}</code></li></ul><p>&nbsp;</p><p><strong><span>批量模式下各变量的指向：</span></strong></p><ul><li><code>{path}</code><span>、</span><code>{dir}</code><span>、</span><code>{name}</code><span>、</span><code>{noext}</code><span>、</span><code>{ext}</code><span> 均指向</span><strong><span>第一个文件</span></strong><span>。</span></li><li><code>{paths}</code><span> 才是所有文件的列表。</span></li><li><code>{count}</code><span> 为文件总数。</span></li></ul><p><span>这样设计是为了保持与常规模式下变量含义的一致，避免混淆。</span></p><p>&nbsp;</p><p>&nbsp;</p><h2 id='文件列表的分隔符如何指定'><span>文件列表的分隔符如何指定？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我开启了批量模式，用了 </span><code>{paths}</code><span>——但程序要求文件之间用逗号分隔，怎么办？</span></p></blockquote><p><strong><span>用 </span><code>sep</code><span> 修饰符来控制分隔方式。</span></strong><span> 它只适用于列表变量 </span><code>{paths}</code><span> 和 </span><code>{ask_files}</code><span>。</span></p><p><strong><span>语法：</span></strong><span> </span><code>{变量:sep=分隔符}</code></p><figure><table><thead><tr><th><span>你的程序需要</span></th><th><span>写法</span></th><th><span>实际传进去的效果</span></th></tr></thead><tbody><tr><td><span>多个独立参数（默认）</span></td><td><code>{paths}</code></td><td><span>图1 图2 图3（每个作为单独参数）</span></td></tr><tr><td><span>逗号分隔</span></td><td><code>{paths:sep=,}</code></td><td><code>图1,图2,图3</code><span>（合为一个参数）</span></td></tr><tr><td><span>竖线分隔（FFmpeg concat 常用）</span></td><td><code>{paths:sep=\|}</code></td><td><code>图1\|图2\|图3</code></td></tr><tr><td><span>换行分隔</span></td><td><code>{paths:sep=\n}</code></td><td><span>每行一个路径</span></td></tr></tbody></table></figure><blockquote><p><strong><span>目的：</span></strong><span> 不同程序对文件列表的格式要求不同，</span><code>sep</code><span> 让你一条命令适配各种情况。</span></p></blockquote><p>&nbsp;</p><h2 id='引号的分组作用'><span>引号的分组作用</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>变量路径不用加引号我知道了，但命令本身还有其他空格——比如我想传一个带空格的固定参数给程序，该怎么写？</span></p></blockquote><p><strong><span>核心规则：</span></strong></p><figure><table><thead><tr><th style='text-align:left;' ><span>你的目的</span></th><th style='text-align:left;' ><span>写法</span></th><th style='text-align:left;' ><span>效果</span></th></tr></thead><tbody><tr><td style='text-align:left;' ><span>把一个含空格的固定字符串当作</span><strong><span>一个参数</span></strong></td><td style='text-align:left;' ><code>&quot;固定的文本&quot;</code></td><td style='text-align:left;' ><span>合并为一个参数 </span><code>固定的文本</code><span>，引号会被剥离</span></td></tr><tr><td style='text-align:left;' ><span>保护变量（无必要，但无害）</span></td><td style='text-align:left;' ><code>&quot;{path}&quot;</code></td><td style='text-align:left;' ><span>结果与不写引号完全相同，引号只起分组作用，不会被传给程序</span></td></tr><tr><td style='text-align:left;' ><span>在参数里包含字面双引号</span></td><td style='text-align:left;' ><code>&quot;a\&quot;b&quot;</code></td><td style='text-align:left;' ><span>变成一个参数 </span><code>a&quot;b</code><span>（</span><code>\&quot;</code><span> 是转义）</span></td></tr></tbody></table></figure><p><strong><span>普通引号不会成为传给程序的数据本身。</span></strong><span> 它的唯一作用是在分词阶段告诉解析器“这几个词应该放在一起”。如果你一定需要使用引号，请使用转义符号</span><code>\</code><span>；</span></p><p><strong><span>示例：</span></strong></p><pre class="md-fences md-end-block md-fences-with-lineno ty-contain-cm modeLoaded" spellcheck="false" lang="text"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang="text"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 19.1992px; left: 63.5938px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 30px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre><div class="CodeMirror-linenumber CodeMirror-gutter-elt"><div>1</div></div></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: -30px; width: 30px;"></div><div class="CodeMirror-gutter-wrapper CodeMirror-activeline-gutter" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">1</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">ffmpeg -i {path} -vf "drawtext=text='hello world':x=10:y=10" {dir}/out.mp4</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 32px;"></div><div class="CodeMirror-gutters" style="height: 32px; left: 0px;"><div class="CodeMirror-gutter CodeMirror-linenumbers" style="width: 29px;"></div></div></div></div></pre><p><span>这里 </span><code>&quot;drawtext=text=&#39;hello world&#39;:x=10:y=10&quot;</code><span> 是一整个滤镜子串，必须用双引号包住，否则空格会把它切成好几个参数。</span></p><p><strong><span>关于 </span><code>{path}</code><span> 到底要不要加引号：</span></strong>
+<span>结论是</span><strong><span>不需要</span></strong><span>。因为变量值在分词完成后才注入参数数组，含空格路径会被视为一个整体。如果你加了引号，比如 </span><code>&quot;{path}&quot;</code><span>，引号仅执行分组后就消失了，最终传给程序的参数和没加引号时完全一样——不会有任何负面作用，但也纯属多此一举。</span></p><p>&nbsp;</p><p>&nbsp;</p><h2 id='命令执行前手动输入数据'><span>命令执行前手动输入数据</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>比如每次加水印的文字不同，或者想手动选择输出文件夹——能不能在执行命令时弹出输入框让我填写？</span></p></blockquote><p><strong><span>可以，用 </span><code>ask</code><span> 系列变量。</span></strong><span> 命令执行到这些变量时，会弹出一个输入窗口，填完后再继续。</span><strong><span>可用的 ask 变量：</span></strong></p><figure><table><thead><tr><th><span>变量</span></th><th><span>弹出什么</span></th><th><span>适用场景</span></th></tr></thead><tbody><tr><td><code>{ask_string}</code></td><td><span>文本输入框</span></td><td><span>水印文字、文件名前缀、备注信息</span></td></tr><tr><td><code>{ask_int}</code></td><td><span>整数输入框</span></td><td><span>宽度、高度、质量参数（如 </span><code>-q:v {ask_int}</code><span>）</span></td></tr><tr><td><code>{ask_float}</code></td><td><span>小数输入框</span></td><td><span>缩放比例、透明度等</span></td></tr><tr><td><code>{ask_dir}</code></td><td><span>文件夹选择框</span></td><td><span>手动指定输出目录</span></td></tr><tr><td><code>{ask_file}</code></td><td><span>单文件选择框</span></td><td><span>选择水印图、模板文件等</span></td></tr><tr><td><code>{ask_files}</code></td><td><span>多文件选择框</span></td><td><span>额外批量选择文件，作为列表变量，可与 </span><code>sep</code><span> 修饰符配合使用，如 </span><code>{ask_files:sep=,}</code></td></tr></tbody></table></figure><p><strong><span>示例：</span></strong></p><pre class="md-fences md-end-block md-fences-with-lineno ty-contain-cm modeLoaded" spellcheck="false" lang=""><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 18.9746px; left: 63.5938px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 30px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre><div class="CodeMirror-linenumber CodeMirror-gutter-elt"><div>1</div></div></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: -30px; width: 30px;"></div><div class="CodeMirror-gutter-wrapper CodeMirror-activeline-gutter" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">1</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">自定义水印 → magick {path} -gravity southeast -fill white -pointsize 36 -annotate 0 "{ask_string}" {dir}/watermarked_{name}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 65px;"></div><div class="CodeMirror-gutters" style="height: 65px; left: 0px;"><div class="CodeMirror-gutter CodeMirror-linenumbers" style="width: 29px;"></div></div></div></div></pre><p><span>执行时：</span></p><ol start='' ><li><span>弹出一个文本框</span></li><li><span>你输入“张三拍摄 2024”</span></li><li><span>水印文字就是“张三拍摄 2024”</span></li></ol><blockquote><p><strong><span>注意：</span></strong><span> 同一个 ask 变量在命令中出现多次，只会弹一次框。用户点取消则中止执行。</span></p></blockquote><p>&nbsp;</p><h2 id='写好的命令怎么测试'><span>写好的命令怎么测试？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>命令写完了，但我不确定它会不会正常工作，甚至担心把原图弄坏了。怎么安全地测试？</span></p></blockquote><p><strong><span>用测试模式。</span></strong><span> 它的目的就是让你在隔离环境里验证命令，绝不触碰原图。</span></p><p><strong><span>启用方法：</span></strong>
+<span>在编辑命令时，点击右下角的 </span><strong><span>●正常</span></strong><span>按钮，当按钮变成</span><strong><span>◍测试</span></strong><span> 的字样时，它会自动在命令第一行插入</span><code>#test</code><span>标识，进入到测试模式。这与手动写 </span><code>#test</code><span> 完全等效——按钮只是帮你省去手敲这一步。</span></p><p><strong><span>测试模式下会发生什么：</span></strong></p><figure><table><thead><tr><th><span>行为</span></th><th><span>目的</span></th></tr></thead><tbody><tr><td><span>选中的图片被</span><strong><span>复制</span></strong><span>到一个临时文件夹</span></td><td><span>原图 100% 安全，任何操作只影响副本</span></td></tr><tr><td><span>命令在临时文件夹里执行</span></td><td><span>输出文件也在临时文件夹，不会污染原目录</span></td></tr><tr><td><span>选中的图片超过 10 张时自动截断为 10 张</span></td><td><span>防止一次测试耗时过长</span></td></tr><tr><td><span>执行完成后弹出结果窗口</span></td><td><span>你能看到完整的参数解析结果、返回码、程序输出，方便排查问题</span></td></tr></tbody></table></figure><p><span>另外，一条命令如果语法错误，比如没有使用正确的变量名，无论是正常模式还是测试模式，都会在实际执行前就被拦截。解析错误会弹框并带行号/列号（如&quot;未闭合的引号，第1行第6列&quot;）。</span></p><blockquote><p><strong><span>推荐工作流：</span></strong><span> 先写命令 → 开启测试模式 → 选一张图和多张图验证 → 确认无误 → 关闭测试模式 → 正式使用。</span></p></blockquote><p>&nbsp;</p><p>&nbsp;</p><h2 id='常见错误速查'><span>常见错误速查</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我觉得自己已经理解了，但有没有一个清单，让我在写命令时快速对照一下？</span></p></blockquote><p><strong><span>常见的错误如下：</span></strong></p><figure><table><thead><tr><th><span>错误写法</span></th><th><span>为什么不对</span></th><th><span>正确做法</span></th></tr></thead><tbody><tr><td><span>用单引号分组：</span><code>&#39;a b&#39;</code></td><td><span>单引号不参与分组，会被拆成多个参数</span></td><td><span>用双引号：</span><code>&quot;a b&quot;</code></td></tr><tr><td><span>在命令里用 </span><code>\|</code><span> </span><code>&gt;</code><span> </span><code>&amp;</code></td><td><span>命令不经 shell，这些符号会当作普通参数传给程序</span></td><td><span>需要管道时封装成脚本调用</span></td></tr><tr><td><span>一条命令写多行</span></td><td><span>一行就是一次完整的命令，多行会报错</span></td><td><span>多步骤逻辑封装进 .py 或 .ps1 脚本</span></td></tr><tr><td><span>把 </span><code>{paths}</code><span> 用在常规模式</span></td><td><span>常规模式下 </span><code>{paths}</code><span> 只含一个元素</span></td><td><span>需要列表时切到批量模式</span></td></tr><tr><td><span>命令使用</span><code>#</code><span>开头</span></td><td><code>#</code><span>开头的内容统统会被当成注释，不会被执行</span></td><td><span>去掉</span><code>#</code></td></tr></tbody></table></figure><p>&nbsp;</p><h2 id='如果我需要的功能很复杂命令一行写不下怎么办'><span>如果我需要的功能很复杂，命令一行写不下怎么办？</span></h2><blockquote><p><strong><span>问题：</span></strong>
+<span>我想做的不只是“转个格式”那么简单——可能涉及多步处理、管道操作、剪贴板交互。一行命令肯定搞不定，怎么办？</span></p></blockquote><p><strong><span>把复杂逻辑封装成脚本，然后用自定义命令调用脚本。</span></strong></p><p><strong><span>示例：</span></strong><span> 你想把选中图片的路径复制到剪贴板。这在命令行里直接做很麻烦，但用 Python 脚本就很简单：</span></p><p><strong><span>脚本 </span><code>copy_paths.py</code><span>（放在 </span><code>D:/tools/</code><span> 里）：</span></strong></p><pre class="md-fences md-end-block md-fences-with-lineno ty-contain-cm modeLoaded" spellcheck="false" lang="python"><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang="python"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 19.1992px; left: 63.5938px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 30px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre><div class="CodeMirror-linenumber CodeMirror-gutter-elt"><div>3</div></div></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: -30px; width: 30px;"></div><div class="CodeMirror-gutter-wrapper CodeMirror-activeline-gutter" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">1</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-keyword">import</span> <span class="cm-variable">sys</span>, <span class="cm-variable">pyperclip</span></span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt" style="left: 0px; width: 21px;">2</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">paths</span> <span class="cm-operator">=</span> <span class="cm-variable">sys</span>.<span class="cm-property">argv</span>[<span class="cm-number">1</span>:] &nbsp;<span class="cm-comment"># 接收所有路径</span></span></pre></div><div style="position: relative;"><div class="CodeMirror-gutter-wrapper" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">3</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;"><span class="cm-variable">pyperclip</span>.<span class="cm-property">copy</span>(<span class="cm-string">"\n"</span>.<span class="cm-property">join</span>(<span class="cm-variable">paths</span>))</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 97px;"></div><div class="CodeMirror-gutters" style="height: 97px; left: 0px;"><div class="CodeMirror-gutter CodeMirror-linenumbers" style="width: 29px;"></div></div></div></div></pre><p><strong><span>自定义命令并开启批量模式：</span></strong></p><pre class="md-fences md-end-block md-fences-with-lineno ty-contain-cm modeLoaded" spellcheck="false" lang=""><div class="CodeMirror cm-s-inner cm-s-null-scroll CodeMirror-wrap" lang=""><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 19.1992px; left: 63.5938px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; bottom: -1em; padding: 0px; width: 1000px; height: 1em; outline: none;"></textarea></div><div class="CodeMirror-scrollbar-filler" cm-not-content="true"></div><div class="CodeMirror-gutter-filler" cm-not-content="true"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="margin-left: 30px; margin-bottom: 0px; border-right-width: 0px; padding-right: 0px; padding-bottom: 0px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines" role="presentation"><div role="presentation" style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>xxxxxxxxxx</span></pre><div class="CodeMirror-linenumber CodeMirror-gutter-elt"><div>1</div></div></div><div class="CodeMirror-measure"></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code" role="presentation"><div class="CodeMirror-activeline" style="position: relative;"><div class="CodeMirror-activeline-background CodeMirror-linebackground"></div><div class="CodeMirror-gutter-background CodeMirror-activeline-gutter" style="left: -30px; width: 30px;"></div><div class="CodeMirror-gutter-wrapper CodeMirror-activeline-gutter" style="left: -30px;"><div class="CodeMirror-linenumber CodeMirror-gutter-elt CodeMirror-linenumber-show" style="left: 0px; width: 21px;">1</div></div><pre class=" CodeMirror-line " role="presentation"><span role="presentation" style="padding-right: 0.1px;">复制路径到剪贴板 → python D:/tools/copy_paths.py {paths}</span></pre></div></div></div></div></div></div><div style="position: absolute; height: 0px; width: 1px; border-bottom: 0px solid transparent; top: 32px;"></div><div class="CodeMirror-gutters" style="height: 32px; left: 0px;"><div class="CodeMirror-gutter CodeMirror-linenumbers" style="width: 29px;"></div></div></div></div></pre><p><strong><span>这样做的好处：</span></strong></p><figure><table><thead><tr><th><span>直接在命令里写</span></th><th><span>封装成脚本</span></th></tr></thead><tbody><tr><td><span>受工具语法限制，一行内难以完成</span></td><td><span>使用完整的编程语言，任何逻辑都能实现</span></td></tr><tr><td><span>对特殊字符（引号、管道等）处理棘手</span></td><td><span>脚本内部可以自由处理任意复杂情况</span></td></tr><tr><td><span>换一台电脑可能要调整</span></td><td><span>脚本可复用、可分享、可版本管理</span></td></tr></tbody></table></figure><blockquote><p><strong><span>原则：</span></strong><span> 命令本身负责“调用脚本”，脚本负责“具体逻辑”。各司其职，简单可靠。</span></p></blockquote><p>&nbsp;</p><h1 id='用户反馈'><span>用户反馈</span></h1><p><span>以下提供几个用户反馈的渠道，你可以在反馈渠道做的事包括：</span></p><ol start='' ><li><span>提议新功能，你应该详细解释为什么你需要这个功能，现有的操作策略是什么；</span></li><li><span>反馈BUG，明确解释其复现流程；</span></li><li><span>对某项原有功能的改进想法；</span></li><li><span>关于功能的某些疑问，帮助文档中没有提到；</span></li></ol><p><span>反馈渠道：</span></p><ol start='' ><li><a href='https://github.com/Just-A-Freshman/VimgFind/issues'><span>Issues · Just-A-Freshman/VimgFind</span></a></li><li><a href='https://gitee.com/Chorgri/VimgFind/issues'><span>Issues · Chorgri/VimgFind - Gitee.com</span></a></li><li><span>Outlook邮箱：</span><a href='mailto:Chorgri@outlook.com' target='_blank' class='url'>Chorgri@outlook.com</a></li></ol><p>&nbsp;</p><p>&nbsp;</p></div></div>
+
+<script>(function(){var e=document.body.parentElement,t=[],n=null,i=document.body.classList.contains("typora-export-collapse-outline"),r=function(e,t,n){document.addEventListener(e,function(e){if(!e.defaultPrevented)for(var i=e.target;i&&i!=this;i=i.parentNode)if(i.matches(t)){!1===n.call(i,e)&&(e.preventDefault(),e.stopPropagation());break}},!1)};function o(){return e.scrollTop}r("click",".outline-expander",function(e){var t=this.closest(".outline-item-wrapper").classList;return t.contains("outline-item-open")?t.remove("outline-item-open"):t.add("outline-item-open"),d(),!1}),r("click",".outline-item",function(e){var t=this.querySelector(".outline-label");if(location.hash="#"+t.getAttribute("href"),i){var n=this.closest(".outline-item-wrapper").classList;n.contains("outline-item-open")||n.add("outline-item-open"),c(),n.add("outline-item-active")}});var a,s,l=function(){var e=o();n=null;for(var i=0;i<t.length&&t[i][1]-e<60;i++)n=t[i]},c=function(){document.querySelectorAll(".outline-item-active").forEach(e=>e.classList.remove("outline-item-active")),document.querySelectorAll(".outline-item-single.outline-item-open").forEach(e=>e.classList.remove("outline-item-open"))},d=function(){if(n){c();var e=document.querySelector('.outline-label[href="#'+(CSS.escape?CSS.escape(n[0]):n[0])+'"]');if(e)if(i){var t=e.closest(".outline-item-open>ul>.outline-item-wrapper");if(t)t.classList.add("outline-item-active");else{for(var r=(e=e.closest(".outline-item-wrapper")).parentElement.closest(".outline-item-wrapper");r;)r=(e=r).parentElement.closest(".outline-item-wrapper");e.classList.add("outline-item-active")}}else e.closest(".outline-item-wrapper").classList.add("outline-item-active")}};window.addEventListener("scroll",function(e){a&&clearTimeout(a),a=setTimeout(function(){l(),d()},300)});var u=function(){s=setTimeout(function(){!function(){t=[];var e=o();document.querySelector("#write").querySelectorAll("h1, h2, h3, h4, h5, h6").forEach(n=>{var i=n.getAttribute("id");t.push([i,e+n.getBoundingClientRect().y])})}(),l(),d()},300)};window.addEventListener("resize",function(e){s&&clearTimeout(s),u()}),u()})();</script></body>
+</html>

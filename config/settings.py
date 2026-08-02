@@ -7,6 +7,7 @@ from pathlib import Path
 import ctypes
 import json
 import logging
+import webbrowser
 import os
 
 from .types import AppSettings, ModelConfig
@@ -107,6 +108,11 @@ class Setting:
                         f.write(line)
                 except (ValueError, IndexError):
                     pass
+            
+    def link_to_docs(self, anchor: str = "") -> None:
+        anchor = f"#{anchor}" if anchor else ""
+        docs_path = (Setting.config_path / "docs" / f"help_{self.app.locale}.html").as_uri()
+        webbrowser.open(f"{docs_path}{anchor}")
 
     def get_active_config_path(self) -> Path:
         if self.app.other_config_path:
