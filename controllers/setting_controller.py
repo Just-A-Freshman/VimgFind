@@ -78,7 +78,6 @@ class GeneralController:
     def __init__(self, general_tab: GeneralTab, app_controller: AppController) -> None:
         self.general_tab = general_tab
         self.app = app_controller
-        # 语言列表不再硬编码，根据 locales 目录中的翻译文件动态生成
         locales = I18n.available_locales()
         self.LOCALE_MAP: dict[str, int] = {loc: i for i, loc in enumerate(locales)}
         self.REVERSE_LOCALE_MAP: dict[int, str] = {i: loc for i, loc in enumerate(locales)}
@@ -185,7 +184,7 @@ class CustomMenuController:
     def env_init(self) -> None:
         tab = self.custom_menu_tab
         for item in self.app.setting.app.menu_items:
-            values = (item.name, _("是") if item.is_visible else _("否"),)
+            values = (item.name if item.type != "embedded" else _(item.name), _("是") if item.is_visible else _("否"),)
             iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=values)
             self.__items_data[iid] = item
         for i in range(2):
@@ -196,7 +195,7 @@ class CustomMenuController:
         tab.delete_button.config(command=self.__delete_menu_item)
         tab.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("自定义菜单命令")))
         tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
-        tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("id"))
+        tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("name"))
         tab.is_visible_checkbutton.config(command=lambda: self.__sync_item_property("is_visible"))
         tab.batch_mode_checkbutton.config(command=lambda: self.__sync_item_property("batch_mode"))
         tab.shortcut_entry.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")
@@ -258,7 +257,7 @@ class CustomMenuController:
             self.__items_data.pop(iid, None)
         self.custom_menu_tab.show_default()
 
-    def __sync_item_property(self, property: Literal["id", "is_visible", "batch_mode", "shortcut", "command"]):
+    def __sync_item_property(self, property: Literal["name", "is_visible", "batch_mode", "shortcut", "command"]):
         selection = self.custom_menu_tab.custom_menu_tree.selection()
         if not selection:
             return
@@ -269,7 +268,7 @@ class CustomMenuController:
             return
         if menu_item.type == "separator" and property != "is_visible":
             return
-        if property == "id":
+        if property == "name":
             self.__items_data[iid].name = tab.name_edit_entry.get().strip()
             tab.custom_menu_tree.set(iid, column="#1", value=self.__items_data[iid].name)
         elif property == "is_visible":
