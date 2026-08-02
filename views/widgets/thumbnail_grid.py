@@ -204,22 +204,14 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
                 self.__selected_items.add(clicked_item)
                 self._set_item_selected(clicked_item, True)
             else:
-                start = end = None
-                range_selected_items = []
-                for index, item in enumerate(self._results):
-                    if item != clicked_item and item not in self.__selected_items:
-                        continue
-                    if start is None:
-                        start = end = index
-                    if item == clicked_item:
-                        end = index
-                        break
-                    else:
-                        end = index
-
-                if start is not None and end is not None:
-                    range_selected_items = list(self._results.keys())[start:end+1]
-                self.selection_set(*range_selected_items)
+                if clicked_item not in self._results:
+                    return
+                keys = list(self._results.keys())
+                start = next(i for i, k in enumerate(keys) if k == clicked_item or k in self.__selected_items)
+                end = keys.index(clicked_item, start)
+                collected = keys[start:end + 1]
+                if collected:
+                    self.selection_set(*collected)
         else:
             self.selection_set(clicked_item)
             self.event_generate("<<ItemviewSelect>>")
