@@ -47,7 +47,7 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
         self.heading(col, command=lambda: self.__sort_column(col, not reverse))
 
     def append(self, image_path: str, *extra_info: str | int) -> str:
-        iid = self._generate_unique_path_item(image_path)
+        iid = self.generate_path_item(image_path)
         content = (os.path.basename(image_path), *extra_info)
         self._results[iid] = (image_path, *extra_info)
         return self.insert('', tk.END, values=content, iid=iid, text=image_path)    

@@ -20,7 +20,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
     __slots__ = (
         "__thumbnail_size", "__characters_size",
         "__image_loader", "_loading_tasks", "_visible_image_data", 
-        "_canvas_items", "_visible_items", "_selected_items", "_scroll_timer",
+        "_canvas_items", "_visible_items", "__selected_items", "_scroll_timer",
         "_scrollbar_drag_timer", "__cols", "__is_destroy", "__is_scrollbar_dragging",
     )
 
@@ -77,15 +77,15 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self.bind("<Button-5>", self._on_mousewheel)
         self.bind("<Button-1>", self._on_canvas_click)
         self.bind("<KeyPress>", self._on_keyboard_click)
-        self.bind("<<ThemeChanged>>", lambda e: self._change_theme())
+        self.bind("<<ThemeChanged>>", lambda e: self.change_theme())
         self.bind("<Enter>", lambda e: self.config(highlightbackground=self.theme_color.primary))
         self.bind("<Leave>", lambda e: self.config(highlightbackground=self.theme_color.selectbg))
         self.bind("<FocusIn>", lambda e: self.config(highlightthickness=TkS(1)))
         self.bind("<FocusOut>", lambda e: self.config(highlightbackground=self.theme_color.selectbg, highlightthickness=TkS(0.5)))
         self.master.after(50, create_scrollbar)
 
-    def _change_theme(self) -> None:
-        super()._change_theme()
+    def change_theme(self) -> None:
+        super().change_theme()
         for item_id in self.find_all():
             if self.type(item_id) == "text":
                 self.itemconfig(item_id, fill=self.theme_color.fg)
@@ -204,29 +204,21 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
                 self.__selected_items.add(clicked_item)
                 self._set_item_selected(clicked_item, True)
             else:
-                clicked_index = self._get_item_index(clicked_item)
-                if clicked_index == -1:
-                    return
-                closest_selected_item = closest_selected_index = None
-                closest_distance = float('inf')
-                for selected_item in self.__selected_items:
-                    selected_index = self._get_item_index(selected_item)
-                    if selected_index == -1:
-                        continue
-                    curr_distance = abs(selected_index - clicked_index)
-                    if curr_distance < closest_distance:
-                        closest_distance = curr_distance
-                        closest_selected_item = selected_item
-                        closest_selected_index = selected_index
-                if closest_selected_item is None or closest_selected_index is None:
-                    self.selection_set(clicked_item)
-                    return
-                start_index = min(closest_selected_index, clicked_index)
-                end_index = max(closest_selected_index, clicked_index)
-                range_selected_items = set()
+                start = end = None
+                range_selected_items = []
                 for index, item in enumerate(self._results):
-                    if start_index <= index <= end_index:
-                        range_selected_items.add(item)
+                    if item != clicked_item and item not in self.__selected_items:
+                        continue
+                    if start is None:
+                        start = end = index
+                    if item == clicked_item:
+                        end = index
+                        break
+                    else:
+                        end = index
+
+                if start is not None and end is not None:
+                    range_selected_items = list(self._results.keys())[start:end+1]
                 self.selection_set(*range_selected_items)
         else:
             self.selection_set(clicked_item)
@@ -392,7 +384,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self.__visible_items = new_visible_items
 
     def append(self, image_path: str, *extra_info: str | int) -> str:
-        item = self._generate_unique_path_item(image_path)
+        item = self.generate_path_item(image_path)
         self._results[item] = (image_path, *extra_info)
         self._update_layout()
         self._create_placeholder(item)

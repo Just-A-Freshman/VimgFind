@@ -19,27 +19,29 @@ class BasicImagePreviewView:
     def __init__(self, master: tk.Widget) -> None:
         self.master = master
         self._results: OrderedDict[str, tuple] = OrderedDict(dict())
-        self.theme_color = self._get_theme_colors()
+        self.theme_color = self.get_theme_colors()
 
-    def _generate_unique_path_item(self, path: str) -> str:
+    def generate_path_item(self, path: str, unique: bool = True) -> str:
         norm_path = file_ops.normalize_path(path)
         hash_key = hashlib.md5(norm_path.encode()).hexdigest()[:16]
+        if not unique:
+            return hash_key
         while hash_key in self._results:
             norm_path += "#"
             hash_key = hashlib.md5(norm_path.encode()).hexdigest()[:16]
         return hash_key
 
-    def _get_theme_colors(self) -> ThemeColor:
+    def get_theme_colors(self) -> ThemeColor:
         style = Style()
         style_color = style.colors
         color_attr = [getattr(style_color, field) for field in ThemeColor._fields]
         return ThemeColor(*color_attr)
 
-    def _change_theme(self) -> None:
-        self.theme_color = self._get_theme_colors()
+    def change_theme(self) -> None:
+        self.theme_color = self.get_theme_colors()
 
     def append(self, image_path: str, *extra_info: Any, **kwargs: Any) -> str:
-        return self._generate_unique_path_item(image_path)
+        return self.generate_path_item(image_path)
 
     def get_show_results(self) -> list[tuple]:
         return list(self._results.values())

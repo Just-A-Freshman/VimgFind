@@ -20,7 +20,9 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         self.__tooltip = ToolTip(self, text=_("没有文件"), delay=500, topmost=True)
 
     def append(self, image_path: str, image_obj: Image.Image) -> str:
-        iid = self._generate_unique_path_item(image_path)
+        iid = self.generate_path_item(image_path, unique=False)
+        if len(self.selection()) != 0 and iid == self.selection()[0]:
+            return iid
         canvas_width = max(self.winfo_width(), 100)
         canvas_height = max(self.winfo_height(), 80)
         x = canvas_width // 2
