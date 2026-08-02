@@ -16,6 +16,7 @@ import utils.file_ops as file_ops
 class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
     MARGIN: int = TkS(10)
     FONT_HEIGHT: int = TkS(32)
+    SELECTED_PADDING: int = TkS(3)
     PRELOAD_ROWS: int = 3
     __slots__ = (
         "__thumbnail_size", "__characters_size",
@@ -303,8 +304,9 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         if canvas_item.get("border_id", ""):
             return
         x, y = self._get_item_position(item)
+        pad = ThumbnailGridView.SELECTED_PADDING
         border_id = self.create_rectangle(
-            x - 4, y - 4, x + self.__thumbnail_size + 4, y + self.__thumbnail_size + 4,
+            x - pad, y - pad, x + self.__thumbnail_size + pad, y + self.__thumbnail_size + pad,
             fill=self.theme_color.selectbg
         )
         canvas_item["border_id"] = border_id
