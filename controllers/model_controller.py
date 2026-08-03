@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from tkinter import filedialog, messagebox
 from typing import TYPE_CHECKING, Callable, cast
+from tkinter import filedialog, messagebox
 import tkinter as tk
 import zipfile
 import logging
 import time
 import json
 
-from core import SearchTool
 from ttkbootstrap import Entry
 
+from core import SearchTool
 from config.settings import STATUS_LABEL, TYPE_LABEL, TkS
 from config.types import ModelConfig
 from utils.i18n import _
@@ -81,9 +81,8 @@ class ModelController:
 
         if self.__current_download and self.__current_download.model_id == iid:
             view.download_btn.grid_forget()
-            self.__show_download_progress(view)
+            self.__show_download_progress()
             self.__update_download_progress(
-                view,
                 self.__current_download.downloaded_bytes,
                 self.__current_download.total_bytes,
                 self.__current_download.speed,
@@ -181,20 +180,20 @@ class ModelController:
         values[0] = new_name
         self.app.view.model_tab.model_tree.item(iid, values=values)
         cfg = self._model_cache.get(iid)
-        if cfg is not None:
-            old_name = cfg.meta.name
-            cfg.meta.name = new_name
-            self.app.setting.save_model_config(iid, cfg)
-
-            combobox = self.app.view.index_tab.switch_model_combobox
-            values = list(combobox.cget("values"))
-            for i, v in enumerate(values):
-                if v == old_name:
-                    values[i] = new_name
-                    break
-            combobox.config(values=values)
-            if combobox.get() == old_name:
-                combobox.set(new_name)
+        if cfg is None:
+            return
+        old_name = cfg.meta.name
+        cfg.meta.name = new_name
+        self.app.setting.save_model_config(iid, cfg)
+        combobox = self.app.view.index_tab.switch_model_combobox
+        values = list(combobox.cget("values"))
+        for i, v in enumerate(values):
+            if v == old_name:
+                values[i] = new_name
+                break
+        combobox.config(values=values)
+        if combobox.get() == old_name:
+            combobox.set(new_name)
 
     def __on_model_double_click(self, event=None) -> None:
         selection = self.app.view.model_tab.model_tree.selection()
@@ -257,11 +256,11 @@ class ModelController:
             dest_dir=self.app.setting.models_dir / model_id,
             model_id=model_id,
             checksum=cfg.meta.checksum_sha256,
-        )
-        self.__current_download.start(progress_callback=self.__make_progress_callback(view))
-        self.__show_download_progress(view)
+        )        
+        self.__current_download.start(progress_callback=lambda d, t, s: self.__update_download_progress(d, t, s))
+        self.__show_download_progress()
         self.__update_tree_status(model_id, "downloading")
-        self.__poll_download(view, model_id)
+        self.__poll_download(model_id)
 
     def __on_download_control(self) -> None:
         task = self.__current_download
@@ -302,12 +301,8 @@ class ModelController:
             if dest_dir.exists():
                 file_ops.rmtree(dest_dir)
 
-    def __make_progress_callback(self, view) -> Callable:
-        return lambda downloaded, total, speed: view.after(
-            0, lambda: self.__update_download_progress(view, downloaded, total, speed)
-        )
-
-    def __poll_download(self, view, model_id: str) -> None:
+    def __poll_download(self, model_id: str) -> None:
+        view = self.app.view.model_tab
         task = self.__current_download
         if task is None:
             return
@@ -317,9 +312,10 @@ class ModelController:
             self.__finish_download(success, cancelled, model_id, view)
             self.__current_download = None
             return
-        view.after(200, lambda: self.__poll_download(view, model_id))
+        view.after(200, lambda: self.__poll_download(model_id))
 
-    def __show_download_progress(self, view: ModelFrame) -> None:
+    def __show_download_progress(self) -> None:
+        view = self.app.view.model_tab
         view.download_btn.grid_forget()
         view.btn_group.grid_forget()
         view.download_progress_label.config(text=_("准备下载..."))
@@ -332,7 +328,8 @@ class ModelController:
         view.download_cancel_btn.grid(row=0, column=2, sticky=tk.E, padx=(TkS(2), TkS(5)))
         view.download_progressbar.grid(row=1, column=0, columnspan=3, sticky=tk.EW, padx=TkS(5), pady=(0, TkS(5)))
 
-    def __update_download_progress(self, view: ModelFrame, downloaded: int, total: int, speed: float) -> None:
+    def __update_download_progress(self, downloaded: int, total: int, speed: float) -> None:
+        view = self.app.view.model_tab
         if total > 0:
             view.download_progressbar.config(value=int(downloaded * 100 / total))
         view.download_progress_label.config(
