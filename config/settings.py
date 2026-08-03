@@ -4,6 +4,7 @@ from dataclasses import fields, asdict
 from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
+from tkinter.font import Font
 import ctypes
 import json
 import logging
@@ -155,8 +156,7 @@ class WinInfo:
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     ico_path = Setting.config_path / "favicon.ico"
     title = "VimgFind"
-    default_font_family = "微软雅黑"
-    default_font_size = TkS(-14)
+    default_font = ("微软雅黑", TkS(-14))
     width = TkS(830)
     height = TkS(560)
 
