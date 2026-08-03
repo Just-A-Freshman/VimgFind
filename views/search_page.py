@@ -61,12 +61,7 @@ class FilterPanel(Labelframe):
     def __set_ext_combo(self) -> Combobox:
         label = Label(self, text=_("文件类型"), width=10, anchor=tk.W)
         label.grid(row=1, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5)))
-        ext_combo = Combobox(
-            self,
-            values=[_("所有图片文件"), *Setting.ext_group_map],
-            state="readonly",
-            font=(WinInfo.default_font_family, WinInfo.default_font_size)
-        )
+        ext_combo = Combobox(self, values=[_("所有图片文件"), *Setting.ext_group_map], state="readonly")
         ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(TkS(4), 0), pady=(TkS(5), TkS(5)))
         ext_combo.current(0)
         return ext_combo
@@ -182,7 +177,7 @@ class SearchFrame(Frame):
         self.nav_frame, self.nav_page_label, self.nav_prev, self.nav_next = self.__set_nav_buttons()
 
     def __set_search_entry(self) -> Entry:
-        ipt = Entry(self, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        ipt = Entry(self)
         ipt.place(relx=0.005, rely=0.02, relwidth=0.4, relheight=0.0690)
         return ipt
 

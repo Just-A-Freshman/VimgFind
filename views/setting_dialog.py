@@ -92,8 +92,8 @@ class GeneralTab(Frame):
         frame.grid(row=0, column=0, padx=TkS(15), sticky=tk.W)
         Label(frame, text=_("显示语言：")).grid(row=0, column=0, sticky=tk.W)
         Label(frame, text=_("主题设置：")).grid(row=1, column=0, sticky=tk.W)
-        locale_combobox = Combobox(frame, state="readonly", font=(WinInfo.default_font_family, WinInfo.default_font_size))
-        theme_combobox = Combobox(frame, state="readonly", font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        locale_combobox = Combobox(frame, state="readonly")
+        theme_combobox = Combobox(frame, state="readonly")
         locale_combobox.grid(row=0, column=1, pady=TkS(12))
         theme_combobox.grid(row=1, column=1, pady=TkS(12))
         return locale_combobox, theme_combobox
@@ -113,7 +113,7 @@ class GeneralTab(Frame):
         return config_labelframe
 
     def __set_config_path_entry(self, parent):
-        config_path_entry = Entry(parent, state="readonly", font=(WinInfo.default_font_family, TkS(-12)))
+        config_path_entry = Entry(parent, state="readonly", font=(WinInfo.default_font[0], TkS(-12)))
         config_path_entry.pack(side=tk.TOP, fill=tk.X, expand=True, padx=TkS(5), ipady=TkS(4))
         return config_path_entry
 
@@ -166,11 +166,11 @@ class CustomMenuTab(Frame):
         self.custom_menu_tree = self.__set_custom_menu_tree(left_frame)
         self.help_btn, self.edit_frame = self.__set_help_edit_frame(right_frame)
         self.name_edit_tip_label = Label(self.edit_frame)
-        self.name_edit_entry = Entry(self.edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        self.name_edit_entry = Entry(self.edit_frame)
         self.is_visible_checkbutton = Checkbutton(self.edit_frame, text=_("显示"))
         self.batch_mode_checkbutton = Checkbutton(self.edit_frame, text=_("批量模式"))
         self.shortcut_tip_label = Label(self.edit_frame, text=_("快捷键："))
-        self.shortcut_entry = Entry(self.edit_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        self.shortcut_entry = Entry(self.edit_frame)
         self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
         self.command_tip_label = Label(self.edit_frame)
         self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="")

@@ -42,7 +42,7 @@ class ModelFrame(Frame):
         self.model_tree = self.__set_model_tree(model_list_frame)
         self.name_tip_label = Label(detail_frame)
         self.detail_desc_text = Text(detail_frame, wrap='char', relief=tk.FLAT, autostyle=False)
-        self.name_edit_entry = Entry(detail_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        self.name_edit_entry = Entry(detail_frame)
         
         self.btn_group = Frame(control_frame)
         self.use_btn = Button(self.btn_group, text=_("使用模型"), takefocus=False, padding=(TkS(20), TkS(10)))
@@ -66,7 +66,7 @@ class ModelFrame(Frame):
         return frame
 
     def __set_load_local_model_entry(self, parent) -> Entry:
-        entry = Entry(parent, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        entry = Entry(parent)
         entry.grid(row=0, column=0, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
         return entry
 

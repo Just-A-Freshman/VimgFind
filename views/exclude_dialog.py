@@ -97,7 +97,7 @@ class ExcludeDialog(tk.Toplevel):
         return frame
 
     def __set_preview_path_entry(self, parent: Frame) -> Entry:
-        preview_path_entry = Entry(parent, font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        preview_path_entry = Entry(parent)
         preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(2)), ipady=TkS(3))
         return preview_path_entry
 

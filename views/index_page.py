@@ -81,7 +81,7 @@ class IndexFrame(Frame):
         container = Frame(parent)
         container.grid(row=0, column=0, columnspan=2, sticky=tk.EW, pady=TkS(2))
         Label(container, text=_("当前模型：")).pack(side=tk.LEFT, padx=TkS(5))
-        combobox = Combobox(container, state="readonly", font=(WinInfo.default_font_family, WinInfo.default_font_size))
+        combobox = Combobox(container, state="readonly")
         combobox.pack(side=tk.LEFT, padx=(TkS(5), TkS(5)), expand=True, fill=tk.BOTH)
         return combobox
 
@@ -114,10 +114,7 @@ class IndexFrame(Frame):
     def __set_update_range_combobox(self, parent) -> Combobox:
         tip = Label(parent, text=_("索引更新范围"), anchor=tk.W)
         tip.grid(row=1, column=1, padx=(TkS(2), TkS(5)), sticky=tk.E)
-        combobox = Combobox(
-            parent, values=(_("当前模型"), _("全部模型")),
-            width=10, state="readonly", font=(WinInfo.default_font_family, WinInfo.default_font_size)
-        )
+        combobox = Combobox(parent, values=(_("当前模型"), _("全部模型")), width=10, state="readonly")
         combobox.grid(row=1, column=2, padx=(0, TkS(2)), sticky=tk.EW)
         return combobox
 
