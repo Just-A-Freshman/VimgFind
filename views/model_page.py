@@ -52,6 +52,8 @@ class ModelFrame(Frame):
         self.download_progress_label = Label(control_frame, text="")
         self.download_control_btn = Button(control_frame, style="link", takefocus=False, text=_("暂停"))
         self.download_cancel_btn = Button(control_frame, style="link", takefocus=False, text=_("取消"))
+        self.btn_group.grid_columnconfigure(0, weight=1, uniform="btn_group")
+        self.btn_group.grid_columnconfigure(1, weight=1, uniform="btn_group")
         self.show_default()
 
     def __set_model_list_frame(self) -> Labelframe:
@@ -140,8 +142,8 @@ class ModelFrame(Frame):
             self.name_edit_entry.config(state=tk.DISABLED)
         else:
             self.btn_group.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
-            self.use_btn.pack(side=tk.LEFT, padx=(0, TkS(5)))
-            self.uninstall_btn.pack(side=tk.LEFT)
+            self.use_btn.grid(row=0, column=0, sticky=tk.EW, padx=(0, TkS(5)))
+            self.uninstall_btn.grid(row=0, column=1, sticky=tk.EW)
             self.use_btn.config(state=tk.DISABLED if status == _(STATUS_LABEL["using"]) else tk.NORMAL)
             self.uninstall_btn.config(state=tk.DISABLED if status == _(STATUS_LABEL["using"]) else tk.NORMAL)
 
