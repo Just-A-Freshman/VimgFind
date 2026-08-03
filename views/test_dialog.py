@@ -79,6 +79,8 @@ class TestResultDialog(tk.Toplevel):
         frame.pack(fill=tk.BOTH, expand=True, padx=TkS(10), pady=(TkS(6), TkS(8)))
         text = Text(frame, wrap=tk.CHAR)
         text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=TkS(2), pady=TkS(2))
+        text.configure(padx=0, pady=0)
+        text.bind("<<ThemeChanged>>", lambda e: text.configure(padx=0, pady=0))
         scrollbar = Scrollbar(text, orient=tk.VERTICAL, command=text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         text.config(yscrollcommand=scrollbar.set)
