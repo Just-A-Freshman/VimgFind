@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from tkinter import font as tkfont
+from tkinter.font import Font
 from tkinter import messagebox, filedialog
 from typing import Callable, TYPE_CHECKING
 import tkinter as tk
@@ -13,7 +13,7 @@ import time
 
 from ttkbootstrap import Menu
 
-from config.settings import TkS, Setting
+from config.settings import TkS, Setting, WinInfo
 from config.types import MenuItemDef
 from views.widgets import BasicImagePreviewView, PreviewCanvasView, simpledialog
 from views.test_dialog import TestResultDialog, TestResultItem
@@ -85,7 +85,7 @@ class MenuController:
 
         adjustment_menu = self.__create_adjustment_menu()
         winfo_right = event.widget.winfo_rootx() + event.widget.winfo_width()
-        menu_font = tkfont.Font(font=adjustment_menu.cget("font"))
+        menu_font = Font(font=adjustment_menu.cget("font"))
         menu_width = max(menu_font.measure(get_label(i)) for i in range(adjustment_menu.index(tk.END) or 0 + 1)) + TkS(65)
         adjustment_menu.post(winfo_right - menu_width, event.widget.winfo_rooty() + TkS(25))
         adjustment_menu.bind("<Unmap>", lambda e: adjustment_menu.destroy())
@@ -329,9 +329,12 @@ class CustomCommandExecutor:
     def __show_test_dialog(self, items, clean_menu_item, temp_dir) -> None:
         assert temp_dir is not None and clean_menu_item is not None
         dialog = TestResultDialog(self.app.view, items, clean_menu_item)
+        dialog.copy_btn.update_idletasks()
+        dialog.copy_btn.bind("<ButtonRelease-1>", lambda e: dialog.copy_btn.config(text="✓") or dialog.after(1000, lambda: e.widget.config(text=_("复制"))))
         dialog.file_tree.bind("<<TreeviewSelect>>", lambda _: dialog.show_result())
         dialog.file_tree.bind("<Double-Button-1>", lambda _: file_ops.open_file(dialog.file_tree.item(dialog.file_tree.selection()[0], "values")[1]))
         dialog.open_tempdir_btn.config(command=lambda: file_ops.open_file(str(temp_dir)))
         dialog.copy_btn.config(command=lambda: file_ops.copy_text(dialog.detail_text.get("1.0", tk.END), tk=self.app.view))
+        dialog.copy_btn.config(width=round(dialog.copy_btn.winfo_width() / Font(font=WinInfo.default_font).measure('0')))
         dialog.protocol("WM_DELETE_WINDOW", lambda: file_ops.rmtree(str(temp_dir)) or dialog.destroy())
         dialog.show_result()

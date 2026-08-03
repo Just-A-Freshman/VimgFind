@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from tkinter.font import Font
 import tkinter as tk
 
 from ttkbootstrap import Button, Frame, Label, Labelframe, Treeview, Text, Scrollbar
@@ -57,7 +56,7 @@ class TestResultDialog(tk.Toplevel):
         summary = Label(bar, text=_(
             "共{total}条  成功: {ok}  失败: {fail}，耗时：{time_consuming:.3f}s",
             total=len(self.__results), ok=success, fail=failed, time_consuming=time_consuming),
-            font=Font(font=WinInfo.default_font, weight="bold")
+            font=(*WinInfo.default_font, "bold")
         )
         summary.pack(side=tk.LEFT)
         return open_btn
@@ -77,15 +76,14 @@ class TestResultDialog(tk.Toplevel):
 
     def __set_detail_panel(self) -> tuple[tk.Text, Button]:
         frame = Labelframe(self, text=_("命令详情"))
-        frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(6), TkS(8)))
-        text = Text(frame, wrap=tk.CHAR, height=8, state=tk.DISABLED, relief=tk.FLAT, borderwidth=0, padx=TkS(1), pady=TkS(4))
-        text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        frame.pack(fill=tk.BOTH, expand=True, padx=TkS(10), pady=(TkS(6), TkS(8)))
+        text = Text(frame, wrap=tk.CHAR)
+        text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=TkS(2), pady=TkS(2))
         scrollbar = Scrollbar(text, orient=tk.VERTICAL, command=text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         text.config(yscrollcommand=scrollbar.set)
         copy_btn = Button(text, text=_("复制"), style="inner.Link.TButton", takefocus=False, cursor="hand2")
         copy_btn.pack(side=tk.BOTTOM, anchor=tk.SE)
-        copy_btn.bind("<ButtonRelease-1>", lambda e: copy_btn.config(text="✓", width=round(e.widget.winfo_width() / (-14))) or self.after(1000, lambda: e.widget.config(text=_("复制"))))
         return text, copy_btn
 
     def show_result(self) -> None:
