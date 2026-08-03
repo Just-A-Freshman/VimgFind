@@ -12,7 +12,7 @@ import json
 from core import SearchTool
 from ttkbootstrap import Entry
 
-from config.settings import STATUS_LABEL, TYPE_LABEL
+from config.settings import STATUS_LABEL, TYPE_LABEL, TkS
 from config.types import ModelConfig
 from utils.i18n import _
 import utils.file_ops as file_ops
@@ -80,7 +80,7 @@ class ModelController:
             view.uninstall_btn.config(state=tk.DISABLED)
 
         if self.__current_download and self.__current_download.model_id == iid:
-            view.download_btn.place_forget()
+            view.download_btn.grid_forget()
             self.__show_download_progress(view)
             self.__update_download_progress(
                 view,
@@ -320,15 +320,17 @@ class ModelController:
         view.after(200, lambda: self.__poll_download(view, model_id))
 
     def __show_download_progress(self, view: ModelFrame) -> None:
-        view.download_btn.place_forget()
+        view.download_btn.grid_forget()
+        view.btn_group.grid_forget()
         view.download_progress_label.config(text=_("准备下载..."))
         view.download_progressbar.config(value=0)
-        view.download_progress_label.place(relx=0.05, rely=0.87, relwidth=0.58, anchor=tk.W)
         is_paused = self.__current_download and self.__current_download.state == internet.DownloadState.PAUSED
         view.download_control_btn.config(text=_("继续") if is_paused else _("暂停"))
-        view.download_control_btn.place(relx=0.65, rely=0.87, anchor=tk.W)
-        view.download_cancel_btn.place(relx=0.78, rely=0.87, anchor=tk.W)
-        view.download_progressbar.place(relx=0.5, rely=0.92, relwidth=0.9, anchor=tk.CENTER)
+
+        view.download_progress_label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(5), TkS(2)), pady=(TkS(3), TkS(3)))
+        view.download_control_btn.grid(row=0, column=1, sticky=tk.E)
+        view.download_cancel_btn.grid(row=0, column=2, sticky=tk.E, padx=(TkS(2), TkS(5)))
+        view.download_progressbar.grid(row=1, column=0, columnspan=3, sticky=tk.EW, padx=TkS(5), pady=(0, TkS(5)))
 
     def __update_download_progress(self, view: ModelFrame, downloaded: int, total: int, speed: float) -> None:
         if total > 0:
@@ -354,10 +356,10 @@ class ModelController:
         if cancelled:
             self.__remove_model(model_id)
             return
-        view.download_progressbar.place_forget()
-        view.download_progress_label.place_forget()
-        view.download_control_btn.place_forget()
-        view.download_cancel_btn.place_forget()
+        view.download_progressbar.grid_forget()
+        view.download_progress_label.grid_forget()
+        view.download_control_btn.grid_forget()
+        view.download_cancel_btn.grid_forget()
         view.use_btn.config(state=tk.NORMAL)
         view.uninstall_btn.config(state=tk.NORMAL)
         if success:
