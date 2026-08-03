@@ -45,9 +45,9 @@ class ModelFrame(Frame):
         self.name_edit_entry = Entry(detail_frame, font=(WinInfo.default_font_family, WinInfo.default_font_size))
         
         self.btn_group = Frame(control_frame)
-        self.use_btn = Button(self.btn_group, text=_("使用模型"), takefocus=False, padding=(TkS(15), TkS(5)))
-        self.uninstall_btn = Button(self.btn_group, text=_("卸载模型"), takefocus=False, padding=(TkS(15), TkS(5)), style="secondary")
-        self.download_btn = Button(control_frame, text=_("下载模型"), takefocus=False, padding=(TkS(15), TkS(5)))
+        self.use_btn = Button(self.btn_group, text=_("使用模型"), takefocus=False, padding=(TkS(20), TkS(10)))
+        self.uninstall_btn = Button(self.btn_group, text=_("卸载模型"), takefocus=False, padding=(TkS(20), TkS(10)), style="secondary")
+        self.download_btn = Button(control_frame, text=_("下载模型"), takefocus=False, padding=(TkS(20), TkS(10)))
         self.download_progressbar = Progressbar(control_frame, orient=tk.HORIZONTAL, mode="determinate", maximum=100)
         self.download_progress_label = Label(control_frame, text="")
         self.download_control_btn = Button(control_frame, style="link", takefocus=False, text=_("暂停"))
@@ -135,11 +135,11 @@ class ModelFrame(Frame):
 
         if status == _(STATUS_LABEL["not download"]):
             self.name_edit_entry.config(state=tk.DISABLED)
-            self.download_btn.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(3)))
+            self.download_btn.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
         elif status == _(STATUS_LABEL["downloading"]):
             self.name_edit_entry.config(state=tk.DISABLED)
         else:
-            self.btn_group.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(3)))
+            self.btn_group.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
             self.use_btn.pack(side=tk.LEFT, padx=(0, TkS(5)))
             self.uninstall_btn.pack(side=tk.LEFT)
             self.use_btn.config(state=tk.DISABLED if status == _(STATUS_LABEL["using"]) else tk.NORMAL)
