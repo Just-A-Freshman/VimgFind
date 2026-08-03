@@ -14,11 +14,8 @@ from .types import AppSettings, ModelConfig
 
 ROOT = Path(__file__).resolve().parent.parent
 SCALE_FACTOR = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
-def TkS(value: int | float, restore: bool = False) -> int:
-    if not restore:
-        return int(round(value * SCALE_FACTOR, 0))
-    else:
-        return int(round(value / SCALE_FACTOR, 0))
+def TkS(value: int | float) -> int:
+    return int(round(value * SCALE_FACTOR, 0))
 
 
 ACTIVE_MARKER = "● "
