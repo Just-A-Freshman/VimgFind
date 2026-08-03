@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from tkinter.font import Font
 
 from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Scrollbar, Notebook, Text
 from ttkbootstrap.widgets import ToolTip
@@ -189,11 +190,13 @@ class CustomMenuTab(Frame):
         btn_frame = Frame(parent)
         btn_frame.pack(fill=tk.X, padx=TkS(0.5), pady=(TkS(10), 0))
         add_btn = Button(btn_frame, text=_("新建"), takefocus=False, cursor="hand2")
-        add_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(12))
         add_sep_btn = Button(btn_frame, text=_("分隔线"), takefocus=False, cursor="hand2")
-        add_sep_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(12))
         del_btn = Button(btn_frame, text=_("删除"), takefocus=False, cursor="hand2")
-        del_btn.pack(side=tk.LEFT, ipadx=TkS(12), padx=0)
+        buttons = (add_btn, add_sep_btn, del_btn)
+        font = Font(font=WinInfo.default_font)
+        for i, btn in enumerate(buttons):
+            btn_frame.grid_columnconfigure(i, weight=font.measure(btn["text"]) + 2 * TkS(12))
+            btn.grid(row=0, column=i, sticky=tk.EW, padx=(0, TkS(5)) if i < len(buttons) - 1 else 0, ipadx=TkS(12))
         return add_btn, add_sep_btn, del_btn
 
     def __set_custom_menu_tree(self, parent: Frame) -> DragReorderTreeview:
