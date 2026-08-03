@@ -6,13 +6,13 @@
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
     "ui_style": "superhero",
-    "current_model": "chinese-clip",
+    "current_model": "EfficientNet",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
     "schedule_index_save_interval": 600,
     "maximize_window": false,
     "topmost_window": false,
-    "locale": "en-US",
+    "locale": "zh-CN",
     "menu_items": [
         {
             "name": "复制名称",

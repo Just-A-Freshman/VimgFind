@@ -12,7 +12,7 @@ import json
 from ttkbootstrap import Entry
 
 from core import SearchTool
-from config.settings import STATUS_LABEL, TYPE_LABEL, TkS
+from config.settings import ACTIVE_MARKER, TYPE_LABEL, TkS
 from config.types import ModelConfig
 from utils.i18n import _
 import utils.file_ops as file_ops
@@ -37,6 +37,10 @@ class ModelController:
         tab.model_tree.bind("<<TreeviewSelect>>", self.on_model_select)
         tab.model_tree.bind("<Double-Button-1>", self.__on_model_double_click)
         tab.name_edit_entry.bind("<FocusOut>", self.__on_name_edited)
+        tab.model_tree.bind("<<ThemeChanged>>", lambda e, fg=self.app.view.style.colors.get("secondary"): (   #type:ignore
+            tab.model_tree.tag_configure("downloading", foreground=fg),
+            tab.model_tree.tag_configure("not download", foreground=fg)
+        ))
         tab.use_btn.config(command=self.switch_model)
         tab.uninstall_btn.config(command=self.__uninstall_model)
         tab.download_btn.config(command=self.__download_model)
@@ -159,13 +163,15 @@ class ModelController:
             model_id = cfg.meta.id or cfg.meta.name
             status = self.get_model_status(model_id)
             self._model_cache[model_id] = cfg
+            name = cfg.meta.name or model_id
+            if status == "using":
+                name = f"{ACTIVE_MARKER}{name}"
             view.model_tree.insert("", tk.END, iid=model_id, values=(
-                cfg.meta.name or model_id,
+                name,
                 cfg.meta.label or "",
                 _(TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type)),
                 file_ops.format_bytes(cfg.meta.size, decimal_parts={'MB': 0, "KB": 0}),
-                _(STATUS_LABEL.get(status, status)),
-            ))
+            ), tags=(status,))
 
     def __on_name_edited(self, event: tk.Event) -> None:
         name_entry = cast(Entry, event.widget)
@@ -176,9 +182,11 @@ class ModelController:
         iid = self.__editing_model_id
         if not iid:
             return
-        values = list(self.app.view.model_tab.model_tree.item(iid, "values"))
-        values[0] = new_name
-        self.app.view.model_tab.model_tree.item(iid, values=values)
+        tree = self.app.view.model_tab.model_tree
+        tags = tree.item(iid, "tags")
+        values = list(tree.item(iid, "values"))
+        values[0] = f"{ACTIVE_MARKER}{new_name}" if tags and tags[0] == "using" else new_name
+        tree.item(iid, values=values)
         cfg = self._model_cache.get(iid)
         if cfg is None:
             return
@@ -339,7 +347,11 @@ class ModelController:
     def __update_tree_status(self, model_id: str, status: str) -> None:
         view = self.app.view.model_tab
         if model_id in view.model_tree.get_children(""):
-            view.model_tree.set(model_id, _("状态"), _(STATUS_LABEL.get(status, status)))
+            tree = view.model_tree
+            values = list(tree.item(model_id, "values"))
+            name = values[0].removeprefix(ACTIVE_MARKER)
+            values[0] = f"{ACTIVE_MARKER}{name}" if status == "using" else name
+            tree.item(model_id, values=values, tags=(status,))
 
     def __remove_model(self, model_id: str) -> None:
         model_dir = self.app.setting.models_dir / model_id

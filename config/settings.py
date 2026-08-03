@@ -20,12 +20,8 @@ def TkS(value: int | float, restore: bool = False) -> int:
     else:
         return int(round(value / SCALE_FACTOR, 0))
 
-STATUS_LABEL = {
-    "using": "使用中",
-    "downloading": "下载中",
-    "downloaded": "可用",
-    "not download": "不可用",
-}
+
+ACTIVE_MARKER = "● "
 
 TYPE_LABEL = {
     "Image-Text": "多模态",

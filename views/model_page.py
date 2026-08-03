@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
+from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Style, Treeview, Scrollbar, Text
 
-from config.settings import WinInfo, TkS, STATUS_LABEL
+from config.settings import WinInfo, TkS, ACTIVE_MARKER
 from config.types import ModelConfig
 from utils.i18n import _
 
@@ -76,10 +76,10 @@ class ModelFrame(Frame):
         return browser_button
 
     def __set_model_tree(self, parent) -> Treeview:
-        columns = [_("名称"), _("标签"), _("类型"), _("大小"), _("状态")]
+        columns = [_("名称"), _("标签"), _("类型"), _("大小")]
         tree = Treeview(parent, show="headings", columns=columns)
         tree.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5))
-        col_widths = {_("名称"): TkS(40), _("标签"): TkS(30), _("类型"): TkS(30), _("大小"): TkS(30), _("状态"): TkS(30)}
+        col_widths = {_("名称"): TkS(40), _("标签"): TkS(30), _("类型"): TkS(30), _("大小"): TkS(30)}
         for col in columns:
             tree.heading(col, text=col, anchor=tk.CENTER)
             tree.column(col, anchor=tk.CENTER, width=col_widths[col], stretch=True)
@@ -120,7 +120,8 @@ class ModelFrame(Frame):
         self.__hide_widgets()
         selection = self.model_tree.selection()
         name = self.model_tree.item(selection[0], "values")[0] if selection else ""
-        status = self.model_tree.item(selection[0], "values")[-1] if selection else ""
+        status = self.model_tree.item(selection[0], "tags")[0] if selection else ""
+        name = name.removeprefix(ACTIVE_MARKER)
 
         self.name_tip_label.config(text=_("名称："))
         self.name_tip_label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(5), TkS(2)), pady=TkS(5))
@@ -135,17 +136,17 @@ class ModelFrame(Frame):
         self.detail_desc_text.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5), pady=(0, TkS(5)))
         self.detail_desc_text.config(state=tk.DISABLED)
 
-        if status == _(STATUS_LABEL["not download"]):
+        if status == "not download":
             self.name_edit_entry.config(state=tk.DISABLED)
             self.download_btn.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
-        elif status == _(STATUS_LABEL["downloading"]):
+        elif status == "downloading":
             self.name_edit_entry.config(state=tk.DISABLED)
         else:
             self.btn_group.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
             self.use_btn.grid(row=0, column=0, sticky=tk.EW, padx=(0, TkS(5)))
             self.uninstall_btn.grid(row=0, column=1, sticky=tk.EW)
-            self.use_btn.config(state=tk.DISABLED if status == _(STATUS_LABEL["using"]) else tk.NORMAL)
-            self.uninstall_btn.config(state=tk.DISABLED if status == _(STATUS_LABEL["using"]) else tk.NORMAL)
+            self.use_btn.config(state=tk.DISABLED if status == "using" else tk.NORMAL)
+            self.uninstall_btn.config(state=tk.DISABLED if status == "using" else tk.NORMAL)
 
     def show_default(self) -> None:
         self.__hide_widgets()
