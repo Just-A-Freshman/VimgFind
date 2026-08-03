@@ -65,12 +65,12 @@ class IndexFrame(Frame):
         table.column(0, width=TkS(15), anchor=tk.CENTER, stretch=False)
         table.heading(1, text=columns[1], anchor=tk.CENTER)
         table.column(1, anchor=tk.CENTER)
-        table.place(relx=0.0081, rely=0.1111, relwidth=0.7, relheight=0.888)
+        table.place(relx=0.0081, rely=0.1111, relwidth=0.67, relheight=0.888)
         return table
 
     def __set_index_setting_frame(self) -> LabelFrame:
         frame = LabelFrame(self, text=_("目录管理"))
-        frame.place(relx=0.7181, rely=0.095, relwidth=0.2719, relheight=0.54)
+        frame.place(relx=0.6881, rely=0.095, relwidth=0.3019, relheight=0.54)
         for i in range(5):
             frame.grid_rowconfigure(i, weight=1)
         frame.grid_columnconfigure(0, weight=2)
@@ -95,7 +95,7 @@ class IndexFrame(Frame):
 
     def __set_scan_setting_frame(self) -> LabelFrame:
         frame = LabelFrame(self, text=_("扫描设置"))
-        frame.place(relx=0.7181, rely=0.64, relwidth=0.2719, relheight=0.36)
+        frame.place(relx=0.6881, rely=0.64, relwidth=0.3019, relheight=0.36)
         for i in range(4):
             frame.grid_rowconfigure(i, weight=1)
         frame.grid_columnconfigure(0, weight=1, uniform='space')
