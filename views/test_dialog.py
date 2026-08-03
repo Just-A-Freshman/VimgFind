@@ -62,7 +62,7 @@ class TestResultDialog(tk.Toplevel):
         return open_btn
 
     def __set_execution_list(self) -> Treeview:
-        column_info = (("status", "", TkS(40)), ("filename", _("副本文件"), TkS(300)), ("retcode", _("返回码"), TkS(60)))
+        column_info = (("status", "", TkS(40)), ("filename", _("副本文件"), TkS(300)), ("retcode", _("返回码"), TkS(80)))
         tree = Treeview(self, columns=[i[0] for i in column_info], show="headings", selectmode="browse", cursor="hand2", height=4)
         for i, (column, text, width) in enumerate(column_info):
             tree.heading(column, text=text, anchor=tk.CENTER)
@@ -85,7 +85,7 @@ class TestResultDialog(tk.Toplevel):
         scrollbar = Scrollbar(text, orient=tk.VERTICAL, command=text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         text.config(yscrollcommand=scrollbar.set)
-        copy_btn = Button(text, text=_("复制"), style="inner.Link.TButton", takefocus=False, cursor="hand2", width=TkS(2))
+        copy_btn = Button(text, text=_("复制"), style="inner.Link.TButton", takefocus=False, cursor="hand2")
         copy_btn.pack(side=tk.BOTTOM, anchor=tk.SE)
         copy_btn.bind("<ButtonRelease-1>", lambda e: copy_btn.config(text="✓") or self.after(1000, lambda: copy_btn.config(text=_("复制"))))
         return text, copy_btn
