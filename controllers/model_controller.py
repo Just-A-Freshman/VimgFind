@@ -33,14 +33,12 @@ class ModelController:
 
     def env_init(self) -> None:
         self.__load_model_list()
+        self.__on_theme_change()
         tab = self.app.view.model_tab
         tab.model_tree.bind("<<TreeviewSelect>>", self.on_model_select)
         tab.model_tree.bind("<Double-Button-1>", self.__on_model_double_click)
         tab.name_edit_entry.bind("<FocusOut>", self.__on_name_edited)
-        tab.model_tree.bind("<<ThemeChanged>>", lambda e, fg=self.app.view.style.colors.get("secondary"): (   #type:ignore
-            tab.model_tree.tag_configure("downloading", foreground=fg),
-            tab.model_tree.tag_configure("not download", foreground=fg)
-        ))
+        tab.model_tree.bind("<<ThemeChanged>>", lambda e: self.__on_theme_change())
         tab.use_btn.config(command=self.switch_model)
         tab.uninstall_btn.config(command=self.__uninstall_model)
         tab.download_btn.config(command=self.__download_model)
@@ -172,6 +170,12 @@ class ModelController:
                 _(TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type)),
                 file_ops.format_bytes(cfg.meta.size, decimal_parts={'MB': 0, "KB": 0}),
             ), tags=(status,))
+
+    def __on_theme_change(self):
+        tab = self.app.view.model_tab
+        active_fg = self.app.view.style.colors.get("info")   #type:ignore
+        tab.model_tree.tag_configure("downloaded", foreground=active_fg)
+        tab.model_tree.tag_configure("using", foreground=active_fg)
 
     def __on_name_edited(self, event: tk.Event) -> None:
         name_entry = cast(Entry, event.widget)
