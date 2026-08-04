@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+from enum import StrEnum
 import tkinter as tk
 
-from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Style, Treeview, Scrollbar, Text
+from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
 
-from config.settings import WinInfo, TkS, ACTIVE_MARKER
+from config.settings import TkS
 from config.types import ModelConfig
 from utils.i18n import _
+
+
+class ModelStatus(StrEnum):
+    DOWNLOADED = "downloaded"
+    DOWNLOADING = "downloading"
+    USING = "using"
+    DISABLED = "disabled"
 
 
 class ModelFrame(Frame):
@@ -76,13 +84,12 @@ class ModelFrame(Frame):
         return browser_button
 
     def __set_model_tree(self, parent) -> Treeview:
-        columns = [_("名称"), _("标签"), _("类型"), _("大小")]
-        tree = Treeview(parent, show="headings", columns=columns)
+        columns_info = [(_("名称"), 40), (_("标签"), 30), (_("类型"), 30), (_("大小"), 30)]
+        tree = Treeview(parent, show="headings", columns=[i[0] for i in columns_info])
         tree.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5))
-        col_widths = {_("名称"): TkS(40), _("标签"): TkS(30), _("类型"): TkS(30), _("大小"): TkS(30)}
-        for col in columns:
-            tree.heading(col, text=col, anchor=tk.CENTER)
-            tree.column(col, anchor=tk.CENTER, width=col_widths[col], stretch=True)
+        for text, width in columns_info:
+            tree.heading(text, text=text, anchor=tk.CENTER)
+            tree.column(text, anchor=tk.CENTER, width=width, stretch=True)
         scrollbar = Scrollbar(tree, orient=tk.VERTICAL, cursor="hand2")
         scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=(TkS(1), TkS(1)), padx=TkS(1))
         scrollbar.config(command=tree.yview)
@@ -121,8 +128,6 @@ class ModelFrame(Frame):
         selection = self.model_tree.selection()
         name = self.model_tree.item(selection[0], "values")[0] if selection else ""
         status = self.model_tree.item(selection[0], "tags")[0] if selection else ""
-        name = name.removeprefix(ACTIVE_MARKER)
-
         self.name_tip_label.config(text=_("名称："))
         self.name_tip_label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(5), TkS(2)), pady=TkS(5))
         self.name_edit_entry.config(state=tk.NORMAL, cursor="xterm")
@@ -136,10 +141,10 @@ class ModelFrame(Frame):
         self.detail_desc_text.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5), pady=(0, TkS(5)))
         self.detail_desc_text.config(state=tk.DISABLED)
 
-        if status == "not download":
+        if status == ModelStatus.DISABLED:
             self.name_edit_entry.config(state=tk.DISABLED, cursor="arrow")
             self.download_btn.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
-        elif status == "downloading":
+        elif status == ModelStatus.DOWNLOADING:
             self.name_edit_entry.config(state=tk.DISABLED, cursor="arrow")
         else:
             self.btn_group.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))

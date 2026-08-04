@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, cast
+from enum import StrEnum
 from tkinter import filedialog, messagebox
 import tkinter as tk
 import zipfile
@@ -12,15 +13,22 @@ import json
 from ttkbootstrap import Entry
 
 from core import SearchTool
-from config.settings import ACTIVE_MARKER, TYPE_LABEL, TkS
+from config.settings import TkS
 from config.types import ModelConfig
+from views.model_page import ModelFrame, ModelStatus
 from utils.i18n import _
 import utils.file_ops as file_ops
 import utils.internet as internet
 
 if TYPE_CHECKING:
     from .app_controller import AppController
-    from views.model_page import ModelFrame
+
+
+TYPE_LABEL = {
+    "Image-Text": "多模态",
+    "Image": "图像",
+    "Unknown": "未知",
+}
 
 
 class ModelController:
@@ -35,7 +43,7 @@ class ModelController:
         self.__load_model_list()
         self.__on_theme_change()
         tab = self.app.view.model_tab
-        tab.model_tree.bind("<<TreeviewSelect>>", self.on_model_select)
+        tab.model_tree.bind("<<TreeviewSelect>>", lambda e: self.on_model_select() or self.__on_theme_change())
         tab.model_tree.bind("<Double-Button-1>", self.__on_model_double_click)
         tab.name_edit_entry.bind("<FocusOut>", self.__on_name_edited)
         tab.model_tree.bind("<<ThemeChanged>>", lambda e: self.__on_theme_change())
@@ -49,17 +57,17 @@ class ModelController:
     def get_downloaded_models(self) -> list[ModelConfig]:
         return [
             cfg for model_id, cfg in self._model_cache.items()
-            if self.get_model_status(model_id) != "not download"
+            if self.get_model_status(model_id) != ModelStatus.DISABLED
         ]
 
-    def get_model_status(self, model_id: str) -> str:
+    def get_model_status(self, model_id: str) -> ModelStatus:
         if self.__current_download and self.__current_download.model_id == model_id:
-            return "downloading"
+            return ModelStatus.DOWNLOADING
         if model_id == self.app.setting.app.current_model:
-            return "using"
+            return ModelStatus.USING
         if self.model_checker.is_installed(model_id):
-            return "downloaded"
-        return "not download"
+            return ModelStatus.DOWNLOADED
+        return ModelStatus.DISABLED
 
     def on_model_select(self, event=None) -> None:
         view = self.app.view.model_tab
@@ -146,8 +154,8 @@ class ModelController:
         self.app.index_controller.refresh_index_dataset_table()
         self.app.view.after(100, self.app.index_controller.update_index_tip)
         self.app.view.title(f"VimgFind - {self._model_cache[model_id].meta.name}")
-        self.__update_tree_status(old_model_id, "downloaded")
-        self.__update_tree_status(model_id, "using")
+        self.__update_tree_status(old_model_id, ModelStatus.DOWNLOADED)
+        self.__update_tree_status(model_id, ModelStatus.USING)
         self.app.view.model_tab.model_tree.selection_set(model_id)
         self.on_model_select()
 
@@ -162,20 +170,16 @@ class ModelController:
             status = self.get_model_status(model_id)
             self._model_cache[model_id] = cfg
             name = cfg.meta.name or model_id
-            if status == "using":
-                name = f"{ACTIVE_MARKER}{name}"
-            view.model_tree.insert("", tk.END, iid=model_id, values=(
-                name,
-                cfg.meta.label or "",
-                _(TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type)),
-                file_ops.format_bytes(cfg.meta.size, decimal_parts={'MB': 0, "KB": 0}),
-            ), tags=(status,))
+            model_type = _(TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type))
+            model_size = file_ops.format_bytes(cfg.meta.size, decimal_parts={'MB': 0, "KB": 0})
+            view.model_tree.insert("", tk.END, iid=model_id, values=(name, cfg.meta.label or "", model_type, model_size), tags=status)
 
     def __on_theme_change(self):
         tab = self.app.view.model_tab
         active_fg = self.app.view.style.colors.get("info")   #type:ignore
-        tab.model_tree.tag_configure("downloaded", foreground=active_fg)
-        tab.model_tree.tag_configure("using", foreground=active_fg)
+        unactivated_fg = self.app.view.style.colors.get("secondary")   #type:ignore
+        tab.model_tree.tag_configure(ModelStatus.DISABLED, foreground=unactivated_fg)
+        tab.model_tree.tag_configure(ModelStatus.USING, foreground=active_fg)
 
     def __on_name_edited(self, event: tk.Event) -> None:
         name_entry = cast(Entry, event.widget)
@@ -187,9 +191,8 @@ class ModelController:
         if not iid:
             return
         tree = self.app.view.model_tab.model_tree
-        tags = tree.item(iid, "tags")
         values = list(tree.item(iid, "values"))
-        values[0] = f"{ACTIVE_MARKER}{new_name}" if tags and tags[0] == "using" else new_name
+        values[0] = new_name
         tree.item(iid, values=values)
         cfg = self._model_cache.get(iid)
         if cfg is None:
@@ -238,7 +241,7 @@ class ModelController:
             return
 
         self.__remove_model(model_id)
-        self.__update_tree_status(model_id, "not download")
+        self.__update_tree_status(model_id, ModelStatus.DISABLED)
         combobox = self.app.view.index_tab.switch_model_combobox
         values = list(combobox.cget("values"))
         if cfg.meta.name in values:
@@ -271,7 +274,7 @@ class ModelController:
         )        
         self.__current_download.start(progress_callback=lambda d, t, s: self.__update_download_progress(d, t, s))
         self.__show_download_progress()
-        self.__update_tree_status(model_id, "downloading")
+        self.__update_tree_status(model_id, ModelStatus.DOWNLOADING)
         self.__poll_download(model_id)
 
     def __on_download_control(self) -> None:
@@ -352,10 +355,7 @@ class ModelController:
         view = self.app.view.model_tab
         if model_id in view.model_tree.get_children(""):
             tree = view.model_tree
-            values = list(tree.item(model_id, "values"))
-            name = values[0].removeprefix(ACTIVE_MARKER)
-            values[0] = f"{ACTIVE_MARKER}{name}" if status == "using" else name
-            tree.item(model_id, values=values, tags=(status,))
+            tree.item(model_id, values=list(tree.item(model_id, "values")), tags=status)
 
     def __remove_model(self, model_id: str) -> None:
         model_dir = self.app.setting.models_dir / model_id
@@ -376,7 +376,7 @@ class ModelController:
         view.use_btn.config(state=tk.NORMAL)
         view.uninstall_btn.config(state=tk.NORMAL)
         if success:
-            self.__update_tree_status(model_id, "downloaded")
+            self.__update_tree_status(model_id, ModelStatus.DOWNLOADED)
             cfg = self._model_cache.get(model_id)
             if cfg:
                 self.app.setting.save_model_config(model_id, cfg)
