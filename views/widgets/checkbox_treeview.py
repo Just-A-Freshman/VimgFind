@@ -24,7 +24,7 @@ class CheckboxTreeview(DragReorderTreeview):
         self.__syncing_views = False
         self.__reserve = self.__border = 0
         
-        self.check_tree = Treeview(self, show="tree headings", style="NoBorder.Treeview")
+        self.check_tree = Treeview(self, show="tree headings", style="NoBorder.Treeview", cursor="hand2")
         self.scrollbar = Scrollbar(self, orient=tk.VERTICAL)
         self.__env_init(padding, checkbox_name)
 
