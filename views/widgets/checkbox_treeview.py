@@ -68,7 +68,7 @@ class CheckboxTreeview(DragReorderTreeview):
     def delete(self, *items: str) -> None:   # type: ignore
         for iid in items:
             self.__checked.pop(iid, None)
-        self.delete(*items)
+        DragReorderTreeview.delete(self, *items)
         self.check_tree.delete(*items)
 
     def set_checked(self, iid: str, checked: bool) -> None:

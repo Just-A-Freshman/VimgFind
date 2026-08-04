@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Callable
 
 from tkinter.ttk import Treeview
@@ -9,15 +10,17 @@ from config.settings import TkS
 
 
 class DragReorderTreeview(Treeview):
-    def __init__(self, parent, ghost_column: int = 0, **kwargs):
+    def __init__(self, parent, ghost_column: int = 0, drag_delay: float = 0.3, **kwargs):
         super().__init__(parent, **kwargs)
         self.__ghost_column = ghost_column
+        self.__drag_delay = drag_delay
         self.__on_reorder: Callable[[int, int], None] | None = None
-        self.__drag_source: str | None = None
         self.__drag_active: bool = False
+        self.__drag_source: str | None = None
         self.__drop_target: str | None = None
         self.__insert_before: bool | None = None
         self.__drag_ghost: tk.Toplevel | None = None
+        self.__press_time: float = 0.0
 
         self.bind("<ButtonPress-1>", self.__drag_start)
         self.bind("<B1-Motion>", self.__drag_motion)
@@ -35,12 +38,15 @@ class DragReorderTreeview(Treeview):
         self.__drop_target = None
         self.__insert_before = None
         self.__drag_ghost = None
+        self.__press_time = time.monotonic()
 
     def __drag_motion(self, event: tk.Event) -> None:
         if not self.__drag_source:
             return
 
         if not self.__drag_active:
+            if time.monotonic() - self.__press_time < self.__drag_delay:
+                return
             self.__drag_active = True
             self.__create_drag_ghost(event)
 
