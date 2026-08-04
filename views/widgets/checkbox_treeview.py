@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter.ttk import Treeview
 from tkinter.font import Font
-from typing import Callable, Literal
+from typing import Callable
 
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 from ttkbootstrap import Scrollbar, Style
