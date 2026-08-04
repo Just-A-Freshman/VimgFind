@@ -5,7 +5,6 @@ from typing import Literal, Callable, TYPE_CHECKING
 from tkinter import filedialog, messagebox
 from tkinter.font import nametofont
 import tkinter as tk
-import webbrowser
 
 from ttkbootstrap.style import Colors
 
@@ -184,19 +183,18 @@ class CustomMenuController:
     def env_init(self) -> None:
         tab = self.custom_menu_tab
         for item in self.app.setting.app.menu_items:
-            values = (item.name if item.type != "embedded" else _(item.name), _("是") if item.is_visible else _("否"),)
-            iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, values=values)
+            text = item.name if item.type != "embedded" else _(item.name)
+            iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, text=text, checked=item.is_visible)
             self.__items_data[iid] = item
         for i in range(2):
-            tab.is_visible_checkbutton.invoke()
             tab.batch_mode_checkbutton.invoke()
         tab.add_button.config(command=self.__add_menu_item)
         tab.add_sep_btn.config(command=lambda: self.__add_menu_item(default=MenuItemDef(name="——————————", type="separator")))
         tab.delete_button.config(command=self.__delete_menu_item)
         tab.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("自定义菜单命令")))
+        tab.custom_menu_tree.on_toggle = self.__on_visibility_toggled
         tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
         tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("name"))
-        tab.is_visible_checkbutton.config(command=lambda: self.__sync_item_property("is_visible"))
         tab.batch_mode_checkbutton.config(command=lambda: self.__sync_item_property("batch_mode"))
         tab.shortcut_entry.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")
         tab.shortcut_entry.bind("<KeyPress>", shortcut.track_modifiers, add="+")
@@ -221,6 +219,11 @@ class CustomMenuController:
         if item:
             self.custom_menu_tab.show_detail(item)
 
+    def __on_visibility_toggled(self, iid: str, checked: bool) -> None:
+        item = self.__items_data.get(iid)
+        if item is not None:
+            item.is_visible = checked
+
     def __add_menu_item(self, default: MenuItemDef | None = None) -> None:
         if default is None:
             default = MenuItemDef()
@@ -235,7 +238,7 @@ class CustomMenuController:
                 return
 
         new_item = default
-        iid = tab.custom_menu_tree.insert("", tk.END, values=(new_item.name, _("否")))
+        iid = tab.custom_menu_tree.insert("", tk.END, text=new_item.name, checked=False)
         self.__items_data[iid] = new_item
         tab.custom_menu_tree.selection_set(iid)
         tab.custom_menu_tree.focus(iid)
@@ -270,12 +273,7 @@ class CustomMenuController:
             return
         if property == "name":
             self.__items_data[iid].name = tab.name_edit_entry.get().strip()
-            tab.custom_menu_tree.set(iid, column="#1", value=self.__items_data[iid].name)
-        elif property == "is_visible":
-            self.__items_data[iid].is_visible = tab.is_visible_checkbutton.instate(["selected"])
-            tab.custom_menu_tree.set(
-                iid, column="#2", value=_("是") if menu_item.is_visible else _("否")
-            )
+            tab.custom_menu_tree.item(iid, text=self.__items_data[iid].name)
         elif property == "batch_mode":
             self.__items_data[iid].batch_mode = tab.batch_mode_checkbutton.instate(["selected"])
         elif property == "shortcut":
