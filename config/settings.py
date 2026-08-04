@@ -4,7 +4,6 @@ from dataclasses import fields, asdict
 from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
-from tkinter.font import Font
 import ctypes
 import json
 import logging
@@ -17,20 +16,6 @@ ROOT = Path(__file__).resolve().parent.parent
 SCALE_FACTOR = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 def TkS(value: int | float) -> int:
     return int(round(value * SCALE_FACTOR, 0))
-
-
-ACTIVE_MARKER = "● "
-
-TYPE_LABEL = {
-    "Image-Text": "多模态",
-    "Image": "图像",
-    "Unknown": "未知",
-}
-
-RANGE_LABEL = {
-    "current": "当前模型",
-    "all": "全部模型"
-}
 
 
 class Setting:

@@ -8,7 +8,6 @@ import logging
 
 from tqdm import tqdm
 
-from config.settings import RANGE_LABEL
 from .exclude_controller import ExcludePreviewController
 from views import ExcludeDialog
 from utils.i18n import _
@@ -20,6 +19,7 @@ if TYPE_CHECKING:
     from .app_controller import AppController
 
 
+RANGE_LABEL = {"current": "当前模型", "all": "全部模型"}
 class IndexController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller

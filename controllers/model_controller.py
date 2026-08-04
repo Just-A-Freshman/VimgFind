@@ -44,7 +44,7 @@ class ModelController:
         self.__on_theme_change()
         tab = self.app.view.model_tab
         tab.model_tree.bind("<<TreeviewSelect>>", lambda e: self.on_model_select() or self.__on_theme_change())
-        tab.model_tree.bind("<Double-Button-1>", self.__on_model_double_click)
+        tab.model_tree.bind("<Double-Button-1>", lambda e: self.__on_model_double_click())
         tab.name_edit_entry.bind("<FocusOut>", self.__on_name_edited)
         tab.model_tree.bind("<<ThemeChanged>>", lambda e: self.__on_theme_change())
         tab.use_btn.config(command=self.switch_model)
@@ -177,7 +177,7 @@ class ModelController:
     def __on_theme_change(self):
         tab = self.app.view.model_tab
         active_fg = self.app.view.style.colors.get("info")   #type:ignore
-        unactivated_fg = self.app.view.style.colors.get("secondary")   #type:ignore
+        unactivated_fg = self.app.view.style.colors.get("light")   #type:ignore
         tab.model_tree.tag_configure(ModelStatus.DISABLED, foreground=unactivated_fg)
         tab.model_tree.tag_configure(ModelStatus.USING, foreground=active_fg)
 
@@ -210,7 +210,7 @@ class ModelController:
         if combobox.get() == old_name:
             combobox.set(new_name)
 
-    def __on_model_double_click(self, event=None) -> None:
+    def __on_model_double_click(self) -> None:
         selection = self.app.view.model_tab.model_tree.selection()
         if not selection:
             return
