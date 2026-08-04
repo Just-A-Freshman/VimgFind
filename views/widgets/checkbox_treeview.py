@@ -53,7 +53,8 @@ class CheckboxTreeview(tk.Frame):
         self.scrollbar.config(command=lambda *args: self.text_tree.yview(*args) or self.check_tree.yview(*args))
 
     def config(self, *args, on_toggle: Callable[[str, bool], None] | None = None, **kwargs):
-        self.__on_toggle = on_toggle
+        if on_toggle is not None:
+            self.__on_toggle = on_toggle
         self.text_tree.config(*args, **kwargs)
 
     def insert(self, parent, index, *, checked: bool = False, **kwargs):

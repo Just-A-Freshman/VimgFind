@@ -24,7 +24,8 @@ class DragReorderTreeview(Treeview):
         self.bind("<ButtonRelease-1>", self.__drag_end)
 
     def config(self, *args, on_reorder: Callable | None = None, **kwargs):
-        self.__on_reorder = on_reorder
+        if on_reorder is not None:
+            self.__on_reorder = on_reorder
         Treeview.config(self, *args, **kwargs)
 
     def __drag_start(self, event: tk.Event) -> None:
