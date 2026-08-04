@@ -94,12 +94,12 @@ class FilterPanel(Labelframe):
         return left_frame
 
     def __set_folder_select_all(self, parent: Frame) -> Checkbutton:
-        folder_select_all = Checkbutton(parent, text=_("全选"))
+        folder_select_all = Checkbutton(parent, text=_("全选"), cursor="hand2")
         folder_select_all.pack(anchor=tk.W, pady=(TkS(11), 0))
         return folder_select_all
 
     def __set_dedup_check(self, parent: Frame) -> Checkbutton:
-        dedup_check = Checkbutton(parent, text=_("去重"))
+        dedup_check = Checkbutton(parent, text=_("去重"), cursor="hand2")
         dedup_check.pack(anchor=tk.W, pady=(TkS(8), 0))
         return dedup_check
 

@@ -102,8 +102,8 @@ class GeneralTab(Frame):
     def __set_maximize_topmost_checkbutton(self) -> tuple[Checkbutton, Checkbutton]:
         checkbutton_frame = Frame(self)
         checkbutton_frame.grid(row=2, column=0, padx=TkS(15), pady=TkS(15), columnspan=4, sticky=tk.EW)
-        maximize_checkbutton = Checkbutton(checkbutton_frame, text=_("启动时最大化窗口"))
-        topmost_checkbutton = Checkbutton(checkbutton_frame, text=_("将当前窗口置顶"))
+        maximize_checkbutton = Checkbutton(checkbutton_frame, text=_("启动时最大化窗口"), cursor="hand2")
+        topmost_checkbutton = Checkbutton(checkbutton_frame, text=_("将当前窗口置顶"), cursor="hand2")
         maximize_checkbutton.pack(side=tk.LEFT)
         topmost_checkbutton.pack(side=tk.LEFT, padx=TkS(15))
         return maximize_checkbutton, topmost_checkbutton
@@ -166,7 +166,7 @@ class CustomMenuTab(Frame):
         self.help_btn, self.edit_frame = self.__set_help_edit_frame(right_frame)
         self.name_edit_tip_label = Label(self.edit_frame)
         self.name_edit_entry = Entry(self.edit_frame)
-        self.batch_mode_checkbutton = Checkbutton(self.edit_frame, text=_("批量模式"))
+        self.batch_mode_checkbutton = Checkbutton(self.edit_frame, text=_("批量模式"), cursor="hand2")
         self.shortcut_tip_label = Label(self.edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(self.edit_frame)
         self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
