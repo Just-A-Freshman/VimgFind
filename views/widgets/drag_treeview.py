@@ -11,9 +11,8 @@ from config.settings import TkS
 class DragReorderTreeview(Treeview):
     def __init__(self, parent, ghost_column: int = 0, **kwargs):
         super().__init__(parent, **kwargs)
-        self.__callback = None
-        self.on_reorder: Callable[[int, int], None] | None = None
         self.__ghost_column = ghost_column
+        self.__callback: Callable[[int, int], None] | None = None
         self.__drag_source: str | None = None
         self.__drag_active: bool = False
         self.__drop_target: str | None = None
@@ -115,8 +114,8 @@ class DragReorderTreeview(Treeview):
             self.move(self.__drag_source, "", target_idx)
             self.selection_set(self.__drag_source)
 
-            if self.on_reorder:
-                self.on_reorder(source_idx, target_idx)
+            if self.__callback:
+                self.__callback(source_idx, target_idx)
         finally:
             self.__drag_clear_state()
 

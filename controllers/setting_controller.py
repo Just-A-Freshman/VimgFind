@@ -33,11 +33,12 @@ class SettingController:
         self.app.setting.app.ui_style = target_theme if target_theme in valid_theme_names else "superhero"
         style.theme_use(self.app.setting.app.ui_style)
         colors: Colors = style.colors   # type:ignore
-        style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
         style.configure('TNotebook.Tab', font=(WinInfo.default_font[0], TkS(-18)))
         style.configure("sub.TNotebook")
         style.configure('sub.TNotebook.Tab', font=WinInfo.default_font)
+        style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
         style.configure("Treeview", rowheight=TkS(30))
+        style.configure("NoBorder.Treeview", borderwidth=0, relief=tk.FLAT)
         style.configure('inner.Link.TButton', background=colors.get("inputbg"), borderwidth=0, foreground=colors.get("info"))
         style.map('inner.Link.TButton', background=[('active', colors.get("bg") if colors.hex_to_rgb(colors.get("bg")) != colors.hex_to_rgb(colors.get("inputbg")) else colors.get("active"))])   # type:ignore
         default_font = nametofont("TkDefaultFont")
