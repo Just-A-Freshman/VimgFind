@@ -25,7 +25,7 @@ class CheckboxTreeview(tk.Frame):
         self.__reserve = self.__border = 0
         
         self.text_tree = DragReorderTreeview(self, show="tree headings", **kwargs)
-        self.check_tree = Treeview(self.text_tree, style="NoBorder.Treeview", show="tree headings")
+        self.check_tree = Treeview(self.text_tree, show="tree headings", style="NoBorder.Treeview")
         self.scrollbar = Scrollbar(self.text_tree, orient=tk.VERTICAL)
         self.__env_init(padding, checkbox_name)
 
@@ -47,7 +47,7 @@ class CheckboxTreeview(tk.Frame):
         self.text_tree.bind("<Configure>", lambda e: self.__reposition(), add="+")
         self.text_tree.bind("<<TreeviewSelect>>", lambda e: self.check_tree.selection_set(self.text_tree.selection()), add="+")
 
-        self.text_tree.config(callback=lambda source, target: self.check_tree.move(self.check_tree.get_children("")[source], "", target))
+        self.text_tree.config(on_reorder=lambda source, target: self.check_tree.move(self.check_tree.get_children("")[source], "", target))
         self.text_tree.configure(padding=(padding, padding, self.__reserve, padding), yscrollcommand=self.__on_yview)
         self.check_tree.configure(yscrollcommand=self.__on_yview, padding=(0, padding, 0, padding))
         self.scrollbar.config(command=lambda *args: self.text_tree.yview(*args) or self.check_tree.yview(*args))
@@ -89,7 +89,7 @@ class CheckboxTreeview(tk.Frame):
     def column(self, *args, **kwargs):
         return self.text_tree.column(*args, **kwargs)
 
-    def bind(self, sequence=None, func=None, add: Literal["+", ""] | None="+", **kwargs) -> str:   # type: ignore
+    def bind(self, sequence=None, func=None, add: Literal["+", ""] | None = "+", **kwargs) -> str:   # type: ignore
         return self.text_tree.bind(sequence, func, add=add, **kwargs)
 
     def selection(self, *args, **kwargs):

@@ -12,7 +12,7 @@ class DragReorderTreeview(Treeview):
     def __init__(self, parent, ghost_column: int = 0, **kwargs):
         super().__init__(parent, **kwargs)
         self.__ghost_column = ghost_column
-        self.__callback: Callable[[int, int], None] | None = None
+        self.__on_reorder: Callable[[int, int], None] | None = None
         self.__drag_source: str | None = None
         self.__drag_active: bool = False
         self.__drop_target: str | None = None
@@ -23,8 +23,8 @@ class DragReorderTreeview(Treeview):
         self.bind("<B1-Motion>", self.__drag_motion)
         self.bind("<ButtonRelease-1>", self.__drag_end)
 
-    def config(self, *args, **kwargs):
-        self.__callback = kwargs.pop("callback")
+    def config(self, *args, on_reorder: Callable | None = None, **kwargs):
+        self.__on_reorder = on_reorder
         Treeview.config(self, *args, **kwargs)
 
     def __drag_start(self, event: tk.Event) -> None:
@@ -114,8 +114,8 @@ class DragReorderTreeview(Treeview):
             self.move(self.__drag_source, "", target_idx)
             self.selection_set(self.__drag_source)
 
-            if self.__callback:
-                self.__callback(source_idx, target_idx)
+            if self.__on_reorder:
+                self.__on_reorder(source_idx, target_idx)
         finally:
             self.__drag_clear_state()
 
