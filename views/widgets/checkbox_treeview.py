@@ -1,58 +1,60 @@
 from __future__ import annotations
 
 import tkinter as tk
+from tkinter.ttk import Treeview
+from tkinter.font import Font
 from typing import Callable, Literal
 
 from PIL import Image, ImageDraw, ImageFont, ImageTk
-from tkinter.ttk import Treeview
 from ttkbootstrap import Scrollbar, Style
+from ttkbootstrap.colorutils import color_to_rgb
 
-from config.settings import TkS
-
+from config.settings import TkS, WinInfo
 from .drag_treeview import DragReorderTreeview
 
 
 class CheckboxTreeview(tk.Frame):
-    def __init__(self, parent, on_toggle: Callable[[str, bool], None] | None = None, padding: int = 0, **kwargs) -> None:
+    def __init__(self, parent, checkbox_name = "", padding: int = 0, **kwargs) -> None:
         super().__init__(parent)
-        self.on_toggle: Callable[[str, bool], None] | None = on_toggle
         self.__checked: dict[str, bool] = {}
         self.__off_img: ImageTk.PhotoImage | None = None
         self.__on_img: ImageTk.PhotoImage | None = None
+        
         self.__images_ready = False
         self.__syncing_views = False
+        self.__reserve = self.__border = 0
+        
+        self.text_tree = DragReorderTreeview(self, show="tree headings", **kwargs)
+        self.check_tree = Treeview(self.text_tree, style="NoBorder.Treeview", show="tree headings")
+        self.scrollbar = Scrollbar(self.text_tree, orient=tk.VERTICAL)
+        self.__env_init(padding, checkbox_name)
 
-        self.__check_w = TkS(45)
+    def __env_init(self, padding: int, checkbox_name: str = "") -> None:
+        scrollbar_width = self.scrollbar.winfo_reqwidth()
+        checkbox_width = max(Font(font=WinInfo.default_font).measure(checkbox_name) + scrollbar_width, TkS(35))
+        self.__reserve = checkbox_width + scrollbar_width
         self.__border = TkS(1)
 
-        self.text_tree = DragReorderTreeview(self, show="tree headings", padding=(padding, padding, self.__check_w, padding), **kwargs)
-        self.text_tree.config(callback=self.__sync_check_order)
-
-        self.scrollbar = Scrollbar(self.text_tree, orient=tk.VERTICAL)
-        self.__sb_w = self.scrollbar.winfo_reqwidth()
-        self.__reserve = self.__check_w + self.__sb_w
-        self.text_tree.configure(padding=(padding, padding, self.__reserve, padding))
-
-        self.check_tree = Treeview(
-            self.text_tree, style="NoBorder.Treeview",
-            show="tree headings", padding=(0, padding, 0, padding)
-        )
-        self.check_tree.heading("#0", text="显示", anchor=tk.W)
-        self.check_tree.column("#0", anchor=tk.W, stretch=True)
-
-        self.check_tree.place(relx=1.0, x=-(self.__border + self.__reserve), y=self.__border, width=self.__check_w)
-        self.scrollbar.place(relx=1.0, x=-(self.__border + self.__sb_w), y=self.__border, width=self.__sb_w)
-        self.text_tree.bind("<Configure>", lambda e: self.__reposition(), add="+")
-
+        self.check_tree.heading("#0", text=checkbox_name, anchor=tk.W)
+        self.check_tree.column("#0", anchor=tk.W)
+        
+        self.check_tree.place(relx=1.0, x=-(self.__border + self.__reserve), y=self.__border, width=checkbox_width)
+        self.scrollbar.place(relx=1.0, x=-(self.__border + scrollbar_width), y=self.__border, width=scrollbar_width)
         self.text_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.check_tree.bind("<Button-1>", self.__on_check_click)
         self.check_tree.bind("<<ThemeChanged>>", self.__on_theme_changed)
+        self.text_tree.bind("<Configure>", lambda e: self.__reposition(), add="+")
         self.text_tree.bind("<<TreeviewSelect>>", lambda e: self.check_tree.selection_set(self.text_tree.selection()), add="+")
 
-        self.text_tree.configure(yscrollcommand=self.__on_yview)
-        self.check_tree.configure(yscrollcommand=self.__on_yview)
+        self.text_tree.config(callback=lambda source, target: self.check_tree.move(self.check_tree.get_children("")[source], "", target))
+        self.text_tree.configure(padding=(padding, padding, self.__reserve, padding), yscrollcommand=self.__on_yview)
+        self.check_tree.configure(yscrollcommand=self.__on_yview, padding=(0, padding, 0, padding))
         self.scrollbar.config(command=lambda *args: self.text_tree.yview(*args) or self.check_tree.yview(*args))
+
+    def config(self, *args, on_toggle: Callable[[str, bool], None] | None = None, **kwargs):
+        self.__on_toggle = on_toggle
+        self.text_tree.config(*args, **kwargs)
 
     def insert(self, parent, index, *, checked: bool = False, **kwargs):
         iid = self.text_tree.insert(parent, index, **kwargs)
@@ -120,18 +122,14 @@ class CheckboxTreeview(tk.Frame):
         self.text_tree.focus_set()
         self.__checked[iid] = not self.__checked.get(iid, False)
         self.__apply_image(iid)
-        if self.on_toggle:
-            self.on_toggle(iid, self.__checked[iid])
+        if self.__on_toggle:
+            self.__on_toggle(iid, self.__checked[iid])
         return "break"
 
     def __reposition(self) -> None:
         h = self.text_tree.winfo_height() - 2 * self.__border
         self.check_tree.place_configure(relx=1, x=-(self.__border + self.__reserve), y=self.__border, height=h)
-        self.scrollbar.place_configure(relx=1, x=-(self.__border + self.__sb_w), y=self.__border, height=h)
-
-    def __sync_check_order(self, source_idx: int, target_idx: int) -> None:
-        for new_idx, iid in enumerate(self.text_tree.get_children()):
-            self.check_tree.move(iid, "", new_idx)
+        self.scrollbar.place_configure(relx=1, x=-(self.__border + self.scrollbar.winfo_reqwidth()), y=self.__border, height=h)
 
     def __on_yview(self, first: float, last: float) -> None:
         self.scrollbar.set(first, last)
@@ -151,33 +149,19 @@ class CheckboxTreeview(tk.Frame):
             self.__on_img = None
             self.__images_ready = True
             return
-        colors = style._get_builder().colors
-        self.__off_img, self.__on_img = self.__create_check_images(colors)
-        self.__images_ready = True
-
-    @staticmethod
-    def __create_check_images(colors):
+        
         SS = 4
         base = 134 * SS
         box = TkS(14)
+        style = Style()
+        primary = color_to_rgb(style.colors.get("primary"))     # type: ignore
+        fg, bg = color_to_rgb(style.colors.get("fg")), color_to_rgb(style.colors.get("bg"))    # type: ignore
+        selectfg = color_to_rgb(style.colors.get("selectfg"))       # type: ignore
 
-        def hex2rgb(h: str):
-            h = h.lstrip("#")
-            return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-
-        primary = hex2rgb(colors.get("primary"))
-        fg, bg = hex2rgb(colors.fg), hex2rgb(colors.bg)
-        selectfg = hex2rgb(colors.selectfg)
-
-        def blend(a_color, b_color, alpha):
-            return tuple(int(alpha * c1 + (1 - alpha) * c2) for c1, c2 in zip(a_color, b_color))
-
-        off_border = blend(fg, bg, 0.4)
-
+        off_border = tuple(int(0.4 * c1 + 0.6 * c2) for c1, c2 in zip(fg, bg))   # type:ignore
         off_sub = Image.new("RGBA", (base, base))
         d = ImageDraw.Draw(off_sub)
-        d.rounded_rectangle([2 * SS, 2 * SS, 132 * SS, 132 * SS], radius=16 * SS,
-                            outline=off_border, width=6 * SS, fill=bg)
+        d.rounded_rectangle([2 * SS, 2 * SS, 132 * SS, 132 * SS], radius=16 * SS, outline=off_border, width=6 * SS, fill=bg)
         on_sub = Image.new("RGBA", (base, base))
         d = ImageDraw.Draw(on_sub)
         d.rounded_rectangle(
@@ -188,8 +172,8 @@ class CheckboxTreeview(tk.Frame):
             fnt = ImageFont.truetype("seguisym.ttf", 120 * SS)
         except OSError:
             fnt = ImageFont.load_default()
+        
         d.text((20 * SS, -20 * SS), "✓", font=fnt, fill=selectfg)
-
         resize = Image.Resampling.LANCZOS
         off_sub = off_sub.resize((box, box), resize)
         on_sub = on_sub.resize((box, box), resize)
@@ -199,7 +183,9 @@ class CheckboxTreeview(tk.Frame):
         off.paste(off_sub, (x0, 0), off_sub)
         on = Image.new("RGBA", (canvas_w, box))
         on.paste(on_sub, (x0, 0), on_sub)
-        return ImageTk.PhotoImage(off), ImageTk.PhotoImage(on)
+        self.__off_img = ImageTk.PhotoImage(off)
+        self.__on_img = ImageTk.PhotoImage(on)
+        self.__images_ready = True
 
     def __apply_image(self, iid: str) -> None:
         if self.__on_img is None or self.__off_img is None:

@@ -197,7 +197,7 @@ class CustomMenuTab(Frame):
         return add_btn, add_sep_btn, del_btn
 
     def __set_custom_menu_tree(self, parent: Frame) -> CheckboxTreeview:
-        treeview = CheckboxTreeview(parent, padding=TkS(1))
+        treeview = CheckboxTreeview(parent, checkbox_name=_("显示"), padding=TkS(1))
         treeview.heading("#0", text=_("菜单名称"), anchor=tk.CENTER)
         treeview.column("#0", anchor=tk.CENTER, width=TkS(160), stretch=True)
         treeview.pack(fill=tk.BOTH, expand=True, pady=TkS(5))
