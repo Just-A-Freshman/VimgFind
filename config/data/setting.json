@@ -1,37 +1,32 @@
 {
     "max_work_thread": 12,
-    "max_match_count": 100,
+    "max_match_count": 300,
     "preview_mode": "medium_ico",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
     "ui_style": "superhero",
-    "current_model": "EfficientNet",
+    "current_model": "chinese-clip",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
     "schedule_index_save_interval": 600,
     "maximize_window": false,
     "topmost_window": false,
-    "locale": "zh-CN",
+    "locale": "en-US",
     "menu_items": [
-        {
-            "name": "复制名称",
-            "type": "custom",
-            "is_visible": false,
-            "shortcut": [],
-            "batch_mode": true,
-            "command": "#test\ncmd /c \"echo {noext}| clip\""
-        },
         {
             "name": "复制图片",
             "type": "embedded",
             "is_visible": true,
-            "shortcut": [],
+            "shortcut": [
+                "Ctrl",
+                "C"
+            ],
             "batch_mode": false,
             "command": ""
         },
         {
-            "name": "复制路径",
+            "name": "删除图片",
             "type": "embedded",
             "is_visible": true,
             "shortcut": [],
@@ -47,7 +42,7 @@
             "command": ""
         },
         {
-            "name": "删除图片",
+            "name": "复制路径",
             "type": "embedded",
             "is_visible": true,
             "shortcut": [],
@@ -61,6 +56,17 @@
             "shortcut": [],
             "batch_mode": false,
             "command": ""
+        },
+        {
+            "name": "复制名称",
+            "type": "custom",
+            "is_visible": false,
+            "shortcut": [
+                "Ctrl",
+                "S"
+            ],
+            "batch_mode": true,
+            "command": "#test\ncmd /c \"echo {noext}| clip\""
         },
         {
             "name": "打开图片",
