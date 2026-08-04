@@ -220,10 +220,11 @@
   "这是一条分隔线": "This is a separator",
   "选择文件": "Select File",
   "选择文件夹": "Select Folder",
-  "选择菜单配置详细信息": "Select a menu item to view details",
+  "选择菜单进行配置": "Select a menu item to configure",
   "选择配置文件": "Select Config File",
   "配置文件存储位置": "Config File Location",
   "配置文件已切换，需要重启后才能生效。": "Config file changed. Restart the app to apply.",
   "配置编辑": "Edit Config",
-  "错误日志": "Error Log"
+  "错误日志": "Error Log",
+  "默认信息": "Default prompt message"
 }

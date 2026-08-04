@@ -5,14 +5,14 @@
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
-    "ui_style": "flatly",
+    "ui_style": "sandstone",
     "current_model": "chinese-clip",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
     "schedule_index_save_interval": 600,
     "maximize_window": false,
     "topmost_window": false,
-    "locale": "en-US",
+    "locale": "zh-CN",
     "menu_items": [
         {
             "name": "复制图片",
@@ -36,16 +36,13 @@
         {
             "name": "复制名称",
             "type": "custom",
-            "is_visible": true,
-            "shortcut": [
-                "Ctrl",
-                "S"
-            ],
+            "is_visible": false,
+            "shortcut": [],
             "batch_mode": true,
             "command": "cmd /c \"echo {noext}| clip\""
         },
         {
-            "name": "删除图片",
+            "name": "图片另存为",
             "type": "embedded",
             "is_visible": true,
             "shortcut": [],
@@ -53,7 +50,7 @@
             "command": ""
         },
         {
-            "name": "图片另存为",
+            "name": "删除图片",
             "type": "embedded",
             "is_visible": true,
             "shortcut": [],

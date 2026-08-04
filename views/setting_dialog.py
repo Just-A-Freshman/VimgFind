@@ -260,6 +260,7 @@ class CustomMenuTab(Frame):
 
     def show_default(self) -> None:
         self.__reset_edit_layout()
-        self.command_tip_label.config(text=_("选择菜单配置详细信息"))
+        self.command_tip_label.config(text=_("选择菜单进行配置"))
+        self.command_tooltip.text = _("默认提示信息")
         self.command_tip_label.grid(row=0, column=0, columnspan=2, sticky=tk.NSEW)
         self.edit_frame.rowconfigure(0, weight=1)
