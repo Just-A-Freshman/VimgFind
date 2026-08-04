@@ -40,7 +40,7 @@ class IndexController:
             tab.auto_update_checkbutton.invoke()
 
         # bind event
-        tab.index_dataset_table.config(callback=self.__on_reorder)
+        tab.index_dataset_table.config(on_reorder=self.__on_reorder)
         tab.add_index_button.config(command=self.add_search_dir)
         tab.clean_excluded_button.config(command=self.__clean_excluded)
         tab.update_index_button.config(command=self.__sync_index)

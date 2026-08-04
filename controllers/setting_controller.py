@@ -193,7 +193,7 @@ class CustomMenuController:
         tab.add_sep_btn.config(command=lambda: self.__add_menu_item(default=MenuItemDef(name="——————————", type="separator")))
         tab.delete_button.config(command=self.__delete_menu_item)
         tab.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("自定义菜单命令")))
-        tab.custom_menu_tree.on_toggle = self.__on_visibility_toggled
+        tab.custom_menu_tree.config(on_toggle=lambda iid, checked: setattr(self.__items_data.get(iid), "is_visible", checked))
         tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
         tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("name"))
         tab.batch_mode_checkbutton.config(command=lambda: self.__sync_item_property("batch_mode"))
@@ -219,11 +219,6 @@ class CustomMenuController:
         item = self.__items_data.get(iid)
         if item:
             self.custom_menu_tab.show_detail(item)
-
-    def __on_visibility_toggled(self, iid: str, checked: bool) -> None:
-        item = self.__items_data.get(iid)
-        if item is not None:
-            item.is_visible = checked
 
     def __add_menu_item(self, default: MenuItemDef | None = None) -> None:
         if default is None:
@@ -261,16 +256,14 @@ class CustomMenuController:
             self.__items_data.pop(iid, None)
         self.custom_menu_tab.show_default()
 
-    def __sync_item_property(self, property: Literal["name", "is_visible", "batch_mode", "shortcut", "command"]):
+    def __sync_item_property(self, property: Literal["name", "batch_mode", "shortcut", "command"]):
         selection = self.custom_menu_tab.custom_menu_tree.selection()
         if not selection:
             return
         tab = self.custom_menu_tab
         iid = selection[0]
         menu_item = self.__items_data[iid]
-        if menu_item.type == "embedded" and property not in ("is_visible", "shortcut"):
-            return
-        if menu_item.type == "separator" and property != "is_visible":
+        if (menu_item.type == "embedded" and property != "shortcut") or (menu_item.type == "separator" and property != "is_visible"):
             return
         if property == "name":
             self.__items_data[iid].name = tab.name_edit_entry.get().strip()
