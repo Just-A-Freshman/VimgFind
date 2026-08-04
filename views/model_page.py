@@ -125,7 +125,7 @@ class ModelFrame(Frame):
 
         self.name_tip_label.config(text=_("名称："))
         self.name_tip_label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(5), TkS(2)), pady=TkS(5))
-        self.name_edit_entry.config(state=tk.NORMAL)
+        self.name_edit_entry.config(state=tk.NORMAL, cursor="xterm")
         self.name_edit_entry.delete(0, tk.END)
         self.name_edit_entry.insert(0, name)
         self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)), pady=TkS(5), ipady=TkS(5))
@@ -137,10 +137,10 @@ class ModelFrame(Frame):
         self.detail_desc_text.config(state=tk.DISABLED)
 
         if status == "not download":
-            self.name_edit_entry.config(state=tk.DISABLED)
+            self.name_edit_entry.config(state=tk.DISABLED, cursor="arrow")
             self.download_btn.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
         elif status == "downloading":
-            self.name_edit_entry.config(state=tk.DISABLED)
+            self.name_edit_entry.config(state=tk.DISABLED, cursor="arrow")
         else:
             self.btn_group.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
             self.use_btn.grid(row=0, column=0, sticky=tk.EW, padx=(0, TkS(5)))

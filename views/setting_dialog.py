@@ -229,7 +229,7 @@ class CustomMenuTab(Frame):
         self.name_edit_tip_label.config(text=_("名称："))
         self.name_edit_tip_label.grid(row=0, column=0, padx=TkS(5), sticky=tk.W)
         self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)))
-        self.name_edit_entry.config(state=tk.NORMAL)
+        self.name_edit_entry.config(state=tk.NORMAL, cursor="xterm")
         self.name_edit_entry.delete(0, tk.END)
         self.name_edit_entry.insert(tk.END, menu_item.name if menu_item.type != "embedded" else _(menu_item.name))
         self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=(0, TkS(3)), sticky=tk.W)
