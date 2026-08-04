@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
-from enum import StrEnum
 from tkinter import filedialog, messagebox
 import tkinter as tk
 import zipfile
@@ -11,6 +10,7 @@ import time
 import json
 
 from ttkbootstrap import Entry
+from ttkbootstrap.colorutils import color_to_rgb, color_to_hex
 
 from core import SearchTool
 from config.settings import TkS
@@ -69,7 +69,7 @@ class ModelController:
             return ModelStatus.DOWNLOADED
         return ModelStatus.DISABLED
 
-    def on_model_select(self, event=None) -> None:
+    def on_model_select(self) -> None:
         view = self.app.view.model_tab
         selection = view.model_tree.selection()
         if not selection:
@@ -176,9 +176,10 @@ class ModelController:
 
     def __on_theme_change(self):
         tab = self.app.view.model_tab
-        active_fg = self.app.view.style.colors.get("info")   #type:ignore
-        unactivated_fg = self.app.view.style.colors.get("light")   #type:ignore
-        tab.model_tree.tag_configure(ModelStatus.DISABLED, foreground=unactivated_fg)
+        colors: Colors = self.app.view.style.colors    #type:ignore
+        active_fg: str = colors.get("info")     #type:ignore
+        unactivated_fg = color_to_hex(tuple(int(c + (255 - c) * 0.2) for c in color_to_rgb(colors.get("secondary"))))  # type:ignore
+        tab.model_tree.tag_configure(ModelStatus.DISABLED, foreground=unactivated_fg)  
         tab.model_tree.tag_configure(ModelStatus.USING, foreground=active_fg)
 
     def __on_name_edited(self, event: tk.Event) -> None:
