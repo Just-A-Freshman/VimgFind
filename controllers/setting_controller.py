@@ -194,7 +194,7 @@ class CustomMenuController:
         tab.delete_button.config(command=self.__delete_menu_item)
         tab.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("自定义菜单命令")))
         tab.custom_menu_tree.config(on_toggle=lambda iid, checked: setattr(self.__items_data.get(iid), "is_visible", checked))
-        tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select())
+        tab.custom_menu_tree.bind("<<TreeviewSelect>>", lambda _: self.__on_tree_select(), add="+")
         tab.name_edit_entry.bind("<KeyRelease>", lambda _: self.__sync_item_property("name"))
         tab.batch_mode_checkbutton.config(command=lambda: self.__sync_item_property("batch_mode"))
         tab.shortcut_entry.bind("<FocusIn>", lambda e: shortcut.reset_modifiers(), add="+")

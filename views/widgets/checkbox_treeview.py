@@ -13,9 +13,9 @@ from config.settings import TkS, WinInfo
 from .drag_treeview import DragReorderTreeview
 
 
-class CheckboxTreeview(tk.Frame):
+class CheckboxTreeview(DragReorderTreeview):
     def __init__(self, parent, checkbox_name = "", padding: int = 0, **kwargs) -> None:
-        super().__init__(parent)
+        super().__init__(parent, show="tree headings", **kwargs)
         self.__checked: dict[str, bool] = {}
         self.__off_img: ImageTk.PhotoImage | None = None
         self.__on_img: ImageTk.PhotoImage | None = None
@@ -24,9 +24,8 @@ class CheckboxTreeview(tk.Frame):
         self.__syncing_views = False
         self.__reserve = self.__border = 0
         
-        self.text_tree = DragReorderTreeview(self, show="tree headings", **kwargs)
-        self.check_tree = Treeview(self.text_tree, show="tree headings", style="NoBorder.Treeview")
-        self.scrollbar = Scrollbar(self.text_tree, orient=tk.VERTICAL)
+        self.check_tree = Treeview(self, show="tree headings", style="NoBorder.Treeview")
+        self.scrollbar = Scrollbar(self, orient=tk.VERTICAL)
         self.__env_init(padding, checkbox_name)
 
     def __env_init(self, padding: int, checkbox_name: str = "") -> None:
@@ -40,25 +39,25 @@ class CheckboxTreeview(tk.Frame):
         
         self.check_tree.place(relx=1.0, x=-(self.__border + self.__reserve), y=self.__border, width=checkbox_width)
         self.scrollbar.place(relx=1.0, x=-(self.__border + scrollbar_width), y=self.__border, width=scrollbar_width)
-        self.text_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         self.check_tree.bind("<Button-1>", self.__on_check_click)
         self.check_tree.bind("<<ThemeChanged>>", self.__on_theme_changed)
-        self.text_tree.bind("<Configure>", lambda e: self.__reposition(), add="+")
-        self.text_tree.bind("<<TreeviewSelect>>", lambda e: self.check_tree.selection_set(self.text_tree.selection()), add="+")
+        self.bind("<Configure>", lambda e: self.__reposition(), add="+")
+        self.bind("<<TreeviewSelect>>", lambda e: self.check_tree.selection_set(self.selection()), add="+")
 
-        self.text_tree.config(on_reorder=lambda source, target: self.check_tree.move(self.check_tree.get_children("")[source], "", target))
-        self.text_tree.configure(padding=(padding, padding, self.__reserve, padding), yscrollcommand=self.__on_yview)
+        self.config(on_reorder=lambda source, target: self.check_tree.move(self.check_tree.get_children("")[source], "", target))
+        self.configure(padding=(padding, padding, self.__reserve, padding), yscrollcommand=self.__on_yview)
         self.check_tree.configure(yscrollcommand=self.__on_yview, padding=(0, padding, 0, padding))
-        self.scrollbar.config(command=lambda *args: self.text_tree.yview(*args) or self.check_tree.yview(*args))
+        self.scrollbar.config(command=lambda *args: self.yview(*args) or self.check_tree.yview(*args))
 
     def config(self, *args, on_toggle: Callable[[str, bool], None] | None = None, **kwargs):
         if on_toggle is not None:
             self.__on_toggle = on_toggle
-        self.text_tree.config(*args, **kwargs)
+        DragReorderTreeview.config(self, *args, **kwargs)
 
-    def insert(self, parent, index, *, checked: bool = False, **kwargs):
-        iid = self.text_tree.insert(parent, index, **kwargs)
+    def insert(self, parent, index, *, checked: bool = False, **kwargs) -> str:  # type:ignore
+        iid = DragReorderTreeview.insert(self, parent, index, **kwargs)
         self.check_tree.insert(parent, index, iid=iid)
         if not self.__images_ready:
             self.__build_images()
@@ -66,10 +65,10 @@ class CheckboxTreeview(tk.Frame):
         self.__apply_image(iid)
         return iid
 
-    def delete(self, *items) -> None:
+    def delete(self, *items: str) -> None:   # type: ignore
         for iid in items:
             self.__checked.pop(iid, None)
-        self.text_tree.delete(*items)
+        self.delete(*items)
         self.check_tree.delete(*items)
 
     def set_checked(self, iid: str, checked: bool) -> None:
@@ -84,43 +83,13 @@ class CheckboxTreeview(tk.Frame):
     def is_checked(self, iid: str) -> bool:
         return self.__checked.get(iid, False)
 
-    def heading(self, *args, **kwargs):
-        return self.text_tree.heading(*args, **kwargs)
-
-    def column(self, *args, **kwargs):
-        return self.text_tree.column(*args, **kwargs)
-
-    def bind(self, sequence=None, func=None, add: Literal["+", ""] | None = "+", **kwargs) -> str:   # type: ignore
-        return self.text_tree.bind(sequence, func, add=add, **kwargs)
-
-    def selection(self, *args, **kwargs):
-        return self.text_tree.selection(*args, **kwargs)
-
-    def selection_set(self, *args, **kwargs):
-        return self.text_tree.selection_set(*args, **kwargs)
-
-    def focus(self, *args, **kwargs):
-        return self.text_tree.focus(*args, **kwargs)
-
-    def see(self, *args, **kwargs):
-        return self.text_tree.see(*args, **kwargs)
-
-    def set(self, *args, **kwargs):
-        return self.text_tree.set(*args, **kwargs)
-
-    def item(self, *args, **kwargs):
-        return self.text_tree.item(*args, **kwargs)
-
-    def get_children(self, *args, **kwargs):
-        return self.text_tree.get_children(*args, **kwargs)
-
     def __on_check_click(self, event: tk.Event):
         if self.check_tree.identify("region", event.x, event.y) != "tree":
             return
         iid = self.check_tree.identify_row(event.y)
         if not iid:
             return
-        self.text_tree.focus_set()
+        self.focus_set()
         self.__checked[iid] = not self.__checked.get(iid, False)
         self.__apply_image(iid)
         if self.__on_toggle:
@@ -128,7 +97,7 @@ class CheckboxTreeview(tk.Frame):
         return "break"
 
     def __reposition(self) -> None:
-        h = self.text_tree.winfo_height() - 2 * self.__border
+        h = self.winfo_height() - 2 * self.__border
         self.check_tree.place_configure(relx=1, x=-(self.__border + self.__reserve), y=self.__border, height=h)
         self.scrollbar.place_configure(relx=1, x=-(self.__border + self.scrollbar.winfo_reqwidth()), y=self.__border, height=h)
 
@@ -138,7 +107,7 @@ class CheckboxTreeview(tk.Frame):
             return
         self.__syncing_views = True
         try:
-            self.text_tree.yview_moveto(first)
+            self.yview_moveto(first)
             self.check_tree.yview_moveto(first)
         finally:
             self.__syncing_views = False
