@@ -31,9 +31,7 @@ class IndexController:
         self.refresh_index_dataset_table()
         self.update_index_tip()
         tab = self.app.view.index_tab
-        downloaded_models = self.app.model_controller.get_downloaded_models()
-        tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
-        tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.app.setting.app.current_model), ""))
+        self.refresh_switch_model_combobox()
         tab.update_range_combobox.set(_(RANGE_LABEL[self.app.setting.app.update_index_range]))
         tab.update_threads_count_scale.set(self.app.setting.app.max_work_thread)
         if self.app.setting.app.auto_update_index:
@@ -58,6 +56,13 @@ class IndexController:
                 next(k for k, v in RANGE_LABEL.items() if _(v) == e.widget.get())
         ))
         tab.update_threads_count_scale.bind("<ButtonRelease-1>", lambda e: setattr(self.app.setting.app, "max_work_thread", int(float(e.widget.get()))))
+        self.app.model_controller.add_models_updated_callback(self.refresh_switch_model_combobox)
+
+    def refresh_switch_model_combobox(self) -> None:
+        tab = self.app.view.index_tab
+        downloaded_models = self.app.model_controller.get_downloaded_models()
+        tab.switch_model_combobox.config(values=[i.meta.name for i in downloaded_models])
+        tab.switch_model_combobox.set(next((i.meta.name for i in downloaded_models if i.meta.id == self.app.setting.app.current_model), ""))
 
     @property
     def is_updating(self) -> bool:

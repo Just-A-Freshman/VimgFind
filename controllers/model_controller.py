@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from threading import Thread
+from typing import TYPE_CHECKING, Callable, cast
 from tkinter import filedialog, messagebox
 import tkinter as tk
 import zipfile
@@ -19,6 +20,7 @@ from views.model_page import ModelFrame, ModelStatus
 from utils.i18n import _
 import utils.file_ops as file_ops
 import utils.internet as internet
+import utils.decorators as decorators
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -38,9 +40,10 @@ class ModelController:
         self._model_cache: dict[str, ModelConfig] = {}
         self.__editing_model_id: str | None = None
         self.__current_download: internet.DownloadTask | None = None
+        self.__models_updated_callbacks: list[Callable[[], None]] = []
 
     def env_init(self) -> None:
-        self.__load_model_list()
+        self.__load_model_list(refresh_remote=False)
         self.__on_theme_change()
         tab = self.app.view.model_tab
         tab.model_tree.bind("<<TreeviewSelect>>", lambda e: self.on_model_select() or self.__on_theme_change())
@@ -59,6 +62,20 @@ class ModelController:
             cfg for model_id, cfg in self._model_cache.items()
             if self.get_model_status(model_id) != ModelStatus.DISABLED
         ]
+
+    def add_models_updated_callback(self, callback: Callable[[], None]) -> None:
+        self.__models_updated_callbacks.append(callback)
+
+    def refresh_remote_models(self) -> None:
+        @decorators.send_task
+        def worker() -> None:
+            try:
+                models = self.model_checker.get_available_models(refresh_remote=True)
+            except Exception as e:
+                logging.error(f"刷新远程模型列表失败：{str(e)}")
+                return
+            self.app.view.after(0, lambda: self.__apply_remote_models(models))
+        worker()
 
     def get_model_status(self, model_id: str) -> ModelStatus:
         if self.__current_download and self.__current_download.model_id == model_id:
@@ -159,12 +176,22 @@ class ModelController:
         self.app.view.model_tab.model_tree.selection_set(model_id)
         self.on_model_select()
 
-    def __load_model_list(self) -> None:
+    def __apply_remote_models(self, models: list[ModelConfig]) -> None:
+        new_ids = {cfg.meta.id or cfg.meta.name for cfg in models}
+        if new_ids == set(self._model_cache):
+            return
+        self.__populate_model_tree(models)
+        for callback in self.__models_updated_callbacks:
+            callback()
+
+    def __load_model_list(self, refresh_remote: bool = True) -> None:
+        self.__populate_model_tree(self.model_checker.get_available_models(refresh_remote=refresh_remote))
+
+    def __populate_model_tree(self, models: list[ModelConfig]) -> None:
         view = self.app.view.model_tab
         self._model_cache.clear()
         view.model_tree.delete(*view.model_tree.get_children())
 
-        models = self.model_checker.get_available_models()
         for cfg in models:
             model_id = cfg.meta.id or cfg.meta.name
             status = self.get_model_status(model_id)
@@ -430,14 +457,21 @@ class ModelChecker:
         except (zipfile.BadZipFile, json.JSONDecodeError) as e:
             raise AssertionError(f"无法读取模型包：{e}")
 
+    def _read_manifest_cache(self) -> dict:
+        try:
+            with open(self.app.setting.manifest_cache, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError, FileNotFoundError):
+            return {}
+
+    def read_cached_manifest(self) -> list[dict] | None:
+        """读取本地缓存的远程清单（不访问网络），无缓存时返回 None"""
+        return self._read_manifest_cache().get("models")
+
     def fetch_remote_manifest(self, cache_ttl: int = 0) -> list[dict] | None:
         now = time.time()
         cache_path = self.app.setting.manifest_cache
-        try:
-            with open(cache_path, "r", encoding="utf-8") as f:
-                cache = json.load(f)
-        except (json.JSONDecodeError, IOError, FileNotFoundError):
-            cache = {}
+        cache = self._read_manifest_cache()
         if now - cache.get("timestamp", 0) < max(cache_ttl, 0):
             return cache.get("models")
         try:
@@ -456,7 +490,7 @@ class ModelChecker:
         model_dir = self.app.setting.models_dir / model_id
         return model_dir.is_dir() and (model_dir / "model.json").is_file()
 
-    def get_available_models(self) -> list[ModelConfig]:
+    def get_available_models(self, refresh_remote: bool = True) -> list[ModelConfig]:
         installed_ids = self.app.setting.get_model_list()
         local_map: dict[str, ModelConfig] = {}
         result: list[ModelConfig] = []
@@ -466,7 +500,10 @@ class ModelChecker:
             local_map[mid] = cfg
             result.append(cfg)
 
-        remote_raw = self.fetch_remote_manifest(self.app.setting.app.cache_ttl)
+        if refresh_remote:
+            remote_raw = self.fetch_remote_manifest(self.app.setting.app.cache_ttl)
+        else:
+            remote_raw = self.read_cached_manifest()
         if not remote_raw:
             return result
         for entry in remote_raw:

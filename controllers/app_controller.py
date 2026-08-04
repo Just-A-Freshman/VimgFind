@@ -47,6 +47,7 @@ class AppController:
         self.search_tools = SearchTool(self.setting)
         self.model_controller.env_init()
         self.index_controller.env_init()
+        self.model_controller.refresh_remote_models()
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
 
     def __on_drop(self, event) -> None:
