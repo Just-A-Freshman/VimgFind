@@ -3,12 +3,12 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter.font import Font
 
-from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Scrollbar, Notebook, Text
+from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Notebook, Text
 from ttkbootstrap.widgets import ToolTip
 
 from config.settings import WinInfo, TkS
 from config.types import MenuItemDef
-from .widgets import DragReorderTreeview
+from .widgets import CheckboxTreeview
 from utils.i18n import _
 
 
@@ -143,8 +143,7 @@ class CustomMenuTab(Frame):
     add_button: Button
     add_sep_btn: Button
     delete_button: Button
-    custom_menu_tree: DragReorderTreeview
-    is_visible_checkbutton: Checkbutton
+    custom_menu_tree: CheckboxTreeview
     shortcut_tip_label: Label
     shortcut_entry: Entry
     command_tip_label: Label
@@ -154,8 +153,7 @@ class CustomMenuTab(Frame):
     __slots__ = (
         "add_button", "add_sep_btn", "delete_button",
         "custom_menu_tree", "help_btn",
-        "batch_mode_checkbutton", "is_visible_checkbutton",
-        "name_edit_tip_label", "name_edit_entry",
+        "batch_mode_checkbutton", "name_edit_tip_label", "name_edit_entry",
         "shortcut_tip_label", "shortcut_entry", "shortcut_warning_tooltip", 
         "command_tip_label", "command_text", "command_tooltip", "state_show_btn"
     )
@@ -168,7 +166,6 @@ class CustomMenuTab(Frame):
         self.help_btn, self.edit_frame = self.__set_help_edit_frame(right_frame)
         self.name_edit_tip_label = Label(self.edit_frame)
         self.name_edit_entry = Entry(self.edit_frame)
-        self.is_visible_checkbutton = Checkbutton(self.edit_frame, text=_("显示"))
         self.batch_mode_checkbutton = Checkbutton(self.edit_frame, text=_("批量模式"))
         self.shortcut_tip_label = Label(self.edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(self.edit_frame)
@@ -199,16 +196,10 @@ class CustomMenuTab(Frame):
             btn.grid(row=0, column=i, sticky=tk.EW, padx=(0, TkS(5)) if i < len(buttons) - 1 else 0, ipadx=TkS(12))
         return add_btn, add_sep_btn, del_btn
 
-    def __set_custom_menu_tree(self, parent: Frame) -> DragReorderTreeview:
-        columns = {_("菜单名称"): TkS(80), _("是否显示"): TkS(80)}
-        treeview = DragReorderTreeview(parent, show="headings", columns=list(columns), padding=TkS(1))
-        for text, width in columns.items():
-            treeview.heading(text, text=text, anchor=tk.CENTER)
-            treeview.column(text, anchor=tk.CENTER, width=width, stretch=True)
-
-        scroll = Scrollbar(treeview, orient=tk.VERTICAL, command=treeview.yview)
-        scroll.pack(fill=tk.Y, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
-        treeview.configure(yscrollcommand=scroll.set)
+    def __set_custom_menu_tree(self, parent: Frame) -> CheckboxTreeview:
+        treeview = CheckboxTreeview(parent, padding=TkS(1))
+        treeview.heading("#0", text=_("菜单名称"), anchor=tk.CENTER)
+        treeview.column("#0", anchor=tk.CENTER, width=TkS(160), stretch=True)
         treeview.pack(fill=tk.BOTH, expand=True, pady=TkS(5))
         return treeview
 
@@ -222,10 +213,6 @@ class CustomMenuTab(Frame):
         return help_btn, edit_frame
 
     def show_detail(self, menu_item: MenuItemDef) -> None:
-        if menu_item.is_visible != self.is_visible_checkbutton.instate(["selected"]):
-            self.is_visible_checkbutton.invoke()
-        self.is_visible_checkbutton.grid(row=0, column=2, sticky=tk.W, padx=TkS(5), pady=TkS(10))
-
         if menu_item.type == "separator":
             self.name_edit_tip_label.grid_forget()
             self.name_edit_entry.grid_forget()
@@ -246,7 +233,7 @@ class CustomMenuTab(Frame):
         self.name_edit_entry.delete(0, tk.END)
         self.name_edit_entry.insert(tk.END, menu_item.name if menu_item.type != "embedded" else _(menu_item.name))
         self.shortcut_tip_label.grid(row=1, column=0, padx=TkS(5), pady=(0, TkS(3)), sticky=tk.W)
-        self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, columnspan=2, padx=(0, TkS(5)))
+        self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, padx=(0, TkS(5)), pady=TkS(5))
         self.shortcut_entry.delete(0, tk.END)
         self.shortcut_entry.insert(tk.END, " + ".join(menu_item.shortcut))
         
@@ -261,8 +248,8 @@ class CustomMenuTab(Frame):
         else:
             self.command_tip_label.config(text=_("执行命令："))
             self.command_tip_label.grid(row=2, column=0, padx=TkS(5), pady=TkS(4), columnspan=2, sticky=tk.W)
-            self.batch_mode_checkbutton.grid(row=2, column=1, columnspan=2, sticky=tk.E, padx=TkS(5))
-            self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=3, padx=TkS(5), pady=(0, TkS(5)))
+            self.batch_mode_checkbutton.grid(row=2, column=1, sticky=tk.E, padx=TkS(5))
+            self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=2, padx=TkS(5), pady=(0, TkS(5)))
             if menu_item.batch_mode != self.batch_mode_checkbutton.instate(["selected"]): 
                 self.batch_mode_checkbutton.invoke()
             self.command_text.delete('1.0', tk.END)
