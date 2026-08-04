@@ -170,7 +170,7 @@ class CustomMenuTab(Frame):
         self.shortcut_tip_label = Label(self.edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(self.edit_frame)
         self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
-        self.command_tip_label = Label(self.edit_frame)
+        self.command_tip_label = Label(self.edit_frame, justify=tk.CENTER, wraplength=TkS(180), anchor=tk.CENTER)
         self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="")
         self.command_text = Text(self.edit_frame, undo=True)
         self.state_show_btn = Button(self.command_text, style="inner.Link.TButton", takefocus=False, cursor="hand2")
@@ -208,24 +208,25 @@ class CustomMenuTab(Frame):
         help_btn.pack(side=tk.TOP, anchor=tk.E, pady=(TkS(5), 0))
         edit_frame = Labelframe(parent, text=_("配置编辑"))
         edit_frame.pack(fill=tk.BOTH, expand=True, pady=(TkS(1), TkS(5)))
-        edit_frame.grid_columnconfigure(1, weight=1)
-        edit_frame.grid_rowconfigure(3, weight=1)
+        edit_frame.columnconfigure(1, weight=1)
         return help_btn, edit_frame
 
+    def __reset_edit_layout(self) -> None:
+        for row in range(4):
+            self.edit_frame.rowconfigure(row, weight=0)
+        for widget in self.edit_frame.children.values():
+            widget.grid_forget()
+        self.state_show_btn.place_forget()
+
     def show_detail(self, menu_item: MenuItemDef) -> None:
+        self.__reset_edit_layout()
         if menu_item.type == "separator":
-            self.name_edit_tip_label.grid_forget()
-            self.name_edit_entry.grid_forget()
-            self.shortcut_tip_label.grid_forget()
-            self.shortcut_entry.grid_forget()
-            self.batch_mode_checkbutton.grid_forget()
-            self.command_text.grid_forget()
-            self.state_show_btn.place_forget()
             self.command_tip_label.config(text=_("这是一条分隔线"))
-            self.command_tip_label.place(relx=0.25, rely=0.45)
+            self.command_tip_label.grid(row=0, column=0, columnspan=2, sticky=tk.NSEW)
+            self.edit_frame.rowconfigure(0, weight=1)
             self.command_tooltip.text = _("分隔线：用于从视觉上分离不同类型的菜单项")
             return
-        
+
         self.name_edit_tip_label.config(text=_("名称："))
         self.name_edit_tip_label.grid(row=0, column=0, padx=TkS(5), sticky=tk.W)
         self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)))
@@ -236,21 +237,20 @@ class CustomMenuTab(Frame):
         self.shortcut_entry.grid(row=1, column=1, sticky=tk.EW, padx=(0, TkS(5)), pady=TkS(5))
         self.shortcut_entry.delete(0, tk.END)
         self.shortcut_entry.insert(tk.END, " + ".join(menu_item.shortcut))
-        
+
         if menu_item.type == "embedded":
-            self.batch_mode_checkbutton.grid_forget()
-            self.command_text.grid_forget()
-            self.state_show_btn.place_forget()
             self.name_edit_entry.config(state="readonly")
             self.command_tip_label.config(text=_("这是一个内置菜单项"))
-            self.command_tip_label.place(relx=0.2, rely=0.5)
+            self.command_tip_label.grid(row=2, column=0, columnspan=2, sticky=tk.NSEW)
+            self.edit_frame.rowconfigure(2, weight=1)
             self.command_tooltip.text = _("内置菜单，无法修改它的名称或执行的命令。")
         else:
             self.command_tip_label.config(text=_("执行命令："))
-            self.command_tip_label.grid(row=2, column=0, padx=TkS(5), pady=TkS(4), columnspan=2, sticky=tk.W)
+            self.command_tip_label.grid(row=2, column=0, columnspan=2, padx=TkS(5), pady=TkS(4), sticky=tk.W)
             self.batch_mode_checkbutton.grid(row=2, column=1, sticky=tk.E, padx=TkS(5))
-            self.command_text.grid(row=3, column=0, sticky=tk.NSEW, columnspan=2, padx=TkS(5), pady=(0, TkS(5)))
-            if menu_item.batch_mode != self.batch_mode_checkbutton.instate(["selected"]): 
+            self.command_text.grid(row=3, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5), pady=(0, TkS(5)))
+            self.edit_frame.rowconfigure(3, weight=1)
+            if menu_item.batch_mode != self.batch_mode_checkbutton.instate(["selected"]):
                 self.batch_mode_checkbutton.invoke()
             self.command_text.delete('1.0', tk.END)
             self.command_text.insert(tk.END, menu_item.command)
@@ -259,8 +259,7 @@ class CustomMenuTab(Frame):
             self.state_show_btn.place(relx=1.0, rely=1.0, anchor=tk.SE)
 
     def show_default(self) -> None:
-        for w in self.name_edit_tip_label.master.children.values():
-            w.grid_forget()
-        self.name_edit_tip_label.config(text=_("选择菜单配置详细信息"))
-        self.name_edit_tip_label.grid(row=3, column=1, padx=TkS(20))
-        self.state_show_btn.place_forget()
+        self.__reset_edit_layout()
+        self.command_tip_label.config(text=_("选择菜单配置详细信息"))
+        self.command_tip_label.grid(row=0, column=0, columnspan=2, sticky=tk.NSEW)
+        self.edit_frame.rowconfigure(0, weight=1)
