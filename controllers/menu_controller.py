@@ -186,7 +186,7 @@ class MenuController:
         for count in default_count:
             label = _("结果数: {count}", count=count) + ("✓" if count == current_count else "")
             menu.add_command(label=label, command=lambda c=count: ctrl.set_preview_result_count(c))
-        label = _("自定义结果数") if current_count in default_count else _("自定义: {count}", count=current_count) + "✓"
+        label = _("自定义数量") if current_count in default_count else _("自定义: {count}", count=current_count) + "✓"
         menu.add_command(label=label, command=lambda: ctrl.set_preview_result_count(simpledialog.askinteger(_("输入"), _("请输入不大于500的数字："))))
 
         menu.add_separator()
