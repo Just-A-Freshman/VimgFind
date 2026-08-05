@@ -148,7 +148,10 @@ def rmtree(target_dir: str | Path) -> None:
 
 def run_cmd(cmd: str | list[str], cwd: str | None = None) -> tuple[int, str, str]:
     try:
-        result = subprocess.run(cmd, shell=isinstance(cmd, str), text=True, capture_output=True, cwd=cwd)
+        result = subprocess.run(
+            cmd, shell=isinstance(cmd, str), text=True, 
+            capture_output=True, cwd=cwd, stdin=subprocess.DEVNULL,
+        )
         return result.returncode, result.stdout, result.stderr
     except FileNotFoundError as e:
         return -1, "", str(e)
