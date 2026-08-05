@@ -172,7 +172,7 @@ def get_metainfo(file_path: str | Path) -> int:
     return os.path.getsize(file_path)
 
 
-def normalize_path(path: str) -> str:
+def normalize_path(path: str | Path) -> str:
     return os.path.normcase(os.path.realpath(path))
 
 
