@@ -181,22 +181,24 @@ class MenuController:
             menu.add_command(label=label, command=lambda m=mode: ctrl.set_preview_mode(m))  # type:ignore
 
         menu.add_separator()
-        for count in (10, 50, 100):
-            label = _("结果数: {count}", count=count)
-            if count == self.app.setting.app.max_match_count: label += "✓"
+        default_count = (10, 50, 100)
+        current_count = self.app.setting.app.max_match_count
+        for count in default_count:
+            label = _("结果数: {count}", count=count) + ("✓" if count == current_count else "")
             menu.add_command(label=label, command=lambda c=count: ctrl.set_preview_result_count(c))
-        menu.add_command(label=_("自定义结果数"), command=lambda: ctrl.set_preview_result_count(simpledialog.askinteger(_("输入"), _("请输入不大于500的数字："))))
+        label = _("自定义结果数") if current_count in default_count else _("自定义: {count}", count=current_count) + "✓"
+        menu.add_command(label=label, command=lambda: ctrl.set_preview_result_count(simpledialog.askinteger(_("输入"), _("请输入不大于500的数字："))))
 
         menu.add_separator()
         menu.add_cascade(label=_("切换模型"), menu=model_menu)
         if self.app.index_controller.is_updating:
             model_menu.add_command(label=_("索引更新中，暂不可用"), state=tk.DISABLED)
-        else:
-            for model in self.app.model_controller.get_downloaded_models():
-                model_menu.add_command(
-                    label=(model.meta.name + "✓") if model.meta.id == self.app.setting.app.current_model else model.meta.name,
-                    command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True),
-                )
+            return menu
+        for model in self.app.model_controller.get_downloaded_models():
+            model_menu.add_command(
+                label=(model.meta.name + "✓") if model.meta.id == self.app.setting.app.current_model else model.meta.name,
+                command=lambda model=model: self.app.model_controller.switch_model(model.meta.id, resend_search=True),
+            )
         return menu
     
 
