@@ -159,9 +159,12 @@ class SearchController:
 
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
-        self.app.setting.app.max_match_count = min(max_match_count, 300)
-        self.app.search_tools.update_max_match_count(self.app.setting.app.max_match_count)
-        self.resend_last_search()
+        try:
+            self.app.setting.app.max_match_count = min(max_match_count, 500)
+            self.app.search_tools.update_max_match_count(self.app.setting.app.max_match_count)
+            self.resend_last_search()
+        except TypeError:
+            return
 
     def set_preview_mode(self, mode: Literal["detail_info", "medium_ico", "big_ico", "huge_ico"]) -> None:
         tab = self.app.view.search_tab

@@ -181,10 +181,11 @@ class MenuController:
             menu.add_command(label=label, command=lambda m=mode: ctrl.set_preview_mode(m))  # type:ignore
 
         menu.add_separator()
-        for count in (10, 50, 100, 300):
+        for count in (10, 50, 100):
             label = _("结果数: {count}", count=count)
             if count == self.app.setting.app.max_match_count: label += "✓"
             menu.add_command(label=label, command=lambda c=count: ctrl.set_preview_result_count(c))
+        menu.add_command(label=_("自定义结果数"), command=lambda: ctrl.set_preview_result_count(simpledialog.askinteger(_("输入"), _("请输入不大于500的数字："))))
 
         menu.add_separator()
         menu.add_cascade(label=_("切换模型"), menu=model_menu)
