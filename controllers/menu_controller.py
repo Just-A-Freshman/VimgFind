@@ -339,5 +339,5 @@ class CustomCommandExecutor:
         dialog.open_tempdir_btn.config(command=lambda: file_ops.open_file(str(temp_dir)))
         dialog.copy_btn.config(command=lambda: file_ops.copy_text(dialog.detail_text.get("1.0", tk.END), tk=self.app.view))
         dialog.copy_btn.config(width=round(dialog.copy_btn.winfo_width() / Font(font=WinInfo.default_font).measure('0')))
-        dialog.protocol("WM_DELETE_WINDOW", lambda: file_ops.rmtree(str(temp_dir)) or dialog.destroy())
+        dialog.bind("<Destroy>", lambda e: e.widget is dialog and file_ops.rmtree(str(temp_dir)))
         dialog.show_result()
