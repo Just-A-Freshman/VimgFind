@@ -43,7 +43,7 @@ class ModelController:
         self.__models_updated_callbacks: list[Callable[[], None]] = []
 
     def env_init(self) -> None:
-        self.__load_model_list(refresh_remote=False)
+        self.__populate_model_tree(self.model_checker.get_available_models(refresh_remote=False))
         self.__on_theme_change()
         tab = self.app.view.model_tab
         tab.model_tree.bind("<<TreeviewSelect>>", lambda e: self.on_model_select() or self.__on_theme_change())
@@ -54,7 +54,7 @@ class ModelController:
         tab.uninstall_btn.config(command=self.__uninstall_model)
         tab.download_btn.config(command=self.__download_model)
         tab.download_control_btn.config(command=self.__on_download_control)
-        tab.download_cancel_btn.config(command=self.__on_download_cancel)
+        tab.download_cancel_btn.config(command=lambda: self.__current_download.cancel() if self.__current_download is not None else None)
         tab.browser_button.config(command=self.load_local_model)
 
     def get_downloaded_models(self) -> list[ModelConfig]:
@@ -66,16 +66,14 @@ class ModelController:
     def add_models_updated_callback(self, callback: Callable[[], None]) -> None:
         self.__models_updated_callbacks.append(callback)
 
+    @decorators.send_task
     def refresh_remote_models(self) -> None:
-        @decorators.send_task
-        def worker() -> None:
-            try:
-                models = self.model_checker.get_available_models(refresh_remote=True)
-            except Exception as e:
-                logging.error(f"刷新远程模型列表失败：{str(e)}")
-                return
-            self.app.view.after(0, lambda: self.__apply_remote_models(models))
-        worker()
+        try:
+            models = self.model_checker.get_available_models(refresh_remote=True)
+        except Exception as e:
+            logging.error(f"刷新远程模型列表失败：{str(e)}")
+            return
+        self.app.view.after(0, lambda: self.__apply_remote_models(models))
 
     def get_model_status(self, model_id: str) -> ModelStatus:
         if self.__current_download and self.__current_download.model_id == model_id:
@@ -183,9 +181,6 @@ class ModelController:
         self.__populate_model_tree(models)
         for callback in self.__models_updated_callbacks:
             callback()
-
-    def __load_model_list(self, refresh_remote: bool = True) -> None:
-        self.__populate_model_tree(self.model_checker.get_available_models(refresh_remote=refresh_remote))
 
     def __populate_model_tree(self, models: list[ModelConfig]) -> None:
         view = self.app.view.model_tab
@@ -317,15 +312,6 @@ class ModelController:
             task.resume()
             btn.config(text=_("暂停"))
 
-    def __on_download_cancel(self) -> None:
-        task = self.__current_download
-        if task is None:
-            return
-        task.cancel()
-        model_id = task.model_id
-        self.__current_download = None
-        self.__finish_download(False, True, model_id, self.app.view.model_tab)
-
     def __load_model_from_zip(self, zip_path: Path, model_id: str, cfg: ModelConfig) -> None:
         dest_dir = self.app.setting.models_dir / model_id
         try:
@@ -337,7 +323,7 @@ class ModelController:
                 zf.extractall(dest_dir)
 
             self.app.setting.save_model_config(model_id, cfg)
-            self.__load_model_list()
+            self.__populate_model_tree(self.model_checker.get_available_models())
             messagebox.showinfo(_("提示"), _("模型「{id}」加载成功！", id=model_id))
         except Exception as e:
             messagebox.showerror(_("错误"), _("加载模型失败：{e}", e=str(e)))
@@ -352,8 +338,8 @@ class ModelController:
         if task.state in (internet.DownloadState.COMPLETED, internet.DownloadState.ERROR, internet.DownloadState.CANCELLED):
             success = task.state == internet.DownloadState.COMPLETED
             cancelled = task.state == internet.DownloadState.CANCELLED
-            self.__finish_download(success, cancelled, model_id, view)
             self.__current_download = None
+            self.__finish_download(success, cancelled, model_id, view)
             return
         view.after(200, lambda: self.__poll_download(model_id))
 
@@ -390,7 +376,7 @@ class ModelController:
         file_ops.rmtree(model_dir)
         self._model_cache.pop(model_id, None)
         self.app.setting.remove_model_config(model_id)
-        self.__load_model_list()
+        self.__populate_model_tree(self.model_checker.get_available_models())
         self.app.view.model_tab.show_default()
 
     def __finish_download(self, success: bool, cancelled: bool, model_id: str, view: ModelFrame) -> None:
