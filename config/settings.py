@@ -141,7 +141,7 @@ class Setting:
 
 
 class WinInfo:
-    version = "2.5.1"
+    version = "2.5.2"
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     ico_path = Setting.config_path / "favicon.ico"
     title = "VimgFind"
