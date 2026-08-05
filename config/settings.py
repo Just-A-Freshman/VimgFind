@@ -89,9 +89,13 @@ class Setting:
                     pass
             
     def link_to_docs(self, anchor: str = "") -> None:
+        anchor = anchor.replace(" ", "-").lower()
         anchor = f"#{anchor}" if anchor else ""
-        docs_path = (Setting.config_path / "docs" / f"help_{self.app.locale}.html").as_uri()
-        webbrowser.open(f"{docs_path}{anchor}")
+        docs_dir = Setting.config_path / "docs"
+        docs_path = docs_dir / f"help_{self.app.locale}.html"
+        if not docs_path.exists():
+            docs_path = docs_dir / f"help_en-US.html"
+        webbrowser.open(f"{docs_path.as_uri()}{anchor}")
 
     def get_active_config_path(self) -> Path:
         if self.app.other_config_path:
