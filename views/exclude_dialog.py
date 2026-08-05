@@ -77,18 +77,18 @@ class ExcludeDialog(tk.Toplevel):
         return rules_tree
 
     def __set_add_rule_btn(self, parent: Frame) -> Button:
-        add_rule_btn = Button(parent, text=_("新建规则"), takefocus=False, cursor="hand2")
-        add_rule_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(6), ipady=TkS(3))
+        add_rule_btn = Button(parent, text=_("新建"), takefocus=False, cursor="hand2")
+        add_rule_btn.pack(side=tk.LEFT, padx=(0, TkS(5)), ipadx=TkS(6))
         return add_rule_btn
 
     def __set_del_rule_btn(self, parent: Frame) -> Button:
-        del_rule_btn = Button(parent, text=_("删除规则"), takefocus=False, cursor="hand2")
-        del_rule_btn.pack(side=tk.LEFT, ipadx=TkS(6), ipady=TkS(3))
+        del_rule_btn = Button(parent, text=_("删除"), takefocus=False, cursor="hand2")
+        del_rule_btn.pack(side=tk.LEFT, ipadx=TkS(6))
         return del_rule_btn
 
     def __set_help_btn(self, parent: Frame) -> Button:
         help_btn = Button(parent, text=_("帮助文档"), takefocus=False, cursor="hand2", style=LINK)
-        help_btn.pack(side=tk.RIGHT, padx=(TkS(7), 0))
+        help_btn.pack(side=tk.RIGHT, padx=(TkS(6), 0))
         return help_btn
 
     def __set_preview_rules_frame(self) -> Labelframe:
@@ -98,12 +98,12 @@ class ExcludeDialog(tk.Toplevel):
 
     def __set_preview_path_entry(self, parent: Frame) -> Entry:
         preview_path_entry = Entry(parent)
-        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(2)), ipady=TkS(3))
+        preview_path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, TkS(2)))
         return preview_path_entry
 
     def __set_browse_btn(self, parent: Frame) -> Button:
         browse_btn = Button(parent, text=_("浏览"), takefocus=False, cursor="hand2")
-        browse_btn.pack(side=tk.RIGHT, ipadx=TkS(12), ipady=TkS(3))
+        browse_btn.pack(side=tk.RIGHT, ipadx=TkS(6))
         return browse_btn
 
     def __set_preview_status_label(self, parent: Frame) -> Label:
