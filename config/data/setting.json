@@ -1,6 +1,6 @@
 {
     "max_work_thread": 12,
-    "max_match_count": 100,
+    "max_match_count": 50,
     "preview_mode": "medium_ico",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
@@ -12,7 +12,7 @@
     "schedule_index_save_interval": 600,
     "maximize_window": false,
     "topmost_window": false,
-    "locale": "zh-CN",
+    "locale": "en-US",
     "menu_items": [
         {
             "name": "复制图片",
@@ -74,12 +74,12 @@
             "command": ""
         },
         {
-            "name": "复制名称",
+            "name": "Copy name",
             "type": "custom",
-            "is_visible": false,
+            "is_visible": true,
             "shortcut": [],
             "batch_mode": true,
-            "command": "cmd /c \"echo {noext}| clip\""
+            "command": "#test\ncmd /c  {paths|sep} \"echo {noext}| clip\""
         }
     ],
     "other_config_path": ""
