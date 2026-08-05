@@ -11,7 +11,6 @@ import webbrowser
 import os
 import subprocess
 import urllib.parse
-import winreg
 
 from .types import AppSettings, ModelConfig
 
@@ -97,11 +96,9 @@ class Setting:
         docs_path = docs_dir / f"help_{self.app.locale}.html"
         if not docs_path.exists():
             docs_path = docs_dir / "help_en-US.html"
-        if not anchor:
-            webbrowser.open(str(docs_path))
-            return
         url = docs_path.as_uri() + "#" + urllib.parse.quote(anchor)
         try:
+            import winreg
             with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"http\shell\open\command") as key:
                 command = winreg.QueryValue(key, None)
             if "%1" in command:
@@ -109,7 +106,6 @@ class Setting:
                 return
         except OSError:
             pass
-        webbrowser.open(url)
 
     def get_active_config_path(self) -> Path:
         if self.app.other_config_path:
