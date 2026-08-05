@@ -457,21 +457,17 @@ class ModelChecker:
         except (zipfile.BadZipFile, json.JSONDecodeError) as e:
             raise AssertionError(f"无法读取模型包：{e}")
 
-    def _read_manifest_cache(self) -> dict:
+    def read_manifest_cache(self) -> dict:
         try:
             with open(self.app.setting.manifest_cache, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError, FileNotFoundError):
             return {}
 
-    def read_cached_manifest(self) -> list[dict] | None:
-        """读取本地缓存的远程清单（不访问网络），无缓存时返回 None"""
-        return self._read_manifest_cache().get("models")
-
     def fetch_remote_manifest(self, cache_ttl: int = 0) -> list[dict] | None:
         now = time.time()
         cache_path = self.app.setting.manifest_cache
-        cache = self._read_manifest_cache()
+        cache = self.read_manifest_cache()
         if now - cache.get("timestamp", 0) < max(cache_ttl, 0):
             return cache.get("models")
         try:
@@ -503,7 +499,7 @@ class ModelChecker:
         if refresh_remote:
             remote_raw = self.fetch_remote_manifest(self.app.setting.app.cache_ttl)
         else:
-            remote_raw = self.read_cached_manifest()
+            remote_raw = self.read_manifest_cache().get("models")
         if not remote_raw:
             return result
         for entry in remote_raw:

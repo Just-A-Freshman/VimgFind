@@ -226,5 +226,5 @@
   "配置文件已切换，需要重启后才能生效。": "Config file changed. Restart the app to apply.",
   "配置编辑": "Edit Config",
   "错误日志": "Error Log",
-  "默认信息": "Default prompt message"
+  "默认提示信息": "Default prompt message"
 }
