@@ -153,7 +153,7 @@
   "  常规  ": "  General  ",
   "自定义: {count}": "Custom: {count}",
   "  自定义菜单  ": "  Custom Menu  ",
-  "自定义结果数": "Custom Results",
+  "自定义数量": "Custom Results",
   "#test 模式已开启，但未输入实际命令。": "#test mode is on, but no command has been entered.",
   "(无输出)": "(no output)",
   "JSON 文件": "JSON Files",
