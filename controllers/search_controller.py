@@ -170,16 +170,24 @@ class SearchController:
         tab = self.app.view.search_tab
         results = tab.preview_view.get_show_results()
         current_selection = tab.preview_view.selection()
-        tab.preview_view.destroy()
         self.app.setting.app.preview_mode = mode
         if mode == "detail_info":
+            if isinstance(tab.preview_view, DetailListView):
+                return
+            tab.preview_view.destroy()
             tab.preview_view = DetailListView(tab.preview_container, {_("大小"): 100, _("修改时间"): 160, _("相似度"): 100})
+            self.env_init(only_preview_widgets=True)
         else:
             thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 110)
-            tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
+            if isinstance(tab.preview_view, ThumbnailGridView):
+                tab.preview_view.clear()
+                tab.preview_view.config(thumbnail_size=thumbnail_size)
+            else:
+                tab.preview_view.destroy()
+                tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
+                self.env_init(only_preview_widgets=True)
         if len(self.__queue_paths) > 0:
             tab.set_nav_visible(True)
-        self.env_init(only_preview_widgets=True)
         self.__smooth_preview(iter(results), B_min=30)
         tab.preview_view.selection_set(*current_selection)
 
