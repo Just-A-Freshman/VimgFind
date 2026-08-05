@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable, Literal
+from pathlib import Path
 import tkinter as tk
 
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
@@ -19,7 +20,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.__tooltip = ToolTip(self, text=_("没有文件"), delay=500, topmost=True)
 
-    def append(self, image_path: str, image_obj: Image.Image) -> str:
+    def append(self, image_path: Path, image_obj: Image.Image) -> str:
         iid = self.generate_path_item(image_path, unique=False)
         if len(self.selection()) != 0 and iid == self.selection()[0]:
             return iid
@@ -36,7 +37,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         self.clear()
         self._results[iid] = (image_path, imgtk)
         self.create_image(x, y, anchor=tk.CENTER, image=imgtk)
-        self.__tooltip.text = image_path
+        self.__tooltip.text = str(image_path.resolve())
         return iid
     
     def delete(self, *items) -> None:

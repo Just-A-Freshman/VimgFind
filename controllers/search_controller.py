@@ -180,7 +180,7 @@ class SearchController:
         if len(self.__queue_paths) > 0:
             tab.set_nav_visible(True)
         self.env_init(only_preview_widgets=True)
-        self.__append_preview_results(results)
+        self.__smooth_preview(iter(results), B_min=30)
         tab.preview_view.selection_set(*current_selection)
 
     def show_toast(self, message: str, duration: int = 1500) -> None:
@@ -239,9 +239,9 @@ class SearchController:
             first_img_path, first_sim = first_result
             if first_img_path.exists():
                 first_extra_info = self.__generate_extra_info(first_img_path, first_sim)
-                item = tab.preview_view.append(str(first_img_path), *first_extra_info)
+                item = tab.preview_view.append(first_img_path, *first_extra_info)
                 tab.preview_view.selection_set(item)
-            self.__smooth_preview(results)
+            self.__smooth_preview(((img_path, *self.__generate_extra_info(img_path, sim)) for img_path, sim in results))
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
@@ -273,9 +273,10 @@ class SearchController:
             tab.search_entry.delete(0, tk.END)
             tab.search_entry.insert(0, source_path or "")
             tab.search_entry.xview_moveto(1.0)
-            if source_path and Path(source_path).is_file():
-                tab.preview_canvas1.append(source_path, input_data)
-            self.__last_search_content = Path(source_path) if source_path is not None else ""
+            source_path_obj = Path(source_path) if source_path is not None else "" 
+            if source_path_obj and source_path_obj.is_file():
+                tab.preview_canvas1.append(source_path_obj, input_data)
+            self.__last_search_content = source_path_obj
         else:
             return False
         return True
@@ -290,28 +291,22 @@ class SearchController:
         elif status == SearchStatus.ENCODE_FAILED:
             messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
 
-    def __smooth_preview(self, results_iter) -> None:
+    def __smooth_preview(self, results_iter, B_min=10, B_max=100, r=0.8, m=5) -> None:
         preview_batch_k = 0
         preview_batch_buffer = []
         preview_iter = results_iter
-
-        def smooth_batch_size(k, B_min=10, B_max=100, r=0.8, m=5):
-            raw = B_min + (B_max - B_min) / (1 + math.exp(-r * (k - m)))
-            return max(1, round(raw))
 
         def process_next_batch() -> None:
             nonlocal preview_batch_k, preview_batch_buffer, preview_iter
             if preview_iter is None:
                 return
-            batch_size = smooth_batch_size(preview_batch_k)
+            batch_size = max(1, round(B_min + (B_max - B_min) / (1 + math.exp(-r * (preview_batch_k - m)))))
             buffer = preview_batch_buffer
             try:
                 while len(buffer) < batch_size:
-                    img_path, similarity = next(preview_iter)
-                    if not img_path.exists():
-                        continue
-                    extra_info = self.__generate_extra_info(img_path, similarity)
-                    buffer.append((img_path, *extra_info))
+                    img_path, *extra_info = next(preview_iter)
+                    if img_path.exists():
+                        buffer.append((img_path, *extra_info))
             except StopIteration:
                 if buffer:
                     self.__append_preview_results(buffer)

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import namedtuple
 from collections import OrderedDict
 from typing import Callable, Literal, Any
+from pathlib import Path
 import hashlib
 import tkinter as tk
 
@@ -21,7 +22,7 @@ class BasicImagePreviewView:
         self._results: OrderedDict[str, tuple] = OrderedDict(dict())
         self.theme_color = self.get_theme_colors()
 
-    def generate_path_item(self, path: str, unique: bool = True) -> str:
+    def generate_path_item(self, path: Path, unique: bool = True) -> str:
         norm_path = file_ops.normalize_path(path)
         hash_key = hashlib.md5(norm_path.encode()).hexdigest()[:16]
         if not unique:
@@ -40,7 +41,7 @@ class BasicImagePreviewView:
     def change_theme(self) -> None:
         self.theme_color = self.get_theme_colors()
 
-    def append(self, image_path: str, *extra_info: Any, **kwargs: Any) -> str:
+    def append(self, image_path: Path, *extra_info: Any, **kwargs: Any) -> str:
         return self.generate_path_item(image_path)
 
     def get_show_results(self) -> list[tuple]:

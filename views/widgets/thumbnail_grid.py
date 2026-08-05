@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable, Literal
+from pathlib import Path
 from tkinter.ttk import Scrollbar
 import tkinter as tk
 import math
@@ -377,7 +378,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
                 self.__image_loader.add_task(item, image_path, self.__thumbnail_size)
         self.__visible_items = new_visible_items
 
-    def append(self, image_path: str, *extra_info: str | int) -> str:
+    def append(self, image_path: Path, *extra_info: str | int) -> str:
         item = self.generate_path_item(image_path)
         self._results[item] = (image_path, *extra_info)
         self._update_layout()

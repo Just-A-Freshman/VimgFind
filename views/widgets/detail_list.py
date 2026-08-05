@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from typing import Callable, Literal
+from pathlib import Path
 from tkinter.ttk import Treeview, Scrollbar
 import tkinter as tk
-import os
 
 
 from .base import BasicImagePreviewView
@@ -46,11 +46,11 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
             self.move(k, "", index)
         self.heading(col, command=lambda: self.__sort_column(col, not reverse))
 
-    def append(self, image_path: str, *extra_info: str | int) -> str:
+    def append(self, image_path: Path, *extra_info: str | int) -> str:
         iid = self.generate_path_item(image_path)
-        content = (os.path.basename(image_path), *extra_info)
+        content = (image_path.name, *extra_info)
         self._results[iid] = (image_path, *extra_info)
-        return self.insert('', tk.END, values=content, iid=iid, text=image_path)    
+        return self.insert('', tk.END, values=content, iid=iid)    
 
     def clear(self) -> None:
         self._results.clear()
