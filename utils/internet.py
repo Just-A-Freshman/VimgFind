@@ -249,6 +249,7 @@ class DownloadTask:
         self.checksum = checksum
         self._state = DownloadState.IDLE
         self._downloader: MultiThreadDownloader | None = None
+        self._cancel_requested = False
         self._error_msg = ""
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
@@ -297,6 +298,8 @@ class DownloadTask:
                 checksum=self.checksum,
                 progress_callback=self._make_progress_wrapper(),
             )
+            if self._cancel_requested:
+                self._downloader.cancel()
             self._downloader.download()
 
             if self._downloader.is_cancelled:
@@ -314,7 +317,7 @@ class DownloadTask:
             else:
                 self._error_msg = msg
                 self._state = DownloadState.ERROR
-            logging.error(f"下载任务失败: {e}")
+                logging.error(f"下载任务失败: {e}")
         except Exception as e:
             self._error_msg = str(e)
             self._state = DownloadState.ERROR
@@ -325,7 +328,7 @@ class DownloadTask:
 
     def pause(self) -> None:
         with self._lock:
-            if self._state == DownloadState.DOWNLOADING and self._downloader:
+            if self._state == DownloadState.DOWNLOADING and self._downloader and not self._cancel_requested:
                 self._downloader.pause()
                 self._state = DownloadState.PAUSED
 
@@ -337,9 +340,9 @@ class DownloadTask:
 
     def cancel(self) -> None:
         with self._lock:
+            self._cancel_requested = True
             if self._downloader:
                 self._downloader.cancel()
-            self._state = DownloadState.CANCELLED
 
     @property
     def state(self) -> DownloadState:
