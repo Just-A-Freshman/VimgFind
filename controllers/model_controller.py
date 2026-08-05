@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from threading import Thread
 from typing import TYPE_CHECKING, Callable, cast
 from tkinter import filedialog, messagebox
 import tkinter as tk
@@ -86,26 +85,18 @@ class ModelController:
 
     def on_model_select(self) -> None:
         view = self.app.view.model_tab
-        selection = view.model_tree.selection()
-        if not selection:
+        result = self.__get_selected_model()
+        if result is None:
             return
-        iid = selection[0]
-        if not iid:
-            view.show_default()
-            return
-        cfg = self._model_cache.get(iid)
-        if cfg is None:
-            view.show_default()
-            return
-        self.__editing_model_id = iid
+        model_id, cfg = result
+        self.__editing_model_id = model_id
         view.show_detail(cfg)
 
         if self.app.index_controller.is_updating:
             view.use_btn.config(state=tk.DISABLED)
             view.uninstall_btn.config(state=tk.DISABLED)
 
-        if self.__current_download and self.__current_download.model_id == iid:
-            view.download_btn.grid_forget()
+        if self.__current_download and self.__current_download.model_id == model_id:
             self.__show_download_progress()
             self.__update_download_progress(
                 self.__current_download.downloaded_bytes,
@@ -174,6 +165,15 @@ class ModelController:
         self.app.view.model_tab.model_tree.selection_set(model_id)
         self.on_model_select()
 
+    def __get_selected_model(self) -> tuple[str, ModelConfig] | None:
+        selection = self.app.view.model_tab.model_tree.selection()
+        if not selection:
+            return None
+        cfg = self._model_cache.get(selection[0])
+        if cfg is None:
+            return None
+        return cfg.meta.id or selection[0], cfg
+
     def __apply_remote_models(self, models: list[ModelConfig]) -> None:
         new_ids = {cfg.meta.id or cfg.meta.name for cfg in models}
         if new_ids == set(self._model_cache):
@@ -220,41 +220,24 @@ class ModelController:
         cfg = self._model_cache.get(iid)
         if cfg is None:
             return
-        old_name = cfg.meta.name
         cfg.meta.name = new_name
         self.app.setting.save_model_config(iid, cfg)
-        combobox = self.app.view.index_tab.switch_model_combobox
-        values = list(combobox.cget("values"))
-        for i, v in enumerate(values):
-            if v == old_name:
-                values[i] = new_name
-                break
-        combobox.config(values=values)
-        if combobox.get() == old_name:
-            combobox.set(new_name)
+        self.app.index_controller.refresh_switch_model_combobox()
 
     def __on_model_double_click(self) -> None:
-        selection = self.app.view.model_tab.model_tree.selection()
-        if not selection:
+        result = self.__get_selected_model()
+        if result is None:
             return
-        iid = selection[0]
-        cfg = self._model_cache.get(iid)
-        if cfg is None:
-            return
-        model_id = cfg.meta.id or iid
+        model_id, _ = result
         model_json_path = self.app.setting.models_dir / model_id / "model.json"
         if model_json_path.exists():
             file_ops.open_file(model_json_path)
 
     def __uninstall_model(self) -> None:
-        view = self.app.view.model_tab
-        iid = view.model_tree.selection()[0]
-        if not iid:
+        result = self.__get_selected_model()
+        if result is None:
             return
-        cfg = self._model_cache.get(iid)
-        if cfg is None:
-            return
-        model_id = cfg.meta.id or iid
+        model_id, cfg = result
 
         if not self.model_checker.is_installed(model_id):
             return
@@ -264,21 +247,13 @@ class ModelController:
             return
 
         self.__remove_model(model_id)
-        self.__update_tree_status(model_id, ModelStatus.DISABLED)
-        combobox = self.app.view.index_tab.switch_model_combobox
-        values = list(combobox.cget("values"))
-        if cfg.meta.name in values:
-            values.remove(cfg.meta.name)
-            combobox.config(values=values)
+        self.app.index_controller.refresh_switch_model_combobox()
 
     def __download_model(self) -> None:
-        view = self.app.view.model_tab
-        iid = view.model_tree.selection()[0]
-        if not iid:
+        result = self.__get_selected_model()
+        if result is None:
             return
-        cfg = self._model_cache.get(iid)
-        if cfg is None:
-            return
+        model_id, cfg = result
         if not cfg.meta.download_url:
             messagebox.showinfo(_("提示"), _("该模型没有可用的下载地址。"))
             return
@@ -288,7 +263,6 @@ class ModelController:
         ):
             return
 
-        model_id = cfg.meta.id or iid
         self.__current_download = internet.DownloadTask(
             url=cfg.meta.download_url,
             dest_dir=self.app.setting.models_dir / model_id,
@@ -336,10 +310,8 @@ class ModelController:
         if task is None:
             return
         if task.state in (internet.DownloadState.COMPLETED, internet.DownloadState.ERROR, internet.DownloadState.CANCELLED):
-            success = task.state == internet.DownloadState.COMPLETED
-            cancelled = task.state == internet.DownloadState.CANCELLED
             self.__current_download = None
-            self.__finish_download(success, cancelled, model_id, view)
+            self.__finish_download(task.state, model_id, view)
             return
         view.after(200, lambda: self.__poll_download(model_id))
 
@@ -366,10 +338,9 @@ class ModelController:
         )
 
     def __update_tree_status(self, model_id: str, status: str) -> None:
-        view = self.app.view.model_tab
-        if model_id in view.model_tree.get_children(""):
-            tree = view.model_tree
-            tree.item(model_id, values=list(tree.item(model_id, "values")), tags=status)
+        tree = self.app.view.model_tab.model_tree
+        if tree.exists(model_id):
+            tree.item(model_id, tags=status)
 
     def __remove_model(self, model_id: str) -> None:
         model_dir = self.app.setting.models_dir / model_id
@@ -379,8 +350,8 @@ class ModelController:
         self.__populate_model_tree(self.model_checker.get_available_models())
         self.app.view.model_tab.show_default()
 
-    def __finish_download(self, success: bool, cancelled: bool, model_id: str, view: ModelFrame) -> None:
-        if cancelled:
+    def __finish_download(self, state: internet.DownloadState, model_id: str, view: ModelFrame) -> None:
+        if state == internet.DownloadState.CANCELLED:
             self.__remove_model(model_id)
             return
         view.download_progressbar.grid_forget()
@@ -389,16 +360,13 @@ class ModelController:
         view.download_cancel_btn.grid_forget()
         view.use_btn.config(state=tk.NORMAL)
         view.uninstall_btn.config(state=tk.NORMAL)
-        if success:
+        if state == internet.DownloadState.COMPLETED:
             self.__update_tree_status(model_id, ModelStatus.DOWNLOADED)
             cfg = self._model_cache.get(model_id)
             if cfg:
                 self.app.setting.save_model_config(model_id, cfg)
-                combobox = self.app.view.index_tab.switch_model_combobox
-                values = list(combobox.cget("values"))
-                values.append(cfg.meta.name)
-                combobox.config(values=values)
-            if model_id in view.model_tree.get_children(""):
+                self.app.index_controller.refresh_switch_model_combobox()
+            if view.model_tree.exists(model_id):
                 view.model_tree.selection_set(model_id)
                 self.on_model_select()
         else:
