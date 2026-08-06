@@ -1,6 +1,6 @@
 {
     "max_work_thread": 12,
-    "max_match_count": 10,
+    "max_match_count": 300,
     "preview_mode": "detail_info",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
