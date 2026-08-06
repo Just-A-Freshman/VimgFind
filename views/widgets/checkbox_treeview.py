@@ -29,11 +29,11 @@ class CheckboxTreeview(DragReorderTreeview):
         self.__env_init(padding, checkbox_name)
 
     def __env_init(self, padding: int, checkbox_name: str = "") -> None:
-        scrollbar_width = self.scrollbar.winfo_reqwidth()
-        checkbox_width = max(Font(font=WinInfo.default_font).measure(checkbox_name) + scrollbar_width, TkS(35))
-        self.__reserve = checkbox_width + scrollbar_width
         self.__border = int(Style().lookup("Treeview", "borderwidth") or 2)
-
+        scrollbar_width = self.scrollbar.winfo_reqwidth()
+        checkbox_width = max(Font(font=WinInfo.default_font).measure(checkbox_name) + scrollbar_width + self.__border, TkS(35))
+        self.__reserve = checkbox_width + scrollbar_width
+        
         self.check_tree.heading("#0", text=checkbox_name, anchor=tk.W)
         self.check_tree.column("#0", anchor=tk.W)
         
