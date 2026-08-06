@@ -7,7 +7,6 @@ from pathlib import Path
 import ctypes
 import json
 import logging
-import math
 import os
 import subprocess
 import urllib.parse
@@ -17,7 +16,8 @@ from .types import AppSettings, ModelConfig
 ROOT = Path(__file__).resolve().parent.parent
 SCALE_FACTOR = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 def TkS(value: int | float) -> int:
-    return math.ceil(value * SCALE_FACTOR)
+    x = value * SCALE_FACTOR
+    return x if x == 0 else max(int(round(x)), 1)
 
 
 class Setting:
