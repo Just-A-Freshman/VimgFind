@@ -27,7 +27,7 @@ VERSION_RE = re.compile(r"(\d+)\.(\d+)\.(\d+)")
 
 UpdateCheckResult = namedtuple(
     "UpdateCheckResult",
-    ["has_update", "latest_version", "release_url", "download_url", "release_body", "current_version", "error"]
+    ["has_update", "latest_version", "release_url", "download_url", "release_body", "error"]
 )
 
 
@@ -61,10 +61,10 @@ class UpdateController:
         except OSError as e:
             code = getattr(e, 'code', None)
             if code is not None:
-                return UpdateCheckResult(False, "", "", "", "", WinInfo.version, f"HTTP {code}: {e}")
-            return UpdateCheckResult(False, "", "", "", "", WinInfo.version, f"网络错误: {e}")
+                return UpdateCheckResult(False, "", "", "", "", f"HTTP {code}: {e}")
+            return UpdateCheckResult(False, "", "", "", "", f"网络错误: {e}")
         except (json.JSONDecodeError, ValueError) as e:
-            return UpdateCheckResult(False, "", "", "", "", WinInfo.version, f"响应解析失败: {e}")
+            return UpdateCheckResult(False, "", "", "", "", f"响应解析失败: {e}")
 
         release_url = data.get("html_url", WinInfo.repo_url)
         release_body = (data.get("body") or "").strip()
@@ -77,7 +77,7 @@ class UpdateController:
                 latest_tuple = v
 
         if latest_tuple is None:
-            return UpdateCheckResult(False, "", "", "", "", WinInfo.version, "无法识别远程版本号")
+            return UpdateCheckResult(False, "", "", "", "", "无法识别远程版本号")
 
         latest_version = ".".join(str(g) for g in latest_tuple)
         current_tuple = parse_version(WinInfo.version)
@@ -96,10 +96,10 @@ class UpdateController:
             if re.match(f"VimgFind-{latest_version}-{platform_tag}-update", asset["name"]):
                 download_url = asset["browser_download_url"]
 
-        return UpdateCheckResult(
-            has_update, latest_version, release_url,
-            download_url or release_url, release_body, WinInfo.version, None
-        )
+        if not download_url:
+            return UpdateCheckResult(False, latest_version, release_url, "", "", "")
+
+        return UpdateCheckResult(has_update, latest_version, release_url, download_url, release_body, None)
 
     def __on_cancel(self) -> None:
         self.__cancelled = True

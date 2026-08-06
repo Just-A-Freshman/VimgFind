@@ -157,17 +157,16 @@ class GeneralController:
             if result.error:
                 messagebox.showerror(_("检查更新失败"), result.error)
             elif not result.has_update:
-                messagebox.showinfo(_("检查更新"), _(
-                    "当前版本：v{current}\n你使用的已是最新版本！\n\n仓库地址：{repo}", 
-                    current=result.current_version, repo=WinInfo.repo_url
-                ))
+                info = _("当前版本：v{current}\n你使用的已是最新版本！\n\n仓库地址：{repo}", current=WinInfo.version, repo=WinInfo.repo_url)
+                messagebox.showinfo(_("检查更新"), info)
             else:
-                if messagebox.askyesno(_("发现新版本"), _(
-                    "发现新版本 v{latest}（当前版本 v{current}）\n\n是否下载更新？",
-                    latest=result.latest_version, current=result.current_version
-                )):
+                info = _("发现新版本 v{latest}（当前版本 v{current}）\n\n是否下载更新？", latest=result.latest_version, current=WinInfo.version)
+                if messagebox.askyesno(_("发现新版本"), info):
                     update_controller.do_update(result.download_url, result.latest_version)
-            self.general_tab.check_update_btn.config(state="normal", text=_("检查更新"))
+            try:
+                self.general_tab.check_update_btn.config(state="normal", text=_("检查更新"))
+            except tk.TclError:
+                pass
         
         self.general_tab.check_update_btn.config(state="disabled", text=_("正在检查..."))
         update_controller = UpdateController(self.app)
