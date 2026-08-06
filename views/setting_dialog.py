@@ -254,7 +254,17 @@ class CustomMenuTab(Frame):
                 self.batch_mode_checkbutton.invoke()
             self.command_text.delete('1.0', tk.END)
             self.command_text.insert(tk.END, menu_item.command)
-            self.command_tooltip.text = _("可用变量列表")
+            self.command_tooltip.text = _((
+                "可用变量列表：\n"
+                "{path}\t选中图片的完整路径\n"
+                "{dir}\t图片所在文件夹\n"
+                "{name}\t完整文件名\n"
+                "{noext}\t文件名无后缀\n"
+                "{ext}\t后缀名，含点\n"
+                "{paths}\t批量模式下的多图列表\n"
+                "{count}\t批量模式下选中图片的数量\n"
+                "{ask_?}\tstring,int,float,dir,file,files"
+            ))
             self.state_show_btn.config(text=_("◍测试") if self.command_text.get("1.0", "1.0 lineend").strip() == "#test" else _("●正常"))
             self.state_show_btn.place(relx=1.0, rely=1.0, anchor=tk.SE)
 
