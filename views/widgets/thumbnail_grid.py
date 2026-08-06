@@ -378,12 +378,6 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
                 self.__image_loader.add_task(item, image_path, self.__thumbnail_size)
         self.__visible_items = new_visible_items
 
-    def config(self, *args, thumbnail_size: int = 0, **kwargs) -> None:
-        if thumbnail_size != 0:
-            self.__thumbnail_size = TkS(thumbnail_size)
-            self.__characters_size = int(self.__thumbnail_size / TkS(8))
-        tk.Canvas.config(self, *args, **kwargs)
-
     def append(self, image_path: Path, *extra_info: str | int) -> str:
         item = self.generate_path_item(image_path)
         self._results[item] = (image_path, *extra_info)
