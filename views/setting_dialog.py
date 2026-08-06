@@ -171,7 +171,7 @@ class CustomMenuTab(Frame):
         self.shortcut_entry = Entry(self.edit_frame)
         self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
         self.command_tip_label = Label(self.edit_frame, justify=tk.CENTER, wraplength=TkS(180), anchor=tk.CENTER)
-        self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="")
+        self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="", wraplength=TkS(350))
         self.command_text = Text(self.edit_frame, undo=True)
         self.state_show_btn = Button(self.command_text, style="inner.Link.TButton", takefocus=False, cursor="hand2")
         self.show_default()
