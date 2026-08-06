@@ -39,10 +39,13 @@ class SettingController:
         style.configure("TEntry", padding=TkS(2.5))
         style.configure("TCombobox", padding=TkS(2.5))
         style.configure("TButton", padding=(TkS(5), TkS(2.5)))
+        style.configure("Link.TButton", padding=(TkS(5), TkS(2.5)))
         style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
         style.configure("Treeview", rowheight=TkS(30))
         style.configure("NoBorder.Treeview", borderwidth=0, relief=tk.FLAT)
         style.configure('inner.Link.TButton', background=colors.get("inputbg"), borderwidth=0, foreground=colors.get("info"))
+        style.map('TNotebook.Tab', padding=[('selected', (TkS(3), TkS(2.5))), ('!selected', (TkS(3), TkS(2.5)))])
+        style.map('sub.TNotebook.Tab', padding=[('selected', (TkS(3), TkS(2.5))), ('!selected', (TkS(3), TkS(2.5)))])
         style.map('inner.Link.TButton', background=[('active', colors.get("bg") if colors.hex_to_rgb(colors.get("bg")) != colors.hex_to_rgb(colors.get("inputbg")) else colors.get("active"))])   # type:ignore
         default_font = nametofont("TkDefaultFont")
         default_font.configure(family=WinInfo.default_font[0], size=WinInfo.default_font[1])
