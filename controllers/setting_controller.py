@@ -33,9 +33,12 @@ class SettingController:
         self.app.setting.app.ui_style = target_theme if target_theme in valid_theme_names else "superhero"
         style.theme_use(self.app.setting.app.ui_style)
         colors: Colors = style.colors   # type:ignore
-        style.configure('TNotebook.Tab', font=(WinInfo.default_font[0], TkS(-18)))
+        style.configure('TNotebook.Tab', font=(WinInfo.default_font[0], 13))
         style.configure("sub.TNotebook")
         style.configure('sub.TNotebook.Tab', font=WinInfo.default_font)
+        style.configure("TEntry", padding=TkS(2.5))
+        style.configure("TCombobox", padding=TkS(2.5))
+        style.configure("TButton", padding=(TkS(5), TkS(2.5)))
         style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
         style.configure("Treeview", rowheight=TkS(30))
         style.configure("NoBorder.Treeview", borderwidth=0, relief=tk.FLAT)
@@ -45,8 +48,8 @@ class SettingController:
         default_font.configure(family=WinInfo.default_font[0], size=WinInfo.default_font[1])
         self.app.view.search_tab.search_entry.config(style="Search.TEntry")
         self.app.view.search_tab.filter_btn.config(bg=colors.get("inputbg"), fg=colors.get("inputfg"))   # type: ignore
-        self.app.view.search_tab.nav_page_label.config(font=("", TkS(-18)))
-        self.app.view.index_tab.index_tip_label.config(font=(WinInfo.default_font[0], TkS(-18)))
+        self.app.view.search_tab.nav_page_label.config(font=(WinInfo.default_font[0], 13))
+        self.app.view.index_tab.index_tip_label.config(font=(WinInfo.default_font[0], 13))
         self.app.view.model_tab.detail_desc_text.config(bg=colors.get("bg"), fg=colors.get("fg"), selectbackground=colors.get('selectbg'))   # type:ignore
 
     def show_dialog(self) -> None:

@@ -7,7 +7,7 @@ from pathlib import Path
 import ctypes
 import json
 import logging
-import webbrowser
+import math
 import os
 import subprocess
 import urllib.parse
@@ -17,7 +17,7 @@ from .types import AppSettings, ModelConfig
 ROOT = Path(__file__).resolve().parent.parent
 SCALE_FACTOR = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 def TkS(value: int | float) -> int:
-    return int(round(value * SCALE_FACTOR, 0))
+    return math.ceil(value * SCALE_FACTOR)
 
 
 class Setting:
@@ -155,7 +155,7 @@ class WinInfo:
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     ico_path = Setting.config_path / "favicon.ico"
     title = "VimgFind"
-    default_font = ("微软雅黑", TkS(-14))
+    default_font = ("微软雅黑", 9 if SCALE_FACTOR < 1.1 else 10)
     width = TkS(830)
     height = TkS(560)
 
