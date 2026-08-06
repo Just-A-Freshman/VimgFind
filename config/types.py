@@ -78,7 +78,7 @@ class AppSettings:
     update_index_range: Literal["current", "all"] = "current"
     ui_style: str = "superhero"
     current_model: str = "osnet"
-    remote_manifest_url: str = "https://raw.githubusercontent.com/Just-A-Freshman/VimgFind/main/models.json"
+    remote_manifest_url: str = ""
     cache_ttl: int = 3600
     schedule_index_save_interval: int = 600
     maximize_window: bool = False

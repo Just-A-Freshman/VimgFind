@@ -422,7 +422,7 @@ class ModelChecker:
         now = time.time()
         cache_path = self.app.setting.manifest_cache
         cache = self.read_manifest_cache()
-        if now - cache.get("timestamp", 0) < max(cache_ttl, 0):
+        if now - cache.get("timestamp", 0) < cache_ttl:
             return cache.get("models")
         try:
             with internet.fetch_url(self.app.setting.app.remote_manifest_url, timeout=5, validate=True) as resp:
