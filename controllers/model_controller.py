@@ -425,7 +425,7 @@ class ModelChecker:
         if now - cache.get("timestamp", 0) < cache_ttl:
             return cache.get("models")
         try:
-            with internet.fetch_url(self.app.setting.app.remote_manifest_url, timeout=5, validate=True) as resp:
+            with internet.fetch_url(self.app.setting.app.remote_manifest_url, timeout=5, validate=True, headers={"Accept": "application/json"}) as resp:
                 models: list[dict] = json.loads(json.loads(resp.read().decode("utf-8"))["raw_content"])
 
             cache_path.parent.mkdir(parents=True, exist_ok=True)
