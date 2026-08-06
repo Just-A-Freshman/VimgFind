@@ -180,15 +180,15 @@ class SearchController:
         else:
             thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 110)
             if isinstance(tab.preview_view, ThumbnailGridView):
-                tab.preview_view.clear()
                 tab.preview_view.config(thumbnail_size=thumbnail_size)
+                tab.preview_view.clear()
             else:
                 tab.preview_view.destroy()
                 tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
                 self.env_init(only_preview_widgets=True)
         if len(self.__queue_paths) > 0:
             tab.set_nav_visible(True)
-        self.__smooth_preview(iter(results), B_min=30)
+        self.__smooth_preview(iter(results), B_min=50, B_max=300, r=10, m=1)
         tab.preview_view.selection_set(*current_selection)
 
     def show_toast(self, message: str, duration: int = 1500) -> None:
