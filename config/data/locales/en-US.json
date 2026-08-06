@@ -179,7 +179,7 @@
   "参数清单": "Parameter List",
   "发现新版本": "New Version Found",
   "发现新版本 v{latest}（当前版本 v{current}）\n\n是否下载更新？": "New version v{latest} found (current: v{current})\n\nDownload and update?",
-  "可用变量列表": "Available Variables",
+  "可用变量列表：\n{path}\t选中图片的完整路径\n{dir}\t图片所在文件夹\n{name}\t完整文件名\n{noext}\t文件名无后缀\n{ext}\t后缀名，含点\n{paths}\t批量模式下的多图列表\n{count}\t批量模式下选中图片的数量\n{ask_?}\tstring,int,float,dir,file,files": "Available variables:\n{path}\tFull path of selected image\n{dir}\tImage folder\n{name}\tFull filename\n{noext}\tFilename without extension\n{ext}\tExtension with dot\n{paths}\tList of images in batch mode\n{count}\tNumber of selected images in batch mode\n{ask_?}\tstring, int, float, dir, file, files",
   "否": "No",
   "启动时最大化窗口": "Maximize window on startup",
   "命令本体": "Command Body",
