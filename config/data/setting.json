@@ -5,7 +5,7 @@
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
-    "ui_style": "sandstone",
+    "ui_style": "superhero",
     "current_model": "chinese-clip",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
@@ -18,10 +18,7 @@
             "name": "复制图片",
             "type": "embedded",
             "is_visible": true,
-            "shortcut": [
-                "Ctrl",
-                "C"
-            ],
+            "shortcut": [],
             "batch_mode": false,
             "command": ""
         },
@@ -77,6 +74,14 @@
             "name": "打开文件夹",
             "type": "embedded",
             "is_visible": true,
+            "shortcut": [],
+            "batch_mode": false,
+            "command": ""
+        },
+        {
+            "name": "未命名",
+            "type": "custom",
+            "is_visible": false,
             "shortcut": [],
             "batch_mode": false,
             "command": ""
