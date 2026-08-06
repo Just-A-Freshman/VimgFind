@@ -147,7 +147,7 @@ class CheckboxTreeview(DragReorderTreeview):
         resize = Image.Resampling.LANCZOS
         off_sub = off_sub.resize((box, box), resize)
         on_sub = on_sub.resize((box, box), resize)
-        x0 = TkS(3)
+        x0 = max((self.__reserve - box - self.scrollbar.winfo_reqwidth()) // 2 - 22, 0)
         canvas_w = x0 + box
         off = Image.new("RGBA", (canvas_w, box))
         off.paste(off_sub, (x0, 0), off_sub)
