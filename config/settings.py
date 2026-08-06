@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCALE_FACTOR = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
 def TkS(value: int | float) -> int:
     x = value * SCALE_FACTOR
-    return x if x == 0 else max(int(round(x)), 1)
+    return 0 if x == 0 else max(int(round(abs(x), 0)), 1) * (-1 if x < 0 else 1)
 
 
 class Setting:
