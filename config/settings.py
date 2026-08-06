@@ -102,7 +102,7 @@ class Setting:
             with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"http\shell\open\command") as key:
                 command = winreg.QueryValue(key, None)
             if "%1" in command:
-                subprocess.Popen(command.replace("%1", f'"{url}"'))
+                subprocess.Popen(command.replace("%1", f'"{url}"'), creationflags=subprocess.CREATE_NO_WINDOW)
                 return
         except OSError:
             pass
