@@ -7,33 +7,12 @@ from utils.i18n import _
 
 
 # ── macOS 窗口层级适配 ─────────────────────────────────────────────
-# macOS 上 -topmost 主窗口层级（19）高于普通对话框；overrideredirect 窗口（ToolTip）
-# 又无法 -topmost。统一做法：把需要置顶显示的窗口（对话框/ToolTip）的 NSWindow level
-# 提升到本应用最高层级 + 1，主窗口全程保持置顶不受影响。
-# 系统文件对话框（filedialog）不在此列——带 parent 参数时 macOS 显示为 sheet，
-# 天然显示在主窗口之上，无需任何层级操作。
-
-
-def _app_windows() -> set:
-    try:
-        from AppKit import NSApp
-        return set(NSApp.windows())
-    except Exception:
-        return set()
-
-
-def _raise_windows_above_main(before: set) -> None:
-    """把 before 之后新增的窗口（对话框）提升到本应用最高窗口层级 + 1。"""
-    try:
-        from AppKit import NSApp
-        new = set(NSApp.windows()) - before
-        if not new:
-            return
-        base = max((nw.level() for nw in NSApp.windows()), default=0)
-        for nw in new:
-            nw.setLevel_(base + 1)
-    except Exception:
-        pass
+# macOS 上 -topmost 主窗口层级高于普通对话框。
+# - 普通 Toplevel（simpledialog 弹窗）：直接设置 attributes("-topmost", True) 即可
+#   （Tk 原生持续管理，不会像 NSWindow setLevel_ hack 那样被窗口激活重置）。
+# - overrideredirect 窗口（ToolTip）：-topmost 在 macOS 上无效（Tk 8.6 限制），
+#   只能通过提升 NSWindow level 实现（见 patch_tooltip_topmost）。
+# - 系统文件对话框（filedialog）：带 parent 时显示为 sheet，天然在父窗口之上。
 
 
 def patch_tooltip_topmost() -> None:
@@ -87,17 +66,55 @@ class BasicDialog(simpledialog.Dialog):
     def buttonbox(self) -> None:
         box = Frame(self)
         box.pack(expand=True, fill=tk.X, pady=10)
-        btn_save = Button(box, text=_("确定"), width=TkS(5), command=self.ok)
+        # macOS HIG: 取消在左、确定在右
         btn_cancel = Button(box, text=_("取消"), width=TkS(5), command=self.cancel, style="secondary")
+        btn_save = Button(box, text=_("确定"), width=TkS(5), command=self.ok)
         box.grid_columnconfigure(0, weight=1)
         box.grid_columnconfigure(1, weight=0)
         box.grid_columnconfigure(2, weight=0)
         box.grid_columnconfigure(3, weight=1)
-        btn_save.grid(row=0, column=1, padx=TkS(3), pady=TkS(3))
-        btn_cancel.grid(row=0, column=2, padx=TkS(3), pady=TkS(3))
+        btn_cancel.grid(row=0, column=1, padx=TkS(3), pady=TkS(3))
+        btn_save.grid(row=0, column=2, padx=TkS(3), pady=TkS(3))
         self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.cancel)
         WinInfo.set_window_icon(self)
+        # 主窗口置顶时弹窗自身提升到最高层级+1：simpledialog.Dialog 内置 transient，
+        # 其窗口的 -topmost 在 macOS 上永久无效、NSWindow level 会被 Tk 设为 0，
+        # 故用 title 匹配 setLevel_ 并持续维护（防窗口激活/映射时被 Tk 重置）
+        self.after_idle(self._maintain_above_main)
+
+    def _raise_above_main(self) -> bool:
+        """将本弹窗的 NSWindow level 提升到本应用最高层级 + 1（高于置顶主窗口）。"""
+        try:
+            # AskString/Int/Float 的继承链（_QueryBase.__init__）会吞掉 parent 参数，
+            # self.parent 可能为 None，回退到默认根窗口（主窗口）
+            main = self.parent if self.parent is not None else tk._default_root
+            if main is None or not main.attributes("-topmost"):
+                return False
+            from AppKit import NSApp
+            title = self.title()
+            # base 取其他窗口（排除弹窗自身）的最高层级，避免维护循环中 level 无限递增
+            base = max((nw.level() for nw in NSApp.windows() if nw.title() != title), default=0)
+            raised = False
+            for nw in NSApp.windows():
+                try:
+                    if nw.title() == title:
+                        nw.setLevel_(base + 1)
+                        raised = True
+                except Exception:
+                    pass
+            return raised
+        except Exception:
+            return False
+
+    def _maintain_above_main(self):
+        try:
+            if not self.winfo_exists():
+                return
+            self._raise_above_main()
+            self.after(300, self._maintain_above_main)
+        except Exception:
+            pass
 
 
 class AskStringDialog(BasicDialog, simpledialog._QueryString):    #type:ignore
@@ -111,21 +128,9 @@ class AskIntDialog(BasicDialog, simpledialog._QueryInteger):   #type:ignore
 
 
 def _query(dialog_cls, title: str, prompt: str, **kwargs):
-    parent = kwargs.get("parent") or tk._default_root
-    before = _app_windows()
-    timer = None
-    if parent is not None:
-        # wait_window 模态期间 Tk 事件循环仍在运行，after 回调会执行
-        timer = parent.after(200, lambda: _raise_windows_above_main(before))
-    try:
-        dialog = dialog_cls(title, prompt, **kwargs)
-        return dialog.result
-    finally:
-        if timer is not None:
-            try:
-                parent.after_cancel(timer)
-            except Exception:
-                pass
+    # 弹窗置顶在 BasicDialog.buttonbox 内处理（Tk 原生 -topmost），无需 after 定时器/NSWindow hack
+    dialog = dialog_cls(title, prompt, **kwargs)
+    return dialog.result
 
 
 def askstring(title, prompt, **kwargs):

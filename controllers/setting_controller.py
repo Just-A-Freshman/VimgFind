@@ -39,6 +39,8 @@ class SettingController:
         style.configure("TEntry", padding=TkS(2.5))
         style.configure("TCombobox", padding=TkS(2.5))
         style.configure("TButton", padding=(TkS(5), TkS(2.5)))
+        # secondary 按钮（取消/次要操作）继承同一 padding，避免与 TButton 大小不一致
+        style.configure("secondary.TButton", padding=(TkS(5), TkS(2.5)))
         style.configure("Link.TButton", padding=(TkS(5), TkS(2.5)))
         style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
         style.configure("Treeview", rowheight=TkS(30))

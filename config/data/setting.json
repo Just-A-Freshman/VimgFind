@@ -1,11 +1,11 @@
 {
     "max_work_thread": 12,
-    "max_match_count": 100,
+    "max_match_count": 500,
     "preview_mode": "medium_ico",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
-    "ui_style": "cyborg",
+    "ui_style": "sandstone",
     "current_model": "osnet",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
@@ -82,7 +82,7 @@
         {
             "name": "打开文件夹",
             "type": "embedded",
-            "is_visible": true,
+            "is_visible": false,
             "shortcut": [],
             "batch_mode": false,
             "command": ""
