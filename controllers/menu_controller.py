@@ -103,6 +103,7 @@ class MenuController:
         self.__last_image_save_dir = self.__last_image_save_dir or src_paths[0].parent 
         for src_path in src_paths:
             save_path = filedialog.asksaveasfilename(
+                parent=self.app.view,
                 filetypes=[(f"{i}(*{i})", f"*{i}") for i in Setting.accepted_exts if i not in [".psd"]],
                 initialfile=file_ops.generate_copy_name(self.__last_image_save_dir / src_path.name).name,
                 initialdir=self.__last_image_save_dir,

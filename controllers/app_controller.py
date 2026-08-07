@@ -14,6 +14,7 @@ from .menu_controller import MenuController
 from utils.i18n import I18n, _
 import utils.file_ops as file_ops
 import utils.decorators as decorators
+from views.widgets.simpledialog import patch_tooltip_topmost
 
 
 class AppController:
@@ -33,6 +34,8 @@ class AppController:
         self.view.after(50, self.env_init)
 
     def env_init(self) -> None:
+        # macOS: ToolTip 为 overrideredirect 窗口无法置顶，patch 其显示逻辑避免被置顶主窗口遮挡
+        patch_tooltip_topmost()
         # 主线程：UI 事件绑定 / tkdnd 注册（tkinter 非线程安全，macOS 上跨线程调用会偶发崩溃）
         self.view.common_setting_btn.config(command=lambda: self.setting_controller.show_dialog())
         self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)

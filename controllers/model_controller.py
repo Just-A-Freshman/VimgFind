@@ -106,7 +106,7 @@ class ModelController:
 
     def load_local_model(self, file_path: str = "") -> None:
         if not file_path:
-            file_path = filedialog.askopenfilename(title=_("选择模型文件"), filetypes=[("ZIP files", "*.zip"), ("All files", "*")])
+            file_path = filedialog.askopenfilename(parent=self.app.view, title=_("选择模型文件"), filetypes=[("ZIP files", "*.zip"), ("All files", "*")])
             if not file_path:
                 return
 

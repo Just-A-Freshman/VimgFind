@@ -57,7 +57,7 @@ class ExcludePreviewController:
             self.refilter_preview()
 
     def on_browse(self) -> None:
-        dir_path = filedialog.askdirectory(title=_("选择要预览的目录"))
+        dir_path = filedialog.askdirectory(parent=self.dialog.winfo_toplevel(), title=_("选择要预览的目录"))
         if dir_path:
             self.dialog.preview_path_entry.delete(0, tk.END)
             self.dialog.preview_path_entry.insert(tk.END, dir_path)

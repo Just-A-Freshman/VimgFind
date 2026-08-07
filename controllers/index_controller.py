@@ -89,7 +89,7 @@ class IndexController:
         if dir_path != "" and not Path(dir_path).is_dir():
             return
         if dir_path == "":
-            dir_path = filedialog.askdirectory(title=_("选择索引文件夹"))
+            dir_path = filedialog.askdirectory(parent=self.app.view, title=_("选择索引文件夹"))
             if not dir_path:
                 return
         search_dirs: list = self.app.setting.model.index.search_dir

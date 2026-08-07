@@ -148,6 +148,7 @@ class GeneralController:
 
     def __change_config_path(self) -> None:
         path = filedialog.askopenfilename(
+            parent=self.app.view,
             title=_("选择配置文件"),
             filetypes=[(_("JSON 文件"), "*.json"), (_("所有文件"), "*")],
         )

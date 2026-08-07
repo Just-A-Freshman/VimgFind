@@ -78,6 +78,7 @@ class SearchController:
     def search_by_browser(self, image_paths: list[str] | None = None) -> None:
         if image_paths is None:
             raw_paths = filedialog.askopenfilenames(
+                parent=self.app.view,
                 filetypes=[(_("图片文件"), " ".join(f"*{ext}" for ext in Setting.accepted_exts))],
                 initialdir=self.__last_save_dir
             )
