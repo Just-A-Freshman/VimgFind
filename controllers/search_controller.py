@@ -55,6 +55,7 @@ class SearchController:
                 # macOS Tk 右键可能映射为 <Button-2>，双绑定覆盖
                 w.bind("<Button-2>", self.app.menu_controller.show_context_menu)
                 w.bind("<Button-3>", self.app.menu_controller.show_context_menu)
+                w.bind("<Button-1>", self.app.menu_controller.on_item_single_click, add="+")
                 w.bind("<Double-Button-1>", self.app.menu_controller.double_click_open_file)
             tab.preview_view.bind("<<ItemviewSelect>>", lambda _: self.__preview_found_image())
             tab.preview_view.bind("<FocusIn>", lambda _: shortcut.reset_modifiers(), add="+")

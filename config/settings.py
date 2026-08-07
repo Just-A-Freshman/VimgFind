@@ -9,6 +9,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import urllib.parse
 
 from .types import AppSettings, ModelConfig
@@ -16,6 +17,16 @@ from .types import AppSettings, ModelConfig
 ROOT = Path(__file__).resolve().parent.parent
 # macOS: Tk 按 points 布局，Retina 高清渲染由系统自动处理，无需 Windows 式 DPI 缩放
 SCALE_FACTOR = 1.0
+
+# ── 只读资源目录（docs/locales/favicon）──────────────────────────
+# 打包后为 .app 内的资源（pyinstaller 的 sys._MEIPASS），开发模式为源码目录。
+# 与用户数据（models/setting.json 等，位于 Application Support）分离：
+# 资源跟随版本、只读；数据每用户隔离、可写、备份。
+RESOURCE_DIR = (
+    Path(sys._MEIPASS) / "config" / "data"
+    if getattr(sys, "_MEIPASS", None)
+    else ROOT / "config" / "data"
+)
 
 # macOS 数据目录规范：用户数据放 ~/Library/Application Support/<AppName>/。
 # 原因：.app 包内部只读（写入会破坏代码签名、更新时数据丢失）；
@@ -116,7 +127,7 @@ class Setting:
             
     def link_to_docs(self, anchor: str = "") -> None:
         anchor = anchor.replace(" ", "-").lower()
-        docs_dir = Setting.config_path / "docs"
+        docs_dir = RESOURCE_DIR / "docs"
         docs_path = docs_dir / f"help_{self.app.locale}.html"
         if not docs_path.exists():
             docs_path = docs_dir / "help_en-US.html"
@@ -172,8 +183,7 @@ class Setting:
 class WinInfo:
     version = "2.5.2"
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
-    ico_path = Setting.config_path / "favicon.ico"
-    png_path = Setting.config_path / "favicon.png"
+    png_path = RESOURCE_DIR / "favicon.png"
     title = "VimgFind"
     default_font = ("PingFang SC", 11 if SCALE_FACTOR < 1.1 else 12)
     width = TkS(830)

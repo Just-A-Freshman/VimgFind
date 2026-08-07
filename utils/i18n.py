@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 
-from config.settings import Setting
+from config.settings import RESOURCE_DIR
 
-LOCALES_DIR = Setting.config_path / "locales"
+LOCALES_DIR = RESOURCE_DIR / "locales"
 LANGUAGES_FILE = LOCALES_DIR / "_languages.json"
 
 
