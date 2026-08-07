@@ -1,11 +1,11 @@
 {
     "max_work_thread": 12,
-    "max_match_count": 500,
-    "preview_mode": "medium_ico",
+    "max_match_count": 10,
+    "preview_mode": "big_ico",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
-    "ui_style": "sandstone",
+    "ui_style": "superhero",
     "current_model": "osnet",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
@@ -91,7 +91,10 @@
             "name": "未命名",
             "type": "custom",
             "is_visible": true,
-            "shortcut": [],
+            "shortcut": [
+                "Cmd",
+                "C"
+            ],
             "batch_mode": false,
             "command": "#test\n{ask_int}"
         }

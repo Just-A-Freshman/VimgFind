@@ -173,6 +173,12 @@ class CustomMenuTab(Frame):
         self.command_tip_label = Label(self.edit_frame, justify=tk.CENTER, wraplength=TkS(180), anchor=tk.CENTER)
         self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="", wraplength=TkS(350))
         self.command_text = Text(self.edit_frame, undo=True)
+        # ttkbootstrap Text autostyle 会覆盖 highlightthickness，创建后设置主题色细边框
+        # 边框色用 selectbg（与 LabelFrame 边框 / ThumbnailGrid 选中框内部色一致）
+        from ttkbootstrap import Style as _BootstrapStyle
+        _bc = _BootstrapStyle().colors.get("selectbg")
+        _pc = _BootstrapStyle().colors.get("primary")
+        self.command_text.configure(highlightthickness=1, highlightbackground=_bc, highlightcolor=_pc, bd=0)
         self.state_show_btn = Button(self.command_text, style="inner.Link.TButton", takefocus=False, cursor="hand2")
         self.show_default()
 

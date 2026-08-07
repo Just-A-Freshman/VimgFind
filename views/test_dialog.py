@@ -78,6 +78,12 @@ class TestResultDialog(tk.Toplevel):
         frame = Labelframe(self, text=_("命令详情"))
         frame.pack(fill=tk.BOTH, expand=True, padx=TkS(10), pady=(TkS(6), TkS(8)))
         text = Text(frame, wrap=tk.CHAR)
+        # autostyle 会覆盖 highlightthickness，创建后设置主题色细边框
+        # 边框色用 selectbg（与 LabelFrame 边框 / ThumbnailGrid 选中框内部色一致）
+        from ttkbootstrap import Style as _BootstrapStyle
+        _bc = _BootstrapStyle().colors.get("selectbg")
+        _pc = _BootstrapStyle().colors.get("primary")
+        text.configure(highlightthickness=1, highlightbackground=_bc, highlightcolor=_pc, bd=0)
         text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=TkS(2), pady=TkS(2))
         text.configure(padx=0, pady=0)
         text.bind("<<ThemeChanged>>", lambda e: text.configure(padx=0, pady=0))

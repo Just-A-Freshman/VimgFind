@@ -49,7 +49,7 @@ class ModelFrame(Frame):
         self.browser_button = self.__set_browser_button(model_list_frame)
         self.model_tree = self.__set_model_tree(model_list_frame)
         self.name_tip_label = Label(detail_frame)
-        self.detail_desc_text = Text(detail_frame, wrap='char', relief=tk.FLAT, autostyle=False)
+        self.detail_desc_text = Text(detail_frame, wrap='char', relief=tk.FLAT, bd=0, highlightthickness=0, autostyle=False)
         self.name_edit_entry = Entry(detail_frame)
         
         self.btn_group = Frame(control_frame)
