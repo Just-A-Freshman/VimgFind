@@ -79,9 +79,28 @@ class BasicDialog(simpledialog.Dialog):
         self.bind("<Escape>", self.cancel)
         WinInfo.set_window_icon(self)
         # 主窗口置顶时弹窗自身提升到最高层级+1：simpledialog.Dialog 内置 transient，
-        # 其窗口的 -topmost 在 macOS 上永久无效、NSWindow level 会被 Tk 设为 0，
-        # 故用 title 匹配 setLevel_ 并持续维护（防窗口激活/映射时被 Tk 重置）
+        # 其窗口的 -topmost 在 macOS 上永久无效、NSWindow level 会被 Tk 设为 0。
+        # 弹窗 NSWindow 在创建后约 40ms 才注册到 NSApp.windows()，若先显示再提升会
+        # 经历"先显示→被遮挡→再显示"的闪烁。因此先隐藏窗口，等 NSWindow 注册并
+        # 提升成功后（level > 置顶主窗口）再显示。
+        self.withdraw()
+        self._raise_and_show()
         self.after_idle(self._maintain_above_main)
+
+    def _raise_and_show(self):
+        try:
+            if not self.winfo_exists():
+                return
+            main = self.parent if self.parent is not None else tk._default_root
+            if main is None or not main.attributes("-topmost"):
+                self.deiconify()  # 非置顶：无需提升，直接显示
+                return
+            if self._raise_above_main():
+                self.deiconify()
+            else:
+                self.after(15, self._raise_and_show)
+        except Exception:
+            pass
 
     def _raise_above_main(self) -> bool:
         """将本弹窗的 NSWindow level 提升到本应用最高层级 + 1（高于置顶主窗口）。"""

@@ -178,3 +178,20 @@
 | TCC 文件弹窗行为 | ❌ | 租机验证一次 |
 | 私有 API 混入 | ✅ 代码审查 | §2.1 清单约束替换方案 |
 | 快捷键手感、多显示器 | ❌ | 租机 |
+
+---
+
+## 10. 已知问题（封存，待后续处理）
+
+### 10.1 置顶模式下 simpledialog 弹窗闪烁（未解决）
+
+- **现象**：主窗口置顶时，`askstring/askinteger/askfloat` 弹窗会经历"先正常显示 → 被遮住 → 再显示"的闪烁。
+- **根因**：弹窗 NSWindow 在创建后约 **40ms** 才注册到 `NSApp.windows()`，期间无法通过 `setLevel_` 提升层级（level 0 < 置顶主窗口 19），先显示后被遮。
+- **已尝试方案**（均未完全解决）：
+  1. `after` 定时器提升 → 对话框销毁后回调触发野指针崩溃（已改用 `after(0)` 消除崩溃）
+  2. BasicDialog 内 title 匹配 `setLevel_` + 300ms 维护循环 → 提升有 ~40ms 延迟
+  3. `buttonbox` 同步提升 + `after(0)` → NSWindow 未注册，同步失败
+  4. `withdraw` 隐藏 → 轮询提升 → `deiconify` 显示 → 仍有 ~6ms level 0 可见窗口期
+- **现状**：`views/widgets/simpledialog.py` 采用方案 4（withdraw→提升→显示），闪烁窗口期从 40ms 缩短到 ~6ms，但视觉上仍可感知；非置顶场景正常。
+- **涉及文件**：`views/widgets/simpledialog.py`（`BasicDialog._raise_and_show / _raise_above_main / _maintain_above_main`）
+- **后续方向**：在 Tk 层面拦截窗口首次映射（如重写 Dialog 初始化流程，在 NSWindow 注册前完成提升），或研究 NSWindow 注册时序，使提升先于窗口首次可见。

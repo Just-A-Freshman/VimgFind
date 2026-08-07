@@ -7,6 +7,7 @@ from pathlib import Path
 import json
 import logging
 import os
+import shutil
 import subprocess
 import urllib.parse
 
@@ -15,14 +16,37 @@ from .types import AppSettings, ModelConfig
 ROOT = Path(__file__).resolve().parent.parent
 # macOS: Tk 按 points 布局，Retina 高清渲染由系统自动处理，无需 Windows 式 DPI 缩放
 SCALE_FACTOR = 1.0
+
+# macOS 数据目录规范：用户数据放 ~/Library/Application Support/<AppName>/。
+# 原因：.app 包内部只读（写入会破坏代码签名、更新时数据丢失）；
+# 升级共享同一目录（数据自动保留）；每用户隔离；纳入 Time Machine 备份。
+_APP_DATA_DIR = Path.home() / "Library" / "Application Support" / "VimgFind"
+_SOURCE_DATA_DIR = ROOT / "config" / "data"
+
+
+def _migrate_source_data() -> None:
+    """首次运行：把源码目录 config/data 迁移到 Application Support（仅一次）。"""
+    if not _SOURCE_DATA_DIR.exists():
+        return  # 无源码数据（如打包后的 .app），直接使用 Application Support
+    if _APP_DATA_DIR.exists():
+        return  # 已迁移过
+    try:
+        _APP_DATA_DIR.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(_SOURCE_DATA_DIR, _APP_DATA_DIR)
+    except OSError:
+        pass
+
+_migrate_source_data()
+
+
 def TkS(value: int | float) -> int:
     x = value * SCALE_FACTOR
     return 0 if x == 0 else max(int(round(abs(x), 0)), 1) * (-1 if x < 0 else 1)
 
 
 class Setting:
-    config_path = ROOT / "config" / "data"
-    temp_image_path = ROOT / "temp"
+    config_path = _APP_DATA_DIR
+    temp_image_path = _APP_DATA_DIR / "temp"
     setting_path = config_path / "setting.json"
     models_dir = config_path / "models"
     manifest_cache = models_dir / "_manifest_cache.json"

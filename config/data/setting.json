@@ -1,40 +1,29 @@
 {
     "max_work_thread": 12,
-    "max_match_count": 10,
-    "preview_mode": "big_ico",
+    "max_match_count": 500,
+    "preview_mode": "medium_ico",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
-    "ui_style": "superhero",
+    "ui_style": "minty",
     "current_model": "osnet",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
     "schedule_index_save_interval": 600,
     "maximize_window": false,
-    "topmost_window": true,
+    "topmost_window": false,
     "locale": "zh-CN",
     "menu_items": [
         {
             "name": "复制图片",
             "type": "embedded",
-            "is_visible": true,
+            "is_visible": false,
             "shortcut": [
                 "Cmd",
                 "C"
             ],
             "batch_mode": false,
             "command": ""
-        },
-        {
-            "name": "fu",
-            "type": "custom",
-            "is_visible": false,
-            "shortcut": [
-                "Shift",
-                "D"
-            ],
-            "batch_mode": true,
-            "command": "/Users/chuzu/Downloads/test_image/activity/A (18).webp\n/Users/chuzu/Downloads/test_image/activity/A (27)(2).png\n/Users/chuzu/Downloads/test_image/activity/A (21).webp\n/Users/chuzu/Downloads/test_image/activity/A (28).webp\n/Users/chuzu/Downloads/test_image/activity/A (6).webp"
         },
         {
             "name": "复制路径",
@@ -82,8 +71,11 @@
         {
             "name": "打开文件夹",
             "type": "embedded",
-            "is_visible": false,
-            "shortcut": [],
+            "is_visible": true,
+            "shortcut": [
+                "Cmd",
+                "G"
+            ],
             "batch_mode": false,
             "command": ""
         },
