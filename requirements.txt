@@ -1,0 +1,14 @@
+# 安装说明（macOS-only）：
+# 1. hnswlib 请使用 conda 安装（conda-forge 提供 osx-arm64 / osx-64 预编译 wheel）：
+#      conda install -c conda-forge hnswlib==0.8.0
+# 2. 其余依赖使用 pip 安装。
+numpy==2.3.5
+onnxruntime==1.23.2
+Pillow==12.0.0
+tqdm==4.67.1
+pyobjc-framework-Cocoa==12.2.1
+pyobjc-framework-Quartz==12.2.1
+ttkbootstrap==1.19.0
+tkinterdnd2==0.4.3
+pathspec==0.12.1
+send2trash==2.1.0

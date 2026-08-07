@@ -1,0 +1,474 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import TYPE_CHECKING, Callable, cast
+from tkinter import filedialog, messagebox
+import tkinter as tk
+import zipfile
+import logging
+import time
+import json
+
+from ttkbootstrap import Entry
+from ttkbootstrap.colorutils import color_to_rgb, color_to_hex
+
+from core import SearchTool
+from config.settings import TkS
+from config.types import ModelConfig
+from views.model_page import ModelFrame, ModelStatus
+from utils.i18n import _
+import utils.file_ops as file_ops
+import utils.internet as internet
+import utils.decorators as decorators
+
+if TYPE_CHECKING:
+    from .app_controller import AppController
+
+
+TYPE_LABEL = {
+    "Image-Text": "多模态",
+    "Image": "图像",
+    "Unknown": "未知",
+}
+
+
+class ModelController:
+    def __init__(self, app_controller: AppController) -> None:
+        self.app = app_controller
+        self.model_checker = ModelChecker(app_controller)
+        self._model_cache: dict[str, ModelConfig] = {}
+        self.__editing_model_id: str | None = None
+        self.__current_download: internet.DownloadTask | None = None
+        self.__models_updated_callbacks: list[Callable[[], None]] = []
+
+    def env_init(self) -> None:
+        self.__populate_model_tree(self.model_checker.get_available_models(refresh_remote=False))
+        self.__on_theme_change()
+        tab = self.app.view.model_tab
+        tab.model_tree.bind("<<TreeviewSelect>>", lambda e: self.on_model_select() or self.__on_theme_change())
+        tab.model_tree.bind("<Double-Button-1>", lambda e: self.__on_model_double_click())
+        tab.name_edit_entry.bind("<FocusOut>", self.__on_name_edited)
+        tab.model_tree.bind("<<ThemeChanged>>", lambda e: self.__on_theme_change())
+        tab.use_btn.config(command=self.switch_model)
+        tab.uninstall_btn.config(command=self.__uninstall_model)
+        tab.download_btn.config(command=self.__download_model)
+        tab.download_control_btn.config(command=self.__on_download_control)
+        tab.download_cancel_btn.config(command=lambda: self.__current_download.cancel() if self.__current_download is not None else None)
+        tab.browser_button.config(command=self.load_local_model)
+
+    def get_downloaded_models(self) -> list[ModelConfig]:
+        return [
+            cfg for model_id, cfg in self._model_cache.items()
+            if self.get_model_status(model_id) != ModelStatus.DISABLED
+        ]
+
+    def add_models_updated_callback(self, callback: Callable[[], None]) -> None:
+        self.__models_updated_callbacks.append(callback)
+
+    @decorators.send_task
+    def refresh_remote_models(self) -> None:
+        try:
+            models = self.model_checker.get_available_models(refresh_remote=True)
+        except Exception as e:
+            logging.error(f"刷新远程模型列表失败：{str(e)}")
+            return
+        self.app.view.after(0, lambda: self.__apply_remote_models(models))
+
+    def get_model_status(self, model_id: str) -> ModelStatus:
+        if self.__current_download and self.__current_download.model_id == model_id:
+            return ModelStatus.DOWNLOADING
+        if model_id == self.app.setting.app.current_model:
+            return ModelStatus.USING
+        if self.model_checker.is_installed(model_id):
+            return ModelStatus.DOWNLOADED
+        return ModelStatus.DISABLED
+
+    def on_model_select(self) -> None:
+        view = self.app.view.model_tab
+        result = self.__get_selected_model()
+        if result is None:
+            return
+        model_id, cfg = result
+        self.__editing_model_id = model_id
+        view.show_detail(cfg)
+
+        if self.app.index_controller.is_updating:
+            view.use_btn.config(state=tk.DISABLED)
+            view.uninstall_btn.config(state=tk.DISABLED)
+
+        if self.__current_download and self.__current_download.model_id == model_id:
+            self.__show_download_progress()
+            self.__update_download_progress(
+                self.__current_download.downloaded_bytes,
+                self.__current_download.total_bytes,
+                self.__current_download.speed,
+            )
+
+    def load_local_model(self, file_path: str = "") -> None:
+        if not file_path:
+            file_path = filedialog.askopenfilename(title=_("选择模型文件"), filetypes=[("ZIP files", "*.zip"), ("All files", "*")])
+            if not file_path:
+                return
+
+        zip_path = Path(file_path)
+        model_id = zip_path.stem
+
+        if self.model_checker.is_installed(model_id):
+            answer = messagebox.askyesno(_("提示"), _("模型「{id}」已安装，是否覆盖？", id=model_id))
+            if not answer:
+                return
+
+        fresh = self.model_checker.fetch_remote_manifest(cache_ttl=0)
+        entry = next((entry for entry in fresh if entry.get("meta_info", {}).get("id") == model_id), None) if fresh else None
+
+        if entry:
+            expected_cs = (entry.get("meta_info") or {}).get("checksum_sha256", "")
+            if expected_cs and not file_ops.verify_file_sha256(zip_path, expected_cs):
+                messagebox.showerror(
+                    _("校验失败"),
+                    _("校验和不匹配，存在模型 ID 冲突风险！\n\n文件「{name}」的校验和与远程记录不匹配，\n可能是文件损坏或被篡改，请勿加载。",
+                        name=zip_path.name)
+                )
+                return
+            cfg = ModelConfig.from_dict(entry)
+        else:
+            try:
+                cfg = self.model_checker.validate_unknown_zip(zip_path, model_id)
+                if cfg is None:
+                    return
+            except AssertionError as e:
+                messagebox.showerror(_("错误"), str(e))
+                return
+
+        self.__load_model_from_zip(zip_path, model_id, cfg)
+
+    def switch_model(self, model_id: str = "", resend_search: bool = False) -> None:
+        self.app.setting.save()
+        self.app.view.model_tab.use_btn.config(state=tk.DISABLED)
+        model_id = model_id if model_id else self.app.view.model_tab.model_tree.selection()[0]
+        old_model_id = self.app.setting.app.current_model
+        if model_id == old_model_id:
+            return
+        if self.app.search_tools:
+            self.app.search_tools.save_index()
+            self.app.search_tools.destroy(wait=True)
+        self.app.setting.app.current_model = model_id
+        self.app.search_tools = SearchTool(self.app.setting)
+        if resend_search:
+            self.app.search_controller.resend_last_search()
+        self.app.view.index_tab.switch_model_combobox.set(self._model_cache[model_id].meta.name)
+        self.app.index_controller.refresh_index_dataset_table()
+        self.app.view.after(100, self.app.index_controller.update_index_tip)
+        self.app.view.title(f"VimgFind - {self._model_cache[model_id].meta.name}")
+        self.__update_tree_status(old_model_id, ModelStatus.DOWNLOADED)
+        self.__update_tree_status(model_id, ModelStatus.USING)
+        self.app.view.model_tab.model_tree.selection_set(model_id)
+        self.on_model_select()
+
+    def __get_selected_model(self) -> tuple[str, ModelConfig] | None:
+        selection = self.app.view.model_tab.model_tree.selection()
+        if not selection:
+            return None
+        cfg = self._model_cache.get(selection[0])
+        if cfg is None:
+            return None
+        return cfg.meta.id or selection[0], cfg
+
+    def __apply_remote_models(self, models: list[ModelConfig]) -> None:
+        new_ids = {cfg.meta.id or cfg.meta.name for cfg in models}
+        if new_ids == set(self._model_cache):
+            return
+        self.__populate_model_tree(models)
+        for callback in self.__models_updated_callbacks:
+            callback()
+
+    def __populate_model_tree(self, models: list[ModelConfig]) -> None:
+        view = self.app.view.model_tab
+        self._model_cache.clear()
+        view.model_tree.delete(*view.model_tree.get_children())
+
+        for cfg in models:
+            model_id = cfg.meta.id or cfg.meta.name
+            status = self.get_model_status(model_id)
+            self._model_cache[model_id] = cfg
+            name = cfg.meta.name or model_id
+            model_type = _(TYPE_LABEL.get(cfg.meta.model_type, cfg.meta.model_type))
+            model_size = file_ops.format_bytes(cfg.meta.size, decimal_parts={'MB': 0, "KB": 0})
+            view.model_tree.insert("", tk.END, iid=model_id, values=(name, cfg.meta.label or "", model_type, model_size), tags=status)
+
+    def __on_theme_change(self):
+        tab = self.app.view.model_tab
+        colors: Colors = self.app.view.style.colors    #type:ignore
+        active_fg: str = colors.get("info")     #type:ignore
+        unactivated_fg = color_to_hex(tuple(int(c + (255 - c) * 0.2) for c in color_to_rgb(colors.get("secondary"))))  # type:ignore
+        tab.model_tree.tag_configure(ModelStatus.DISABLED, foreground=unactivated_fg)  
+        tab.model_tree.tag_configure(ModelStatus.USING, foreground=active_fg)
+
+    def __on_name_edited(self, event: tk.Event) -> None:
+        name_entry = cast(Entry, event.widget)
+        new_name = name_entry.get().strip()
+        if not new_name:
+            return
+
+        iid = self.__editing_model_id
+        if not iid:
+            return
+        tree = self.app.view.model_tab.model_tree
+        values = list(tree.item(iid, "values"))
+        values[0] = new_name
+        tree.item(iid, values=values)
+        cfg = self._model_cache.get(iid)
+        if cfg is None:
+            return
+        cfg.meta.name = new_name
+        self.app.setting.save_model_config(iid, cfg)
+        self.app.index_controller.refresh_switch_model_combobox()
+
+    def __on_model_double_click(self) -> None:
+        result = self.__get_selected_model()
+        if result is None:
+            return
+        model_id, _ = result
+        model_json_path = self.app.setting.models_dir / model_id / "model.json"
+        if model_json_path.exists():
+            file_ops.open_file(model_json_path)
+
+    def __uninstall_model(self) -> None:
+        result = self.__get_selected_model()
+        if result is None:
+            return
+        model_id, cfg = result
+
+        if not self.model_checker.is_installed(model_id):
+            return
+
+        answer = messagebox.askyesno(_("确认卸载"), _("确定要卸载模型「{name}」吗？\n该模型对应的索引也会被删除！", name=cfg.meta.name or model_id), icon=messagebox.WARNING)
+        if not answer:
+            return
+
+        self.__remove_model(model_id)
+        self.app.index_controller.refresh_switch_model_combobox()
+
+    def __download_model(self) -> None:
+        result = self.__get_selected_model()
+        if result is None:
+            return
+        model_id, cfg = result
+        if not cfg.meta.download_url:
+            messagebox.showinfo(_("提示"), _("该模型没有可用的下载地址。"))
+            return
+
+        if self.__current_download is not None and self.__current_download.state in (
+            internet.DownloadState.DOWNLOADING, internet.DownloadState.PAUSED,
+        ):
+            return
+
+        self.__current_download = internet.DownloadTask(
+            url=cfg.meta.download_url,
+            dest_dir=self.app.setting.models_dir / model_id,
+            model_id=model_id,
+            checksum=cfg.meta.checksum_sha256,
+        )        
+        self.__current_download.start(progress_callback=lambda d, t, s: self.__update_download_progress(d, t, s))
+        self.__show_download_progress()
+        self.__update_tree_status(model_id, ModelStatus.DOWNLOADING)
+        self.__poll_download(model_id)
+
+    def __on_download_control(self) -> None:
+        task = self.__current_download
+        if task is None:
+            return
+        btn = self.app.view.model_tab.download_control_btn
+        if task.state == internet.DownloadState.DOWNLOADING:
+            task.pause()
+            btn.config(text=_("继续"))
+        elif task.state == internet.DownloadState.PAUSED:
+            task.resume()
+            btn.config(text=_("暂停"))
+
+    def __load_model_from_zip(self, zip_path: Path, model_id: str, cfg: ModelConfig) -> None:
+        dest_dir = self.app.setting.models_dir / model_id
+        try:
+            if dest_dir.exists():
+                file_ops.rmtree(dest_dir)
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                zf.extractall(dest_dir)
+
+            self.app.setting.save_model_config(model_id, cfg)
+            self.__populate_model_tree(self.model_checker.get_available_models())
+            messagebox.showinfo(_("提示"), _("模型「{id}」加载成功！", id=model_id))
+        except Exception as e:
+            messagebox.showerror(_("错误"), _("加载模型失败：{e}", e=str(e)))
+            if dest_dir.exists():
+                file_ops.rmtree(dest_dir)
+
+    def __poll_download(self, model_id: str) -> None:
+        view = self.app.view.model_tab
+        task = self.__current_download
+        if task is None:
+            return
+        if task.state in (internet.DownloadState.COMPLETED, internet.DownloadState.ERROR, internet.DownloadState.CANCELLED):
+            self.__current_download = None
+            self.__finish_download(task.state, model_id, view)
+            return
+        view.after(200, lambda: self.__poll_download(model_id))
+
+    def __show_download_progress(self) -> None:
+        view = self.app.view.model_tab
+        view.download_btn.grid_forget()
+        view.btn_group.grid_forget()
+        view.download_progress_label.config(text=_("准备下载..."))
+        view.download_progressbar.config(value=0)
+        is_paused = self.__current_download and self.__current_download.state == internet.DownloadState.PAUSED
+        view.download_control_btn.config(text=_("继续") if is_paused else _("暂停"))
+
+        view.download_progress_label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(5), TkS(2)), pady=(TkS(3), TkS(3)))
+        view.download_control_btn.grid(row=0, column=1, sticky=tk.E)
+        view.download_cancel_btn.grid(row=0, column=2, sticky=tk.E, padx=(TkS(2), TkS(5)))
+        view.download_progressbar.grid(row=1, column=0, columnspan=3, sticky=tk.EW, padx=TkS(5), pady=(0, TkS(5)))
+
+    def __update_download_progress(self, downloaded: int, total: int, speed: float) -> None:
+        view = self.app.view.model_tab
+        if total > 0:
+            view.download_progressbar.config(value=int(downloaded * 100 / total))
+        view.download_progress_label.config(
+            text=f"{file_ops.format_bytes(speed)}/s - {file_ops.format_bytes(downloaded)}/{file_ops.format_bytes(total)}"
+        )
+
+    def __update_tree_status(self, model_id: str, status: str) -> None:
+        tree = self.app.view.model_tab.model_tree
+        if tree.exists(model_id):
+            tree.item(model_id, tags=status)
+
+    def __remove_model(self, model_id: str) -> None:
+        model_dir = self.app.setting.models_dir / model_id
+        file_ops.rmtree(model_dir)
+        self._model_cache.pop(model_id, None)
+        self.app.setting.remove_model_config(model_id)
+        self.__populate_model_tree(self.model_checker.get_available_models())
+        self.app.view.model_tab.show_default()
+
+    def __finish_download(self, state: internet.DownloadState, model_id: str, view: ModelFrame) -> None:
+        if state == internet.DownloadState.CANCELLED:
+            self.__remove_model(model_id)
+            return
+        view.download_progressbar.grid_forget()
+        view.download_progress_label.grid_forget()
+        view.download_control_btn.grid_forget()
+        view.download_cancel_btn.grid_forget()
+        view.use_btn.config(state=tk.NORMAL)
+        view.uninstall_btn.config(state=tk.NORMAL)
+        if state == internet.DownloadState.COMPLETED:
+            self.__update_tree_status(model_id, ModelStatus.DOWNLOADED)
+            cfg = self._model_cache.get(model_id)
+            if cfg:
+                self.app.setting.save_model_config(model_id, cfg)
+                self.app.index_controller.refresh_switch_model_combobox()
+            if view.model_tree.exists(model_id):
+                view.model_tree.selection_set(model_id)
+                self.on_model_select()
+        else:
+            is_installed_anyway = model_id in self._model_cache and self.model_checker.is_installed(model_id)
+            if not is_installed_anyway:
+                self.__remove_model(model_id)
+            messagebox.showerror(_("下载失败"), _("模型「{id}」下载失败，请检查网络后重试。", id=model_id))
+            self.on_model_select()
+
+
+class ModelChecker:
+    def __init__(self, app_controller: AppController) -> None:
+        self.app = app_controller
+
+    def validate_unknown_zip(self, zip_path: Path, model_id: str) -> ModelConfig:
+        try:
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                namelist = zf.namelist()
+
+                onnx_files = [n for n in namelist if n.endswith(".onnx")]
+                if not onnx_files:
+                    raise AssertionError("无法识别的模型包：未找到 ONNX 模型文件（.onnx）。")
+
+                if "model.json" not in namelist:
+                    raise AssertionError("无法识别的模型包：未找到 model.json 配置文件。")
+
+                with zf.open("model.json") as f:
+                    raw = json.loads(f.read().decode("utf-8"))
+
+                mc = raw.get("model_config") or {}
+                image_path = mc.get("image_encoder_path", "") or ""
+                text_path = mc.get("text_encoder_path", "") or ""
+
+                if image_path and image_path not in namelist:
+                    raise AssertionError(f"校验失败：model.json 中的 image_encoder_path「{image_path}」在 zip 包中不存在。")
+                if text_path and text_path not in namelist:
+                    raise AssertionError(f"校验失败：model.json 中的 text_encoder_path「{text_path}」在 zip 包中不存在。")
+
+                raw["meta_info"] = raw.get("meta_info") or {"id": model_id, "name": model_id}
+                return ModelConfig.from_dict(raw)
+
+        except (zipfile.BadZipFile, json.JSONDecodeError) as e:
+            raise AssertionError(f"无法读取模型包：{e}")
+
+    def read_manifest_cache(self) -> dict:
+        try:
+            with open(self.app.setting.manifest_cache, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError, FileNotFoundError):
+            return {}
+
+    def fetch_remote_manifest(self, cache_ttl: int = 0) -> list[dict] | None:
+        now = time.time()
+        cache_path = self.app.setting.manifest_cache
+        cache = self.read_manifest_cache()
+        if now - cache.get("timestamp", 0) < cache_ttl:
+            return cache.get("models")
+        try:
+            with internet.fetch_url(self.app.setting.app.remote_manifest_url, timeout=5, validate=True, headers={"Accept": "application/json"}) as resp:
+                models: list[dict] = json.loads(json.loads(resp.read().decode("utf-8"))["raw_content"])
+
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump({"timestamp": now, "models": models}, f, indent=2)
+            return models
+        except (OSError, ValueError, json.JSONDecodeError) as e:
+            logging.error(f"获取远程模型失败：{str(e)}")
+            return cache.get("models")
+
+    def is_installed(self, model_id: str) -> bool:
+        model_dir = self.app.setting.models_dir / model_id
+        return model_dir.is_dir() and (model_dir / "model.json").is_file()
+
+    def get_available_models(self, refresh_remote: bool = True) -> list[ModelConfig]:
+        installed_ids = self.app.setting.get_model_list()
+        local_map: dict[str, ModelConfig] = {}
+        result: list[ModelConfig] = []
+
+        for mid in installed_ids:
+            cfg = self.app.setting.load_model_config(mid)
+            local_map[mid] = cfg
+            result.append(cfg)
+
+        if refresh_remote:
+            remote_raw = self.fetch_remote_manifest(self.app.setting.app.cache_ttl)
+        else:
+            remote_raw = self.read_manifest_cache().get("models")
+        if not remote_raw:
+            return result
+        for entry in remote_raw:
+            meta = entry.get("meta_info") or {}
+            mid = meta.get("id")
+            if not mid:
+                continue
+            if mid in local_map:
+                disk_cfg = local_map[mid]
+                if not disk_cfg.meta.download_url:
+                    disk_cfg.meta.download_url = meta.get("download_url", "")
+                if not disk_cfg.meta.checksum_sha256:
+                    disk_cfg.meta.checksum_sha256 = meta.get("checksum_sha256", "")
+            else:
+                result.append(ModelConfig.from_dict(entry))
+
+        return result
+

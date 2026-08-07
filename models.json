@@ -1,0 +1,197 @@
+[
+    {
+        "meta_info": {
+            "id": "chinese-clip",
+            "name": "Chinese-CLIP",
+            "label": "语义捕捉",
+            "model_type": "Image-Text",
+            "description": "Chinse Clip擅长中文场景下的以文搜图，如用“水墨画里的远山”搜素材、电商评论图搜同款、中文新闻图片溯源。它的一大优势是原生中文语义理解，能准确把握中文自然语言中的物体、风格与意境。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/chinese-clip.zip",
+            "checksum_sha256": "sha256:0ed17fd21c7eb6dc13d158bc8c3943c4a333d286f42fdb5b986f5bc1234d2a74",
+            "size": 755771016
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize",
+            "fill_color": null,
+            "context_length": 52,
+            "mean": [
+                0.48145466,
+                0.4578275,
+                0.40821073
+            ],
+            "std": [
+                0.26862954,
+                0.26130258,
+                0.27577711
+            ],
+            "normalization": true,
+            "image_encoder_path": "image_model.onnx",
+            "text_encoder_path": "text_model.onnx"
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 512,
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "EfficientNet",
+            "name": "EfficientNet",
+            "label": "语义捕捉",
+            "model_type": "Image",
+            "description": "EfficientNet擅长语义级别的物品提取，适用于“搜出同类东西”的场景。它通过复合缩放将网络深度、宽度、分辨率平衡得极好，在同等计算量下，高层语义表达更强，能更准确地抓住“这是什么”而非死死抠住每一个像素细节。",
+            "download_url": "https://gitee.com/Chorgri/VimgFind/releases/download/model/EfficientNet-b0.zip",
+            "checksum_sha256": "sha256:d028830d906f8ead533bb751d816ce594bd7c4a310cd199cf88475a862e64db9",
+            "size": 33702488
+        },
+        "model_config": {
+            "image_size": 260,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": false,
+            "image_encoder_path": "imagenet-b2-opti.onnx",
+            "text_encoder_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 1000,
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "dinov2-base",
+            "name": "Dinov2-Base",
+            "label": "抗干扰",
+            "model_type": "Image",
+            "description": "Dinov2擅长物体实例级别的稳健匹配，适用于需要在图像被各种编辑处理后依然能精准锁定“同一个东西”的场景，同一地标不同游客照的聚合、商品去水印后的同款溯源等。它的一大优势是对裁剪、滤镜、文字叠加和色调调整高度不敏感，能透过重重干扰紧紧抓住物体本身的视觉特征。",
+            "download_url": "https://github.com/Just-A-Freshman/VimgFind/releases/download/model/dinov2-base.zip",
+            "checksum_sha256": "sha256:1cdcc5280e25eceedbeefab33df150ff2322930faadf16c641de481ff132ae0f",
+            "size": 689384571
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize_crop",
+            "fill_color": null,
+            "context_length": null,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": true,
+            "output_index": 0,
+            "image_encoder_path": "model.onnx",
+            "text_encoder_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 768,
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "resnet50",
+            "name": "Resnet50",
+            "label": "细节捕捉",
+            "model_type": "Image",
+            "description": "resnet50擅长细节的区分与捕捉，适用于对纹理、图案、局部结构要求精准的检索，比如工业零件型号比对、面料纹样查重、同一地标不同角度的确认。它逐层提取特征的残差结构，让底层边缘和纹理信息能很好地保留到最终表达中，搜出来的结果在局部一致性上往往很可靠。",
+            "download_url": "https://gitee.com/Chorgri/VimgFind/releases/download/model/resnet50.zip",
+            "checksum_sha256": "sha256:72157277c1a1c2639a46db5351dccf7a8c4e2b71b4901c43c6dc7238d8c5aef8",
+            "size": 93958728
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize",
+            "fill_color": null,
+            "context_length": null,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": true,
+            "output_index": 0,
+            "image_encoder_path": "model.onnx",
+            "text_encoder_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 2048,
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    },
+    {
+        "meta_info": {
+            "id": "osnet",
+            "name": "Osnet",
+            "label": "特征融合",
+            "model_type": "Image",
+            "description": "osnet擅长整体与局部特征的融合表达，适用于需要在极轻量条件下同时抓住全貌和关键细节的检索场景，如跨摄像头行人重识别、手机端穿搭搜同款、无人机视角下的目标再确认等。",
+            "download_url": "https://gitee.com/Chorgri/VimgFind/releases/download/model/osnet.zip",
+            "checksum_sha256": "sha256:14a60cadd7b789ce0dd0ed209de2560ba1d1461c9b4e58b31025ceb8b6c97b82",
+            "size": 8761813
+        },
+        "model_config": {
+            "image_size": 224,
+            "preprocess_type": "resize",
+            "fill_color": null,
+            "context_length": null,
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ],
+            "normalization": true,
+            "output_index": 0,
+            "image_encoder_path": "model.onnx",
+            "text_encoder_path": null
+        },
+        "index_config": {
+            "vector_index_path": "index/vector_index.bin",
+            "name_index_path": "index/name_index.json",
+            "index_capacity": 1000000,
+            "index_dim": 512,
+            "search_dir": [],
+            "exclude_rules": []
+        }
+    }
+]
