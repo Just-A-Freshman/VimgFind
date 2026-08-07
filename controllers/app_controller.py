@@ -29,9 +29,38 @@ class AppController:
         self.menu_controller = MenuController(self)
         self.index_controller = IndexController(self)
         self.model_controller = ModelController(self)
+        self._patch_messagebox_parent()
         self.setting_controller.change_theme(self.setting.app.ui_style)
         self.search_controller.set_preview_mode(self.setting.app.preview_mode)
         self.view.after(50, self.env_init)
+
+    def _patch_messagebox_parent(self) -> None:
+        """macOS: 置顶主窗口（layer=19）会遮挡不带 parent 的 messagebox（NSAlert layer=0）。
+        给 messagebox 自动补 parent=当前焦点窗口，使其以 sheet 形式附着显示、不被遮挡。
+        """
+        import tkinter.messagebox as _mb
+
+        def _current_parent():
+            try:
+                fw = self.view.focus_get()
+                if fw is not None:
+                    return fw.winfo_toplevel()
+            except Exception:
+                pass
+            return self.view
+
+        for _name in ("showinfo", "showwarning", "showerror",
+                      "askyesno", "askokcancel", "askquestion", "askretrycancel"):
+            _orig = getattr(_mb, _name)
+
+            def _make_wrapper(orig):
+                def wrapper(*args, **kwargs):
+                    if "parent" not in kwargs:
+                        kwargs["parent"] = _current_parent()
+                    return orig(*args, **kwargs)
+                return wrapper
+
+            setattr(_mb, _name, _make_wrapper(_orig))
 
     def env_init(self) -> None:
         # macOS: ToolTip 为 overrideredirect 窗口无法置顶，patch 其显示逻辑避免被置顶主窗口遮挡
