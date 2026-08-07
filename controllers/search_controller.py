@@ -127,15 +127,15 @@ class SearchController:
                         else:
                             raise tk.TclError
 
-                # 2) 剪贴板文本（路径 / URL，兼容 file:// 与花括号包裹）
+                # 2) 剪贴板文本：每行一个完整路径（支持含空格/括号的路径），兼容 file:// 前缀
                 if image_path is None:
                     copy_text = self.app.view.clipboard_get()
-                    raw_paths = file_ops.extract_file_paths(copy_text)
-                    if len(raw_paths) > 3000:
-                        raw_paths = raw_paths[:3000]
+                    lines = copy_text.splitlines()
+                    if len(lines) > 3000:
+                        lines = lines[:3000]
                         self.show_toast(_("内容过长，已截断到3000行。"))
                     accept_exts = set(Setting.accepted_exts)
-                    all_paths = [Path(p) for p in raw_paths if p]
+                    all_paths = [Path(file_ops.url_to_path(line)) for line in lines if line.strip()]
                     valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix.lower() in accept_exts]
                     if len(valid_paths) > 1:
                         self.__queue_paths = valid_paths

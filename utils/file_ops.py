@@ -204,14 +204,16 @@ def generate_copy_name(file_path: str | Path) -> Path:
     return orig.with_stem(f"{stem}({high})")
 
 
-def extract_file_paths(text: str) -> list[str]:
-    def url_to_path(raw: str) -> str:
-        raw = raw.strip()
-        if raw.startswith("file://"):
-            parsed = urllib.parse.urlparse(raw)
-            return urllib.parse.unquote(parsed.path)
-        return raw
+def url_to_path(raw: str) -> str:
+    """将 file:// URL 转换为本地路径；普通路径原样返回（含空格/括号的完整路径）。"""
+    raw = raw.strip()
+    if raw.startswith("file://"):
+        parsed = urllib.parse.urlparse(raw)
+        return urllib.parse.unquote(parsed.path)
+    return raw
 
+
+def extract_file_paths(text: str) -> list[str]:
     paths = []
     i = 0
     n = len(text)
