@@ -39,8 +39,6 @@ class WinGUI(Window, TkinterDnD.Tk):
         geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) // 2, (screenheight - height) // 2)
         self.geometry(geometry)
         if full_screen:
-            # macOS: state("zoomed") 只是放大到可用区域（保留标题栏/交通灯/菜单栏），
-            # 用 -fullscreen 才能真正覆盖整个屏幕、隐藏窗口装饰
             self.attributes("-fullscreen", True)
             self.bind_all("<Escape>", lambda e: self.attributes("-fullscreen", False))
         WinInfo.set_window_icon(self)

@@ -121,7 +121,6 @@ class FilterPanel(Labelframe):
     def __set_confirm_cancel_btn(self) -> tuple[Button, Button]:
         btn_frame = Frame(self)
         btn_frame.grid(row=4, column=0, columnspan=7, pady=(TkS(7), TkS(15)))
-        # macOS HIG: 取消在左、确定在右
         cancel_btn = Button(btn_frame, text=_("取消"), takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)), style="secondary")
         cancel_btn.grid(row=0, column=0, padx=(0, TkS(25)))
         confirm_btn = Button(btn_frame, text=_("确定"), takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)))
