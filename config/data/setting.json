@@ -18,15 +18,21 @@
             "name": "复制图片",
             "type": "embedded",
             "is_visible": true,
-            "shortcut": [],
+            "shortcut": [
+                "Cmd",
+                "C"
+            ],
             "batch_mode": false,
             "command": ""
         },
         {
             "name": "复制名称",
             "type": "custom",
-            "is_visible": true,
-            "shortcut": [],
+            "is_visible": false,
+            "shortcut": [
+                "Shift",
+                "D"
+            ],
             "batch_mode": true,
             "command": "cmd /c  \"echo {noext}| clip\""
         },
@@ -34,7 +40,10 @@
             "name": "复制路径",
             "type": "embedded",
             "is_visible": true,
-            "shortcut": [],
+            "shortcut": [
+                "Cmd",
+                "0"
+            ],
             "batch_mode": false,
             "command": ""
         },
@@ -84,7 +93,7 @@
             "is_visible": false,
             "shortcut": [],
             "batch_mode": false,
-            "command": ""
+            "command": "/Users/chuzu/Downloads/test_image/activity/A (2).webp\n/Users/chuzu/Downloads/test_image/activity/A (11).webp\n/Users/chuzu/Downloads/test_image/activity/A (18).webp\n/Users/chuzu/Downloads/test_image/activity/A (27).webp"
         }
     ],
     "other_config_path": ""

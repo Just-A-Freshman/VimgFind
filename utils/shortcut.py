@@ -1,9 +1,11 @@
 import tkinter as tk
 
-INNER_SHORTCUT = (["Ctrl", "A"], ["Ctrl", "V"], ["Ctrl", "←"], ["Ctrl", "→"], ["↑"], ["↓"], ["←"], ["→"])
+INNER_SHORTCUT = (["Ctrl", "A"], ["Cmd", "A"], ["Ctrl", "V"], ["Cmd", "V"], ["Ctrl", "←"], ["Cmd", "←"], ["Ctrl", "→"], ["Cmd", "→"], ["↑"], ["↓"], ["←"], ["→"])
 
 MODIFIER_KEYS: dict[str, str] = {
     "Control_L": "Ctrl", "Control_R": "Ctrl",
+    "Command_L": "Cmd", "Command_R": "Cmd",
+    "Meta_L": "Cmd", "Meta_R": "Cmd",   # macOS Tk 中 ⌘ 键的 keysym 为 Meta_L/R
     "Shift_L": "Shift", "Shift_R": "Shift",
     "Alt_L": "Alt", "Alt_R": "Alt",
     "Super_L": "Win", "Super_R": "Win"
@@ -57,12 +59,14 @@ SPECIAL_KEYS: dict[str, str] = {
 
 __MODIFIER_LOOKUP: dict[str, str] = {
     "Control_L": "Ctrl", "Control_R": "Ctrl",
+    "Command_L": "Cmd", "Command_R": "Cmd",
+    "Meta_L": "Cmd", "Meta_R": "Cmd",   # macOS Tk 中 ⌘ 键的 keysym 为 Meta_L/R
     "Shift_L": "Shift", "Shift_R": "Shift",
     "Alt_L": "Alt", "Alt_R": "Alt",
     "Super_L": "Win", "Super_R": "Win"
 }
 
-__MODIFIER_ORDER: list[str] = ["Ctrl", "Alt", "Shift", "Win"]
+__MODIFIER_ORDER: list[str] = ["Cmd", "Ctrl", "Alt", "Shift"]
 
 _active_modifiers: set[str] = set()
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import logging
 import io
+import urllib.parse
 
 from PIL.ImageFile import ImageFile
 from PIL import Image, UnidentifiedImageError
@@ -27,6 +28,23 @@ def parse_image_from_clipboard_bytes() -> None | ImageFile:
         return Image.open(io.BytesIO(image_data))   # type: ignore[arg-type]
     except Exception:
         return None
+
+
+def parse_file_paths_from_clipboard() -> list[str]:
+    """读取剪贴板中的文件 URL（本程序"复制图片" / Finder 复制）为本地路径列表。"""
+    try:
+        pb = NSPasteboard.generalPasteboard()
+        paths = []
+        for item in pb.pasteboardItems() or []:
+            url_str = item.stringForType_("public.file-url")
+            if url_str:
+                parsed = urllib.parse.urlparse(url_str)
+                path = urllib.parse.unquote(parsed.path)
+                if path:
+                    paths.append(path)
+        return paths
+    except Exception:
+        return []
 
 
 def parse_image_from_path(image_path: str | Path) -> ImageFile | None:

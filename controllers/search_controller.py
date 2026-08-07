@@ -41,13 +41,19 @@ class SearchController:
         tab = self.app.view.search_tab
         inner_shortcut = (
             (["Ctrl", "A"], lambda _: tab.preview_view.selection_set(tk.ALL)),
+            (["Cmd", "A"], lambda _: tab.preview_view.selection_set(tk.ALL)),
             (["Ctrl", "V"], lambda _: self.search_image_by_clipboard()),
+            (["Cmd", "V"], lambda _: self.search_image_by_clipboard()),
             (["Ctrl", "←"], lambda _: self.__debounce_navigate(-1)),
+            (["Cmd", "←"], lambda _: self.__debounce_navigate(-1)),
             (["Ctrl", "→"], lambda _: self.__debounce_navigate(1)),
+            (["Cmd", "→"], lambda _: self.__debounce_navigate(1)),
         )
         self.__is_finish_search.set()
         if only_preview_widgets:
             for w in (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view):
+                # macOS Tk 右键可能映射为 <Button-2>，双绑定覆盖
+                w.bind("<Button-2>", self.app.menu_controller.show_context_menu)
                 w.bind("<Button-3>", self.app.menu_controller.show_context_menu)
                 w.bind("<Double-Button-1>", self.app.menu_controller.double_click_open_file)
             tab.preview_view.bind("<<ItemviewSelect>>", lambda _: self.__preview_found_image())
@@ -103,29 +109,49 @@ class SearchController:
 
         if image_obj is None:
             try:
-                copy_text = self.app.view.clipboard_get()
-                lines = copy_text.splitlines()
-                if len(lines) > 3000:
-                    lines = lines[:3000]
-                    self.show_toast(_("内容过长，已截断到3000行。"))
-                accept_exts = set(Setting.accepted_exts)
-                all_paths = [Path(l.strip()) for l in lines if l.strip()]
-                valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix.lower() in accept_exts]
-                if len(valid_paths) > 1:
-                    self.__queue_paths = valid_paths
-                    self.__current_page = 0
-                    self.__search_image()
-                    return
-                elif len(valid_paths) == 1:
-                    image_obj = image_ops.parse_image_from_path(valid_paths[0])
-                    if image_obj is not None:
-                        image_path = Path(valid_paths[0])
+                # 1) 剪贴板中的文件 URL（本程序"复制图片" / Finder 复制文件）
+                file_paths = image_ops.parse_file_paths_from_clipboard()
+                if file_paths:
+                    accept_exts = set(Setting.accepted_exts)
+                    all_url_paths = [Path(p) for p in file_paths if p]
+                    valid_url_paths = [str(p.absolute()) for p in all_url_paths if p.is_file() and p.suffix.lower() in accept_exts]
+                    if len(valid_url_paths) > 1:
+                        self.__queue_paths = valid_url_paths
+                        self.__current_page = 0
+                        self.__search_image()
+                        return
+                    elif len(valid_url_paths) == 1:
+                        image_obj = image_ops.parse_image_from_path(valid_url_paths[0])
+                        if image_obj is not None:
+                            image_path = Path(valid_url_paths[0])
+                        else:
+                            raise tk.TclError
+
+                # 2) 剪贴板文本（路径 / URL，兼容 file:// 与花括号包裹）
+                if image_path is None:
+                    copy_text = self.app.view.clipboard_get()
+                    raw_paths = file_ops.extract_file_paths(copy_text)
+                    if len(raw_paths) > 3000:
+                        raw_paths = raw_paths[:3000]
+                        self.show_toast(_("内容过长，已截断到3000行。"))
+                    accept_exts = set(Setting.accepted_exts)
+                    all_paths = [Path(p) for p in raw_paths if p]
+                    valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix.lower() in accept_exts]
+                    if len(valid_paths) > 1:
+                        self.__queue_paths = valid_paths
+                        self.__current_page = 0
+                        self.__search_image()
+                        return
+                    elif len(valid_paths) == 1:
+                        image_obj = image_ops.parse_image_from_path(valid_paths[0])
+                        if image_obj is not None:
+                            image_path = Path(valid_paths[0])
+                        else:
+                            raise tk.TclError
                     else:
-                        raise tk.TclError
-                else:
-                    image_obj = image_ops.parse_image_from_url(copy_text)
-                    if image_obj is None:
-                        raise tk.TclError
+                        image_obj = image_ops.parse_image_from_url(copy_text)
+                        if image_obj is None:
+                            raise tk.TclError
             except tk.TclError:
                 messagebox.showinfo(_("提示"), _("无法识别剪切板中的图片数据！"))
                 return

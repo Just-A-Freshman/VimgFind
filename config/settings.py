@@ -151,7 +151,7 @@ class WinInfo:
     ico_path = Setting.config_path / "favicon.ico"
     png_path = Setting.config_path / "favicon.png"
     title = "VimgFind"
-    default_font = ("PingFang SC", 9  if SCALE_FACTOR < 1.1 else 10)
+    default_font = ("PingFang SC", 11 if SCALE_FACTOR < 1.1 else 12)
     width = TkS(830)
     height = TkS(560)
 

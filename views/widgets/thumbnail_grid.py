@@ -128,13 +128,16 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self._schedule_load()
 
     def _on_mousewheel(self, event: tk.Event) -> None:
-        if event.delta:
-            delta = int(-1 * (event.delta / 120))
-            self.yview_scroll(delta, "units")
-        elif event.num == 4:
+        # macOS: delta 为小值(如 ±1~±3)，Windows: delta 为 ±120 的倍数；X11: Button-4/5
+        if event.num == 4:
             self.yview_scroll(-1, "units")
         elif event.num == 5:
             self.yview_scroll(1, "units")
+        elif event.delta:
+            delta = event.delta
+            if abs(delta) >= 120:
+                delta = int(delta / 120)
+            self.yview_scroll(-delta, "units")
         self._schedule_load()
 
     def _on_keyboard_click(self, event: tk.Event) -> None:
@@ -191,10 +194,13 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         if not clicked_item:
             return
         state = int(event.state)
+        # macOS: Control+点击 被系统模拟为右键(Button-2)；多选应使用 ⌘(Command)
+        # macOS Tk 中 ⌘ 的 state 位因 Tk 版本而异（Mod1/Mod2/Mod3/Mod4 均可能），全部兼容
         ctrl_pressed = (state & 0x0004) != 0
+        cmd_pressed = bool(state & (0x0008 | 0x0010 | 0x0020 | 0x0040))
         shift_pressed = (state & 0x0001) != 0
 
-        if ctrl_pressed:
+        if ctrl_pressed or cmd_pressed:
             if clicked_item in self.__selected_items:
                 self.__selected_items.remove(clicked_item)
                 self._set_item_selected(clicked_item, False)
