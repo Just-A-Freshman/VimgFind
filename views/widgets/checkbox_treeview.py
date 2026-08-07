@@ -138,12 +138,9 @@ class CheckboxTreeview(DragReorderTreeview):
             [2 * SS, 2 * SS, 132 * SS, 132 * SS], radius=16 * SS,
             fill=primary, outline=primary, width=3 * SS
         )
-        try:
-            fnt = ImageFont.truetype("seguisym.ttf", 120 * SS)
-        except OSError:
-            fnt = ImageFont.load_default()
-        
-        d.text((20 * SS, -20 * SS), "✓", font=fnt, fill=selectfg)
+        # 画对勾：模仿 macOS/ttk 复选勾样式（单条粗对勾 + 圆角连接）。
+        # 不用字体渲染：Windows 字体 seguisym.ttf 在 macOS 不存在，且超大字体 + resize 会糊成一团。
+        d.line([(24 * SS, 62 * SS), (54 * SS, 92 * SS), (110 * SS, 34 * SS)], fill=selectfg, width=16 * SS, joint='curve')
         resize = Image.Resampling.LANCZOS
         off_sub = off_sub.resize((box, box), resize)
         on_sub = on_sub.resize((box, box), resize)
