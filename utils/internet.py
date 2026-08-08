@@ -9,31 +9,60 @@ import logging
 import os
 import socket
 import ssl
+import subprocess
 import urllib.parse
 import tempfile
 import threading
 import time
 import zipfile
+import certifi
 
 from . import file_ops
 
 
-try:
-    import certifi
-except ImportError:
-    certifi = None
+_CA_BUNDLE_CACHE: bytes | None = None
+
+
+def _system_keychain_pem() -> bytes:
+    global _CA_BUNDLE_CACHE
+    if _CA_BUNDLE_CACHE is not None:
+        return _CA_BUNDLE_CACHE
+    parts: list[bytes] = []
+    for args in (
+        ["security", "find-certificate", "-a", "-p", "/Library/Keychains/System.keychain"],
+        ["security", "find-certificate", "-a", "-p"],  # 默认登录钥匙串
+    ):
+        try:
+            out = subprocess.run(args, capture_output=True, timeout=10)
+            if out.returncode == 0:
+                parts.append(out.stdout)
+        except (OSError, subprocess.SubprocessError):
+            continue
+    _CA_BUNDLE_CACHE = b"\n".join(parts)
+    return _CA_BUNDLE_CACHE
 
 
 def _build_ssl_context() -> ssl.SSLContext:
-    """构建带 CA 证书的 SSL context。
-    python.org 版 Python（macOS）默认不附带 CA 证书，
-    直接 urlopen https 会报 CERTIFICATE_VERIFY_FAILED；
-    优先使用 certifi 证书包，失败时回退系统默认。
-    """
     ctx = ssl.create_default_context()
     if certifi is not None:
         try:
             ctx.load_verify_locations(certifi.where())
+        except (ssl.SSLError, OSError):
+            pass
+    pem = _system_keychain_pem()
+    if pem:
+        try:
+            with tempfile.NamedTemporaryFile("wb", suffix=".pem", delete=False) as f:
+                f.write(pem)
+                cafile = f.name
+            try:
+                ctx.load_verify_locations(cafile=cafile)
+            finally:
+                try:
+                    import os
+                    os.unlink(cafile)
+                except OSError:
+                    pass
         except (ssl.SSLError, OSError):
             pass
     return ctx
@@ -68,14 +97,13 @@ def validate_url_safe(url: str) -> bool:
         logging.warning(f"URL域名解析失败: {parsed.hostname}, {e}")
         return False
     for _, _, _, _, sockaddr in addr:
-        ip = sockaddr[0]
-        if ipaddress.ip_address(ip).is_private:
+        ip = ipaddress.ip_address(sockaddr[0])
+        if ip.is_loopback:
+            continue
+        if ip.is_private:
             logging.warning(f"禁止访问私有IP: {ip}")
             return False
-        if ipaddress.ip_address(ip).is_loopback:
-            logging.warning(f"禁止访问回环地址: {ip}")
-            return False
-        if ipaddress.ip_address(ip).is_link_local:
+        if ip.is_link_local:
             logging.warning(f"禁止访问链路本地地址: {ip}")
             return False
     return True
