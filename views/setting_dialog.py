@@ -95,13 +95,13 @@ class GeneralTab(Frame):
         Label(frame, text=_("主题设置：")).grid(row=1, column=0, sticky=tk.W)
         locale_combobox = Combobox(frame, state="readonly")
         theme_combobox = Combobox(frame, state="readonly")
-        locale_combobox.grid(row=0, column=1, pady=TkS(12))
-        theme_combobox.grid(row=1, column=1, pady=TkS(12))
+        locale_combobox.grid(row=0, column=1, pady=TkS(11))
+        theme_combobox.grid(row=1, column=1, pady=TkS(11))
         return locale_combobox, theme_combobox
     
     def __set_maximize_topmost_checkbutton(self) -> tuple[Checkbutton, Checkbutton]:
         checkbutton_frame = Frame(self)
-        checkbutton_frame.grid(row=2, column=0, padx=TkS(15), pady=TkS(15), columnspan=4, sticky=tk.EW)
+        checkbutton_frame.grid(row=2, column=0, padx=TkS(15), pady=TkS(14), columnspan=4, sticky=tk.EW)
         maximize_checkbutton = Checkbutton(checkbutton_frame, text=_("启动时最大化窗口"), cursor="hand2")
         topmost_checkbutton = Checkbutton(checkbutton_frame, text=_("将当前窗口置顶"), cursor="hand2")
         maximize_checkbutton.pack(side=tk.LEFT)
@@ -110,7 +110,7 @@ class GeneralTab(Frame):
     
     def __set_config_labelframe(self):
         config_labelframe = Labelframe(self, text=_("配置文件存储位置"))
-        config_labelframe.grid(row=3, column=0, padx=TkS(10), pady=(TkS(15), 0), columnspan=8, sticky=tk.EW)
+        config_labelframe.grid(row=3, column=0, padx=TkS(10), pady=(TkS(14), 0), columnspan=8, sticky=tk.EW)
         return config_labelframe
 
     def __set_config_path_entry(self, parent):
@@ -129,7 +129,7 @@ class GeneralTab(Frame):
 
     def __set_bottom_buttons(self) -> tuple[Button, Button, Button]:
         bottom_frame = Frame(self)
-        bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10), pady=TkS(10))
+        bottom_frame.grid(row=4, column=0, sticky=tk.EW, padx=TkS(10), pady=TkS(9))
         help_btn = Button(bottom_frame, text=_("帮助文档"), style="link", cursor="hand2", takefocus=False)
         error_log_btn = Button(bottom_frame, text=_("错误日志"), style="link", cursor="hand2", takefocus=False)
         check_update_btn = Button(bottom_frame, text=_("检查更新"), style="link", cursor="hand2", takefocus=False)

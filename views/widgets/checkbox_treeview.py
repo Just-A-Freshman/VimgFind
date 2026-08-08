@@ -5,7 +5,7 @@ from tkinter.ttk import Treeview
 from tkinter.font import Font
 from typing import Callable
 
-from PIL import Image, ImageDraw, ImageFont, ImageTk
+from PIL import Image, ImageDraw, ImageTk
 from ttkbootstrap import Scrollbar, Style
 from ttkbootstrap.colorutils import color_to_rgb
 
@@ -138,17 +138,14 @@ class CheckboxTreeview(DragReorderTreeview):
             [2 * SS, 2 * SS, 132 * SS, 132 * SS], radius=16 * SS,
             fill=primary, outline=primary, width=3 * SS
         )
-        # 不用字体渲染：Windows 字体 seguisym.ttf 在 macOS 不存在，且超大字体 + resize 会糊成一团。
         d.line([(24 * SS, 62 * SS), (54 * SS, 92 * SS), (110 * SS, 34 * SS)], fill=selectfg, width=16 * SS, joint='curve')
         resize = Image.Resampling.LANCZOS
         off_sub = off_sub.resize((box, box), resize)
         on_sub = on_sub.resize((box, box), resize)
-        x0 = max((self.__reserve - box - self.scrollbar.winfo_reqwidth()) // 2 - 22, 0)
-        canvas_w = x0 + box
-        off = Image.new("RGBA", (canvas_w, box))
-        off.paste(off_sub, (x0, 0), off_sub)
-        on = Image.new("RGBA", (canvas_w, box))
-        on.paste(on_sub, (x0, 0), on_sub)
+        off = Image.new("RGBA", (box, box))
+        off.paste(off_sub, (0, 0), off_sub)
+        on = Image.new("RGBA", (box, box))
+        on.paste(on_sub, (0, 0), on_sub)
         self.__off_img = ImageTk.PhotoImage(off)
         self.__on_img = ImageTk.PhotoImage(on)
         self.__images_ready = True
