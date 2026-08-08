@@ -33,11 +33,14 @@ class CheckboxTreeview(DragReorderTreeview):
         scrollbar_width = self.scrollbar.winfo_reqwidth()
         checkbox_width = max(Font(font=WinInfo.default_font).measure(checkbox_name) + scrollbar_width + self.__border, 35)
         self.__reserve = checkbox_width + scrollbar_width
+        font = Font(font=WinInfo.default_font)
+        self.__icon_offset = max(0, round((font.measure("show") - font.measure(checkbox_name)) / 2))
+        heading_pad = round(self.__icon_offset / font.measure(" "))
         
-        self.check_tree.heading("#0", text=checkbox_name, anchor=tk.W)
+        self.check_tree.heading("#0", text=" " * heading_pad + checkbox_name, anchor=tk.W)
         self.check_tree.column("#0", anchor=tk.W)
         
-        self.check_tree.place(relx=1.0, x=-(self.__border + self.__reserve), y=self.__border, width=checkbox_width)
+        self.check_tree.place(relx=1.0, x=-(self.__border + self.__reserve + self.__icon_offset), y=self.__border, width=checkbox_width + self.__icon_offset)
         self.scrollbar.place(relx=1.0, x=-(self.__border + scrollbar_width), y=self.__border, width=scrollbar_width)
         self.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -98,7 +101,8 @@ class CheckboxTreeview(DragReorderTreeview):
 
     def __reposition(self) -> None:
         h = self.winfo_height() - 2 * self.__border
-        self.check_tree.place_configure(relx=1, x=-(self.__border + self.__reserve), y=self.__border, height=h)
+        self.check_tree.place_configure(
+            relx=1, x=-(self.__border + self.__reserve + self.__icon_offset), y=self.__border, height=h)
         self.scrollbar.place_configure(relx=1, x=-(self.__border + self.scrollbar.winfo_reqwidth()), y=self.__border, height=h)
 
     def __on_yview(self, first: float, last: float) -> None:
