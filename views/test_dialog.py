@@ -7,6 +7,7 @@ from ttkbootstrap import Button, Frame, Label, Labelframe, Treeview, Text, Scrol
 from ttkbootstrap.constants import LINK
 
 from config.settings import WinInfo
+from utils import macos_window
 from config.types import MenuItemDef
 from utils.i18n import _
 
@@ -38,11 +39,13 @@ class TestResultDialog(tk.Toplevel):
         WinInfo.set_window_icon(self)
         win_w = 450
         win_h = 400
+        scale = macos_window.content_scale(parent.winfo_width(), WinInfo.width)
+        win_w, win_h = round(win_w * scale), round(win_h * scale)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.transient(parent)
-        self.minsize(400, 320)
+        self.minsize(round(400 * scale), round(320 * scale))
         self.deiconify()
 
     def __set_summary_bar(self) -> Button:
@@ -78,7 +81,6 @@ class TestResultDialog(tk.Toplevel):
         frame = Labelframe(self, text=_("命令详情"))
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(6, 8))
         text = Text(frame, wrap=tk.CHAR)
-        # 高亮边框样式统一由 SettingController.change_theme 的 editor_text_style 配置
         text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2, pady=2)
         text.configure(padx=0, pady=0)
         text.bind("<<ThemeChanged>>", lambda e: text.configure(padx=0, pady=0))

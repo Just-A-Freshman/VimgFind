@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tkinter import filedialog
-from utils import messagebox
+from utils import macos_window, messagebox
 from typing import TYPE_CHECKING, Literal
 from dataclasses import dataclass
 from threading import Event
@@ -206,8 +206,7 @@ class SearchController:
         else:
             base_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 110)
             self.app.view.update_idletasks()
-            window_w = self.app.view.winfo_width()
-            scale = max(1.0, window_w / WinInfo.width)
+            scale = macos_window.content_scale(self.app.view.winfo_width(), WinInfo.width)
             thumbnail_size = max(1, round(base_size * scale))
             tab.preview_view.destroy()
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)

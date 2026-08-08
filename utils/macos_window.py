@@ -8,6 +8,10 @@ _WINDOW_WIDTH_RATIO = 1660 / 2880
 _WINDOW_HEIGHT_RATIO = 1120 / 1400
 
 
+def content_scale(actual_width: int, design_width: int) -> float:
+    return max(1.0, actual_width / design_width)
+
+
 def fit_window_size(width: int, height: int) -> tuple[int, int]:
     frame = NSScreen.mainScreen().frame()
     sw, sh = int(frame.size.width), int(frame.size.height)

@@ -6,6 +6,7 @@ from tkinter.font import Font
 from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Notebook, Text
 
 from config.settings import WinInfo
+from utils import macos_window
 from config.types import MenuItemDef
 from .widgets import CheckboxTreeview
 from .widgets.tooltip import TopmostToolTip
@@ -173,7 +174,6 @@ class CustomMenuTab(Frame):
         self.command_tip_label = Label(self.edit_frame, justify=tk.CENTER, wraplength=180, anchor=tk.CENTER)
         self.command_tooltip = TopmostToolTip(self.command_tip_label, topmost=True, text="", wraplength=350)
         self.command_text = Text(self.edit_frame, undo=True)
-        # 高亮边框样式统一由 SettingController.change_theme 的 editor_text_style 配置
         self.state_show_btn = Button(self.command_text, style="inner.Link.TButton", takefocus=False, cursor="hand2")
         self.show_default()
 

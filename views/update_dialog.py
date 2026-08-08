@@ -4,6 +4,7 @@ from tkinter.ttk import Label, Progressbar
 import tkinter as tk
 
 from config.settings import WinInfo
+from utils import macos_window
 from utils.i18n import _
 
 
@@ -29,6 +30,8 @@ class UpdateDialog(tk.Toplevel):
         self.grab_set()
         win_w = 380
         win_h = 130
+        scale = macos_window.content_scale(parent.winfo_width(), WinInfo.width)
+        win_w, win_h = round(win_w * scale), round(win_h * scale)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
