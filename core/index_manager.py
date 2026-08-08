@@ -39,7 +39,9 @@ class VectorIndexManager:
 
     def __init_index(self) -> None:
         self.__hnsw_index = hnswlib.Index(space="cosine", dim=self.__dim)
-        if Path(self.__index_path).exists():
+        # 空路径会被 Path("") 解析为当前目录（exists() 恒为 True），
+        # 导致 load_index("") 报 Cannot open file，需显式排除
+        if self.__index_path and Path(self.__index_path).exists():
             current_capacity = min(max(self.__current_capacity * 2, INITIAL_CAPCITY), self.__index_capacity)
             self.__hnsw_index.load_index(self.__index_path, max_elements=current_capacity)
             self.__current_capacity = current_capacity

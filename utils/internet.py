@@ -8,6 +8,7 @@ import ipaddress
 import logging
 import os
 import socket
+import ssl
 import urllib.parse
 import tempfile
 import threading
@@ -15,6 +16,27 @@ import time
 import zipfile
 
 from . import file_ops
+
+
+try:
+    import certifi
+except ImportError:
+    certifi = None
+
+
+def _build_ssl_context() -> ssl.SSLContext:
+    """构建带 CA 证书的 SSL context。
+    python.org 版 Python（macOS）默认不附带 CA 证书，
+    直接 urlopen https 会报 CERTIFICATE_VERIFY_FAILED；
+    优先使用 certifi 证书包，失败时回退系统默认。
+    """
+    ctx = ssl.create_default_context()
+    if certifi is not None:
+        try:
+            ctx.load_verify_locations(certifi.where())
+        except (ssl.SSLError, OSError):
+            pass
+    return ctx
 
 
 DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -32,7 +54,7 @@ def fetch_url(
     headers = dict(headers or {})
     headers.setdefault('User-Agent', DEFAULT_USER_AGENT)
     req = request.Request(url, headers=headers, method=method)
-    return request.urlopen(req, timeout=timeout)
+    return request.urlopen(req, timeout=timeout, context=_build_ssl_context())
 
 
 def validate_url_safe(url: str) -> bool:

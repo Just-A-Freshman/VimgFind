@@ -189,6 +189,8 @@ class ModelController:
 
         for cfg in models:
             model_id = cfg.meta.id or cfg.meta.name
+            if not model_id:
+                model_id = f"model-{len(self._model_cache)}"
             status = self.get_model_status(model_id)
             self._model_cache[model_id] = cfg
             name = cfg.meta.name or model_id
@@ -447,6 +449,12 @@ class ModelChecker:
 
         for mid in installed_ids:
             cfg = self.app.setting.load_model_config(mid)
+            # 本地模型的 meta.id/name 可能为空（如未知 zip 导入），用目录名兜底，
+            # 否则 treeview 插入空 iid 会与根节点冲突（Item  already exists）
+            if not cfg.meta.id:
+                cfg.meta.id = mid
+            if not cfg.meta.name:
+                cfg.meta.name = mid
             local_map[mid] = cfg
             result.append(cfg)
 

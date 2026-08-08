@@ -114,7 +114,7 @@ class GeneralTab(Frame):
         return config_labelframe
 
     def __set_config_path_entry(self, parent):
-        config_path_entry = Entry(parent, state="readonly", font=(WinInfo.default_font[0], 9))
+        config_path_entry = Entry(parent, state="readonly", font=(WinInfo.default_font[0], 11))
         config_path_entry.pack(side=tk.TOP, fill=tk.X, expand=True, padx=TkS(5), ipady=TkS(4))
         return config_path_entry
 

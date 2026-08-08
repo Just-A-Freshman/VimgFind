@@ -15,49 +15,38 @@ import urllib.parse
 from .types import AppSettings, ModelConfig
 
 ROOT = Path(__file__).resolve().parent.parent
-# macOS: Tk 按 points 布局，Retina 高清渲染由系统自动处理，无需 Windows 式 DPI 缩放
 SCALE_FACTOR = 1.0
-
-# ── 只读资源目录（docs/locales/favicon）──────────────────────────
-# 打包后为 .app 内的资源（pyinstaller 的 sys._MEIPASS），开发模式为源码目录。
-# 与用户数据（models/setting.json 等，位于 Application Support）分离：
-# 资源跟随版本、只读；数据每用户隔离、可写、备份。
 RESOURCE_DIR = (
     Path(sys._MEIPASS) / "config" / "data"
     if getattr(sys, "_MEIPASS", None)
     else ROOT / "config" / "data"
 )
 
-# macOS 数据目录规范：用户数据放 ~/Library/Application Support/<AppName>/。
-# 原因：.app 包内部只读（写入会破坏代码签名、更新时数据丢失）；
-# 升级共享同一目录（数据自动保留）；每用户隔离；纳入 Time Machine 备份。
-_APP_DATA_DIR = Path.home() / "Library" / "Application Support" / "VimgFind"
-_SOURCE_DATA_DIR = ROOT / "config" / "data"
+APP_DATA_DIR = Path.home() / "Library" / "Application Support" / "VimgFind"
 
 
-def _migrate_source_data() -> None:
-    """首次运行：把源码目录 config/data 迁移到 Application Support（仅一次）。"""
-    if not _SOURCE_DATA_DIR.exists():
-        return  # 无源码数据（如打包后的 .app），直接使用 Application Support
-    if _APP_DATA_DIR.exists():
-        return  # 已迁移过
+
+def migrate_source_data() -> None:
+    source_data_dir = ROOT / "config" / "data"
+    if not source_data_dir.exists() or APP_DATA_DIR.exists():
+        return
     try:
-        _APP_DATA_DIR.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(_SOURCE_DATA_DIR, _APP_DATA_DIR)
+        APP_DATA_DIR.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source_data_dir, APP_DATA_DIR)
     except OSError:
         pass
 
-_migrate_source_data()
+migrate_source_data()
+
 
 
 def TkS(value: int | float) -> int:
-    x = value * SCALE_FACTOR
-    return 0 if x == 0 else max(int(round(abs(x), 0)), 1) * (-1 if x < 0 else 1)
+    return 0 if value == 0 else max(int(round(abs(value), 0)), 1) * (-1 if value < 0 else 1)
 
 
 class Setting:
-    config_path = _APP_DATA_DIR
-    temp_image_path = _APP_DATA_DIR / "temp"
+    config_path = APP_DATA_DIR
+    temp_image_path = APP_DATA_DIR / "temp"
     setting_path = config_path / "setting.json"
     models_dir = config_path / "models"
     manifest_cache = models_dir / "_manifest_cache.json"
@@ -185,7 +174,7 @@ class WinInfo:
     repo_url = "https://github.com/Just-A-Freshman/VimgFind"
     png_path = RESOURCE_DIR / "favicon.png"
     title = "VimgFind"
-    default_font = ("PingFang SC", 11 if SCALE_FACTOR < 1.1 else 12)
+    default_font = ("PingFang SC", 13)
     width = TkS(830)
     height = TkS(560)
 

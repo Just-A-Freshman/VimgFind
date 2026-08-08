@@ -33,7 +33,7 @@ class SettingController:
         self.app.setting.app.ui_style = target_theme if target_theme in valid_theme_names else "superhero"
         style.theme_use(self.app.setting.app.ui_style)
         colors: Colors = style.colors   # type:ignore
-        style.configure('TNotebook.Tab', font=(WinInfo.default_font[0], 13))
+        style.configure('TNotebook.Tab', font=(WinInfo.default_font[0], 16))
         style.configure("sub.TNotebook")
         style.configure('sub.TNotebook.Tab', font=WinInfo.default_font)
         style.configure("TEntry", padding=TkS(2.5))
@@ -54,7 +54,7 @@ class SettingController:
         self.app.view.search_tab.search_entry.config(style="Search.TEntry")
         self.app.view.search_tab.filter_btn.config(bg=colors.get("inputbg"), fg=colors.get("inputfg"))   # type: ignore
         self.app.view.search_tab.nav_page_label.config(font=(WinInfo.default_font[0], 13))
-        self.app.view.index_tab.index_tip_label.config(font=(WinInfo.default_font[0], 13))
+        self.app.view.index_tab.index_tip_label.config(font=(WinInfo.default_font[0], 16))
         self.app.view.model_tab.detail_desc_text.config(bg=colors.get("bg"), fg=colors.get("fg"), selectbackground=colors.get('selectbg'))   # type:ignore
 
     def show_dialog(self) -> None:
