@@ -15,7 +15,6 @@ import urllib.parse
 from .types import AppSettings, ModelConfig
 
 ROOT = Path(__file__).resolve().parent.parent
-SCALE_FACTOR = 1.0
 RESOURCE_DIR = (
     Path(sys._MEIPASS) / "config" / "data" # type: ignore
     if getattr(sys, "_MEIPASS", None)
@@ -177,16 +176,15 @@ class WinInfo:
     default_font = ("PingFang SC", 13)
     width = TkS(830)
     height = TkS(560)
-
-    _icon_photo = None
+    __icon_photo = None
 
     @staticmethod
     def set_window_icon(widget) -> None:
         try:
-            if WinInfo._icon_photo is None:
+            if WinInfo.__icon_photo is None:
                 import tkinter as tk
-                WinInfo._icon_photo = tk.PhotoImage(file=WinInfo.png_path)
-            widget.iconphoto(True, WinInfo._icon_photo)
+                WinInfo.__icon_photo = tk.PhotoImage(file=WinInfo.png_path)
+            widget.iconphoto(True, WinInfo.__icon_photo)
         except Exception as e:
             logging.warning(f"设置窗口图标失败：{e}")
 
