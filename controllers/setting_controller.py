@@ -55,7 +55,18 @@ class SettingController:
         self.app.view.search_tab.filter_btn.config(bg=colors.get("inputbg"), fg=colors.get("inputfg"))   # type: ignore
         self.app.view.search_tab.nav_page_label.config(font=(WinInfo.default_font[0], 13))
         self.app.view.index_tab.index_tip_label.config(font=(WinInfo.default_font[0], 16))
+        if self.dialog is not None:
+            self.dialog.custom_menu_tab.command_text.configure(**self.editor_text_style())
         self.app.view.model_tab.detail_desc_text.config(bg=colors.get("bg"), fg=colors.get("fg"), selectbackground=colors.get('selectbg'))   # type:ignore
+
+    def editor_text_style(self) -> dict:
+        colors: Colors = self.app.view.style.colors
+        return dict(
+            highlightthickness=1,
+            highlightbackground=colors.get("selectbg"),
+            highlightcolor=colors.get("primary"),
+            bd=0,
+        )
 
     def show_dialog(self) -> None:
         def destroy():
@@ -191,6 +202,8 @@ class CustomMenuController:
 
     def env_init(self) -> None:
         tab = self.custom_menu_tab
+        # 应用编辑器 Text 的统一高亮边框样式（来源：SettingController.editor_text_style）
+        tab.command_text.configure(**self.app.setting_controller.editor_text_style())
         for item in self.app.setting.app.menu_items:
             text = item.name if item.type != "embedded" else _(item.name)
             iid = self.custom_menu_tab.custom_menu_tree.insert("", tk.END, text=text, checked=item.is_visible)

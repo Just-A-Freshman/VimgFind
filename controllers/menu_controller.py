@@ -33,10 +33,6 @@ class MenuController:
         self.app = app_controller
         self.executor = CustomCommandExecutor(app_controller)
         self.__last_image_save_dir: Path | None = None
-        # 双击打开校验。事件序列（macOS Tk + ToDesk 环境实测）：
-        #   标准 Tk：第二次按下只产生 <Double-Button-1>（<Button-1> 不再触发）
-        #   异常环境：第二次按下会同时产生 <Button-1> 和多个 <Double-Button-1>（重复分发）
-        # 因此需要同时记录 prev/cur，并根据 Double 前是否紧邻 <Button-1> 选择参考点。
         self.__prev_click: tuple[object, str] | None = None
         self.__cur_click: tuple[object, str] | None = None
         self.__prev_click_time: float = 0.0
@@ -45,19 +41,10 @@ class MenuController:
         self.__last_click_time: float = 0.0
         self.__last_double_widget: object | None = None
         self.__last_double_time: float = 0.0
-        # ── 临时诊断日志（复现“点击两个不同 item 触发打开”后请删除本段）──
-        self.__diag_path = Setting.config_path / "dbl_diag.log"
-
-    def __diag(self, *parts) -> None:
-        try:
-            with open(self.__diag_path, "a", encoding="utf-8") as f:
-                f.write(time.strftime("%H:%M:%S") + " " + " | ".join(str(p) for p in parts) + "\n")
-        except Exception:
-            pass
 
     def on_item_single_click(self, event: tk.Event) -> None:
         try:
-            item = event.widget.identify_item(event)
+            item = event.widget.identify_item(event) # type: ignore
         except Exception:
             item = ""
         self.__prev_click = self.__cur_click
@@ -66,8 +53,6 @@ class MenuController:
         self.__cur_click_time = time.monotonic()
         self.__last_click_widget = event.widget
         self.__last_click_time = self.__cur_click_time
-        self.__diag("Button-1", type(event.widget).__name__, f"x={event.x}", f"y={event.y}",
-                    f"xr={event.x_root}", f"yr={event.y_root}", f"item={item}")
 
     def on_menu_shortcut(self, event) -> str | None:
         custom_shortcut = shortcut.build_shortcut(event)
@@ -135,53 +120,30 @@ class MenuController:
         now = time.monotonic()
         cur = self.__cur_click
         cur_same_widget = cur is not None and cur[0] is event.widget
-        # ── 拦截迟到的重复 <Double-Button-1>（关键）──
-        # 异常环境（ToDesk）下每次按压会重复分发多个 Double，且可能乱序到达：
-        # 快速切换 item 时，前一次按压的 Double 可能在后一次按压的 <Button-1> 之后才到。
-        # 若 Double 的 item 与最近一次 <Button-1>（cur）的 item 不符，说明它不是本次
-        # 按压的双击信号，而是上一次按压迟到的重复事件 → 忽略。
-        if current_item != "" and cur_same_widget and cur[1] != current_item:
-            self.__diag("Double-Button-1", f"item={current_item}", f"cur_item={cur[1]}", "SKIP(stale-item)")
+        if current_item != "" and cur_same_widget and cur[1] != current_item: # type: ignore
             return
-        # ── 拦截同一次按压的重复 Double ──
-        # 同 widget 上，上一次 Double 晚于最近一次 <Button-1>（两次 Double 之间无新按压）
-        # → 同一按压的重复分发（实测 Double#1 后 111~209ms 的 Double#2/#3）→ 忽略。
         if (self.__last_double_widget is event.widget
                 and self.__last_click_widget is event.widget
                 and self.__last_double_time > self.__last_click_time):
-            self.__diag("Double-Button-1", f"item={current_item}", "SKIP(duplicate)")
             return
         if current_item != "":
             self.__last_double_widget = event.widget
             self.__last_double_time = now
         if current_item == "":
-            self.__diag("Double-Button-1", type(event.widget).__name__, f"x={event.x}", f"y={event.y}",
-                        f"xr={event.x_root}", f"yr={event.y_root}", "item=''", "BLOCK(empty)")
             return
-        # ── 选择参考点 ──
-        # 若 Double 前 ~80ms 内刚有同 widget 的 <Button-1>（异常环境：第二次按下同时触发
-        # <Button-1> 与 <Double-Button-1>，该 Button-1 已把 cur 更新为本次按下）→ 与更早的
-        # prev（上一次按压）比对；否则（标准 Tk：第二次按下只产生 Double）→ 与 cur 比对。
         if (self.__last_click_widget is event.widget
                 and now - self.__last_click_time <= 0.08):
             ref, ref_time = self.__prev_click, self.__prev_click_time
         else:
             ref, ref_time = cur, self.__cur_click_time
         if ref is None or ref[0] is not event.widget or ref[1] != current_item:
-            self.__diag("Double-Button-1", type(event.widget).__name__, f"x={event.x}", f"y={event.y}",
-                        f"xr={event.x_root}", f"yr={event.y_root}", f"item={current_item}",
-                        f"ref={ref[1] if ref else None}", f"dt={now - ref_time:.3f}", "BLOCK(item-mismatch)")
             return
-        # 间隔超过 0.5s（超出双击窗口）视为两次独立单击，不触发打开
         if now - ref_time > 0.5:
-            self.__diag("Double-Button-1", f"item={current_item}", f"dt={now - ref_time:.3f}", "BLOCK(stale)")
             return
         selected_file = Path(event.widget.item(current_item)[0])
         if not selected_file.exists():
-            self.__diag("Double-Button-1", f"item={current_item}", "OPEN-FAIL(not-exist)")
             messagebox.showinfo(_("提示"), _("文件不存在！"))
         else:
-            self.__diag("Double-Button-1", f"item={current_item}", f"dt={now - ref_time:.3f}", "OPEN", str(selected_file))
             file_ops.open_file(selected_file)
 
     def save_as_image(self, *src_paths: Path) -> None:
@@ -418,6 +380,7 @@ class CustomCommandExecutor:
     def __show_test_dialog(self, items, clean_menu_item, temp_dir) -> None:
         assert temp_dir is not None and clean_menu_item is not None
         dialog = TestResultDialog(self.app.view, items, clean_menu_item)
+        dialog.detail_text.configure(**self.app.setting_controller.editor_text_style())
         dialog.copy_btn.update_idletasks()
         dialog.copy_btn.bind("<ButtonRelease-1>", lambda e: dialog.copy_btn.config(text="✓") or dialog.after(1000, lambda: e.widget.config(text=_("复制"))))
         dialog.file_tree.bind("<<TreeviewSelect>>", lambda _: dialog.show_result())

@@ -5,7 +5,7 @@ import tkinter as tk
 from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
-from config.settings import WinInfo, TkS, Setting
+from config.settings import TkS, Setting
 from utils.i18n import _
 
 

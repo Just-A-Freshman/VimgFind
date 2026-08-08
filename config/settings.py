@@ -17,7 +17,7 @@ from .types import AppSettings, ModelConfig
 ROOT = Path(__file__).resolve().parent.parent
 SCALE_FACTOR = 1.0
 RESOURCE_DIR = (
-    Path(sys._MEIPASS) / "config" / "data"
+    Path(sys._MEIPASS) / "config" / "data" # type: ignore
     if getattr(sys, "_MEIPASS", None)
     else ROOT / "config" / "data"
 )

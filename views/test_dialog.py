@@ -78,10 +78,7 @@ class TestResultDialog(tk.Toplevel):
         frame = Labelframe(self, text=_("命令详情"))
         frame.pack(fill=tk.BOTH, expand=True, padx=TkS(10), pady=(TkS(6), TkS(8)))
         text = Text(frame, wrap=tk.CHAR)
-        from ttkbootstrap import Style as _BootstrapStyle
-        _bc = _BootstrapStyle().colors.get("selectbg")
-        _pc = _BootstrapStyle().colors.get("primary")
-        text.configure(highlightthickness=1, highlightbackground=_bc, highlightcolor=_pc, bd=0)
+        # 高亮边框样式统一由 SettingController.change_theme 的 editor_text_style 配置
         text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=TkS(2), pady=TkS(2))
         text.configure(padx=0, pady=0)
         text.bind("<<ThemeChanged>>", lambda e: text.configure(padx=0, pady=0))

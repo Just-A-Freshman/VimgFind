@@ -63,22 +63,17 @@ class AppController:
             setattr(_mb, _name, _make_wrapper(_orig))
 
     def env_init(self) -> None:
-        # macOS: ToolTip 为 overrideredirect 窗口无法置顶，patch 其显示逻辑避免被置顶主窗口遮挡
         patch_tooltip_topmost()
-        # 主线程：UI 事件绑定 / tkdnd 注册（tkinter 非线程安全，macOS 上跨线程调用会偶发崩溃）
         self.view.common_setting_btn.config(command=lambda: self.setting_controller.show_dialog())
         self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)
         self.view.drop_target_register(DND_FILES)
         self.view.dnd_bind('<<Drop>>', self.__on_drop)
         self.view.protocol("WM_DELETE_WINDOW", self.destroy)
 
-        # 主线程：各控制器 UI 初始化（不依赖 search_tools 的部分）
         self.search_controller.env_init()
         self.filter_controller.env_init()
         self.model_controller.env_init()
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
-
-        # 后台线程：模型加载 / 索引初始化 / 远程清单（重活）
         self.__env_init_background()
 
     @decorators.send_task
