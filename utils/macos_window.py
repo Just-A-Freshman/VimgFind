@@ -1,6 +1,19 @@
 from __future__ import annotations
 
-from AppKit import NSApp
+from AppKit import NSApp, NSScreen # type: ignore
+
+
+
+_WINDOW_WIDTH_RATIO = 1660 / 2880
+_WINDOW_HEIGHT_RATIO = 1120 / 1400
+
+
+def fit_window_size(width: int, height: int) -> tuple[int, int]:
+    frame = NSScreen.mainScreen().frame()
+    sw, sh = int(frame.size.width), int(frame.size.height)
+    scale = min(sw * _WINDOW_WIDTH_RATIO / width, sh * _WINDOW_HEIGHT_RATIO / height)
+    scale = max(scale, 1.0)
+    return round(width * scale), round(height * scale)
 
 
 def windows() -> list:

@@ -11,6 +11,7 @@ from .index_page import IndexFrame
 from .model_page import ModelFrame
 from .search_page import SearchFrame
 from config.settings import WinInfo
+from utils import macos_window
 from utils.i18n import _
 
 
@@ -32,10 +33,9 @@ class WinGUI(Window, TkinterDnD.Tk):
         self.title(WinInfo.title)
         if topmost:
             self.attributes("-topmost", True)
+        width, height = macos_window.fit_window_size(WinInfo.width, WinInfo.height)
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
-        width = WinInfo.width
-        height = WinInfo.height
         geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) // 2, (screenheight - height) // 2)
         self.geometry(geometry)
         if full_screen:
