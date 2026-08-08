@@ -144,6 +144,14 @@ If you cannot access the corresponding link because you cannot access Github, it
 - [GitHub Accelerated Download Proxy - Fast Access to GitHub Files](https://gh-proxy.com/)
 
 After manually downloading the model, **no need to unzip**. Click `Load Local Model` in the model interface, select the corresponding model, and wait a few seconds.
+
+> ⚠️ **macOS note (Safari auto-unzip):**
+> Safari automatically unzips archives containing only a single file/folder after download, leaving a bare `model.onnx` file or folder — the model ID (folder name) is lost, and the model can no longer be imported via `Load Local Model`.
+> Solutions (pick any):
+> - Prefer **in-app download** (the download button on the Model tab); the app manages the zip itself and bypasses the browser;
+> - Disable Safari's auto-open: Safari → Settings → General → uncheck “Open ‘safe’ files after downloading”;
+> - Use Chrome or another download tool instead (they do not auto-unzip by default).
+> When importing, always select the **.zip archive**, not the extracted files.
 ## After switching models, the index content is "gone"?
 > **Question:** After downloading multiple models, in the Index tab, I clicked to switch models, and the originally indexed folders are gone?
 
