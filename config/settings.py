@@ -116,10 +116,13 @@ class Setting:
         if not docs_path.exists():
             docs_path = docs_dir / "help_en-US.html"
         url = docs_path.as_uri() + "#" + urllib.parse.quote(anchor)
+        script = f'tell application "Safari" to open location "{url}"'
         try:
-            subprocess.Popen(["open", url])
+            ret = subprocess.call(["osascript", "-e", script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if ret != 0:
+                subprocess.Popen(["open", url])
         except OSError:
-            pass
+            subprocess.Popen(["open", url])
 
     def get_active_config_path(self) -> Path:
         if self.app.other_config_path:
