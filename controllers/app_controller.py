@@ -33,6 +33,11 @@ class AppController:
         self.view.after(50, self.env_init)
 
     def env_init(self) -> None:
+        @decorators.send_task
+        def env_init_background() -> None:
+            self.search_tools = SearchTool(self.setting)
+            self.index_controller.env_init()
+            self.model_controller.refresh_remote_models()
         self.view.common_setting_btn.config(command=lambda: self.setting_controller.show_dialog())
         self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)
         self.view.drop_target_register(DND_FILES)
@@ -43,13 +48,7 @@ class AppController:
         self.filter_controller.env_init()
         self.model_controller.env_init()
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
-        self.__env_init_background()
-
-    @decorators.send_task
-    def __env_init_background(self) -> None:
-        self.search_tools = SearchTool(self.setting)
-        self.index_controller.env_init()
-        self.model_controller.refresh_remote_models()
+        env_init_background()
 
     def __on_drop(self, event) -> None:
         file_paths_str: str = getattr(event, "data")
