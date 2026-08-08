@@ -205,7 +205,6 @@ def generate_copy_name(file_path: str | Path) -> Path:
 
 
 def url_to_path(raw: str) -> str:
-    """将 file:// URL 转换为本地路径；普通路径原样返回（含空格/括号的完整路径）。"""
     raw = raw.strip()
     if raw.startswith("file://"):
         parsed = urllib.parse.urlparse(raw)
