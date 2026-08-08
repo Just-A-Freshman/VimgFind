@@ -5,9 +5,9 @@ from pathlib import Path
 import tkinter as tk
 
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
-from ttkbootstrap.widgets import ToolTip
 
 from .base import BasicImagePreviewView
+from .tooltip import TopmostToolTip
 from utils.i18n import _
 
 
@@ -18,7 +18,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         tk.Canvas.__init__(self, master, highlightthickness=0, cursor="hand2")
         BasicImagePreviewView.__init__(self, master)
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.__tooltip = ToolTip(self, text=_("没有文件"), delay=500, topmost=True)
+        self.__tooltip = TopmostToolTip(self, text=_("没有文件"), delay=500, topmost=True)
 
     def append(self, image_path: Path, image_obj: Image.Image) -> str:
         iid = self.generate_path_item(image_path, unique=False)

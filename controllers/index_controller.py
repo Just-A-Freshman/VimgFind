@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import TYPE_CHECKING
-from tkinter import messagebox, filedialog
+from tkinter import filedialog
+from utils import messagebox
 import tkinter as tk
 import logging
 

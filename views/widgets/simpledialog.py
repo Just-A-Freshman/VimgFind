@@ -1,50 +1,26 @@
-from ttkbootstrap import Frame, Button
-from tkinter import simpledialog
+"""macOS 适配的输入弹窗（simpledialog）。
+
+- 按钮顺序遵循 macOS HIG：取消在左、确定在右（见 BasicDialog.buttonbox）；
+- 置顶主窗口下提升弹窗层级，避免被遮挡（见 BasicDialog._raise_above_main，
+  层级操作统一封装在 utils.macos_window）；
+- 输入对话框逻辑复制自 CPython 3.12 tkinter/simpledialog.py 的 _QueryDialog，
+  避免依赖 tkinter 私有类（_QueryString 等），控件改用 ttkbootstrap 统一风格。
+"""
+from __future__ import annotations
+
 import tkinter as tk
+from tkinter import simpledialog
+
+from ttkbootstrap import Frame, Button, Label, Entry
 
 from config.settings import TkS, WinInfo
+from utils import macos_window, messagebox
 from utils.i18n import _
 
 
-# only necessary for macos
-def patch_tooltip_topmost() -> None:
-    try:
-        from ttkbootstrap.widgets import ToolTip
-    except ImportError:
-        return
-    if getattr(ToolTip, "_vimgfind_tooltip_patched", False):
-        return
-
-    _orig_show = ToolTip.show_tip
-
-    def _show_tip(self, *args, **kwargs):
-        try:
-            from AppKit import NSApp
-            before = set(NSApp.windows())
-        except Exception:
-            before = None
-        _orig_show(self, *args, **kwargs)
-        if before is not None and self.toplevel is not None:
-            try:
-                main = self.widget.winfo_toplevel()
-                if not main.attributes("-topmost"):
-                    return
-                new_windows = set(NSApp.windows()) - before
-                if not new_windows:
-                    return
-                base = max((nw.level() for nw in NSApp.windows()), default=0)
-                for nw in new_windows:
-                    nw.setLevel_(base + 1)
-            except Exception:
-                pass
-
-    ToolTip.show_tip = _show_tip
-    ToolTip._vimgfind_tooltip_patched = True
-
-
-
-
 class BasicDialog(simpledialog.Dialog):
+    """tkinter.simpledialog.Dialog 的 macOS 适配基类。"""
+
     def buttonbox(self) -> None:
         box = Frame(self)
         box.pack(expand=True, fill=tk.X, pady=10)
@@ -83,18 +59,7 @@ class BasicDialog(simpledialog.Dialog):
             main = self.parent if self.parent is not None else tk._default_root
             if main is None or not main.attributes("-topmost"):
                 return False
-            from AppKit import NSApp
-            title = self.title()
-            base = max((nw.level() for nw in NSApp.windows() if nw.title() != title), default=0)
-            raised = False
-            for nw in NSApp.windows():
-                try:
-                    if nw.title() == title:
-                        nw.setLevel_(base + 1)
-                        raised = True
-                except Exception:
-                    pass
-            return raised
+            return macos_window.raise_above_others({self.title()})
         except Exception:
             return False
 
@@ -108,17 +73,87 @@ class BasicDialog(simpledialog.Dialog):
             pass
 
 
-class AskStringDialog(BasicDialog, simpledialog._QueryString):    #type:ignore
-    ...
+class _QueryDialog(BasicDialog):
+    """输入类对话框基类（复制自 CPython 3.12 tkinter/simpledialog.py 的 _QueryDialog）。"""
 
-class AskFloatDialog(BasicDialog, simpledialog._QueryFloat):   # type:ignore
-    ...
+    errormessage = ""
 
-class AskIntDialog(BasicDialog, simpledialog._QueryInteger):   #type:ignore
-    ...
+    def __init__(self, title, prompt, initialvalue=None, minvalue=None, maxvalue=None, parent=None):
+        self.prompt = prompt
+        self.minvalue = minvalue
+        self.maxvalue = maxvalue
+        self.initialvalue = initialvalue
+        super().__init__(parent, title)
+
+    def destroy(self):
+        self.entry = None
+        super().destroy()
+
+    def body(self, master):
+        w = Label(master, text=self.prompt, justify=tk.LEFT)
+        w.grid(row=0, padx=5, sticky=tk.W)
+        self.entry = Entry(master, name="entry")
+        self.entry.grid(row=1, padx=5, sticky=tk.W + tk.E)
+        if self.initialvalue is not None:
+            self.entry.insert(0, self.initialvalue)
+            self.entry.select_range(0, tk.END)
+        return self.entry
+
+    def validate(self):
+        try:
+            result = self.getresult()
+        except ValueError:
+            messagebox.showwarning(
+                "Illegal value",
+                self.errormessage + "\nPlease try again",
+                parent=self,
+            )
+            return 0
+        if self.minvalue is not None and result < self.minvalue:
+            messagebox.showwarning(
+                "Too small",
+                "The allowed minimum value is %s. Please try again." % self.minvalue,
+                parent=self,
+            )
+            return 0
+        if self.maxvalue is not None and result > self.maxvalue:
+            messagebox.showwarning(
+                "Too large",
+                "The allowed maximum value is %s. Please try again." % self.maxvalue,
+                parent=self,
+            )
+            return 0
+        self.result = result
+        return 1
 
 
-def _query(dialog_cls, title: str, prompt: str, **kwargs):
+class AskStringDialog(_QueryDialog):
+    """字符串输入对话框（复制自 CPython _QueryString）。"""
+
+    def validate(self):
+        result = self.entry.get()
+        self.result = result
+        return 1
+
+    def apply(self):
+        pass
+
+
+class AskFloatDialog(_QueryDialog):
+    errormessage = "Not a floating point value."
+
+    def getresult(self):
+        return self.getfloat(self.entry.get())
+
+
+class AskIntDialog(_QueryDialog):
+    errormessage = "Not an integer."
+
+    def getresult(self):
+        return self.getint(self.entry.get())
+
+
+def _query(dialog_cls, title, prompt, **kwargs):
     dialog = dialog_cls(title, prompt, **kwargs)
     return dialog.result
 
@@ -126,8 +161,10 @@ def _query(dialog_cls, title: str, prompt: str, **kwargs):
 def askstring(title, prompt, **kwargs):
     return _query(AskStringDialog, title, prompt, **kwargs)
 
+
 def askfloat(title, prompt, **kwargs):
     return _query(AskFloatDialog, title, prompt, **kwargs)
+
 
 def askinteger(title, prompt, **kwargs):
     return _query(AskIntDialog, title, prompt, **kwargs)

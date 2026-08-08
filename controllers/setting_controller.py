@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Literal, Callable, TYPE_CHECKING
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
+from utils import messagebox
 from tkinter.font import nametofont
 import tkinter as tk
 
@@ -39,7 +40,6 @@ class SettingController:
         style.configure("TEntry", padding=TkS(2.5))
         style.configure("TCombobox", padding=TkS(2.5))
         style.configure("TButton", padding=(TkS(5), TkS(2.5)))
-        # secondary 按钮（取消/次要操作）继承同一 padding，避免与 TButton 大小不一致
         style.configure("secondary.TButton", padding=(TkS(5), TkS(2.5)))
         style.configure("Link.TButton", padding=(TkS(5), TkS(2.5)))
         style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
@@ -60,7 +60,7 @@ class SettingController:
         self.app.view.model_tab.detail_desc_text.config(bg=colors.get("bg"), fg=colors.get("fg"), selectbackground=colors.get('selectbg'))   # type:ignore
 
     def editor_text_style(self) -> dict:
-        colors: Colors = self.app.view.style.colors
+        colors: Colors = self.app.view.style.colors # type: ignore
         return dict(
             highlightthickness=1,
             highlightbackground=colors.get("selectbg"),
@@ -202,7 +202,6 @@ class CustomMenuController:
 
     def env_init(self) -> None:
         tab = self.custom_menu_tab
-        # 应用编辑器 Text 的统一高亮边框样式（来源：SettingController.editor_text_style）
         tab.command_text.configure(**self.app.setting_controller.editor_text_style())
         for item in self.app.setting.app.menu_items:
             text = item.name if item.type != "embedded" else _(item.name)

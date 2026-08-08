@@ -4,11 +4,11 @@ import tkinter as tk
 from tkinter.font import Font
 
 from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Notebook, Text
-from ttkbootstrap.widgets import ToolTip
 
 from config.settings import WinInfo, TkS
 from config.types import MenuItemDef
 from .widgets import CheckboxTreeview
+from .widgets.tooltip import TopmostToolTip
 from utils.i18n import _
 
 
@@ -169,9 +169,9 @@ class CustomMenuTab(Frame):
         self.batch_mode_checkbutton = Checkbutton(self.edit_frame, text=_("批量模式"), cursor="hand2")
         self.shortcut_tip_label = Label(self.edit_frame, text=_("快捷键："))
         self.shortcut_entry = Entry(self.edit_frame)
-        self.shortcut_warning_tooltip = ToolTip(self.shortcut_entry, topmost=True)
+        self.shortcut_warning_tooltip = TopmostToolTip(self.shortcut_entry, topmost=True)
         self.command_tip_label = Label(self.edit_frame, justify=tk.CENTER, wraplength=TkS(180), anchor=tk.CENTER)
-        self.command_tooltip = ToolTip(self.command_tip_label, topmost=True, text="", wraplength=TkS(350))
+        self.command_tooltip = TopmostToolTip(self.command_tip_label, topmost=True, text="", wraplength=TkS(350))
         self.command_text = Text(self.edit_frame, undo=True)
         # 高亮边框样式统一由 SettingController.change_theme 的 editor_text_style 配置
         self.state_show_btn = Button(self.command_text, style="inner.Link.TButton", takefocus=False, cursor="hand2")

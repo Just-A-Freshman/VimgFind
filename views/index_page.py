@@ -5,7 +5,8 @@ import tkinter as tk
 
 from ttkbootstrap.constants import LINK
 from ttkbootstrap import Button, Checkbutton, Scale
-from ttkbootstrap.widgets import ToolTip
+
+from views.widgets.tooltip import TopmostToolTip
 
 from config.settings import WinInfo, TkS
 from utils.i18n import _
@@ -14,7 +15,7 @@ from views.widgets import DragReorderTreeview
 
 class IndexFrame(Frame):
     index_tip_label: Label
-    index_tooltip: ToolTip
+    index_tooltip: TopmostToolTip
     index_dataset_table: DragReorderTreeview
     switch_model_combobox: Combobox
     add_index_button: Button
@@ -38,7 +39,7 @@ class IndexFrame(Frame):
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.index_tip_label = self.__set_index_tip_label()
-        self.index_tooltip = ToolTip(self.index_tip_label, topmost=True)
+        self.index_tooltip = TopmostToolTip(self.index_tip_label, topmost=True)
         self.index_dataset_table = self.__set_index_dataset_table()
         index_setting_frame = self.__set_index_setting_frame()
         scan_setting_frame = self.__set_scan_setting_frame()

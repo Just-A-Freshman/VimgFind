@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
+from utils import messagebox
 from typing import TYPE_CHECKING, Literal
 from dataclasses import dataclass
 from threading import Event

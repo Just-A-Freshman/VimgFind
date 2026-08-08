@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from tkinter.font import Font
-from tkinter import messagebox, filedialog
+from tkinter import filedialog
+from utils import messagebox
 from typing import Callable, TYPE_CHECKING
 import tkinter as tk
 import logging
