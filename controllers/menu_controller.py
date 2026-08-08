@@ -150,9 +150,15 @@ class MenuController:
     def save_as_image(self, *src_paths: Path) -> None:
         self.__last_image_save_dir = self.__last_image_save_dir or src_paths[0].parent 
         for src_path in src_paths:
+            exts = [i for i in Setting.accepted_exts if i not in [".psd"]]
+            own_ext = src_path.suffix.lower()
+            if own_ext in exts:
+                exts.remove(own_ext)
+                exts.insert(0, own_ext)
+            filetypes = [(f"{i}(*{i})", f"*{i}") for i in exts]
             save_path = filedialog.asksaveasfilename(
                 parent=self.app.view,
-                filetypes=[(f"{i}(*{i})", f"*{i}") for i in Setting.accepted_exts if i not in [".psd"]],
+                filetypes=filetypes,
                 initialfile=file_ops.generate_copy_name(self.__last_image_save_dir / src_path.name).name,
                 initialdir=self.__last_image_save_dir,
                 defaultextension=src_path.suffix
