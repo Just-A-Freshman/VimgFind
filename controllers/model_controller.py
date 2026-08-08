@@ -14,7 +14,6 @@ from ttkbootstrap import Entry
 from ttkbootstrap.colorutils import color_to_rgb, color_to_hex
 
 from core import SearchTool
-from config.settings import TkS
 from config.types import ModelConfig
 from views.model_page import ModelFrame, ModelStatus
 from utils.i18n import _
@@ -327,10 +326,10 @@ class ModelController:
         is_paused = self.__current_download and self.__current_download.state == internet.DownloadState.PAUSED
         view.download_control_btn.config(text=_("继续") if is_paused else _("暂停"))
 
-        view.download_progress_label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(5), TkS(2)), pady=(TkS(3), TkS(3)))
+        view.download_progress_label.grid(row=0, column=0, sticky=tk.W, padx=(5, 2), pady=(3, 3))
         view.download_control_btn.grid(row=0, column=1, sticky=tk.E)
-        view.download_cancel_btn.grid(row=0, column=2, sticky=tk.E, padx=(TkS(2), TkS(5)))
-        view.download_progressbar.grid(row=1, column=0, columnspan=3, sticky=tk.EW, padx=TkS(5), pady=(0, TkS(5)))
+        view.download_cancel_btn.grid(row=0, column=2, sticky=tk.E, padx=(2, 5))
+        view.download_progressbar.grid(row=1, column=0, columnspan=3, sticky=tk.EW, padx=5, pady=(0, 5))
 
     def __update_download_progress(self, downloaded: int, total: int, speed: float) -> None:
         view = self.app.view.model_tab

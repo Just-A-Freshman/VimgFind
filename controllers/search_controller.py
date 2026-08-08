@@ -14,7 +14,7 @@ import math
 from PIL import Image
 
 from core import SearchStatus
-from config.settings import Setting, TkS
+from config.settings import Setting
 from utils.i18n import _
 from views.widgets import DetailListView, ThumbnailGridView
 import utils.shortcut as shortcut
@@ -53,7 +53,6 @@ class SearchController:
         self.__is_finish_search.set()
         if only_preview_widgets:
             for w in (tab.preview_canvas1, tab.preview_canvas2, tab.preview_view):
-                # macOS Tk 右键可能映射为 <Button-2>，双绑定覆盖
                 w.bind("<Button-2>", self.app.menu_controller.show_context_menu)
                 w.bind("<Button-3>", self.app.menu_controller.show_context_menu)
                 w.bind("<Button-1>", self.app.menu_controller.on_item_single_click, add="+")
@@ -112,7 +111,6 @@ class SearchController:
 
         if image_obj is None:
             try:
-                # 1) 剪贴板中的文件 URL（本程序"复制图片" / Finder 复制文件）
                 file_paths = image_ops.parse_file_paths_from_clipboard()
                 if file_paths:
                     accept_exts = set(Setting.accepted_exts)
@@ -130,7 +128,6 @@ class SearchController:
                         else:
                             raise tk.TclError
 
-                # 2) 剪贴板文本：每行一个完整路径（支持含空格/括号的路径），兼容 file:// 前缀
                 if image_path is None:
                     copy_text = self.app.view.clipboard_get()
                     lines = copy_text.splitlines()
@@ -164,11 +161,11 @@ class SearchController:
                 file_ops.rmtree(Setting.temp_image_path)
             if not image_path.parent.exists():
                 Setting.temp_image_path.mkdir(exist_ok=True)
-            image_obj.save(image_path)
+            image_obj.save(image_path) # type: ignore
 
         self.__queue_paths = []
         self.__current_page = 0
-        self.__search_image(image_obj, source_path=str(image_path.absolute()))
+        self.__search_image(image_obj, source_path=str(image_path.absolute())) # type: ignore
 
     @decorators.send_task
     def search_image_by_text(self) -> None:
@@ -219,7 +216,7 @@ class SearchController:
     def show_toast(self, message: str, duration: int = 1500) -> None:
         toast = self.app.view.search_tab.toast_label
         toast.config(text=message)
-        toast.place(in_=self.app.view.search_tab.preview_view, relx=1.0, rely=1.0, anchor=tk.SE, height=TkS(30))   # type: ignore
+        toast.place(in_=self.app.view.search_tab.preview_view, relx=1.0, rely=1.0, anchor=tk.SE, height=30)   # type: ignore
         toast.lift()
         if self.__show_toast_timer is not None:
             self.app.view.after_cancel(self.__show_toast_timer)

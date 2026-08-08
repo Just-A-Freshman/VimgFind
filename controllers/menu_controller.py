@@ -14,7 +14,7 @@ import time
 
 from ttkbootstrap import Menu
 
-from config.settings import TkS, Setting, WinInfo
+from config.settings import Setting, WinInfo
 from config.types import MenuItemDef
 from views.widgets import BasicImagePreviewView, PreviewCanvasView, simpledialog
 from views.test_dialog import TestResultDialog, TestResultItem
@@ -107,8 +107,8 @@ class MenuController:
         adjustment_menu = self.__create_adjustment_menu()
         winfo_right = event.widget.winfo_rootx() + event.widget.winfo_width()
         menu_font = Font(font=adjustment_menu.cget("font"))
-        menu_width = max(menu_font.measure(get_label(i)) for i in range(adjustment_menu.index(tk.END) or 0 + 1)) + TkS(65)
-        adjustment_menu.post(winfo_right - menu_width, event.widget.winfo_rooty() + TkS(25))
+        menu_width = max(menu_font.measure(get_label(i)) for i in range(adjustment_menu.index(tk.END) or 0 + 1)) + 65
+        adjustment_menu.post(winfo_right - menu_width, event.widget.winfo_rooty() + 25)
         adjustment_menu.bind("<Unmap>", lambda e: adjustment_menu.destroy())
 
     def double_click_open_file(self, event: tk.Event) -> None:
@@ -203,7 +203,7 @@ class MenuController:
         }
     
     def __create_context_menu(self, event: tk.Event, selected_files: list[Path]) -> Menu:
-        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3), bd=0)
+        menu = Menu(self.app.view, tearoff=0, activeborderwidth=3, bd=0)
         id_command_map = self.embeded_command(event, selected_files)
         for item_def in self.app.setting.app.menu_items:
             if not item_def.is_visible:
@@ -217,7 +217,7 @@ class MenuController:
         return menu
 
     def __create_adjustment_menu(self) -> Menu:
-        menu = Menu(self.app.view, tearoff=0, activeborderwidth=TkS(3))
+        menu = Menu(self.app.view, tearoff=0, activeborderwidth=3)
         model_menu = Menu(menu, tearoff=0)
         ctrl = self.app.search_controller
         for label, mode in (

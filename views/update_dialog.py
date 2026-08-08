@@ -3,7 +3,7 @@ from __future__ import annotations
 from tkinter.ttk import Label, Progressbar
 import tkinter as tk
 
-from config.settings import WinInfo, TkS
+from config.settings import WinInfo
 from utils.i18n import _
 
 
@@ -27,23 +27,23 @@ class UpdateDialog(tk.Toplevel):
         self.resizable(False, False)
         self.transient(parent)
         self.grab_set()
-        win_w = TkS(380)
-        win_h = TkS(130)
+        win_w = 380
+        win_h = 130
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
 
     def __set_status_label(self) -> Label:
         label = Label(self)
-        label.pack(pady=(TkS(15), TkS(5)))
+        label.pack(pady=(15, 5))
         return label
 
     def __set_progressbar(self) -> Progressbar:
-        bar = Progressbar(self, mode="determinate", length=TkS(300))
-        bar.pack(pady=TkS(5))
+        bar = Progressbar(self, mode="determinate", length=300)
+        bar.pack(pady=5)
         return bar
 
     def __set_hint_label(self) -> Label:
         label = Label(self, text=_("关闭窗口可取消更新"))
-        label.pack(pady=(TkS(5), TkS(10)))
+        label.pack(pady=(5, 10))
         return label

@@ -8,7 +8,7 @@ from ttkbootstrap import Button, Checkbutton, Scale
 
 from views.widgets.tooltip import TopmostToolTip
 
-from config.settings import WinInfo, TkS
+from config.settings import WinInfo
 from utils.i18n import _
 from views.widgets import DragReorderTreeview
 
@@ -63,7 +63,7 @@ class IndexFrame(Frame):
         columns = [" ", _("图库目录")]
         table = DragReorderTreeview(self, show="headings", columns=columns, ghost_column=1)
         table.heading(0, text=columns[0], anchor=tk.CENTER)
-        table.column(0, width=TkS(15), anchor=tk.CENTER, stretch=False)
+        table.column(0, width=15, anchor=tk.CENTER, stretch=False)
         table.heading(1, text=columns[1], anchor=tk.CENTER)
         table.column(1, anchor=tk.CENTER)
         table.place(relx=0.0081, rely=0.1111, relwidth=0.67, relheight=0.888)
@@ -80,17 +80,17 @@ class IndexFrame(Frame):
 
     def __set_switch_model_combobox(self, parent) -> Combobox:
         container = Frame(parent)
-        container.grid(row=0, column=0, columnspan=2, sticky=tk.EW, pady=TkS(2))
-        Label(container, text=_("当前模型：")).pack(side=tk.LEFT, padx=TkS(5))
+        container.grid(row=0, column=0, columnspan=2, sticky=tk.EW, pady=2)
+        Label(container, text=_("当前模型：")).pack(side=tk.LEFT, padx=5)
         combobox = Combobox(container, state="readonly")
-        combobox.pack(side=tk.LEFT, padx=(TkS(5), TkS(5)), expand=True, fill=tk.BOTH)
+        combobox.pack(side=tk.LEFT, padx=(5, 5), expand=True, fill=tk.BOTH)
         return combobox
 
     def __set_index_btn(self, parent: LabelFrame, text: str, row: int, *, pady_top: int = 2, pady_bottom: int = 2) -> Button:
         btn = Button(parent, text=text, takefocus=False)
         btn.grid(
-            row=row, column=0, padx=TkS(2), pady=(TkS(pady_top), TkS(pady_bottom)),
-            ipadx=TkS(5), ipady=TkS(2), sticky=tk.NSEW, columnspan=2
+            row=row, column=0, padx=2, pady=(pady_top, pady_bottom),
+            ipadx=5, ipady=2, sticky=tk.NSEW, columnspan=2
         )
         return btn
 
@@ -107,32 +107,32 @@ class IndexFrame(Frame):
 
     def __set_auto_update_checkbutton(self, parent) -> Checkbutton:
         tip = Label(parent, text=_("索引自动更新"), anchor=tk.W)
-        tip.grid(row=0, column=1, padx=(TkS(2), TkS(5)), sticky=tk.E)
+        tip.grid(row=0, column=1, padx=(2, 5), sticky=tk.E)
         checkbtn = Checkbutton(parent, style="round-toggle")
-        checkbtn.grid(row=0, column=2, padx=(0, TkS(2)), sticky=tk.EW)
+        checkbtn.grid(row=0, column=2, padx=(0, 2), sticky=tk.EW)
         return checkbtn
 
     def __set_update_range_combobox(self, parent) -> Combobox:
         tip = Label(parent, text=_("索引更新范围"), anchor=tk.W)
-        tip.grid(row=1, column=1, padx=(TkS(2), TkS(5)), sticky=tk.E)
+        tip.grid(row=1, column=1, padx=(2, 5), sticky=tk.E)
         combobox = Combobox(parent, values=(_("当前模型"), _("全部模型")), width=10, state="readonly")
-        combobox.grid(row=1, column=2, padx=(0, TkS(2)), sticky=tk.EW)
+        combobox.grid(row=1, column=2, padx=(0, 2), sticky=tk.EW)
         return combobox
 
     def __set_update_threads_count_scale(self, parent) -> Scale:
         tip = Label(parent, text=_("更新线程：{count}", count=8), anchor=tk.W)
-        tip.grid(row=2, column=1, padx=(TkS(2), TkS(5)), sticky=tk.E)
+        tip.grid(row=2, column=1, padx=(2, 5), sticky=tk.E)
         scale = Scale(parent, from_=4, to=20, orient=tk.HORIZONTAL)
-        scale.grid(row=2, column=2, padx=(0, TkS(2)), sticky=tk.EW)
+        scale.grid(row=2, column=2, padx=(0, 2), sticky=tk.EW)
         scale.config(command=lambda value: tip.config(text=_("更新线程:  {count:0>2}", count=int(float(value)))))
         return scale
 
     def __set_exclude_button(self, parent) -> Button:
         manage_btn = Button(parent, text=_("管理排除规则"), takefocus=False, cursor="hand2", style=LINK)
-        manage_btn.grid(row=3, column=1, padx=(TkS(7), 0), sticky=tk.E)
+        manage_btn.grid(row=3, column=1, padx=(7, 0), sticky=tk.E)
         return manage_btn
 
     def __set_clean_excluded_button(self, parent) -> Button:
         btn = Button(parent, text=_("清理排除图片"), takefocus=False, cursor="hand2", style=LINK)
-        btn.grid(row=3, column=2, padx=(TkS(2), 0), sticky=tk.W)
+        btn.grid(row=3, column=2, padx=(2, 0), sticky=tk.W)
         return btn

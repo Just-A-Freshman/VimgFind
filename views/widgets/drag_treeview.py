@@ -6,7 +6,6 @@ from typing import Callable
 from tkinter.ttk import Treeview
 import tkinter as tk
 
-from config.settings import TkS
 
 
 class DragReorderTreeview(Treeview):
@@ -51,7 +50,7 @@ class DragReorderTreeview(Treeview):
             self.__create_drag_ghost(event)
 
         if self.__drag_ghost:
-            self.__drag_ghost.geometry(f"+{event.x_root + TkS(10)}+{event.y_root - TkS(5)}")
+            self.__drag_ghost.geometry(f"+{event.x_root + 10}+{event.y_root - 5}")
 
         target = self.identify_row(event.y)
 
@@ -137,11 +136,11 @@ class DragReorderTreeview(Treeview):
         ghost.overrideredirect(True)
         ghost.attributes("-alpha", 0.75, "-topmost", True)
 
-        label = tk.Label(ghost, text=str(dir_path), anchor=tk.W, padx=TkS(12), pady=TkS(3))
+        label = tk.Label(ghost, text=str(dir_path), anchor=tk.W, padx=12, pady=3)
         label.pack()
 
         ghost.update_idletasks()
-        ghost.geometry(f"+{event.x_root + TkS(10)}+{event.y_root - TkS(5)}")
+        ghost.geometry(f"+{event.x_root + 10}+{event.y_root - 5}")
         self.__drag_ghost = ghost
 
     def __drag_clear_state(self) -> None:

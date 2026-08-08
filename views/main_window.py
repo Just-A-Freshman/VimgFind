@@ -10,7 +10,7 @@ from ttkbootstrap import Button, Notebook, Window
 from .index_page import IndexFrame
 from .model_page import ModelFrame
 from .search_page import SearchFrame
-from config.settings import WinInfo, TkS
+from config.settings import WinInfo
 from utils.i18n import _
 
 
@@ -53,6 +53,6 @@ class WinGUI(Window, TkinterDnD.Tk):
         self.model_tab = ModelFrame(notebook)
         notebook.add(self.model_tab, text=_("  模型  "))
         notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.common_setting_btn = Button(parent, text=_("通用设置"), style=LINK, cursor="hand2", takefocus=False, padding=(TkS(3), TkS(0)))
-        self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=TkS(0), anchor=tk.NE)
+        self.common_setting_btn = Button(parent, text=_("通用设置"), style=LINK, cursor="hand2", takefocus=False, padding=(3, 0))
+        self.common_setting_btn.place(relx=1.0, x=-2, y=0, anchor=tk.NE)
         return notebook

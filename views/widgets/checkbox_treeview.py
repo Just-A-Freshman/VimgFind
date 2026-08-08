@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageTk
 from ttkbootstrap import Scrollbar, Style
 from ttkbootstrap.colorutils import color_to_rgb
 
-from config.settings import TkS, WinInfo
+from config.settings import WinInfo
 from .drag_treeview import DragReorderTreeview
 
 
@@ -31,7 +31,7 @@ class CheckboxTreeview(DragReorderTreeview):
     def __env_init(self, padding: int, checkbox_name: str = "") -> None:
         self.__border = int(Style().lookup("Treeview", "borderwidth") or 2)
         scrollbar_width = self.scrollbar.winfo_reqwidth()
-        checkbox_width = max(Font(font=WinInfo.default_font).measure(checkbox_name) + scrollbar_width + self.__border, TkS(35))
+        checkbox_width = max(Font(font=WinInfo.default_font).measure(checkbox_name) + scrollbar_width + self.__border, 35)
         self.__reserve = checkbox_width + scrollbar_width
         
         self.check_tree.heading("#0", text=checkbox_name, anchor=tk.W)
@@ -122,7 +122,7 @@ class CheckboxTreeview(DragReorderTreeview):
         
         SS = 4
         base = 134 * SS
-        box = TkS(14)
+        box = 14
         style = Style()
         primary = color_to_rgb(style.colors.get("primary"))     # type: ignore
         fg, bg = color_to_rgb(style.colors.get("fg")), color_to_rgb(style.colors.get("bg"))    # type: ignore

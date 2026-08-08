@@ -6,7 +6,7 @@ import tkinter as tk
 from ttkbootstrap import Button, Frame, Label, Labelframe, Treeview, Text, Scrollbar
 from ttkbootstrap.constants import LINK
 
-from config.settings import WinInfo, TkS
+from config.settings import WinInfo
 from config.types import MenuItemDef
 from utils.i18n import _
 
@@ -36,18 +36,18 @@ class TestResultDialog(tk.Toplevel):
         self.transient(parent)
         self.title(_("命令测试结果"))
         WinInfo.set_window_icon(self)
-        win_w = TkS(450)
-        win_h = TkS(400)
+        win_w = 450
+        win_h = 400
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.transient(parent)
-        self.minsize(TkS(400), TkS(320))
+        self.minsize(400, 320)
         self.deiconify()
 
     def __set_summary_bar(self) -> Button:
         bar = Frame(self)
-        bar.pack(fill=tk.X, padx=TkS(10), pady=(TkS(8), 0))
+        bar.pack(fill=tk.X, padx=10, pady=(8, 0))
         success = sum(1 for r in self.__results if r.returncode == 0)
         failed = len(self.__results) - success
         time_consuming = self.__results[0].time_consuming if self.__menu_items.batch_mode else sum(i.time_consuming for i in self.__results)
@@ -62,12 +62,12 @@ class TestResultDialog(tk.Toplevel):
         return open_btn
 
     def __set_execution_list(self) -> Treeview:
-        column_info = (("status", "", TkS(40)), ("filename", _("副本文件"), TkS(300)), ("retcode", _("返回码"), TkS(80)))
+        column_info = (("status", "", 40), ("filename", _("副本文件"), 300), ("retcode", _("返回码"), 80))
         tree = Treeview(self, columns=[i[0] for i in column_info], show="headings", selectmode="browse", cursor="hand2", height=4)
         for i, (column, text, width) in enumerate(column_info):
             tree.heading(column, text=text, anchor=tk.CENTER)
             tree.column(column, width=width, stretch=i == 1, anchor=tk.W if i == 1 else tk.CENTER)
-        tree.pack(fill=tk.X, padx=TkS(10), pady=(TkS(6), 0))
+        tree.pack(fill=tk.X, padx=10, pady=(6, 0))
         if self.__results:
             for i, r in enumerate(self.__results):
                 tree.insert("", tk.END, iid=str(i), values=("✓" if r.returncode == 0 else "✗", r.file_name, r.returncode))
@@ -76,10 +76,10 @@ class TestResultDialog(tk.Toplevel):
 
     def __set_detail_panel(self) -> tuple[tk.Text, Button]:
         frame = Labelframe(self, text=_("命令详情"))
-        frame.pack(fill=tk.BOTH, expand=True, padx=TkS(10), pady=(TkS(6), TkS(8)))
+        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(6, 8))
         text = Text(frame, wrap=tk.CHAR)
         # 高亮边框样式统一由 SettingController.change_theme 的 editor_text_style 配置
-        text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=TkS(2), pady=TkS(2))
+        text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2, pady=2)
         text.configure(padx=0, pady=0)
         text.bind("<<ThemeChanged>>", lambda e: text.configure(padx=0, pady=0))
         scrollbar = Scrollbar(text, orient=tk.VERTICAL, command=text.yview)

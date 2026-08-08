@@ -39,10 +39,6 @@ migrate_source_data()
 
 
 
-def TkS(value: int | float) -> int:
-    return 0 if value == 0 else max(int(round(abs(value), 0)), 1) * (-1 if value < 0 else 1)
-
-
 class Setting:
     config_path = APP_DATA_DIR
     temp_image_path = APP_DATA_DIR / "temp"
@@ -174,8 +170,8 @@ class WinInfo:
     png_path = RESOURCE_DIR / "favicon.png"
     title = "VimgFind"
     default_font = ("PingFang SC", 13)
-    width = TkS(830)
-    height = TkS(560)
+    width = 830
+    height = 560
     __icon_photo = None
 
     @staticmethod

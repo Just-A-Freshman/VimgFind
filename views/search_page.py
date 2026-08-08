@@ -5,7 +5,7 @@ import tkinter as tk
 from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
-from config.settings import TkS, Setting
+from config.settings import Setting
 from utils.i18n import _
 
 
@@ -47,65 +47,65 @@ class FilterPanel(Labelframe):
     def _setup_grid(self) -> None:
         for col, weight in enumerate([0, 1, 0, 0, 1, 0, 0]):
             self.grid_columnconfigure(col, weight=weight)
-        self.grid_columnconfigure(6, minsize=TkS(6))
+        self.grid_columnconfigure(6, minsize=6)
 
     def __set_sim_scale(self) -> tuple[Scale, Label]:
         label = Label(self, text=_("相似度阈值"), width=10, anchor=tk.W)
-        label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(10), TkS(5)))
+        label.grid(row=0, column=0, sticky=tk.W, padx=(6, 0), pady=(10, 5))
         sim_scale = Scale(self, from_=0, to=100, orient=tk.HORIZONTAL)
         sim_value = Label(self, text="0%", width=5)
-        sim_scale.grid(row=0, column=1, columnspan=4, sticky=tk.EW, padx=(TkS(4), TkS(2)), pady=(TkS(10), TkS(5)))
-        sim_value.grid(row=0, column=5, sticky=tk.E, pady=(TkS(10), TkS(5)))
+        sim_scale.grid(row=0, column=1, columnspan=4, sticky=tk.EW, padx=(4, 2), pady=(10, 5))
+        sim_value.grid(row=0, column=5, sticky=tk.E, pady=(10, 5))
         return sim_scale, sim_value
 
     def __set_ext_combo(self) -> Combobox:
         label = Label(self, text=_("文件类型"), width=10, anchor=tk.W)
-        label.grid(row=1, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5)))
+        label.grid(row=1, column=0, sticky=tk.W, padx=(6, 0), pady=(5, 5))
         ext_combo = Combobox(self, values=[_("所有图片文件"), *Setting.ext_group_map], state="readonly")
-        ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(TkS(4), 0), pady=(TkS(5), TkS(5)))
+        ext_combo.grid(row=1, column=1, columnspan=5, sticky=tk.EW, padx=(4, 0), pady=(5, 5))
         ext_combo.current(0)
         return ext_combo
 
     def __set_size_unit_combo(self, column: int, padx: tuple) -> Combobox:
         combo = Combobox(self, values=["KB", "MB"], state="readonly", width=4)
-        combo.grid(row=2, column=column, sticky=tk.EW, padx=padx, pady=(TkS(5), TkS(5)))
+        combo.grid(row=2, column=column, sticky=tk.EW, padx=padx, pady=(5, 5))
         combo.current(1)
         return combo
 
     def __set_size_min(self) -> tuple[Entry, Combobox]:
         label = Label(self, text=_("文件大小"), width=10, anchor=tk.W)
-        label.grid(row=2, column=0, sticky=tk.W, padx=(TkS(6), 0), pady=(TkS(5), TkS(5)))
+        label.grid(row=2, column=0, sticky=tk.W, padx=(6, 0), pady=(5, 5))
         size_min = Entry(self, width=6)
-        size_min.grid(row=2, column=1, sticky=tk.EW, padx=(TkS(4), TkS(1)), pady=(TkS(5), TkS(5)))
-        size_min_unit = self.__set_size_unit_combo(2, (0, TkS(1)))
+        size_min.grid(row=2, column=1, sticky=tk.EW, padx=(4, 1), pady=(5, 5))
+        size_min_unit = self.__set_size_unit_combo(2, (0, 1))
         return size_min, size_min_unit
 
     def __set_size_max(self) -> tuple[Entry, Combobox]:
-        Label(self, text=_("到")).grid(row=2, column=3, pady=(TkS(5), TkS(5)))
+        Label(self, text=_("到")).grid(row=2, column=3, pady=(5, 5))
         size_max = Entry(self, width=6)
-        size_max.grid(row=2, column=4, sticky=tk.EW, padx=(TkS(2), TkS(1)), pady=(TkS(5), TkS(5)))
+        size_max.grid(row=2, column=4, sticky=tk.EW, padx=(2, 1), pady=(5, 5))
         size_max_unit = self.__set_size_unit_combo(5, (0, 0))
         return size_max, size_max_unit
 
     def __set_folder_left_frame(self) -> Frame:
         left_frame = Frame(self)
         Label(left_frame, text=_("所属文件夹"), width=10, anchor=tk.W).pack(anchor=tk.W)
-        left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(TkS(6), 0), pady=(TkS(5), TkS(1)))
+        left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(6, 0), pady=(5, 1))
         return left_frame
 
     def __set_folder_select_all(self, parent: Frame) -> Checkbutton:
         folder_select_all = Checkbutton(parent, text=_("全选"), cursor="hand2")
-        folder_select_all.pack(anchor=tk.W, pady=(TkS(11), 0))
+        folder_select_all.pack(anchor=tk.W, pady=(11, 0))
         return folder_select_all
 
     def __set_dedup_check(self, parent: Frame) -> Checkbutton:
         dedup_check = Checkbutton(parent, text=_("去重"), cursor="hand2")
-        dedup_check.pack(anchor=tk.W, pady=(TkS(8), 0))
+        dedup_check.pack(anchor=tk.W, pady=(8, 0))
         return dedup_check
 
     def __set_folder_listbox(self) -> tk.Listbox:
         lbox_frame = Frame(self)
-        lbox_frame.grid(row=3, column=1, columnspan=5, sticky=tk.N+tk.E+tk.W, padx=(TkS(4), 0), pady=(TkS(5), TkS(1)))
+        lbox_frame.grid(row=3, column=1, columnspan=5, sticky=tk.N+tk.E+tk.W, padx=(4, 0), pady=(5, 1))
         lbox_frame.grid_columnconfigure(0, weight=1)
         lbox_frame.grid_rowconfigure(0, weight=1)
         folder_listbox = tk.Listbox(
@@ -120,10 +120,10 @@ class FilterPanel(Labelframe):
 
     def __set_confirm_cancel_btn(self) -> tuple[Button, Button]:
         btn_frame = Frame(self)
-        btn_frame.grid(row=4, column=0, columnspan=7, pady=(TkS(7), TkS(15)))
-        cancel_btn = Button(btn_frame, text=_("取消"), takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)), style="secondary")
-        cancel_btn.grid(row=0, column=0, padx=(0, TkS(25)))
-        confirm_btn = Button(btn_frame, text=_("确定"), takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)))
+        btn_frame.grid(row=4, column=0, columnspan=7, pady=(7, 15))
+        cancel_btn = Button(btn_frame, text=_("取消"), takefocus=False, cursor="hand2", padding=(10, 4), style="secondary")
+        cancel_btn.grid(row=0, column=0, padx=(0, 25))
+        confirm_btn = Button(btn_frame, text=_("确定"), takefocus=False, cursor="hand2", padding=(10, 4))
         confirm_btn.grid(row=0, column=1)
         return confirm_btn, cancel_btn
 
@@ -173,7 +173,7 @@ class SearchFrame(Frame):
         self.preview_frame2 = self.__set_preview_frame2()
         self.preview_canvas1 = PreviewCanvasView(self.preview_frame1)
         self.preview_canvas2 = PreviewCanvasView(self.preview_frame2)
-        self.toast_label = Label(self.preview_container, padding=TkS(5), style="inverse-success")
+        self.toast_label = Label(self.preview_container, padding=5, style="inverse-success")
         self.nav_frame, self.nav_page_label, self.nav_prev, self.nav_next = self.__set_nav_buttons()
 
     def __set_search_entry(self) -> Entry:
@@ -183,7 +183,7 @@ class SearchFrame(Frame):
 
     def __set_filter_btn(self) -> tk.Label:
         btn = tk.Label(self, text="▼", cursor="hand2", bd=0, highlightthickness=0, relief=tk.FLAT)
-        btn.pack(in_=self.search_entry, side=tk.RIGHT, fill=tk.Y, ipadx=TkS(6), pady=TkS(2), padx=TkS(2))
+        btn.pack(in_=self.search_entry, side=tk.RIGHT, fill=tk.Y, ipadx=6, pady=2, padx=2)
         return btn
 
     def __set_search_by_browser_button(self) -> Button:
@@ -198,7 +198,7 @@ class SearchFrame(Frame):
 
     def __set_more_options_button(self) -> Button:
         button = Button(self, text="• • •", takefocus=False, style="link", cursor="hand2")
-        button.place(relx=1, rely=0.0192, width=TkS(50), x=TkS(-50))
+        button.place(relx=1, rely=0.0192, width=50, x=-50)
         return button
 
     def __set_preview_results_frame(self) -> Frame:
@@ -217,25 +217,25 @@ class SearchFrame(Frame):
         return frame
 
     def __set_nav_buttons(self) -> tuple[tk.Frame, Label, Button, Button]:
-        nav_frame = tk.Frame(self.preview_container, borderwidth=TkS(6))
+        nav_frame = tk.Frame(self.preview_container, borderwidth=6)
         nav_page_label = Label(nav_frame, text="0 / 0")
-        nav_page_label.pack(side=tk.LEFT, padx=(TkS(15), 0))
+        nav_page_label.pack(side=tk.LEFT, padx=(15, 0))
         nav_prev = Button(
             nav_frame, text="◀", takefocus=False,
-            cursor="hand2", padding=(TkS(4), TkS(1)), width=3
+            cursor="hand2", padding=(4, 1), width=3
         )
         nav_next = Button(
             nav_frame, text="▶", takefocus=False,
-            cursor="hand2", padding=(TkS(4), TkS(1)), width=3
+            cursor="hand2", padding=(4, 1), width=3
         )
-        nav_next.pack(side=tk.RIGHT, padx=(0, TkS(5)))
-        nav_prev.pack(side=tk.RIGHT, padx=(0, TkS(5)))
+        nav_next.pack(side=tk.RIGHT, padx=(0, 5))
+        nav_prev.pack(side=tk.RIGHT, padx=(0, 5))
         nav_frame.pack_forget()
         return nav_frame, nav_page_label, nav_prev, nav_next
 
     def set_nav_visible(self, show: bool) -> None:
         if show:
-            self.nav_frame.grid(row=1, column=0, sticky='ew', padx=(TkS(1), TkS(12)), pady=(0, TkS(1)))
+            self.nav_frame.grid(row=1, column=0, sticky='ew', padx=(1, 12), pady=(0, 1))
             self.nav_frame.lift()
         else:
             self.nav_frame.grid_forget()

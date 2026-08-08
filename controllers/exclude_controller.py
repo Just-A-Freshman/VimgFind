@@ -10,7 +10,7 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 from pathspec import PathSpec
 from ttkbootstrap import Style
 
-from config.settings import Setting, TkS
+from config.settings import Setting
 from utils.i18n import _
 from views.exclude_dialog import ExcludeDialog
 import utils.exclude_rules as exclude_rules
@@ -136,7 +136,7 @@ class ExcludePreviewController:
 
     def trigger_preview(self) -> None:
         self.__cancel_scan = True
-        self.dialog.stop_btn.pack(side=tk.RIGHT, padx=(TkS(10), 0))
+        self.dialog.stop_btn.pack(side=tk.RIGHT, padx=(10, 0))
         self.__preview_cache.clear()
         self.__scan_cache.clear()
 
@@ -194,8 +194,8 @@ class ExcludePreviewController:
         else:
             children = tree.get_children()
             row_idx = children.index(iid)
-            entry_x, entry_y = TkS(1), row_idx * row_height
-            entry_w, entry_h = content_w - TkS(1), row_height
+            entry_x, entry_y = 1, row_idx * row_height
+            entry_w, entry_h = content_w - 1, row_height
 
         entry = tk.Entry(tree, bd=0, highlightthickness=1)
         entry.insert(0, initial_text)

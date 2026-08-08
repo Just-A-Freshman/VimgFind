@@ -7,21 +7,20 @@ import tkinter as tk
 
 
 from .base import BasicImagePreviewView
-from config.settings import TkS
 from utils.i18n import _
 
 
 class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
     def __init__(self, master: tk.Widget, extra_columns: dict[str, int]) -> None:
-        columns = {_("名称"): TkS(80), **extra_columns}
-        Treeview.__init__(self, master, show="headings", columns=list(columns), padding=TkS(1))
+        columns = {_("名称"): 80, **extra_columns}
+        Treeview.__init__(self, master, show="headings", columns=list(columns), padding=1)
         BasicImagePreviewView.__init__(self, master)
         self.__env_init(columns)
         
     def __env_init(self, columns: dict[str, int]) -> None:
         def create_scrollbar() -> None:
             scrollbar = Scrollbar(self, orient=tk.VERTICAL, cursor="hand2")
-            scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=TkS(1), pady=TkS(1))
+            scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=1, pady=1)
             scrollbar.config(command=self.yview)
             self.configure(yscrollcommand=scrollbar.set)
         for text, width in columns.items():

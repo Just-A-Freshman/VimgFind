@@ -5,7 +5,6 @@ import tkinter as tk
 
 from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
 
-from config.settings import TkS
 from config.types import ModelConfig
 from utils.i18n import _
 
@@ -53,9 +52,9 @@ class ModelFrame(Frame):
         self.name_edit_entry = Entry(detail_frame)
         
         self.btn_group = Frame(control_frame)
-        self.use_btn = Button(self.btn_group, text=_("使用模型"), takefocus=False, padding=(TkS(20), TkS(10)))
-        self.uninstall_btn = Button(self.btn_group, text=_("卸载模型"), takefocus=False, padding=(TkS(20), TkS(10)), style="secondary")
-        self.download_btn = Button(control_frame, text=_("下载模型"), takefocus=False, padding=(TkS(20), TkS(10)))
+        self.use_btn = Button(self.btn_group, text=_("使用模型"), takefocus=False, padding=(20, 10))
+        self.uninstall_btn = Button(self.btn_group, text=_("卸载模型"), takefocus=False, padding=(20, 10), style="secondary")
+        self.download_btn = Button(control_frame, text=_("下载模型"), takefocus=False, padding=(20, 10))
         self.download_progressbar = Progressbar(control_frame, orient=tk.HORIZONTAL, mode="determinate", maximum=100)
         self.download_progress_label = Label(control_frame, text="")
         self.download_control_btn = Button(control_frame, style="link", takefocus=False, text=_("暂停"))
@@ -75,23 +74,23 @@ class ModelFrame(Frame):
 
     def __set_load_local_model_entry(self, parent) -> Entry:
         entry = Entry(parent)
-        entry.grid(row=0, column=0, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
+        entry.grid(row=0, column=0, pady=(5, 5), padx=5, ipady=5, sticky=tk.EW)
         return entry
 
     def __set_browser_button(self, parent) -> Button:
         browser_button = Button(parent, text=_("加载本地模型"), takefocus=False)
-        browser_button.grid(row=0, column=1, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
+        browser_button.grid(row=0, column=1, pady=(5, 5), padx=5, ipady=5, sticky=tk.EW)
         return browser_button
 
     def __set_model_tree(self, parent) -> Treeview:
         columns_info = [(_("名称"), 40), (_("标签"), 30), (_("类型"), 30), (_("大小"), 30)]
         tree = Treeview(parent, show="headings", columns=[i[0] for i in columns_info])
-        tree.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5))
+        tree.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=5)
         for text, width in columns_info:
             tree.heading(text, text=text, anchor=tk.CENTER)
             tree.column(text, anchor=tk.CENTER, width=width, stretch=True)
         scrollbar = Scrollbar(tree, orient=tk.VERTICAL, cursor="hand2")
-        scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=(TkS(1), TkS(1)), padx=TkS(1))
+        scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=(1, 1), padx=1)
         scrollbar.config(command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
         return tree
@@ -108,7 +107,7 @@ class ModelFrame(Frame):
 
     def __set_control_frame(self, parent) -> Frame:
         frame = Frame(parent)
-        frame.grid(row=2, column=0, columnspan=2, sticky=tk.EW, pady=(TkS(8), TkS(5)))
+        frame.grid(row=2, column=0, columnspan=2, sticky=tk.EW, pady=(8, 5))
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_columnconfigure(1, weight=0)
         frame.grid_columnconfigure(2, weight=0)
@@ -129,26 +128,26 @@ class ModelFrame(Frame):
         name = self.model_tree.item(selection[0], "values")[0] if selection else ""
         status = self.model_tree.item(selection[0], "tags")[0] if selection else ""
         self.name_tip_label.config(text=_("名称："))
-        self.name_tip_label.grid(row=0, column=0, sticky=tk.W, padx=(TkS(5), TkS(2)), pady=TkS(5))
+        self.name_tip_label.grid(row=0, column=0, sticky=tk.W, padx=(5, 2), pady=5)
         self.name_edit_entry.config(state=tk.NORMAL, cursor="xterm")
         self.name_edit_entry.delete(0, tk.END)
         self.name_edit_entry.insert(0, name)
-        self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, TkS(5)), pady=TkS(5), ipady=TkS(5))
+        self.name_edit_entry.grid(row=0, column=1, sticky=tk.EW, padx=(0, 5), pady=5, ipady=5)
         self.detail_desc_text.config(state=tk.NORMAL)
         self.detail_desc_text.delete('1.0', tk.END)
         text = _("描述：{desc}\n\n下载地址：{url}", desc=model_config.meta.description, url=model_config.meta.download_url)
         self.detail_desc_text.insert(tk.END, text)
-        self.detail_desc_text.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5), pady=(0, TkS(5)))
+        self.detail_desc_text.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=5, pady=(0, 5))
         self.detail_desc_text.config(state=tk.DISABLED)
 
         if status == ModelStatus.DISABLED:
             self.name_edit_entry.config(state=tk.DISABLED, cursor="arrow")
-            self.download_btn.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
+            self.download_btn.grid(row=0, column=0, columnspan=3, pady=(3, 20))
         elif status == ModelStatus.DOWNLOADING:
             self.name_edit_entry.config(state=tk.DISABLED, cursor="arrow")
         else:
-            self.btn_group.grid(row=0, column=0, columnspan=3, pady=(TkS(3), TkS(20)))
-            self.use_btn.grid(row=0, column=0, sticky=tk.EW, padx=(0, TkS(5)))
+            self.btn_group.grid(row=0, column=0, columnspan=3, pady=(3, 20))
+            self.use_btn.grid(row=0, column=0, sticky=tk.EW, padx=(0, 5))
             self.uninstall_btn.grid(row=0, column=1, sticky=tk.EW)
             self.use_btn.config(state=tk.DISABLED if status == "using" else tk.NORMAL)
             self.uninstall_btn.config(state=tk.DISABLED if status == "using" else tk.NORMAL)
