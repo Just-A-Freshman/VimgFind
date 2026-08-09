@@ -1,6 +1,6 @@
 # Search
 ## How to select multiple images at once?
-1.  **Discontinuous selection**: Hold down the `Ctrl` key on the bottom left of the keyboard without releasing it, then use the mouse to select multiple different images, and execute the corresponding right-click menu command.
+1.  **Discontinuous selection**: Hold down the `⌘` (Command) key on the bottom left of the keyboard without releasing it, then use the mouse to select multiple different images, and execute the corresponding right-click menu command. (On macOS, `Control`-click is the system right-click and cannot be used for multi-selection.)
 2.  **Continuous selection**: Hold down the `Shift` key on the bottom left of the keyboard without releasing it, then click one image with the mouse, and then click another image. All images between these two images will be selected.
 
 Actually, this is just an implementation of the default behavior of most operating systems. However, it should be noted that when selecting multiple images and right-clicking to open the image or open the folder, only the first selected image and the folder where the first image is located will always be opened.
@@ -22,7 +22,7 @@ A few points to note:
 > **Question:**
 > Can I use multiple images simultaneously to search for similar images? Will pasting dozens of images cause a crash?
 
-**Supported. You can simultaneously input multiple images for searching by dragging, pasting, or multi-selecting (`Ctrl`/`Shift`) while browsing.**
+**Supported. You can simultaneously input multiple images for searching by dragging, pasting, or multi-selecting (`⌘`/`Shift`) while browsing.**
 
 **Actual Behavior:**
 
@@ -112,7 +112,7 @@ One folder per model, the folder name is the unique ID of the model. The folder 
 - Text encoding model (`.onnx`, not required, only needed for multimodal models)
 - `models.json` configuration file (placed in the root directory)
 
-Once a model folder is prepared, place it in: `./config/data/models/` and it can be directly recognized and used. Alternatively, you can compress the model folder into a `.zip` format first, and then click "Load Local Model" in the Model tab.
+Once a model folder is prepared, place it in: `~/Library/Application Support/VimgFind/models/` and it can be directly recognized and used. Alternatively, you can compress the model folder into a `.zip` format first, and then click "Load Local Model" in the Model tab.
 
 We will focus on the format of `models.json`. As a direct reference, you can double-click the currently used model in the Model tab to see what a standard `models.json` looks like. Among these, the parameters you particularly need to care about:
 | Parameter            | Meaning                                                      | Consequence of filling wrong                                 |
@@ -360,13 +360,13 @@ In this command, `ffmpeg` is the **subject** executing the command. `-i`, `{path
 | :---------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
 | PNG to JPG                          | `ffmpeg -i {path} {dir}/{noext}.jpg`                         | `{path}` is the original image, `{dir}/{noext}.jpg` is the new file in the same folder |
 | Add text watermark with ImageMagick | `magick {path} -pointsize 36 -fill white -gravity southeast -annotate 0 "My Watermark" {dir}/watermarked_{name}` | Add `watermarked_` prefix to output filename to avoid overwriting original |
-| Call your own Python script         | `python D:/tools/my_script.py {path} {dir}/result.png`       | Script receives two arguments: input path and output path, handles freely internally |
+| Call your own Python script         | `python ~/tools/my_script.py {path} {dir}/result.png`       | Script receives two arguments: input path and output path, handles freely internally |
 
 **What do these variables mean?**
 
 | Variable                            | What it represents                                           |
 | :---                                | :---                                                         |
-| `{path}`                            | Full path of the selected image, e.g., `D:\Photos\2024\IMG_001.png` |
+| `{path}`                            | Full path of the selected image, e.g., `/Users/name/Photos/2024/IMG_001.png` |
 | `{dir}`                             | The folder where the image is located                        |
 | `{name}`                            | Complete filename, e.g., `IMG_001.png`                       |
 | `{noext}`                           | Filename without extension, e.g., `IMG_001`                  |
@@ -507,7 +507,7 @@ As mentioned above, this is behavior in Test Mode. Go to the configuration setti
 
 **Example:** You want to copy the paths of selected images to the clipboard. Doing this directly in the command line is troublesome, but with a Python script it's simple:
 
-**Script `copy_paths.py` (placed in `D:/tools/`):**
+**Script `copy_paths.py` (placed in `~/tools/`):**
 
 ```python
 import sys, pyperclip
@@ -517,7 +517,7 @@ pyperclip.copy("\n".join(paths))
 **Custom command and enable Batch Mode:**
 
 ```
-Copy paths to clipboard → python D:/tools/copy_paths.py {paths}
+Copy paths to clipboard → python ~/tools/copy_paths.py {paths}
 ```
 > **Principle:** The command itself is responsible for "calling the script", the script is responsible for "specific logic". Each does its job, simple and reliable.
 # User Feedback
