@@ -90,7 +90,7 @@ class ModelFrame(Frame):
             tree.heading(text, text=text, anchor=tk.CENTER)
             tree.column(text, anchor=tk.CENTER, width=width, stretch=True)
         scrollbar = Scrollbar(tree, orient=tk.VERTICAL, cursor="hand2")
-        scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=(1, 1), padx=1)
+        scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, pady=2, padx=2)
         scrollbar.config(command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
         return tree

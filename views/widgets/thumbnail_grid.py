@@ -52,7 +52,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
     def __env_init(self) -> None:
         def create_scrollbar() -> None:
             scrollbar = Scrollbar(self, orient=tk.VERTICAL, cursor="hand2")
-            scrollbar.grid(row=0, column=1, sticky=tk.NS, padx=1, pady=1)
+            scrollbar.grid(row=0, column=1, sticky=tk.NS, padx=2, pady=2)
             self.configure(yscrollcommand=scrollbar.set)
             scrollbar.config(command=self._on_scrollbar_scroll)
             scrollbar.bind("<B1-Motion>", self._on_scrollbar_drag)
@@ -81,7 +81,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self.bind("<<ThemeChanged>>", lambda e: self.change_theme())
         self.bind("<Enter>", lambda e: self.config(highlightbackground=self.theme_color.primary))
         self.bind("<Leave>", lambda e: self.config(highlightbackground=self.theme_color.selectbg))
-        self.bind("<FocusIn>", lambda e: self.config(highlightthickness=1))
+        self.bind("<FocusIn>", lambda e: self.config(highlightthickness=2))
         self.bind("<FocusOut>", lambda e: self.config(highlightbackground=self.theme_color.selectbg, highlightthickness=1))
         self.master.after(50, create_scrollbar)
 

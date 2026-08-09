@@ -20,7 +20,7 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
     def __env_init(self, columns: dict[str, int]) -> None:
         def create_scrollbar() -> None:
             scrollbar = Scrollbar(self, orient=tk.VERTICAL, cursor="hand2")
-            scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=1, pady=1)
+            scrollbar.pack(fill=tk.BOTH, side=tk.RIGHT, padx=2, pady=2)
             scrollbar.config(command=self.yview)
             self.configure(yscrollcommand=scrollbar.set)
         for text, width in columns.items():
