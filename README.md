@@ -2,7 +2,7 @@
 
 ## 1. 项目简介
 
-VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**以图搜图**与**以文搜图**（搜索框内按回车键触发）功能，兼顾性能与易用性。
+VimgFind 是一款适用于 Windows 和 Macos 平台的本地 AI 搜图工具，集成**以图搜图**与**以文搜图**（搜索框内按回车键触发）功能，兼顾性能与易用性。
 
 核心技术栈：
 
@@ -40,9 +40,14 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 
 其他情况详见：config/data/docs/ 帮助文档；
 
+
+
 ## 3. 快速上手
 
 ### 3.1. 直接使用
+
+### Windows用户
+
 以下给出2.5.2版本的**完整程序**的下载链接：
 
 - Github：[Github下载VimgFind-v2.5.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-win64.zip)
@@ -55,7 +60,23 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 - Github：[Github下载VimgFind-v2.5.2更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-win64-update.zip)
 - 蓝奏云：[蓝奏云下载VingFind-v2.5.2更新包](https://wwbbm.lanzouv.com/ikIpA40w58di)
 
-> tip：使用VimgFind 1.2 到 2.4的所有版本的程序，均可使用上述更新程序进行升级。升级方法：点击`更新请点我.hta`，选择目标可执行程序后点击更新即可。更新期间，会弹出黑色的命令行窗口以执行更新脚本，此时请不要关闭窗口。2.5.1版本，在设置界面点击检查更新，无需手动操作即可完成更新。
+>tip：使用VimgFind 1.2 到 2.4的所有版本的程序，均可使用上述更新程序进行升级。升级方法：点击`更新请点我.hta`，选择目标可执行程序后点击更新即可。更新期间，会弹出黑色的命令行窗口以执行更新脚本，此时请不要关闭窗口。2.5.1版本，在设置界面点击检查更新，无需手动操作即可完成更新。
+
+
+
+### Macos用户
+
+我们仅提供一种下载方式，打开终端，执行如下命令：
+
+```sh
+/bin/bash -c "$(curl -fsSL https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/install-remote.sh)"
+```
+
+执行完成后等待下载，下载完成后会自动启动界面，在APP中可以看到它。
+
+>注意：请不要手动在Release中下载dmg文件；由于Macos系统的默认下载方式会没有签名的APP进行强制隔离，导致APP无法打开；而使用curl这类下载工具可以绕过这一限制。
+
+
 
 更新日志请查看：[VimgFindv2.5.1更新日志](https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.5)
 
@@ -64,6 +85,8 @@ VimgFind 是一款适用于 Windows 平台的本地 AI 搜图工具，集成**�
 
 
 ### 3.2 源码运行
+
+### Windows系统
 
 环境要求：Python 3.9 及以上版本，推荐使用conda安装：
 
@@ -115,6 +138,12 @@ pyinstaller -D main.py -i config/data/favicon.ico -w
 
 
 
+### Macos系统
+
+详看：`version2.5-macos`分支的说明文档。
+
+
+
 ### 3.4 模型与配置说明
 
 所有模型配置见：@models.json，里面包含了内置模型的基本配置。如果你希望使用自己的模型，需要：
@@ -131,8 +160,7 @@ pyinstaller -D main.py -i config/data/favicon.ico -w
 ## 4. 未来规划
 
 - [x] 引入 [多模型 - 多索引] 机制：用户可以自由切换不同的搜图模型，不同的模型有自己单独的索引文件夹 和 索引文件 
+- [x] 增加跨平台支持：计划未来支持Macos系统
 
-- [ ] 增加跨平台支持：计划未来支持Macos和Linux系统
-
-其他需求请在issue中提出
+其他需求请在issue中提出。
 
