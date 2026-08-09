@@ -1,6 +1,6 @@
 {
-    "max_work_thread": 12,
-    "max_match_count": 500,
+    "max_work_thread": 10,
+    "max_match_count": 50,
     "preview_mode": "medium_ico",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
@@ -17,11 +17,8 @@
         {
             "name": "复制图片",
             "type": "embedded",
-            "is_visible": false,
-            "shortcut": [
-                "Cmd",
-                "C"
-            ],
+            "is_visible": true,
+            "shortcut": [],
             "batch_mode": false,
             "command": ""
         },
@@ -29,10 +26,7 @@
             "name": "复制路径",
             "type": "embedded",
             "is_visible": true,
-            "shortcut": [
-                "Cmd",
-                "0"
-            ],
+            "shortcut": [],
             "batch_mode": false,
             "command": ""
         },
@@ -53,14 +47,6 @@
             "command": ""
         },
         {
-            "name": "——————————",
-            "type": "separator",
-            "is_visible": true,
-            "shortcut": [],
-            "batch_mode": false,
-            "command": ""
-        },
-        {
             "name": "打开图片",
             "type": "embedded",
             "is_visible": true,
@@ -72,23 +58,9 @@
             "name": "打开文件夹",
             "type": "embedded",
             "is_visible": true,
-            "shortcut": [
-                "Cmd",
-                "G"
-            ],
+            "shortcut": [],
             "batch_mode": false,
             "command": ""
-        },
-        {
-            "name": "未命名",
-            "type": "custom",
-            "is_visible": true,
-            "shortcut": [
-                "Cmd",
-                "C"
-            ],
-            "batch_mode": false,
-            "command": "#test\n{ask_int}"
         }
     ],
     "other_config_path": ""
