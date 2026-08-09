@@ -1,0 +1,40 @@
+name: macOS 多版本安装测试
+
+on:
+  workflow_dispatch:        # 手动触发：Actions 页面点 Run workflow
+  workflow_call:            # 可被其他工作流调用
+
+jobs:
+  install-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15, macos-26]   # arm64 版本；macos-13 为 Intel，本包不适用
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: 执行用户安装命令（真实分发路径）
+        env:
+          VIMFIND_INSTALL_DIR: "${{ runner.temp }}/vf_install"
+          # 国内镜像源在 CI 上可关（GitHub 网络内直连快）：
+          VIMFIND_GITEE_URL: ""
+        run: |
+          /bin/bash -c "$(curl -fsSL https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos-install.sh)"
+
+      - name: 验证应用启动
+        run: |
+          APP="${{ runner.temp }}/vf_install/VimgFind.app"
+          test -d "$APP" || { echo "✗ 应用未安装"; exit 1; }
+          echo "  架构: $(file "$APP/Contents/MacOS/VimgFind" | grep -o 'arm64\|x86_64')"
+          sleep 30
+          if pgrep -f "vf_install/VimgFind.app" > /dev/null; then
+            echo "✓ 应用在 ${{ matrix.os }} 上启动成功"
+          else
+            echo "✗ 应用启动失败"
+            exit 1
+          fi
+          pkill -f "vf_install/VimgFind.app" || true
+
+      - name: 输出系统信息
+        run: |
+          sw_vers
+          uname -m
