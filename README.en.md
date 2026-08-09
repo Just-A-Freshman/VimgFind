@@ -60,6 +60,10 @@ Open Terminal and paste the following command (it downloads and launches the app
 
 > Since 2.5.1, the packaged program only bundles the lightest OSNet model for easier distribution. Other models can be viewed and downloaded in the **Model** tab.
 
+### 3.3 Switching the UI Language
+
+The app ships with both **中文 (Chinese)** and **English** UI languages. Open *General Settings* → *General* tab, then pick your language from the *Display Language* dropdown; a restart is needed for the change to fully take effect.
+
 ## 4. Resource Usage & Performance Tips
 
 - **Disk**: index files are roughly 1 MB per 400 images — usually negligible;
