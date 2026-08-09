@@ -69,7 +69,7 @@ VimgFind 是一款适用于 Windows 和 Macos 平台的本地 AI 搜图工具，
 我们仅提供一种下载方式，打开终端，执行如下命令：
 
 ```sh
-/bin/bash -c "$(curl -fsSL https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/install-remote.sh)"
+/bin/bash -c "$(curl -fsSL https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos-install.sh)"
 ```
 
 执行完成后等待下载，下载完成后会自动启动界面，在APP中可以看到它。
