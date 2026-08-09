@@ -11,6 +11,7 @@ from .index_page import IndexFrame
 from .model_page import ModelFrame
 from .search_page import SearchFrame
 from config.settings import WinInfo
+from utils import macos_window
 from utils.i18n import _
 
 
@@ -38,6 +39,7 @@ class WinGUI(Window, TkinterDnD.Tk):
         height = WinInfo.height
         geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) // 2, (screenheight - height) // 2)
         self.geometry(geometry)
+        macos_window.enable_frame_autosave(WinInfo.title, "VimgFindMainWindow")
         if full_screen:
             self.attributes("-fullscreen", True)
             self.bind_all("<Escape>", lambda e: self.attributes("-fullscreen", False))

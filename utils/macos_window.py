@@ -7,6 +7,16 @@ def windows() -> list:
     return list(NSApp.windows())
 
 
+def enable_frame_autosave(window_title: str, name: str) -> None:
+    for w in windows():
+        if w.title() == window_title:
+            try:
+                w.setFrameAutosaveName_(name)
+            except Exception:
+                pass
+            return
+
+
 def max_level() -> int:
     return max((w.level() for w in windows()), default=0)
 
