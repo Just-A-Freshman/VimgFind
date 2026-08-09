@@ -6,7 +6,6 @@ from tkinter.font import Font
 from ttkbootstrap import Button, Frame, Label, Combobox, Checkbutton, Entry, Labelframe, Notebook, Text
 
 from config.settings import WinInfo
-from utils import macos_window
 from config.types import MenuItemDef
 from .widgets import CheckboxTreeview
 from .widgets.tooltip import TopmostToolTip

@@ -7,7 +7,6 @@ from ttkbootstrap import Button, Frame, Label, Labelframe, Treeview, Text, Scrol
 from ttkbootstrap.constants import LINK
 
 from config.settings import WinInfo
-from utils import macos_window
 from config.types import MenuItemDef
 from utils.i18n import _
 
@@ -39,13 +38,11 @@ class TestResultDialog(tk.Toplevel):
         WinInfo.set_window_icon(self)
         win_w = 450
         win_h = 400
-        scale = macos_window.content_scale(parent.winfo_width(), WinInfo.width)
-        win_w, win_h = round(win_w * scale), round(win_h * scale)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.transient(parent)
-        self.minsize(round(400 * scale), round(320 * scale))
+        self.minsize(400, 320)
         self.deiconify()
 
     def __set_summary_bar(self) -> Button:

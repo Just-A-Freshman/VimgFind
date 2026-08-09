@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tkinter import filedialog
-from utils import macos_window, messagebox
+from utils import messagebox
 from typing import TYPE_CHECKING, Literal
 from dataclasses import dataclass
 from threading import Event
@@ -14,7 +14,7 @@ import math
 from PIL import Image
 
 from core import SearchStatus
-from config.settings import Setting, WinInfo
+from config.settings import Setting
 from utils.i18n import _
 from views.widgets import DetailListView, ThumbnailGridView
 import utils.shortcut as shortcut
@@ -204,10 +204,7 @@ class SearchController:
             tab.preview_view = DetailListView(tab.preview_container, {_("大小"): 100, _("修改时间"): 160, _("相似度"): 100})
             self.env_init(only_preview_widgets=True)
         else:
-            base_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 110)
-            self.app.view.update_idletasks()
-            scale = macos_window.content_scale(self.app.view.winfo_width(), WinInfo.width)
-            thumbnail_size = max(1, round(base_size * scale))
+            thumbnail_size = {"medium_ico": 110, "big_ico": 150, "huge_ico": 230}.get(mode, 110)
             tab.preview_view.destroy()
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
             self.env_init(only_preview_widgets=True)

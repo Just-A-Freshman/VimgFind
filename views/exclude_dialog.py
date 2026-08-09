@@ -6,7 +6,6 @@ from ttkbootstrap.constants import LINK
 from ttkbootstrap import Button, Labelframe, Frame, Entry, Label, Treeview, Scrollbar
 
 from config.settings import WinInfo
-from utils import macos_window
 from utils.i18n import _
 
 
@@ -51,8 +50,6 @@ class ExcludeDialog(tk.Toplevel):
         self.title(_("排除设置"))
         win_w = 450
         win_h = 400
-        scale = macos_window.content_scale(parent.winfo_width(), WinInfo.width)
-        win_w, win_h = round(win_w * scale), round(win_h * scale)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
