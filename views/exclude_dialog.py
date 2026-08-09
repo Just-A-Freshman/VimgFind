@@ -73,9 +73,9 @@ class ExcludeDialog(tk.Toplevel):
     def __set_rules_tree(self, parent) -> Treeview:
         rules_tree = Treeview(parent, columns=("name",), show="", selectmode="browse", cursor="hand2")
         rules_tree.column("name", stretch=True)
-        rules_tree.pack(fill=tk.BOTH, expand=True, padx=2, pady=(0, 1))
+        rules_tree.pack(fill=tk.BOTH, expand=True, padx=2, pady=(0, 2))
         scroll = Scrollbar(rules_tree, orient=tk.VERTICAL, command=rules_tree.yview)
-        scroll.pack(fill=tk.Y, side=tk.RIGHT, padx=1, pady=1)
+        scroll.pack(fill=tk.Y, side=tk.RIGHT, padx=2, pady=2)
         rules_tree.configure(yscrollcommand=scroll.set)
         return rules_tree
 
@@ -120,8 +120,8 @@ class ExcludeDialog(tk.Toplevel):
         preview_tree.pack(fill=tk.BOTH, expand=True, padx=2)
 
         preview_scroll_v = Scrollbar(preview_tree, orient=tk.VERTICAL, command=preview_tree.yview)
-        preview_scroll_v.pack(fill=tk.Y, side=tk.RIGHT, padx=(0, 1), pady=1)
+        preview_scroll_v.pack(fill=tk.Y, side=tk.RIGHT, padx=(0, 2), pady=2)
         preview_scroll_h = Scrollbar(preview_tree, orient=tk.HORIZONTAL, command=preview_tree.xview)
-        preview_scroll_h.pack(fill=tk.X, side=tk.BOTTOM, padx=(1, 0), pady=1)
+        preview_scroll_h.pack(fill=tk.X, side=tk.BOTTOM, padx=(2, 0), pady=2)
         preview_tree.configure(yscrollcommand=preview_scroll_v.set, xscrollcommand=preview_scroll_h.set)
         return preview_tree
