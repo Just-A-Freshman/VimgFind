@@ -27,19 +27,19 @@ VimgFind 是一款适用于 Windows 和 Macos 平台的本地 AI 搜图工具，
 
 - 多种模型适配（>=2.5.1）：提供已经经过转化直接可用的几个模型，可随时根据条件切换使用；
 
-- 自定义右键菜单（>=2.5.2）：允许用户控制右键菜单项的显示、快键键和上下位置（拖拽），且可以通过自定义命令拓展菜单功能；
+- 索引排除规则支持(>=2.4.2，#12)：通过编写符合特定语法的条目，符合规则的图片将不会被添加到索引；
+
+- 自定义右键菜单（>=2.5.2，#13）：允许用户控制右键菜单项的显示、快键键和上下位置（拖拽），且可以通过自定义命令拓展菜单功能；
 
 
-
-### 2.2 固有局限
+### 2.2 局限性
 
 - 磁盘占用：索引文件体积相对较大，参考数据：400 张图片对应约 1MB 磁盘空间；
-- 内存消耗较大：
-    - 模型方面：如果使用如Chinese clip模型，启动后预计需占用1.6GB内存；而最轻的模型（仅以图搜图，2.5版本安装包内置）：Osnet，大约启动需消耗170MB内存；
-    - 索引方面：HNSW需要将整个索引加载到内存中以支持高效匹配。参考内存消耗：100万张图片 ~ 6-8GB内存。因此更为合适的做法是使用合适模型索引不同的文件夹，以分担内存压力。
+- 内存占用：
+    - 模型方面，如Chinese clip模型，启动后预计需占用1.6GB内存；而最轻的内置模型：Osnet，启动后需消耗170MB内存；
+    - 索引方面：HNSW需要将整个索引加载到内存中以支持高效匹配。参考内存消耗：100万张图片 ~ 6-8GB内存。因此更为合适的做法是使用合适模型索引不同的文件夹，并善于使用索引排除规则排除文件，以从根源上降低内存压力。
 
 其他情况详见：config/data/docs/ 帮助文档；
-
 
 
 ## 3. 快速上手
@@ -60,13 +60,13 @@ VimgFind 是一款适用于 Windows 和 Macos 平台的本地 AI 搜图工具，
 - Github：[Github下载VimgFind-v2.5.2更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-win64-update.zip)
 - 蓝奏云：[蓝奏云下载VingFind-v2.5.2更新包](https://wwbbm.lanzouv.com/ikIpA40w58di)
 
->tip：使用VimgFind 1.2 到 2.4的所有版本的程序，均可使用上述更新程序进行升级。升级方法：点击`更新请点我.hta`，选择目标可执行程序后点击更新即可。更新期间，会弹出黑色的命令行窗口以执行更新脚本，此时请不要关闭窗口。2.5.1版本，在设置界面点击检查更新，无需手动操作即可完成更新。
+>tip：使用VimgFind 1.2 到 2.4的所有版本的程序，均可使用上述更新程序进行升级。升级方法：点击`更新请点我.hta`，选择目标可执行程序后点击更新即可。更新期间，会弹出黑色的命令行窗口以执行更新脚本，此时请不要关闭窗口。2.5.2版本，在设置界面点击检查更新，无需手动操作即可完成更新。
 
 
 
 ### Macos用户
 
-我们仅提供一种下载方式，打开终端，执行如下命令：
+推荐使用终端下载。打开终端后，粘贴如下命令：
 
 ```sh
 /bin/bash -c "$(curl -fsSL https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos-install.sh)"
@@ -78,7 +78,7 @@ VimgFind 是一款适用于 Windows 和 Macos 平台的本地 AI 搜图工具，
 
 
 
-更新日志请查看：[VimgFindv2.5.1更新日志](https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.5)
+更新日志请查看：[VimgFindv2.5.2更新日志](https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.5)
 
 其他历史版本请自行查看：[Releases · Just-A-Freshman/VimgFind/releases](https://github.com/Just-A-Freshman/VimgFind/releases)
 
@@ -95,8 +95,6 @@ VimgFind 是一款适用于 Windows 和 Macos 平台的本地 AI 搜图工具，
     ```
     git clone https://github.com/Just-A-Freshman/VimgFind.git
     ```
-
-    
 
 2. 进入目录并创建激活虚拟环境(powershell)：
 
@@ -125,8 +123,6 @@ VimgFind 是一款适用于 Windows 和 Macos 平台的本地 AI 搜图工具，
     python ./main.py
     ```
 
-
-
 如果你希望将程序自行打包使用，可以使用如下命令：
 
 ```
@@ -137,12 +133,9 @@ pyinstaller -D main.py -i config/data/favicon.ico -w
 打包完成后，将源代码中的`config/data/`和`docs/`文件夹复制到`_internal`下即可。
 
 
-
 ### Macos系统
 
 详看：`version2.5-macos`分支的说明文档。
-
-
 
 ### 3.4 模型与配置说明
 
@@ -153,14 +146,12 @@ pyinstaller -D main.py -i config/data/favicon.ico -w
 - 将文件夹压缩成zip；
 - 启动程序，点击模型界面导入使用；
 
-但需要说明，将模型转化成本程序可以接受的有效的onnx模型，其标准步骤尚不清晰，未来将补充详细的转换文档。
-
-
+关于`model.json`中参数的含义，详见：`config/data/docs/`下的帮助文档。
 
 ## 4. 未来规划
 
-- [x] 引入 [多模型 - 多索引] 机制：用户可以自由切换不同的搜图模型，不同的模型有自己单独的索引文件夹 和 索引文件 
-- [x] 增加跨平台支持：计划未来支持Macos系统
+- [x] 引入 [多模型 - 多索引] 机制：用户可以自由切换不同的搜图模型，不同的模型有自己单独的索引文件夹 和 索引文件；
+- [x] 增加跨平台支持：计划未来支持Macos系统；
 
 其他需求请在issue中提出。
 
