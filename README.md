@@ -187,6 +187,47 @@ OLD=/Library/Frameworks/Python.framework/Versions/3.12
 - python.org 安装包：华为云 `https://mirrors.huaweicloud.com/python/<版本号>/`
 
 
+### 3.6 macOS 打包与分发（实测记录）
+
+**一键构建**（打包 → 缩包 → 签名 → 验证 全流程）：
+
+```bash
+./build.sh
+```
+
+产物为 `dist/VimgFind.app`（约 120MB）。构建环境默认 `.venv-build`，可用 `BUILD_ENV=xxx ./build.sh` 指定。
+
+**产物结构与启动原理**：
+
+- `.app` 是一个**文件夹**（bundle），Finder 显示为单个图标；右键 → “显示包内容”可查看：
+  - `Contents/MacOS/VimgFind`（约 6MB，引导器 + Python 字节码）
+  - `Contents/Resources/` + `Contents/Frameworks/`（真正的运行时：onnxruntime/Python/numpy 等，对应 Windows `-D` 的 `_internal`）
+- 启动方式：引导器初始化路径 → 加载打包的 Python → 运行 `main.py`。Windows `-F` 的 6MB exe 只是“压缩壳”，真实体积同样 100MB+（运行时解压到临时目录），因此体积并非 macOS 更大。
+
+**默认数据模板（首启自动迁移）**：
+
+- `config/data/` 即打包的默认模板：`setting.json`（干净默认菜单）+ `models/osnet/`（默认模型，`models/` 被 .gitignore 忽略，需自行放入）。
+- 全新用户首次启动，程序把模板**复制**到 `~/Library/Application Support/VimgFind/`（复制非移动，bundle 内模板永不减少）；之后用户数据全在用户目录，升级不会被覆盖。
+- 模拟全新用户测试（不动本机真实数据）：
+  ```bash
+  HOME=/tmp/vf_fresh ./dist/VimgFind.app/Contents/MacOS/VimgFind
+  rm -rf /tmp/vf_fresh   # 测完即弃
+  ```
+
+**签名与分发**：
+
+- 当前为 **ad-hoc 签名**（`com.vimgfind.app`），本机/自测直接运行即可，无任何弹窗。
+- 分发给他人时，下载后的 app 会带 `com.apple.quarantine` 属性（下载即被打标），首次打开会被 Gatekeeper 拦截，两种处理：
+  - 右键 → 打开 → 再点“打开”（无需终端）
+  - 终端执行：`xattr -dr com.apple.quarantine /path/to/VimgFind.app`
+- 若希望“下载即可运行”（免上述操作），需 Apple Developer Program（$99/年）→ Developer ID 签名 + notarization 公证（macOS 26 对未公证软件逐步收紧，右键打开通道目前仍可用）。
+
+**构建顺序注意事项**：
+
+- 缩包必须在**签名之前**（缩包移走文件会使签名封存失效）；`build.sh` 已按正确顺序处理。
+- 手动构建时参考：`pyinstaller -D -w --name VimgFind --osx-bundle-identifier com.vimgfind.app --add-data "config/data:config/data" --collect-all tkinterdnd2 --collect-all ttkbootstrap main.py` → 缩包（`缩包脚本/shrink_macos.py`）→ `codesign --force --deep --sign - dist/VimgFind.app`。
+
+
 ## 4. 未来规划
 
 - [x] 引入 [多模型 - 多索引] 机制：用户可以自由切换不同的搜图模型，不同的模型有自己单独的索引文件夹 和 索引文件 
