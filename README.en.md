@@ -37,15 +37,35 @@ Screenshot:
 
 ### 3.1 Installation
 
-**macOS (recommended)**
+**macOS**
 
-Open Terminal and paste the following command (it downloads and launches the app automatically):
+**Option A: Automatic install via command line (recommended)**
+
+Open Terminal and run the following commands (the script downloads itself locally first, then installs and launches the app):
 
 ```sh
-/bin/bash -c "$(curl -fsSL https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos-install.sh)"
+curl -fsSL -o /tmp/vimgfind-install.sh https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos-install.sh
+bash /tmp/vimgfind-install.sh
 ```
 
-> Do not manually download the dmg from Releases: macOS' default download flow applies quarantine to unsigned apps and blocks them from opening. Downloading via `curl` bypasses that restriction.
+> Security note: the install script runs locally with your user privileges. We recommend reviewing it first (`cat /tmp/vimgfind-install.sh`); running it means you acknowledge and accept the associated risks. If GitHub is unreachable from your network, use Option B below (Gitee mirror).
+
+**Option B: Manual install (dmg)**
+
+- GitHub: [Download VimgFind-2.5.2-macos.dmg](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos.dmg)
+- Gitee mirror: [Download VimgFind-2.5.2-macos.dmg](https://gitee.com/Chorgri/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos.dmg)
+
+Open the dmg and drag `VimgFind.app` into the *Applications* folder. If you see "VimgFind is damaged and can't be opened" or "Apple cannot check it for malicious software" (caused by macOS quarantine on the unsigned app), do either of the following:
+
+1. **Right-click** `VimgFind.app` in Finder, choose *Open*, and confirm in the dialog;
+2. Or run in Terminal: `xattr -dr com.apple.quarantine /Applications/VimgFind.app`
+
+Optional integrity check: verify the SHA-256 after downloading:
+
+```sh
+shasum -a 256 VimgFind-2.5.2-macos.dmg
+# Expected output: 917960061391634332ac7b7e486d168363e67b8c1ba284a8edb80c92f6ffa79b
+```
 
 **Windows**
 

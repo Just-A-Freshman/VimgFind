@@ -39,15 +39,35 @@ VimgFind 是一款运行在**本地**的 AI 搜图工具。同时支持以图搜
 
 ### 3.1 安装
 
-**macOS 用户（推荐）**
+**macOS 用户**
 
-打开终端，粘贴以下命令（脚本会自动下载并启动应用）：
+**方式 A：命令行自动安装（推荐）**
+
+打开终端，执行以下命令（脚本会先下载到本地，再自动安装并启动应用）：
 
 ```sh
-/bin/bash -c "$(curl -fsSL https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos-install.sh)"
+curl -fsSL -o /tmp/vimgfind-install.sh https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos-install.sh
+bash /tmp/vimgfind-install.sh
 ```
 
-> 请不要手动从 Release 下载 dmg 文件：macOS 默认下载方式会对未签名 App 强制隔离（quarantine），导致无法打开；用 `curl` 这类下载工具可绕过该限制。
+> 安全提示：安装脚本将以你的用户权限在本地执行。建议先查看脚本内容（`cat /tmp/vimgfind-install.sh`）再运行；运行即代表你已知晓并接受相应风险。国内网络若无法访问 GitHub，可改用下方的 dmg 手动安装（Gitee 镜像）。
+
+**方式 B：手动安装（dmg）**
+
+- GitHub：[下载 VimgFind-2.5.2-macos.dmg](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos.dmg)
+- Gitee 镜像：[下载 VimgFind-2.5.2-macos.dmg](https://gitee.com/Chorgri/VimgFind/releases/download/program2.5/VimgFind-2.5.2-macos.dmg)
+
+打开 dmg，将 `VimgFind.app` 拖入“应用程序”文件夹。若启动时提示“已损坏，无法打开”或“无法验证开发者”（未签名 App 被系统隔离所致），任选其一：
+
+1. 在 Finder 中**右键**点击 `VimgFind.app`，选择“打开”，并在弹窗中确认；
+2. 或打开终端执行：`xattr -dr com.apple.quarantine /Applications/VimgFind.app`
+
+安装包校验（可选）：下载后执行 `shasum -a 256` 核对 SHA-256：
+
+```sh
+shasum -a 256 VimgFind-2.5.2-macos.dmg
+# 期望输出：917960061391634332ac7b7e486d168363e67b8c1ba284a8edb80c92f6ffa79b
+```
 
 **Windows 用户**
 
