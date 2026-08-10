@@ -71,7 +71,7 @@ shasum -a 256 VimgFind-2.5.2-macos.dmg
 
 **Windows 用户**
 
-- 完整程序：[Github 下载 VimgFind-v2.5.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iKpAQ40w561e)
+- 完整程序：[Github 下载 VimgFind-v2.5.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iKQcC41o45qf)
 - 更新程序：[Github 下载 v2.5.2 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/ikIpA40w58di)
 
 
