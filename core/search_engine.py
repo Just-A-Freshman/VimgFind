@@ -314,7 +314,6 @@ class SearchTool:
         threshold -= THRESHOLD_EPSILON
         prev_similarity: float | None = None
         prev_sizes: list[int] = []
-        invalid_files: list[str] = []
 
         for img_id, similarity in zip(ids_list, sim_list):
             if similarity < threshold:
@@ -332,7 +331,7 @@ class SearchTool:
             try:
                 st_size = file_path.stat().st_size
             except OSError:
-                invalid_files.append(str(file_path))
+                self.__checkout_status = SearchStatus.PARTIAL_OMITTED
                 continue
             if size_min is not None or size_max is not None:
                 file_size_mb = st_size / (1024 * 1024)
@@ -363,9 +362,6 @@ class SearchTool:
 
         if yielded_count == 0:
             self.__checkout_status = SearchStatus.NO_RESULTS
-        if len(invalid_files) != 0:
-            self.remove_files(invalid_files)
-            self.__checkout_status = SearchStatus.PARTIAL_OMITTED
 
     def is_empty_index(self) -> bool:
         return self.__name_idx_mgr.results_count == 0
