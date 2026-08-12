@@ -229,5 +229,6 @@
   "配置文件已切换，需要重启后才能生效。": "Config file changed. Restart the app to apply.",
   "配置编辑": "Edit Config",
   "错误日志": "Error Log",
-  "默认提示信息": "Default prompt message"
+  "默认提示信息": "Default prompt message",
+  "部分无效结果被隐藏，建议更新索引。": "Some invalid results are hidden. Consider updating the index."
 }

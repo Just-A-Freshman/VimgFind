@@ -247,7 +247,7 @@ class SearchController:
                 tab.preview_view.selection_set(item)
             self.__smooth_preview(((img_path, *self.__generate_extra_info(img_path, sim)) for img_path, sim in results))
             if self.app.search_tools.checkout_status == SearchStatus.PARTIAL_OMITTED:
-                self.show_toast(_("部分无效结果被隐藏，建议更新索引。"), duration=5000)
+                self.show_toast(_("部分无效结果被隐藏，建议更新索引。"), duration=3000)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
