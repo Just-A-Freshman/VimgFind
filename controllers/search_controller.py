@@ -102,33 +102,28 @@ class SearchController:
         image_path = None
 
         if image_obj is None:
-            try:
-                copy_text = self.app.view.clipboard_get()
-                lines = copy_text.splitlines()
-                if len(lines) > 3000:
-                    lines = lines[:3000]
-                    self.show_toast(_("内容过长，已截断到3000行。"))
-                accept_exts = set(Setting.accepted_exts)
-                all_paths = [Path(l.strip()) for l in lines if l.strip()]
-                valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix.lower() in accept_exts]
-                if len(valid_paths) > 1:
-                    self.__queue_paths = valid_paths
-                    self.__current_page = 0
-                    self.__search_image()
-                    return
-                elif len(valid_paths) == 1:
-                    image_obj = image_ops.parse_image_from_path(valid_paths[0])
-                    if image_obj is not None:
-                        image_path = Path(valid_paths[0])
-                    else:
-                        raise tk.TclError
-                else:
-                    image_obj = image_ops.parse_image_from_url(copy_text)
-                    if image_obj is None:
-                        raise tk.TclError
-            except tk.TclError:
-                messagebox.showinfo(_("提示"), _("无法识别剪切板中的图片数据！"))
+            copy_text = self.app.view.clipboard_get()
+            lines = copy_text.splitlines()
+            if len(lines) > 3000:
+                lines = lines[:3000]
+                self.show_toast(_("内容过长，已截断到3000行。"))
+            accept_exts = set(Setting.accepted_exts)
+            all_paths = [Path(l.strip()) for l in lines if l.strip()]
+            valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix.lower() in accept_exts]
+            if len(valid_paths) > 1:
+                self.__queue_paths = valid_paths
+                self.__current_page = 0
+                self.__search_image()
                 return
+            if len(valid_paths) == 1:
+                image_obj = image_ops.parse_image_from_path(valid_paths[0])
+            if image_obj is None:
+                image_obj = image_ops.parse_image_from_url(copy_text)
+                if image_obj is None:
+                    messagebox.showinfo(_("提示"), _("无法识别剪切板中的图片数据！"))
+                    return
+            else:
+                image_path = Path(valid_paths[0])
         if image_path is None:
             image_path = file_ops.generate_unique_filename(Setting.temp_image_path, ".jpg")
             if file_ops.get_folder_size(Setting.temp_image_path) > 1024 * 1024 * 30:
@@ -218,11 +213,14 @@ class SearchController:
             tab.set_nav_page_label(self.__current_page + 1, len(self.__queue_paths))
             source_path = self.__queue_paths[self.__current_page]
             if not source_path or not Path(source_path).is_file():
-                messagebox.showinfo(_("提示"), _("第 {n} 张图片不存在或已被删除！", n=self.__current_page + 1))
+                tab.preview_view.clear()
+                self.show_toast(_("第 {n} 张图片不存在或已被删除！", n=self.__current_page + 1))
+                self.__is_finish_search.set()
                 return
             input_data = image_ops.parse_image_from_path(source_path)
             if input_data is None:
                 messagebox.showwarning(_("警告"), _("无法识别该图片类型！"))
+                self.__is_finish_search.set()
                 return
             tab.set_nav_visible(True)
         else:
