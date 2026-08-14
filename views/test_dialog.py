@@ -24,26 +24,27 @@ class TestResultItem:
 class TestResultDialog(tk.Toplevel):
     def __init__(self, parent, results: list[TestResultItem], menu_item: MenuItemDef) -> None:
         super().__init__(parent)
-        self.withdraw()
+        self.__win(parent)
         self.__results = results
         self.__menu_items = menu_item
         self.open_tempdir_btn = self.__set_summary_bar()
         self.file_tree = self.__set_execution_list()
         self.detail_text, self.copy_btn = self.__set_detail_panel()
-        self.__win(parent)
 
     def __win(self, parent) -> None:
+        self.withdraw()
+        self.attributes("-alpha", 0)
+        self.update_idletasks()
         self.transient(parent)
-        self.title(_("命令测试结果"))
-        self.iconbitmap(WinInfo.ico_path)
         win_w = TkS(450)
         win_h = TkS(400)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
-        self.transient(parent)
+        self.title(_("命令测试结果"))
+        self.iconbitmap(WinInfo.ico_path)
         self.minsize(TkS(400), TkS(320))
-        self.deiconify()
+        self.after(100, lambda: self.attributes("-alpha", 1) or self.deiconify())
 
     def __set_summary_bar(self) -> Button:
         bar = Frame(self)

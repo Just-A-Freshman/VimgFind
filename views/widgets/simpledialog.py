@@ -46,7 +46,7 @@ class SingletonDialog(tk.Toplevel):
         self.geometry(f"{width}x{height}+{x}+{y}")
         self.title(title)
         self.iconbitmap(WinInfo.ico_path)
-        self.after(50, lambda: self.attributes('-alpha', 1) or self.deiconify())
+        self.after(100, lambda: self.attributes('-alpha', 1) or self.deiconify())
 
 
 class AskStringDialog(BasicDialog, simpledialog._QueryString):    #type:ignore
