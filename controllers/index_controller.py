@@ -230,7 +230,8 @@ class IndexController:
         dialog.rules_tree.bind("<Double-Button-1>", controller.on_item_double_click)
         dialog.preview_tree.bind("<Double-Button-1>", controller.on_preview_double_click)
         dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
-        controller.load_rules_into_view()
+        if len(dialog.rules_tree.get_children()) == 0:
+            controller.load_rules_into_view()
 
     def __open_dataset_folder(self, event: tk.Event) -> None:
         selection = self.app.view.index_tab.index_dataset_table.selection()
