@@ -218,10 +218,10 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
             self.selection_set(clicked_item)
             self.event_generate("<<ItemviewSelect>>")
 
-    def _schedule_load(self) -> None:
+    def _schedule_load(self, interval: int = 100) -> None:
         if self.__scroll_timer:
             self.master.after_cancel(self.__scroll_timer)
-        self.__scroll_timer = self.master.after(100, self._load_visible_images)
+        self.__scroll_timer = self.master.after(interval, self._load_visible_images)
 
     def _check_results(self) -> None:
         if self.__is_destroy:
@@ -359,6 +359,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
     def _load_visible_images(self) -> None:
         if not self._results or self.__cols == 0:
             return
+        print(1)
         canvas_y1 = self.canvasy(0)
         canvas_y2 = canvas_y1 + self.winfo_height()
         item_height = self.__thumbnail_size + self.MARGIN + self.FONT_HEIGHT
@@ -368,7 +369,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         start_index = int(start_row * self.__cols)
         end_index = int(min(end_row * self.__cols - 1, len(self._results) - 1))
         new_visible_items = set()
-        for index, item in enumerate(list(self._results)):
+        for index, item in enumerate(self._results):
             if index < start_index or index > end_index:
                 continue
             new_visible_items.add(item)
@@ -383,7 +384,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self._results[item] = (image_path, *extra_info)
         self._update_layout()
         self._create_placeholder(item)
-        self.master.after(100, self._load_visible_images)
+        self._schedule_load(interval=10)
         return item
     
     def clear(self) -> None:
