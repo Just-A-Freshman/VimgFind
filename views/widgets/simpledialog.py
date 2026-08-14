@@ -34,11 +34,18 @@ class SingletonDialog(tk.Toplevel):
         cls._instance = instance
         return instance
     
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, title: str = "", width: int = TkS(450), height: int = TkS(320), **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._initialized = True
         self.withdraw()
         self.update_idletasks()
+        self.transient(self.master)  # type: ignore
+        x = self.master.winfo_rootx() + (self.master.winfo_width() - width) // 2
+        y = self.master.winfo_rooty() + (self.master.winfo_height() - height) // 2
+        self.geometry(f"{width}x{height}+{x}+{y}")
+        self.title(title)
+        self.iconbitmap(WinInfo.ico_path)
+        self.deiconify()
 
 
 class AskStringDialog(BasicDialog, simpledialog._QueryString):    #type:ignore

@@ -20,21 +20,8 @@ class SettingDialog(simpledialog.SingletonDialog):
     def __init__(self, parent) -> None:
         if hasattr(self, '_initialized'):
             return
-        super().__init__(parent)
-        self._initialized = True
+        super().__init__(master=parent, title=_("设置"))
         self.general_tab, self.custom_menu_tab = self.__set_notebook()
-        self.__win(parent)
-        
-    def __win(self, parent) -> None:
-        self.transient(parent)
-        win_w = TkS(450)
-        win_h = TkS(320)
-        x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
-        y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
-        self.geometry(f"{win_w}x{win_h}+{x}+{y}")
-        self.title(_("设置"))
-        self.iconbitmap(WinInfo.ico_path)
-        self.deiconify()
 
     def __set_notebook(self) -> tuple[GeneralTab, CustomMenuTab]:
         notebook = Notebook(self, style="sub.TNotebook")

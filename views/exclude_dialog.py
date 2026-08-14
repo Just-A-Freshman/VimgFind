@@ -29,7 +29,7 @@ class ExcludeDialog(simpledialog.SingletonDialog):
     def __init__(self, parent) -> None:
         if hasattr(self, '_initialized'):
             return
-        super().__init__(parent)
+        super().__init__(parent, title=_("排除设置"), height=TkS(400))
         edit_rules_frame = self.__set_edit_rules_frame()
         button_frame = self.__set_edit_frame(edit_rules_frame)
         self.add_rule_btn = self.__set_add_rule_btn(button_frame)
@@ -45,18 +45,6 @@ class ExcludeDialog(simpledialog.SingletonDialog):
         self.preview_status_label = self.__set_preview_status_label(status_frame)
         self.stop_btn = Button(status_frame, text=_("停止"), style=LINK, cursor="hand2")
         self.preview_tree = self.__set_preview_tree(preview_rules_frame)
-        self.__win(parent)
-
-    def __win(self, parent: tk.Tk) -> None:
-        self.title(_("排除设置"))
-        win_w = TkS(450)
-        win_h = TkS(400)
-        x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
-        y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
-        self.geometry(f"{win_w}x{win_h}+{x}+{y}")
-        self.iconbitmap(WinInfo.ico_path)
-        self.transient(parent)
-        self.deiconify()
 
     def __set_edit_rules_frame(self) -> Labelframe:
         frame = Labelframe(self, text=_("排除规则"))
