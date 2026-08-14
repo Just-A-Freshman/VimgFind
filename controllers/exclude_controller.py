@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from tkinter import filedialog, font
 import tkinter as tk
 import logging
@@ -12,10 +13,12 @@ from ttkbootstrap import Style
 
 from config.settings import Setting, TkS
 from utils.i18n import _
-from views.exclude_dialog import ExcludeDialog
 import utils.exclude_rules as exclude_rules
 import utils.file_ops as file_ops
 import utils.decorators as decorators
+
+if TYPE_CHECKING:
+    from views.exclude_dialog import ExcludeDialog
 
 
 MAX_PREVIEW_ITEMS = 100000

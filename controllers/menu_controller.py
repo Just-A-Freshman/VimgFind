@@ -16,7 +16,6 @@ from ttkbootstrap import Menu
 from config.settings import TkS, Setting, WinInfo
 from config.types import MenuItemDef
 from views.widgets import BasicImagePreviewView, PreviewCanvasView, simpledialog
-from views.test_dialog import TestResultDialog, TestResultItem
 from utils.i18n import _
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
@@ -207,6 +206,7 @@ class CustomCommandExecutor:
         self.app = app_controller
 
     def run(self, selected_files: list[Path], menu_item: MenuItemDef) -> None:
+        from views.test_dialog import TestResultItem
         clean_menu_item = self.__resolve_test_item(menu_item)
         if clean_menu_item is None:
             return
@@ -330,6 +330,7 @@ class CustomCommandExecutor:
         return results
 
     def __show_test_dialog(self, items, clean_menu_item, temp_dir) -> None:
+        from views.test_dialog import TestResultDialog
         assert temp_dir is not None and clean_menu_item is not None
         dialog = TestResultDialog(self.app.view, items, clean_menu_item)
         dialog.copy_btn.update_idletasks()

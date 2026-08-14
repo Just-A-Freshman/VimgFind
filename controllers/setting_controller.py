@@ -10,8 +10,6 @@ from ttkbootstrap.style import Colors
 
 from config.settings import Setting, WinInfo, TkS
 from config.types import MenuItemDef
-from .update_controller import UpdateController, UpdateCheckResult
-from views import SettingDialog
 from utils.i18n import I18n, _
 import utils.shortcut as shortcut
 import utils.file_ops as file_ops
@@ -19,7 +17,7 @@ import utils.decorators as decorators
 
 if TYPE_CHECKING:
     from .app_controller import AppController
-    from views import SettingDialog, GeneralTab, CustomMenuTab
+    from views.setting_dialog import SettingDialog, GeneralTab, CustomMenuTab
 
 
 class SettingController:
@@ -56,6 +54,8 @@ class SettingController:
         self.app.view.model_tab.detail_desc_text.config(bg=colors.get("bg"), fg=colors.get("fg"), selectbackground=colors.get('selectbg'))   # type:ignore
 
     def show_dialog(self) -> None:
+        from views.setting_dialog import SettingDialog
+
         def destroy():
             self.app.setting.save()
             if self.dialog is not None:
@@ -159,6 +159,8 @@ class GeneralController:
 
     @decorators.send_task
     def __check_update(self) -> None:
+        from .update_controller import UpdateController, UpdateCheckResult
+
         def on_check_result(result: UpdateCheckResult) -> None:
             if result.error:
                 messagebox.showerror(_("检查更新失败"), result.error)

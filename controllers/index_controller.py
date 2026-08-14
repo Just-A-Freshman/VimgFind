@@ -9,7 +9,6 @@ import logging
 from tqdm import tqdm
 
 from .exclude_controller import ExcludePreviewController
-from views import ExcludeDialog
 from utils.i18n import _
 import utils.file_ops as file_ops
 import utils.decorators as decorators
@@ -218,6 +217,7 @@ class IndexController:
             self._is_auto_updating = False
 
     def __open_exclude_dialog(self) -> None:
+        from views.exclude_dialog import ExcludeDialog
         dialog = ExcludeDialog(self.app.view)
         controller = ExcludePreviewController(dialog, self.app.setting)
         dialog.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("排除规则")))

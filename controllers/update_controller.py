@@ -12,7 +12,7 @@ import sys
 import re
 
 from config.settings import ROOT, WinInfo
-from views import UpdateDialog
+from views.update_dialog import UpdateDialog
 from utils.i18n import _
 import utils.file_ops as file_ops
 import utils.internet as internet
