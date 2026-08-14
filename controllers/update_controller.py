@@ -134,6 +134,7 @@ class UpdateController:
                 save_path=str(zip_path),
                 num_threads=16,
                 progress_callback=progress_cb,
+                validate=False
             )
             self.__downloader = downloader
             downloader.download()
@@ -143,11 +144,11 @@ class UpdateController:
 
             dialog.after(0, lambda: self.__finish_update(zip_path))
         except RuntimeError as e:
-            if "下载已取消" in str(e):
+            error_msg = str(e)
+            if "下载已取消" in error_msg:
                 return
-            dialog.after(0, lambda: self.__on_error(str(e)))
-        except Exception as e:
-            dialog.after(0, lambda: self.__on_error(str(e)))
+            messagebox.showerror(_("更新失败"), _("更新过程中出现错误：\n{msg}", msg=error_msg))
+            self.__cleanup()
 
     def __finish_update(self, zip_path: Path) -> None:
         try:
@@ -174,8 +175,3 @@ class UpdateController:
             messagebox.showerror(_("更新失败"), _("更新过程中出现错误：\n{msg}", msg=str(e)))
         finally:
             self.__cleanup()
-
-    def __on_error(self, error_msg: str) -> None:
-        messagebox.showerror(_("更新失败"), _("更新过程中出现错误：\n{msg}", msg=error_msg))
-        self.__cleanup()
-

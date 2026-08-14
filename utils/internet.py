@@ -67,7 +67,8 @@ class MultiThreadDownloader:
             num_threads=32, 
             chunk_size=8192, 
             checksum: str = "",
-            progress_callback=None
+            progress_callback=None,
+            validate: bool = True,
         ) -> None:
         self.url = url
         self.save_path = save_path
@@ -75,6 +76,7 @@ class MultiThreadDownloader:
         self.chunk_size = chunk_size
         self.checksum = checksum
         self.progress_callback = progress_callback
+        self.validate = validate
 
         self.file_size = 0
         self.accept_ranges = False
@@ -91,7 +93,7 @@ class MultiThreadDownloader:
 
     def _get_file_info(self) -> None:
         try:
-            with fetch_url(self.url, timeout=30, method='HEAD', validate=True) as resp:
+            with fetch_url(self.url, timeout=30, method='HEAD', validate=self.validate) as resp:
                 self.file_size = int(resp.headers.get('Content-Length', 0))
                 self.accept_ranges = resp.headers.get('Accept-Ranges', '').lower() == 'bytes'
         except (OSError, ValueError) as e:
@@ -136,12 +138,12 @@ class MultiThreadDownloader:
 
         headers = {'Range': f'bytes={start}-{end}'}
         try:
-            with fetch_url(self.url, timeout=60, headers=headers, validate=True) as resp:
+            with fetch_url(self.url, timeout=60, headers=headers, validate=self.validate) as resp:
                 with open(part_file, 'wb') as f:
                     while True:
                         if self._has_error:
                             return
-                        self._pause_event.wait()  # blocks when paused
+                        self._pause_event.wait()
                         if self._cancel_event.is_set():
                             return
                         chunk = resp.read(self.chunk_size)
