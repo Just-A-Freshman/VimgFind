@@ -23,6 +23,24 @@ class BasicDialog(simpledialog.Dialog):
         self.iconbitmap(WinInfo.ico_path)
 
 
+class SingletonDialog(tk.Toplevel):
+    _instance = None
+    def __new__(cls, parent=None):
+        if cls._instance is not None and cls._instance.winfo_exists():
+            cls._instance.lift()
+            cls._instance.focus_force()
+            return cls._instance
+        instance = super().__new__(cls)
+        cls._instance = instance
+        return instance
+    
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._initialized = True
+        self.withdraw()
+        self.update_idletasks()
+
+
 class AskStringDialog(BasicDialog, simpledialog._QueryString):    #type:ignore
     ...
 

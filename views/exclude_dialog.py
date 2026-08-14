@@ -6,10 +6,11 @@ from ttkbootstrap.constants import LINK
 from ttkbootstrap import Button, Labelframe, Frame, Entry, Label, Treeview, Scrollbar
 
 from config.settings import WinInfo, TkS
+from views.widgets import simpledialog
 from utils.i18n import _
 
 
-class ExcludeDialog(tk.Toplevel):
+class ExcludeDialog(simpledialog.SingletonDialog):
     add_rule_btn: Button
     del_rule_btn: Button
     help_btn: Button
@@ -26,8 +27,9 @@ class ExcludeDialog(tk.Toplevel):
     )
 
     def __init__(self, parent) -> None:
+        if hasattr(self, '_initialized'):
+            return
         super().__init__(parent)
-        self.withdraw()
         edit_rules_frame = self.__set_edit_rules_frame()
         button_frame = self.__set_edit_frame(edit_rules_frame)
         self.add_rule_btn = self.__set_add_rule_btn(button_frame)
@@ -46,7 +48,6 @@ class ExcludeDialog(tk.Toplevel):
         self.__win(parent)
 
     def __win(self, parent: tk.Tk) -> None:
-        self.update_idletasks()
         self.title(_("排除设置"))
         win_w = TkS(450)
         win_h = TkS(400)

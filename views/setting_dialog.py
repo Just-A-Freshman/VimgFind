@@ -8,37 +8,25 @@ from ttkbootstrap.widgets import ToolTip
 
 from config.settings import WinInfo, TkS
 from config.types import MenuItemDef
-from .widgets import CheckboxTreeview
+from .widgets import CheckboxTreeview, simpledialog
 from utils.i18n import _
 
 
-class SettingDialog(tk.Toplevel):
+class SettingDialog(simpledialog.SingletonDialog):
     general_tab: GeneralTab
     custom_menu_tab: CustomMenuTab
-    _instance = None
     __slots__ = ("general_tab", "custom_menu_tab", "_initialized")
-
-    def __new__(cls, parent=None):
-        if cls._instance is not None and cls._instance.winfo_exists():
-            cls._instance.lift()
-            cls._instance.focus_force()
-            return cls._instance
-        instance = super().__new__(cls)
-        cls._instance = instance
-        return instance
 
     def __init__(self, parent) -> None:
         if hasattr(self, '_initialized'):
             return
         super().__init__(parent)
-        self.withdraw()
         self._initialized = True
         self.general_tab, self.custom_menu_tab = self.__set_notebook()
         self.__win(parent)
         
     def __win(self, parent) -> None:
         self.transient(parent)
-        self.update_idletasks()
         win_w = TkS(450)
         win_h = TkS(320)
         x = parent.winfo_rootx() + (parent.winfo_width() - win_w) // 2
