@@ -9,12 +9,7 @@ import logging
 import os
 import shutil
 import subprocess
-import unicodedata
-import uuid
 import time
-
-from send2trash import send2trash
-import win32clipboard
 
 from .i18n import _
 from . import exclude_rules
@@ -71,6 +66,7 @@ def open_file(file_path: str | Path, highlight: bool = False) -> None:
 
 
 def copy_files(*file_paths: str | Path) -> None:
+    import win32clipboard
     valid_paths = []
     for path in file_paths:
         abs_path = Path(path).absolute()
@@ -116,6 +112,7 @@ def copy_text(*text: str, tk: Tk) -> None:
 
 def delete_file(file_path: str | Path, hard=True) -> None:
     try:
+        from send2trash import send2trash
         os.remove(file_path) if hard else send2trash(file_path)
     except (FileNotFoundError, OSError) as e:
         logging.error(f"删除文件失败: {file_path}")
@@ -161,6 +158,7 @@ def run_cmd(cmd: str | list[str], cwd: str | None = None) -> tuple[int, str, str
 
 
 def truncate_filename(filename: str, target_width: int = 16) -> str:
+    import unicodedata
     file_path = Path(filename)
     char_width = lambda x: 2 if unicodedata.east_asian_width(x) in ('F', 'W') else 1
     target_width = target_width - sum(char_width(char) for char in file_path.suffix) - 1
@@ -189,6 +187,7 @@ def is_path_under(path: str, parent_dir: str, *, normalized: bool = False) -> bo
 
 
 def generate_unique_filename(target_dir: Path, suffix: str) -> Path:
+    import uuid
     random_name = uuid.uuid4().hex
     if suffix and not suffix.startswith("."):
         suffix = f".{suffix}"
