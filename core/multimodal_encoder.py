@@ -98,7 +98,7 @@ class ImagePreprocess:
 class MultiModalEncoder:
     __slots__ = (
         "__preprocess", "__normalization", "__output_index",
-        "__context_length", "__tokenizer",
+        "__context_length", "__tokenizer", "__text_encoder_path",
         "image_session", "text_session",
     )
 
@@ -114,8 +114,9 @@ class MultiModalEncoder:
         self.__output_index = config.output_index
         self.__context_length = config.context_length
         self.__tokenizer = create_tokenizer(".")
-        self.image_session = self._init_onnx_session(config.image_encoder_path)
-        self.text_session = self._init_onnx_session(config.text_encoder_path)
+        self.__text_encoder_path = config.text_encoder_path
+        self.text_session = None
+        self.image_session = self._init_onnx_session(config.image_encoder_path)        
 
     def tokenize(self, texts) -> np.ndarray:
         if self.__tokenizer is None:
@@ -184,6 +185,8 @@ class MultiModalEncoder:
         return image_features
 
     def encode_text(self, input_text: str) -> np.ndarray | None:
+        if self.text_session is None:
+            self.text_session = self._init_onnx_session(self.__text_encoder_path)
         assert self.text_session is not None and self.__tokenizer is not None, "该模型不是文字模型，无法进行以文搜图"
         try:
             text = self.tokenize(input_text)
