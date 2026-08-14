@@ -48,8 +48,6 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self.__is_destroy = False
         self.__is_scrollbar_dragging = False
 
-        self._check_results()
-
     def __env_init(self) -> None:
         def create_scrollbar() -> None:
             scrollbar = Scrollbar(self, orient=tk.VERTICAL, cursor="hand2")
@@ -235,7 +233,8 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
             self.__visible_image_data[item] = {'photo': result.photo, 'size': result.size, 'error': result.error}
             if item in self.__canvas_items:
                 self._create_canvas_item(item)
-        self.master.after(100, self._check_results)
+        if self.__loading_tasks:
+            self.master.after(100, self._check_results)
 
     def _cancel_timer(self) -> None:
         if self.__scroll_timer:
@@ -359,7 +358,6 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
     def _load_visible_images(self) -> None:
         if not self._results or self.__cols == 0:
             return
-        print(1)
         canvas_y1 = self.canvasy(0)
         canvas_y2 = canvas_y1 + self.winfo_height()
         item_height = self.__thumbnail_size + self.MARGIN + self.FONT_HEIGHT
@@ -378,6 +376,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
                 image_path = self._results[item][0]
                 self.__image_loader.add_task(item, image_path, self.__thumbnail_size)
         self.__visible_items = new_visible_items
+        self._check_results()
 
     def append(self, image_path: Path, *extra_info: str | int) -> str:
         item = self.generate_path_item(image_path)
