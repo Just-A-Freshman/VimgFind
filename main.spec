@@ -143,6 +143,8 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=True,
-    upx_exclude=[],
+    # numpy 的 OpenBLAS DLL 不能 UPX：实测 UPX 压缩（20.4MB→3.85MB）虽省 ~16MB 磁盘，
+    # 但运行时解压整个 20MB 镜像常驻内存，比未压缩的文件映射多占 ~20MB 物理内存。
+    upx_exclude=['libscipy_openblas64*', 'libopenblas*', 'libblas*'],
     name='main',
 )
