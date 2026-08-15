@@ -219,7 +219,7 @@ class SearchTool:
         if not rules_obj:
             return []
 
-        normalized_dirs = [os.path.normcase(d) for d in search_dirs]
+        normalized_dirs = [file_ops.normalize_path(d) for d in search_dirs]
         result: list[str] = []
 
         for index_file, _ in self.__name_idx_mgr.name_index:
