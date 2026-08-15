@@ -174,16 +174,25 @@ def get_metainfo(file_path: str | Path) -> int:
     return os.path.getsize(file_path)
 
 
-def normalize_path(path: str | Path) -> str:
+def fast_normalize(path: str | Path) -> str:
+    s = os.fspath(path)
+    if not os.path.isabs(s):
+        s = os.path.abspath(s)
+    return os.path.normcase(os.path.normpath(s))
+
+
+def real_normalize(path: str | Path) -> str:
     return os.path.normcase(os.path.realpath(path))
 
 
-def is_path_under(path: str, parent_dir: str, *, normalized: bool = False) -> bool:
-    if not normalized:
-        path = normalize_path(path)
-        parent_dir = normalize_path(parent_dir)
-    parent_with_sep = parent_dir.rstrip(os.sep) + os.sep
-    return path.startswith(parent_with_sep)
+def is_path_under(path: str | Path, parent_dir: str | Path) -> bool:
+    fast_path = fast_normalize(path)
+    fast_parent = fast_normalize(parent_dir)
+    if fast_path.startswith(fast_parent.rstrip(os.sep) + os.sep):
+        return True
+    real_path = real_normalize(path)
+    real_parent = real_normalize(parent_dir)
+    return real_path.startswith(real_parent.rstrip(os.sep) + os.sep)
 
 
 def generate_unique_filename(target_dir: Path, suffix: str) -> Path:

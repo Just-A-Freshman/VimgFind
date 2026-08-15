@@ -78,7 +78,6 @@ class SearchTool:
     
     def __get_changed_files(self, target_dir: str) -> list[str]:
         changed_files = []
-        target_dir = file_ops.normalize_path(target_dir)
         for idx, (index_file, old_metainfo) in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
@@ -93,16 +92,12 @@ class SearchTool:
     def __get_new_files(self, target_dir: str, exclude_rules: list[str] | None = None) -> list[str]:
         new_files = []
         current_files = file_ops.get_file_iterator(target_dir, exclude_rules)
-        existing_files = set(
-            file_ops.normalize_path(i[0]) for i in self.__name_idx_mgr.name_index
-            if i[0] != NameIndexManager.NOTEXISTS
-        )
+        existing_files = set(i[0] for i in self.__name_idx_mgr.name_index if i[0] != NameIndexManager.NOTEXISTS)
         new_files = []
         for file in current_files:
             if self.force_stop_update:
                 break
-            norm_file = file_ops.normalize_path(file)
-            if norm_file not in existing_files:
+            if file_ops.fast_normalize(file) not in existing_files:
                 new_files.append(file)
         return new_files
 
@@ -194,12 +189,11 @@ class SearchTool:
         for idx, (file_path, _) in enumerate(self.__name_idx_mgr.name_index):
             if file_path == NameIndexManager.NOTEXISTS:
                 continue
-            normalized = file_ops.normalize_path(file_path)
-            if normalized in seen_paths:
+            if file_path in seen_paths:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
             else:
-                seen_paths.add(normalized)
+                seen_paths.add(file_path)
 
     def remove_nonexists(self) -> None:
         self.__init_event.wait()
@@ -219,15 +213,14 @@ class SearchTool:
         if not rules_obj:
             return []
 
-        normalized_dirs = [file_ops.normalize_path(d) for d in search_dirs]
+        normalized_dirs = [file_ops.fast_normalize(d) for d in search_dirs]
         result: list[str] = []
 
         for index_file, _ in self.__name_idx_mgr.name_index:
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
 
-            norm_file = os.path.normcase(index_file)
-            target_dir = next((nd for nd in normalized_dirs if file_ops.is_path_under(norm_file, nd, normalized=True)), None,)
+            target_dir = next((nd for nd in normalized_dirs if file_ops.is_path_under(index_file, nd)), None)
             if target_dir is None:
                 result.append(index_file)
                 continue
@@ -242,26 +235,23 @@ class SearchTool:
 
     def remove_files_in_directory(self, directory: str, keep_dirs: list[str] | None = None) -> None:
         self.__init_event.wait()
-        directory_path = Path(directory).resolve()
-        keep_paths = [Path(d).resolve() for d in (keep_dirs or [])]
         for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            file_path = Path(index_file).resolve()
-            if not file_path.is_relative_to(directory_path):
+            if not file_ops.is_path_under(index_file, directory):
                 continue
-            if any(file_path.is_relative_to(kp) for kp in keep_paths):
+            if any(file_ops.is_path_under(index_file, kp) for kp in (keep_dirs or [])):
                 continue
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
 
     def remove_files(self, file_paths: list[str]) -> None:
         self.__init_event.wait()
-        file_set = {file_ops.normalize_path(p) for p in file_paths}
+        file_set = {file_ops.fast_normalize(p) for p in file_paths}
         for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
-            if file_ops.normalize_path(index_file) in file_set:
+            if index_file in file_set:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
 
@@ -341,7 +331,7 @@ class SearchTool:
                     continue
 
             if folder_filters:
-                if not any(file_path.is_relative_to(f) for f in folder_filters):
+                if not any(file_ops.is_path_under(file_path, f) for f in folder_filters):
                     continue
 
             if dedup:

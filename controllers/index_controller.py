@@ -96,7 +96,7 @@ class IndexController:
             messagebox.showinfo(_("提示"), _("新索引的目录已包含在当前索引目录中！"))
             return
         for search_dir in search_dirs:
-            if Path(dir_path).is_relative_to(search_dir):
+            if file_ops.is_path_under(dir_path, search_dir):
                 messagebox.showinfo(_("提示"), _("该文件夹是索引目录的子文件夹！"))
                 return
         search_dirs.append(dir_path)

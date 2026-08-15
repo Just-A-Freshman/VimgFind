@@ -13,6 +13,7 @@ import numpy as np
 
 import utils.file_ops as file_ops
 
+
 HNSW_EF_CONSTRUCTION = 200
 HNSW_M = 32
 HNSW_MIN_EF = 100
@@ -152,8 +153,9 @@ class NameIndexManager:
     __slots__ = ("__name_index_path", "__max_match_count", "__name_index", "__valid_index_count")
 
     def __init__(self, name_index_path: str, max_match_count: int) -> None:
-        self.__name_index_path = name_index_path
-        self.__max_match_count = max_match_count
+        self.__name_index_path: str = name_index_path
+        self.__max_match_count: int = max_match_count
+        self.__valid_index_count: int = 0
         self.__init_index()
 
     @property
@@ -181,14 +183,14 @@ class NameIndexManager:
             Path(self.__name_index_path).parent.mkdir(exist_ok=True, parents=True)
             self.__name_index = []
         finally:
-            self.__valid_index_count = sum(
-                index_file != NameIndexManager.NOTEXISTS
-                for index_file, _ in self.__name_index
-            )
+            for entry in self.__name_index:
+                if entry[0] != NameIndexManager.NOTEXISTS:
+                    entry[0] = file_ops.fast_normalize(entry[0])
+                    self.__valid_index_count += 1
 
     def add_name(self, name: Path | str) -> int:
         self.__name_index.append([
-            file_ops.normalize_path(str(name)),
+            file_ops.fast_normalize(str(name)),
             file_ops.get_metainfo(name)
         ])
         self.__valid_index_count += 1
