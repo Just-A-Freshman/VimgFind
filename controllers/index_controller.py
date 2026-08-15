@@ -219,6 +219,8 @@ class IndexController:
     def __open_exclude_dialog(self) -> None:
         from views.exclude_dialog import ExcludeDialog
         dialog = ExcludeDialog(self.app.view)
+        if dialog.rules_tree.bind("<<TreeviewSelect>>"):
+            return
         controller = ExcludePreviewController(dialog, self.app.setting)
         dialog.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("排除规则")))
         dialog.stop_btn.config(command=controller.stop_scan)
@@ -230,8 +232,7 @@ class IndexController:
         dialog.rules_tree.bind("<Double-Button-1>", controller.on_item_double_click)
         dialog.preview_tree.bind("<Double-Button-1>", controller.on_preview_double_click)
         dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
-        if len(dialog.rules_tree.get_children()) == 0:
-            controller.load_rules_into_view()
+        controller.load_rules_into_view()
 
     def __open_dataset_folder(self, event: tk.Event) -> None:
         selection = self.app.view.index_tab.index_dataset_table.selection()
