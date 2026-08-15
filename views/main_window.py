@@ -24,7 +24,7 @@ class WinGUI(Window, TkinterDnD.Tk):
 
     def __init__(self, full_screen: bool = False, topmost: bool = False) -> None:
         enable_high_dpi_awareness()
-        super().__init__(iconphoto=None)
+        super().__init__(iconphoto=str(WinInfo.icon_png))
         self.__win(full_screen, topmost)
         self.switch_tab = self.__set_notebook(self)
 
@@ -40,7 +40,6 @@ class WinGUI(Window, TkinterDnD.Tk):
         height = WinInfo.height
         geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) // 2, (screenheight - height) // 2)
         self.geometry(geometry)
-        self.iconbitmap(WinInfo.ico_path)
         self.option_add('*Font', WinInfo.default_font)
 
     def __set_notebook(self, parent) -> Notebook:

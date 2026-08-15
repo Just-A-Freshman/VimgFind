@@ -20,7 +20,6 @@ class BasicDialog(simpledialog.Dialog):
         btn_cancel.grid(row=0, column=2, padx=TkS(3), pady=TkS(3))
         self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.cancel)
-        self.iconbitmap(WinInfo.ico_path)
 
 
 class SingletonDialog(tk.Toplevel):
@@ -45,7 +44,6 @@ class SingletonDialog(tk.Toplevel):
         y = self.master.winfo_rooty() + (self.master.winfo_height() - height) // 2
         self.geometry(f"{width}x{height}+{x}+{y}")
         self.title(title)
-        self.iconbitmap(WinInfo.ico_path)
         self.after(100, lambda: self.attributes('-alpha', 1) or self.deiconify())
 
 

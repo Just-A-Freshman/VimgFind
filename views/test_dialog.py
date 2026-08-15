@@ -42,7 +42,6 @@ class TestResultDialog(tk.Toplevel):
         y = parent.winfo_rooty() + (parent.winfo_height() - win_h) // 2
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.title(_("命令测试结果"))
-        self.iconbitmap(WinInfo.ico_path)
         self.minsize(TkS(400), TkS(320))
         self.after(100, lambda: self.attributes("-alpha", 1) or self.deiconify())
 
