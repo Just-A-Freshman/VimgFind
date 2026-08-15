@@ -145,7 +145,7 @@ class MenuController:
     def embeded_command(self, event: tk.Event, selected_files: list[Path]) -> dict[str, Callable]:
         return {
             "复制图片": lambda f=selected_files: file_ops.copy_files(*f),
-            "复制路径": lambda f=selected_files: file_ops.copy_text(*f, tk=self.app.view),
+            "复制路径": lambda f=selected_files: file_ops.copy_text(*[i.resolve() for i in f], tk=self.app.view),
             "图片另存为": lambda f=selected_files: self.save_as_image(*f),
             "删除图片": lambda f=selected_files: self.delete_files(event, f),
             "打开图片": lambda: file_ops.open_file(selected_files[0]),

@@ -275,7 +275,7 @@ class SearchController:
             self.__last_search_content = input_data
         elif isinstance(input_data, Image.Image):
             tab.search_entry.delete(0, tk.END)
-            tab.search_entry.insert(0, source_path or "")
+            tab.search_entry.insert(0, str(Path(source_path).resolve()) if source_path else "")
             tab.search_entry.xview_moveto(1.0)
             source_path_obj = Path(source_path) if source_path is not None else "" 
             if source_path_obj and source_path_obj.is_file():
