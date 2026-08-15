@@ -44,7 +44,7 @@ class SingletonDialog(tk.Toplevel):
         y = self.master.winfo_rooty() + (self.master.winfo_height() - height) // 2
         self.geometry(f"{width}x{height}+{x}+{y}")
         self.title(title)
-        self.after(100, lambda: self.attributes('-alpha', 1) or self.deiconify())
+        self.after(50, lambda: self.attributes('-alpha', 1) or self.deiconify())
 
 
 class AskStringDialog(BasicDialog, simpledialog._QueryString):    #type:ignore

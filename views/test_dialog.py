@@ -43,7 +43,7 @@ class TestResultDialog(tk.Toplevel):
         self.geometry(f"{win_w}x{win_h}+{x}+{y}")
         self.title(_("命令测试结果"))
         self.minsize(TkS(400), TkS(320))
-        self.after(100, lambda: self.attributes("-alpha", 1) or self.deiconify())
+        self.after(50, lambda: self.attributes("-alpha", 1) or self.deiconify())
 
     def __set_summary_bar(self) -> Button:
         bar = Frame(self)
