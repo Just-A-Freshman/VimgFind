@@ -13,7 +13,7 @@ import utils.image_ops as image_ops
 
 
 class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
-    __slots__ = ("__tooltip", )
+    __slots__ = ("__tooltip", "__resize_timer")
 
     def __init__(self, master) -> None:
         tk.Canvas.__init__(self, master, highlightthickness=0, cursor="hand2")
@@ -27,14 +27,18 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         if not self._results:
             return
         imaga_path, imgtk = self._results[self.identify_item(event)]
-        if abs(max(self.winfo_width(), 100) - imgtk.width()) < 10 or abs(max(self.winfo_height(), 80) - imgtk.height()) < 10:
-            self.coords(self.find_all()[0], self.winfo_width() // 2, self.winfo_height() // 2)
+        canvas_width = max(event.width, 100)
+        canvas_height = max(event.height, 80)
+        if abs(imgtk.width() - canvas_width) < 10 or abs(imgtk.height() - canvas_height) < 10:
+            self.coords(self.find_all()[0], event.width // 2, event.height // 2)
             return
         if self.__resize_timer:
             self.after_cancel(self.__resize_timer)
         self.__resize_timer = tk.Canvas.after(self, 500, lambda: self.clear() or self.append(imaga_path))
 
     def append(self, image_path: Path, image_obj: Image.Image | None = None) -> str:
+        if self.__resize_timer:
+            self.after_cancel(self.__resize_timer)
         iid = self.generate_path_item(image_path, unique=False)
         if len(self.selection()) != 0 and iid == self.selection()[0]:
             return iid
@@ -74,5 +78,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         tk.Canvas.bind(self, sequence, func, add)
 
     def destroy(self) -> None:
+        if self.__resize_timer:
+            self.after_cancel(self.__resize_timer)
         self._results.clear()
         tk.Canvas.destroy(self)
