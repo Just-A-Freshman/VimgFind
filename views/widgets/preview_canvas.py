@@ -9,6 +9,7 @@ from ttkbootstrap.widgets import ToolTip
 
 from .base import BasicImagePreviewView
 from utils.i18n import _
+import utils.image_ops as image_ops
 
 
 class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
@@ -18,9 +19,22 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         tk.Canvas.__init__(self, master, highlightthickness=0, cursor="hand2")
         BasicImagePreviewView.__init__(self, master)
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.bind('<Configure>', self.__on_configure)
         self.__tooltip = ToolTip(self, text=_("没有文件"), delay=500, topmost=True)
+        self.__resize_timer: str = ""
 
-    def append(self, image_path: Path, image_obj: Image.Image) -> str:
+    def __on_configure(self, event: tk.Event) -> None:
+        if not self._results:
+            return
+        imaga_path, imgtk = self._results[self.identify_item(event)]
+        if abs(max(self.winfo_width(), 100) - imgtk.width()) < 10 or abs(max(self.winfo_height(), 80) - imgtk.height()) < 10:
+            self.coords(self.find_all()[0], self.winfo_width() // 2, self.winfo_height() // 2)
+            return
+        if self.__resize_timer:
+            self.after_cancel(self.__resize_timer)
+        self.__resize_timer = tk.Canvas.after(self, 500, lambda: self.clear() or self.append(imaga_path))
+
+    def append(self, image_path: Path, image_obj: Image.Image | None = None) -> str:
         iid = self.generate_path_item(image_path, unique=False)
         if len(self.selection()) != 0 and iid == self.selection()[0]:
             return iid
@@ -29,8 +43,10 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         x = canvas_width // 2
         y = canvas_height // 2
         try:
+            if image_obj is None:
+                image_obj = image_ops.parse_image_from_path(image_path)
             img: Image.Image = ImageOps.exif_transpose(image_obj)    # type: ignore[arg-type]
-            img.thumbnail((canvas_width, canvas_height), Image.Resampling.BICUBIC)
+            img.thumbnail((canvas_width, canvas_height), Image.Resampling.LANCZOS)
             imgtk = ImageTk.PhotoImage(img)
         except UnidentifiedImageError:
             return ""
