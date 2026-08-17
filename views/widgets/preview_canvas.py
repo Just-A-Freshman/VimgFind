@@ -26,15 +26,15 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
     def __on_configure(self, event: tk.Event) -> None:
         if not self._results:
             return
-        imaga_path, imgtk = self._results[self.identify_item(event)]
-        canvas_width = max(event.width, 100)
-        canvas_height = max(event.height, 80)
-        if abs(imgtk.width() - canvas_width) < 10 or abs(imgtk.height() - canvas_height) < 10:
-            self.coords(self.find_all()[0], event.width // 2, event.height // 2)
+        image_path, imgtk = self._results[self.identify_item(event)]
+        self.coords(self.find_all()[0], event.width // 2, event.height // 2)
+        if imgtk.width() == max(event.width, 100) or imgtk.height() == max(event.height, 80):
             return
+        self.clear()
+        self.append(image_path, ImageTk.getimage(imgtk))
         if self.__resize_timer:
             self.after_cancel(self.__resize_timer)
-        self.__resize_timer = tk.Canvas.after(self, 500, lambda: self.clear() or self.append(imaga_path))
+        self.__resize_timer = tk.Canvas.after(self, 500, lambda: self.clear() or self.append(image_path))
 
     def append(self, image_path: Path, image_obj: Image.Image | None = None) -> str:
         if self.__resize_timer:
@@ -50,7 +50,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
             if image_obj is None:
                 image_obj = image_ops.parse_image_from_path(image_path)
             img: Image.Image = ImageOps.exif_transpose(image_obj)    # type: ignore[arg-type]
-            img.thumbnail((canvas_width, canvas_height), Image.Resampling.LANCZOS)
+            img = ImageOps.contain(img, (canvas_width, canvas_height), Image.Resampling.LANCZOS)
             imgtk = ImageTk.PhotoImage(img)
         except UnidentifiedImageError:
             return ""
