@@ -33,14 +33,16 @@ class ImageLoader:
             ))
             return
         try:
+            width, height = img.size
             if img.mode == 'P':
                 img = img.convert('RGBA')
+            elif img.format in ('JPEG', 'MPO') and max(img.size) > thumbnail_size * 10:
+                img.draft('RGB', (thumbnail_size * 2, thumbnail_size * 2))
             img = ImageOps.exif_transpose(img) or img
-            width, height = img.size
             img.thumbnail((thumbnail_size, thumbnail_size))
             self._result_queue.put(LoaderResult(item=item, size=(width, height), photo=img, error=""))
         except Exception as e:
-            logging.exception(f"图片处理失败:{image_path}")
+            logging.exception(f"图片处理失败:{image_path}，错误原因：{str(e)}")
             self._result_queue.put(LoaderResult(
                 item=item, size=(0, 0), photo=None, error=_("图片处理失败！")
             ))
