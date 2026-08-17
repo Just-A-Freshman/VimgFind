@@ -6,8 +6,6 @@ import io
 
 from PIL.ImageFile import ImageFile
 from PIL import Image, UnidentifiedImageError
-import win32clipboard
-import win32con
 
 from . import internet
 from . import file_ops
@@ -16,10 +14,12 @@ from config.settings import Setting
 
 def parse_image_from_clipboard_bytes() -> None | ImageFile:
     try:
+        import win32clipboard
         win32clipboard.OpenClipboard()
     except Exception:
         return None
     try:
+        import win32con
         if not win32clipboard.IsClipboardFormatAvailable(win32con.CF_DIB):
             return None
         dib_data = win32clipboard.GetClipboardData(win32con.CF_DIB)
