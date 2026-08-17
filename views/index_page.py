@@ -7,7 +7,7 @@ from ttkbootstrap.constants import LINK
 from ttkbootstrap import Button, Checkbutton, Scale
 from ttkbootstrap.widgets import ToolTip
 
-from config.settings import WinInfo, TkS
+from config.settings import TkS
 from utils.i18n import _
 from views.widgets import DragReorderTreeview
 

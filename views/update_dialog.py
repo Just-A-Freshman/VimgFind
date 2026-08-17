@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from tkinter.ttk import Label, Progressbar
-import tkinter as tk
 
-from config.settings import WinInfo, TkS
+from config.settings import TkS
 from views.widgets import simpledialog
 from utils.i18n import _
 

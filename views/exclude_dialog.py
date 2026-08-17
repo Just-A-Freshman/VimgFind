@@ -5,7 +5,7 @@ import tkinter as tk
 from ttkbootstrap.constants import LINK
 from ttkbootstrap import Button, Labelframe, Frame, Entry, Label, Treeview, Scrollbar
 
-from config.settings import WinInfo, TkS
+from config.settings import TkS
 from views.widgets import simpledialog
 from utils.i18n import _
 
