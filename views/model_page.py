@@ -20,7 +20,6 @@ class ModelStatus(StrEnum):
 class ModelFrame(Frame):
     load_local_model_entry: Entry
     model_tree: Treeview
-    detail_frame: Labelframe
     detail_desc_text: Text
     use_btn: Button
     uninstall_btn: Button
@@ -40,11 +39,12 @@ class ModelFrame(Frame):
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
+        self.grid_columnconfigure(0, weight=5, uniform="model_col")
+        self.grid_columnconfigure(1, weight=4, uniform="model_col")
+        self.grid_rowconfigure(0, weight=1)
 
         model_list_frame = self.__set_model_list_frame()
         detail_frame = self.__set_detail_frame()
-        control_frame = self.__set_control_frame(detail_frame)
-
         self.load_local_model_entry = self.__set_load_local_model_entry(model_list_frame)
         self.browser_button = self.__set_browser_button(model_list_frame)
         self.model_tree = self.__set_model_tree(model_list_frame)
@@ -52,6 +52,7 @@ class ModelFrame(Frame):
         self.detail_desc_text = Text(detail_frame, wrap='char', relief=tk.FLAT, autostyle=False)
         self.name_edit_entry = Entry(detail_frame)
         
+        control_frame = self.__set_control_frame(detail_frame)
         self.btn_group = Frame(control_frame)
         self.use_btn = Button(self.btn_group, text=_("使用模型"), takefocus=False, padding=(TkS(20), TkS(10)))
         self.uninstall_btn = Button(self.btn_group, text=_("卸载模型"), takefocus=False, padding=(TkS(20), TkS(10)), style="secondary")
@@ -66,7 +67,7 @@ class ModelFrame(Frame):
 
     def __set_model_list_frame(self) -> Labelframe:
         frame = Labelframe(self, text=_("模型列表"))
-        frame.place(relx=0.01, rely=0.02, relwidth=0.57, relheight=0.98)
+        frame.grid(row=0, column=0, sticky=tk.NSEW, padx=(TkS(5), TkS(2)), pady=TkS(5))
         frame.grid_rowconfigure(0, weight=0)
         frame.grid_rowconfigure(1, weight=1)
         frame.grid_columnconfigure(0, weight=1)
@@ -80,7 +81,7 @@ class ModelFrame(Frame):
 
     def __set_browser_button(self, parent) -> Button:
         browser_button = Button(parent, text=_("加载本地模型"), takefocus=False)
-        browser_button.grid(row=0, column=1, pady=(TkS(5), TkS(5)), padx=TkS(5), ipady=TkS(5), sticky=tk.EW)
+        browser_button.grid(row=0, column=1, pady=(TkS(5), TkS(5)), padx=(TkS(2), TkS(5)), ipady=TkS(5), sticky=tk.EW)
         return browser_button
 
     def __set_model_tree(self, parent) -> Treeview:
@@ -98,7 +99,7 @@ class ModelFrame(Frame):
 
     def __set_detail_frame(self) -> Labelframe:
         frame = Labelframe(self, text=_("模型详情"))
-        frame.place(relx=0.59, rely=0.02, relwidth=0.40, relheight=0.98)
+        frame.grid(row=0, column=1, sticky=tk.NSEW, padx=(TkS(2), TkS(5)), pady=TkS(5))
         frame.grid_rowconfigure(0, weight=0)
         frame.grid_rowconfigure(1, weight=1)
         frame.grid_rowconfigure(2, weight=0)
