@@ -35,13 +35,21 @@ class IndexFrame(Frame):
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
-        self.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.pack(fill=tk.BOTH, expand=True)
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=2, uniform="main_col")
+        self.grid_columnconfigure(1, weight=1, uniform="main_col")
 
         self.index_tip_label = self.__set_index_tip_label()
         self.index_tooltip = ToolTip(self.index_tip_label, topmost=True)
-        self.index_dataset_table = self.__set_index_dataset_table()
-        index_setting_frame = self.__set_index_setting_frame()
-        scan_setting_frame = self.__set_scan_setting_frame()
+        
+        left_panel = self.__set_left_panel()
+        self.index_dataset_table = self.__set_index_dataset_table(left_panel)
+        
+        right_panel = self.__set_right_panel()
+        index_setting_frame = self.__set_index_setting_frame(right_panel)
+        scan_setting_frame = self.__set_scan_setting_frame(right_panel)
         self.switch_model_combobox = self.__set_switch_model_combobox(index_setting_frame)
         self.add_index_button = self.__set_index_btn(index_setting_frame, _("添加索引目录"), 1, pady_top=5)
         self.update_index_button = self.__set_index_btn(index_setting_frame, _("更新索引目录"), 2)
@@ -55,22 +63,37 @@ class IndexFrame(Frame):
 
     def __set_index_tip_label(self) -> Label:
         label = Label(self, text=_("当前索引的图库({count}张图片)", count="~"), anchor=tk.NW)
-        label.place(relx=0.0081, rely=0.04, relwidth=1, relheight=0.0575)
+        label.grid(row=0, column=0, columnspan=2, sticky=tk.EW, pady=(TkS(15), TkS(5)), padx=TkS(6))
         return label
 
-    def __set_index_dataset_table(self) -> DragReorderTreeview:
+    def __set_left_panel(self) -> Frame:
+        frame = Frame(self)
+        frame.grid(row=1, column=0, sticky=tk.NSEW, padx=(TkS(5), TkS(2)), pady=(0, TkS(5)))
+        frame.grid_rowconfigure(0, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
+        return frame
+
+    def __set_index_dataset_table(self, parent) -> DragReorderTreeview:
         columns = [" ", _("图库目录")]
-        table = DragReorderTreeview(self, show="headings", columns=columns, ghost_column=1)
+        table = DragReorderTreeview(parent, show="headings", columns=columns, ghost_column=1)
         table.heading(0, text=columns[0], anchor=tk.CENTER)
         table.column(0, width=TkS(15), anchor=tk.CENTER, stretch=False)
         table.heading(1, text=columns[1], anchor=tk.CENTER)
         table.column(1, anchor=tk.CENTER)
-        table.place(relx=0.0081, rely=0.1111, relwidth=0.67, relheight=0.888)
+        table.grid(row=0, column=0, sticky=tk.NSEW, pady=(TkS(9), 0))
         return table
 
-    def __set_index_setting_frame(self) -> LabelFrame:
-        frame = LabelFrame(self, text=_("目录管理"))
-        frame.place(relx=0.6881, rely=0.095, relwidth=0.3019, relheight=0.54)
+    def __set_right_panel(self) -> Frame:
+        frame = Frame(self)
+        frame.grid(row=1, column=1, sticky=tk.NSEW, padx=(TkS(2), TkS(5)), pady=(0, TkS(5)))
+        frame.grid_rowconfigure(0, weight=3, uniform="right_row")
+        frame.grid_rowconfigure(1, weight=2, uniform="right_row")
+        frame.grid_columnconfigure(0, weight=1)
+        return frame
+
+    def __set_index_setting_frame(self, parent) -> LabelFrame:
+        frame = LabelFrame(parent, text=_("目录管理"))
+        frame.grid(row=0, column=0, sticky=tk.NSEW, pady=(0, TkS(2)))
         for i in range(5):
             frame.grid_rowconfigure(i, weight=1)
         frame.grid_columnconfigure(0, weight=2)
@@ -93,9 +116,9 @@ class IndexFrame(Frame):
         )
         return btn
 
-    def __set_scan_setting_frame(self) -> LabelFrame:
-        frame = LabelFrame(self, text=_("扫描设置"))
-        frame.place(relx=0.6881, rely=0.64, relwidth=0.3019, relheight=0.36)
+    def __set_scan_setting_frame(self, parent) -> LabelFrame:
+        frame = LabelFrame(parent, text=_("扫描设置"))
+        frame.grid(row=1, column=0, sticky=tk.NSEW, pady=(TkS(2), 0))
         for i in range(4):
             frame.grid_rowconfigure(i, weight=1)
         frame.grid_columnconfigure(0, weight=1, uniform='space')
