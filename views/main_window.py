@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinterdnd2 import TkinterDnD
 from ttkbootstrap.constants import LINK
 from ttkbootstrap.utility import enable_high_dpi_awareness
-from ttkbootstrap import Button, Notebook, Window
+from ttkbootstrap import Button, Notebook, Style, Window
 
 from .index_page import IndexFrame
 from .model_page import ModelFrame
@@ -46,12 +46,12 @@ class WinGUI(Window, TkinterDnD.Tk):
     def __set_notebook(self, parent) -> Notebook:
         notebook = Notebook(parent)
         self.search_tab = SearchFrame(notebook)
-        notebook.add(self.search_tab, text=_("  检索  "))
+        notebook.add(self.search_tab, text=_("检索"))
         self.index_tab = IndexFrame(notebook)
-        notebook.add(self.index_tab, text=_("  索引  "))
+        notebook.add(self.index_tab, text=_("索引"))
         self.model_tab = ModelFrame(notebook)
-        notebook.add(self.model_tab, text=_("  模型  "))
-        notebook.place(relx=0, rely=0, relwidth=1, relheight=1)
+        notebook.add(self.model_tab, text=_("模型"))
+        notebook.pack(fill=tk.BOTH, expand=True)
         self.common_setting_btn = Button(parent, text=_("通用设置"), style=LINK, cursor="hand2", takefocus=False)
         self.common_setting_btn.place(relx=1.0, x=TkS(-2), y=TkS(1), anchor=tk.NE)
         return notebook
