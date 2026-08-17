@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinterdnd2 import TkinterDnD
 from ttkbootstrap.constants import LINK
 from ttkbootstrap.utility import enable_high_dpi_awareness
-from ttkbootstrap import Button, Notebook, Style, Window
+from ttkbootstrap import Button, Notebook, Window
 
 from .index_page import IndexFrame
 from .model_page import ModelFrame
