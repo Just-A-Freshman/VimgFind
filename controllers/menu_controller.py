@@ -92,7 +92,10 @@ class MenuController:
     def double_click_open_file(self, event: tk.Event) -> None:
         if not isinstance(event.widget, BasicImagePreviewView):
             return
-        selected_file = Path(event.widget.item(event.widget.selection()[0])[0])
+        selection = event.widget.selection()
+        if len(selection) == 0:
+            return
+        selected_file = Path(event.widget.item(selection[0])[0])
         if not selected_file.exists():
             messagebox.showinfo(_("提示"), _("文件不存在！"))
         else:
