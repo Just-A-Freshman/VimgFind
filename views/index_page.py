@@ -77,7 +77,7 @@ class IndexFrame(Frame):
         columns = [" ", _("图库目录")]
         table = DragReorderTreeview(parent, show="headings", columns=columns, ghost_column=1)
         table.heading(0, text=columns[0], anchor=tk.CENTER)
-        table.column(0, width=TkS(15), anchor=tk.CENTER, stretch=False)
+        table.column(0, width=TkS(30), anchor=tk.CENTER, stretch=False)
         table.heading(1, text=columns[1], anchor=tk.CENTER)
         table.column(1, anchor=tk.CENTER)
         table.grid(row=0, column=0, sticky=tk.NSEW, pady=(TkS(9), 0))
