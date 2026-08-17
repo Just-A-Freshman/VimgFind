@@ -18,7 +18,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
     def __init__(self, master) -> None:
         tk.Canvas.__init__(self, master, highlightthickness=0, cursor="hand2")
         BasicImagePreviewView.__init__(self, master)
-        self.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.pack(fill=tk.BOTH, expand=True)
         self.bind('<Configure>', self.__on_configure)
         self.__tooltip = ToolTip(self, text=_("没有文件"), delay=500, topmost=True)
         self.__resize_timer: str = ""
