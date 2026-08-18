@@ -135,6 +135,9 @@ class CustomMenuTab(Frame):
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
+        self.grid_columnconfigure(0, weight=1, uniform="edit_col")
+        self.grid_columnconfigure(1, weight=1, uniform="edit_col")
+        self.grid_rowconfigure(0, weight=1)
         left_frame, right_frame = self.__set_column_frames()
         self.add_button, self.add_sep_btn, self.delete_button = self.__set_menu_buttons(left_frame)
         self.custom_menu_tree = self.__set_custom_menu_tree(left_frame)
@@ -153,9 +156,9 @@ class CustomMenuTab(Frame):
 
     def __set_column_frames(self) -> tuple[Frame, Frame]:
         left_frame = Frame(self)
-        left_frame.place(relx=0, rely=0, relheight=1, relwidth=0.5)
+        left_frame.grid(row=0, column=0, sticky=tk.NSEW, padx=(0, TkS(2)))
         right_frame = Frame(self)
-        right_frame.place(relx=0.51, rely=0, relheight=1, relwidth=0.48)
+        right_frame.grid(row=0, column=1, sticky=tk.NSEW, padx=(TkS(2), 0))
         return left_frame, right_frame
 
     def __set_menu_buttons(self, parent: Frame) -> tuple[Button, Button, Button]:
