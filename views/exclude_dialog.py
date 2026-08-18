@@ -30,6 +30,9 @@ class ExcludeDialog(simpledialog.SingletonDialog):
         if hasattr(self, '_initialized'):
             return
         super().__init__(parent, title=_("排除设置"), height=TkS(400))
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=45, uniform="exclude_row")
+        self.grid_rowconfigure(1, weight=52, uniform="exclude_row")
         edit_rules_frame = self.__set_edit_rules_frame()
         button_frame = self.__set_edit_frame(edit_rules_frame)
         self.add_rule_btn = self.__set_add_rule_btn(button_frame)
@@ -48,7 +51,7 @@ class ExcludeDialog(simpledialog.SingletonDialog):
 
     def __set_edit_rules_frame(self) -> Labelframe:
         frame = Labelframe(self, text=_("排除规则"))
-        frame.place(relx=0.02, rely=0.01, relwidth=0.96, relheight=0.45)
+        frame.grid(row=0, column=0, sticky=tk.NSEW, padx=TkS(5), pady=(TkS(5), TkS(2)))
         return frame
 
     def __set_edit_frame(self, parent) -> Frame:
@@ -82,7 +85,7 @@ class ExcludeDialog(simpledialog.SingletonDialog):
 
     def __set_preview_rules_frame(self) -> Labelframe:
         frame = Labelframe(self, text=_("选择任意文件夹预览排除效果"))
-        frame.place(relx=0.02, rely=0.48, relwidth=0.96, relheight=0.52)
+        frame.grid(row=1, column=0, sticky=tk.NSEW, padx=TkS(5), pady=(TkS(2), TkS(5)))
         return frame
 
     def __set_preview_path_entry(self, parent: Frame) -> Entry:
