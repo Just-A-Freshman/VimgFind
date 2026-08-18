@@ -31,8 +31,8 @@ class ExcludeDialog(simpledialog.SingletonDialog):
             return
         super().__init__(parent, title=_("排除设置"), height=TkS(400))
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=45, uniform="exclude_row")
-        self.grid_rowconfigure(1, weight=52, uniform="exclude_row")
+        self.grid_rowconfigure(0, weight=1, uniform="exclude_row")
+        self.grid_rowconfigure(1, weight=1, uniform="exclude_row")
         edit_rules_frame = self.__set_edit_rules_frame()
         button_frame = self.__set_edit_frame(edit_rules_frame)
         self.add_rule_btn = self.__set_add_rule_btn(button_frame)
