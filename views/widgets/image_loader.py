@@ -34,10 +34,10 @@ class ImageLoader:
             return
         try:
             width, height = img.size
+            if img.format in ('JPEG', 'MPO') and max(img.size) > 2048:
+                img.draft('RGB', (thumbnail_size * 2, thumbnail_size * 2))
             if img.mode == 'P':
                 img = img.convert('RGBA')
-            elif img.format in ('JPEG', 'MPO') and max(img.size) > thumbnail_size * 10:
-                img.draft('RGB', (thumbnail_size * 2, thumbnail_size * 2))
             img = ImageOps.exif_transpose(img) or img
             img.thumbnail((thumbnail_size, thumbnail_size))
             self._result_queue.put(LoaderResult(item=item, size=(width, height), photo=img, error=""))
