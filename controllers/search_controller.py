@@ -462,9 +462,18 @@ class FilterController:
                 folder_all=fp.folder_select_all.instate(["selected"]),
                 dedup=fp.dedup_check.instate(['selected']),
             )
-            fp.update_idletasks()
-            fp.place(relx=0.005, rely=0.094, relwidth=0.4, height=fp.winfo_reqheight())
-            fp.lift()
+            self.__place_filter_panel()
+            self.app.view.search_tab.search_entry.bind('<Configure>', lambda e: fp.winfo_viewable() and self.__place_filter_panel())
+
+    def __place_filter_panel(self) -> None:
+        tab = self.app.view.search_tab
+        tab.update_idletasks()
+        se_x = tab.search_entry.winfo_rootx() - tab.winfo_rootx()
+        se_y = tab.search_entry.winfo_rooty() - tab.winfo_rooty()
+        se_width = tab.search_entry.winfo_width()
+        se_height = tab.search_entry.winfo_height()
+        tab.filter_panel.place(x=se_x, y=se_y + se_height, width=se_width, height=tab.filter_panel.winfo_reqheight())
+        tab.filter_panel.lift()
 
     def confirm_filter(self) -> None:
         self.app.view.search_tab.filter_panel.place_forget()
