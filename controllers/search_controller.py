@@ -213,8 +213,7 @@ class SearchController:
         self.__is_finish_search.clear()
         tab = self.app.view.search_tab
         if len(self.__queue_paths) > 0 or input_data is None:
-            tab.set_nav_state(self.__current_page > 0, self.__current_page < len(self.__queue_paths) - 1)
-            tab.set_nav_page_label(self.__current_page + 1, len(self.__queue_paths))
+            tab.set_nav_state(self.__current_page + 1, len(self.__queue_paths))
             source_path = self.__queue_paths[self.__current_page]
             if not source_path or not Path(source_path).is_file():
                 tab.preview_view.clear()
@@ -353,8 +352,7 @@ class SearchController:
         if new_page < 0 or new_page > len(self.__queue_paths) - 1:
             return
         self.__current_page = new_page
-        tab.set_nav_state(self.__current_page > 0, self.__current_page < len(self.__queue_paths) - 1)
-        tab.set_nav_page_label(self.__current_page + 1, len(self.__queue_paths))
+        tab.set_nav_state(self.__current_page + 1, len(self.__queue_paths))
         if self.__nav_debounce_timer is not None:
             tab.after_cancel(self.__nav_debounce_timer)
         self.__nav_debounce_timer = tab.after(200, do_navigate)

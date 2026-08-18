@@ -184,12 +184,12 @@ class SearchFrame(Frame):
 
     def __set_left_panel(self) -> Frame:
         frame = Frame(self)
-        frame.grid(row=0, column=0, sticky=tk.EW, padx=(TkS(5), 0), pady=(TkS(5), 0))
+        frame.grid(row=0, column=0, sticky=tk.EW, padx=(TkS(5), 0), pady=(TkS(3), 0))
         return frame
 
     def __set_search_entry(self, parent) -> Entry:
         ipt = Entry(parent)
-        ipt.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=TkS(6), pady=(TkS(5), 0))
+        ipt.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=TkS(7), pady=(TkS(5), 0))
         return ipt
 
     def __set_filter_btn(self) -> tk.Label:
@@ -199,12 +199,12 @@ class SearchFrame(Frame):
 
     def __set_search_by_browser_button(self, parent) -> Button:
         btn = Button(parent, text=_("浏览"), takefocus=False, width=9)
-        btn.pack(side=tk.RIGHT, ipady=TkS(4.5), padx=TkS(6), pady=(TkS(5), 0))
+        btn.pack(side=tk.RIGHT, ipady=TkS(5.5), padx=TkS(6), pady=(TkS(5), 0))
         return btn
 
     def __set_search_by_clipboard_button(self, parent) -> Button:
         btn = Button(parent, text=_("剪切板"), takefocus=False, width=9)
-        btn.pack(side=tk.RIGHT, ipady=TkS(4.5), padx=(0, TkS(2)), pady=(TkS(5), 0))
+        btn.pack(side=tk.RIGHT, ipady=TkS(5.5), padx=(0, TkS(2)), pady=(TkS(5), 0))
         return btn
     
     def __set_right_panel(self) -> Frame:
@@ -236,9 +236,9 @@ class SearchFrame(Frame):
         return frame
 
     def __set_nav_buttons(self) -> tuple[tk.Frame, Label, Button, Button]:
-        nav_frame = tk.Frame(self.preview_container, borderwidth=TkS(6))
+        nav_frame = tk.Frame(self.preview_container, borderwidth=0)
         nav_page_label = Label(nav_frame, text="0 / 0")
-        nav_page_label.pack(side=tk.LEFT, padx=(TkS(15), 0))
+        nav_page_label.pack(side=tk.LEFT, padx=(TkS(15), 0), pady=(TkS(7), TkS(2)))
         nav_prev = Button(
             nav_frame, text="◀", takefocus=False,
             cursor="hand2", padding=(TkS(4), TkS(1)), width=3
@@ -247,8 +247,8 @@ class SearchFrame(Frame):
             nav_frame, text="▶", takefocus=False,
             cursor="hand2", padding=(TkS(4), TkS(1)), width=3
         )
-        nav_next.pack(side=tk.RIGHT, padx=(0, TkS(5)))
-        nav_prev.pack(side=tk.RIGHT, padx=(0, TkS(5)))
+        nav_next.pack(side=tk.RIGHT, padx=(0, TkS(5)), pady=(TkS(7), TkS(2)))
+        nav_prev.pack(side=tk.RIGHT, padx=(0, TkS(5)), pady=(TkS(7), TkS(2)))
         nav_frame.pack_forget()
         return nav_frame, nav_page_label, nav_prev, nav_next
 
@@ -259,9 +259,7 @@ class SearchFrame(Frame):
         else:
             self.nav_frame.grid_forget()
 
-    def set_nav_state(self, has_prev: bool, has_next: bool) -> None:
-        self.nav_prev.config(state=tk.NORMAL if has_prev else tk.DISABLED)
-        self.nav_next.config(state=tk.NORMAL if has_next else tk.DISABLED)
-
-    def set_nav_page_label(self, current: int, total: int) -> None:
-        self.nav_page_label.config(text=f"{current} / {total}")
+    def set_nav_state(self, current_page: int, total_page: int) -> None:
+        self.nav_page_label.config(text=f"{current_page} / {total_page}")
+        self.nav_prev.config(state=tk.NORMAL if current_page > 1 else tk.DISABLED)
+        self.nav_next.config(state=tk.NORMAL if current_page < total_page else tk.DISABLED)
