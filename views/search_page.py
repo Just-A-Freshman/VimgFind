@@ -159,26 +159,37 @@ class SearchFrame(Frame):
 
     def __init__(self, parent, **kwargs) -> None:
         super().__init__(parent, **kwargs)
-        self.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.pack(fill=tk.BOTH, expand=True)
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=32, uniform="main_col", minsize=TkS(200))
+        self.grid_columnconfigure(1, weight=19, uniform="main_col", minsize=TkS(150))
 
-        self.search_entry = self.__set_search_entry()
+        left_panel = self.__set_left_panel()
+        self.search_entry = self.__set_search_entry(left_panel)
         self.filter_btn = self.__set_filter_btn()
-        self.search_by_browser_btn = self.__set_search_by_browser_button()
-        self.search_by_clipboard_btn = self.__set_search_by_clipboard_button()
+        self.search_by_clipboard_btn = self.__set_search_by_clipboard_button(left_panel)
+        self.search_by_browser_btn = self.__set_search_by_browser_button(left_panel)
         self.more_options_button = self.__set_more_options_button()
         self.filter_panel = FilterPanel(self)
         self.preview_container = self.__set_preview_results_frame()
         self.preview_view = BasicImagePreviewView(self.preview_container)
-        self.preview_frame1 = self.__set_preview_frame1()
-        self.preview_frame2 = self.__set_preview_frame2()
+        right_panel = self.__set_right_panel()
+        self.preview_frame1 = self.__set_preview_frame1(right_panel)
+        self.preview_frame2 = self.__set_preview_frame2(right_panel)
         self.preview_canvas1 = PreviewCanvasView(self.preview_frame1)
         self.preview_canvas2 = PreviewCanvasView(self.preview_frame2)
         self.toast_label = Label(self.preview_container, padding=TkS(5), style="inverse-success")
         self.nav_frame, self.nav_page_label, self.nav_prev, self.nav_next = self.__set_nav_buttons()
 
-    def __set_search_entry(self) -> Entry:
-        ipt = Entry(self)
-        ipt.place(relx=0.005, rely=0.02, relwidth=0.4, relheight=0.0690)
+    def __set_left_panel(self) -> Frame:
+        frame = Frame(self)
+        frame.grid(row=0, column=0, sticky=tk.EW, padx=(TkS(5), 0), pady=(TkS(5), 0))
+        return frame
+
+    def __set_search_entry(self, parent) -> Entry:
+        ipt = Entry(parent)
+        ipt.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=TkS(6), pady=(TkS(5), 0))
         return ipt
 
     def __set_filter_btn(self) -> tk.Label:
@@ -186,34 +197,42 @@ class SearchFrame(Frame):
         btn.pack(in_=self.search_entry, side=tk.RIGHT, fill=tk.Y, ipadx=TkS(6), pady=TkS(2), padx=TkS(2))
         return btn
 
-    def __set_search_by_browser_button(self) -> Button:
-        btn = Button(self, text=_("浏览"), takefocus=False)
-        btn.place(relx=0.415, rely=0.0192, relwidth=0.1, relheight=0.0690)
+    def __set_search_by_browser_button(self, parent) -> Button:
+        btn = Button(parent, text=_("浏览"), takefocus=False, width=9)
+        btn.pack(side=tk.RIGHT, ipady=TkS(4.5), padx=TkS(6), pady=(TkS(5), 0))
         return btn
 
-    def __set_search_by_clipboard_button(self) -> Button:
-        btn = Button(self, text=_("剪切板"), takefocus=False)
-        btn.place(relx=0.525, rely=0.0192, relwidth=0.1, relheight=0.0690)
+    def __set_search_by_clipboard_button(self, parent) -> Button:
+        btn = Button(parent, text=_("剪切板"), takefocus=False, width=9)
+        btn.pack(side=tk.RIGHT, ipady=TkS(4.5), padx=(0, TkS(2)), pady=(TkS(5), 0))
         return btn
+    
+    def __set_right_panel(self) -> Frame:
+        frame = Frame(self)
+        frame.grid(row=1, column=1, sticky=tk.NSEW, padx=(TkS(2), TkS(5)), pady=(0, TkS(5)))
+        frame.grid_rowconfigure(0, weight=1, uniform="right_row")
+        frame.grid_rowconfigure(1, weight=1, uniform="right_row")
+        frame.grid_columnconfigure(0, weight=1)
+        return frame
 
     def __set_more_options_button(self) -> Button:
         button = Button(self, text="• • •", takefocus=False, style="link", cursor="hand2")
-        button.place(relx=1, rely=0.0192, width=TkS(50), x=TkS(-50))
+        button.grid(row=0, column=1, sticky=tk.E, padx=(0, TkS(5)))
         return button
 
     def __set_preview_results_frame(self) -> Frame:
         frame = Frame(self)
-        frame.place(relx=0.005, rely=0.1111, relwidth=0.622, relheight=0.888)
+        frame.grid(row=1, column=0, sticky=tk.NSEW, padx=(TkS(5), TkS(2)), pady=(TkS(9), TkS(5)))
         return frame
 
-    def __set_preview_frame1(self) -> Labelframe:
-        frame = Labelframe(self, text=_("源图片"))
-        frame.place(relx=0.63, rely=0.095, relwidth=0.365, relheight=0.4444)
+    def __set_preview_frame1(self, parent) -> Labelframe:
+        frame = Labelframe(parent, text=_("源图片"))
+        frame.grid(row=0, column=0, sticky=tk.NSEW, pady=(0, TkS(2)))
         return frame
 
-    def __set_preview_frame2(self) -> Labelframe:
-        frame = Labelframe(self, text=_("匹配图片"))
-        frame.place(relx=0.63, rely=0.5555, relwidth=0.365, relheight=0.4444)
+    def __set_preview_frame2(self, parent) -> Labelframe:
+        frame = Labelframe(parent, text=_("匹配图片"))
+        frame.grid(row=1, column=0, sticky=tk.NSEW, pady=(TkS(2), 0))
         return frame
 
     def __set_nav_buttons(self) -> tuple[tk.Frame, Label, Button, Button]:
