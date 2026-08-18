@@ -102,7 +102,11 @@ class SearchController:
         image_path = None
 
         if image_obj is None:
-            copy_text = self.app.view.clipboard_get()
+            try:
+                copy_text = self.app.view.clipboard_get()
+            except tk.TclError:
+                messagebox.showinfo(_("提示"), _("无法识别剪切板中的图片数据！"))
+                return
             lines = copy_text.splitlines()
             if len(lines) > 3000:
                 lines = lines[:3000]
@@ -239,10 +243,9 @@ class SearchController:
                 self.__is_finish_search.set()
                 return
             first_img_path, first_sim = first_result
-            if first_img_path.exists():
-                first_extra_info = self.__generate_extra_info(first_img_path, first_sim)
-                item = tab.preview_view.append(first_img_path, *first_extra_info)
-                tab.preview_view.selection_set(item)
+            first_extra_info = self.__generate_extra_info(first_img_path, first_sim)
+            item = tab.preview_view.append(first_img_path, *first_extra_info)
+            tab.preview_view.selection_set(item)
             self.__smooth_preview(((img_path, *self.__generate_extra_info(img_path, sim)) for img_path, sim in results))
             if self.app.search_tools.checkout_status == SearchStatus.PARTIAL_OMITTED:
                 self.show_toast(_("部分无效结果被隐藏，建议更新索引。"), duration=3000)
