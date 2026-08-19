@@ -8,6 +8,8 @@
 
 [English](./README.en.md) · [更新日志](https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.5)
 
+💬 **参与 UI 讨论**：[筛选面板优化讨论](https://github.com/Just-A-Freshman/VimgFind/discussions/15)
+
 </div>
 
 ## 1. 项目简介
