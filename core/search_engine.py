@@ -178,6 +178,7 @@ class SearchTool:
                             pending.add(executor.submit(_process_item, next(need_iter)))
                         except StopIteration:
                             break
+        self.__multimodal_encoder.clear_cache()
         progress_bar.close()
 
     def remove_duplicate(self) -> None:

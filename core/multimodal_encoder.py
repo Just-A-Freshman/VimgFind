@@ -225,6 +225,17 @@ class MultiModalEncoder:
         except Exception as e:
             logging.error(f"编码文字时出现错误: {e}")
             return None
+        
+    def clear_cache(self):
+        if self.image_session is not None:
+            self.image_session.set_providers(
+                providers=['CPUExecutionProvider'],
+                provider_options=[{
+                    'enable_cpu_mem_arena': False,
+                    'intra_op_num_threads': 1,
+                    'inter_op_num_threads': 1
+                }]
+            )
 
     def close(self) -> None:
         self.image_session = None
