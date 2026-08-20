@@ -7,7 +7,6 @@ from pathlib import Path
 from re import sub
 from typing import Iterator
 import logging
-import os
 import random
 
 from PIL import Image
@@ -392,25 +391,21 @@ class SearchTool:
             ]
             if not valid_ids:
                 self.reset_index()
-            else:
-                try:
-                    new_mgr = VectorIndexManager.build_from_vectors(
-                        dim=self.__setting.model.index.index_dim,
-                        ids=valid_ids,
-                        old_mgr=self.__vec_idx_mgr,
-                        index_path=self.__setting.model.index.vector_index_path,
-                        index_capacity=self.__setting.model.index.index_capacity,
-                        progress_bar=progress_bar,
-                        stop_check=lambda: self.force_stop_update
-                    )
-                    if new_mgr is None:
-                        return
-                    self.__vec_idx_mgr.close()
-                    self.__vec_idx_mgr = new_mgr
-                    self.__name_idx_mgr.compact(valid_ids)
-                except Exception as e:
-                    logging.error(f"软重建失败: {e}", exc_info=True)
-                    self.reset_index()
+                return
+            try:
+                new_mgr = self.__vec_idx_mgr.build_from_vectors(
+                    ids=valid_ids, 
+                    old_mgr=self.__vec_idx_mgr,
+                    progress_bar=progress_bar,
+                    stop_check=lambda: self.force_stop_update
+                )
+                if new_mgr is None:
+                    return
+                self.__vec_idx_mgr = new_mgr
+                self.__name_idx_mgr.compact(valid_ids)
+            except Exception as e:
+                logging.error(f"软重建失败: {e}", exc_info=True)
+                self.reset_index()
         except Exception as e:
             logging.exception(f"重建索引过程异常：{e}，执行硬重建")
             self.reset_index()

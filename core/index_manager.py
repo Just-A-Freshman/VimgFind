@@ -95,14 +95,9 @@ class VectorIndexManager:
         assert self.__hnsw_index is not None
         return self.__hnsw_index.get_items(ids)   # type: ignore[return-value]
 
-    @classmethod
-    def build_from_vectors(
-        cls,
-        dim: int,
+    def build_from_vectors(self,
         ids: list[int],
         old_mgr: "VectorIndexManager",
-        index_path: str,
-        index_capacity: int,
         progress_bar: tqdm,
         stop_check: None | Callable = None
     ) -> "VectorIndexManager | None":
@@ -113,36 +108,36 @@ class VectorIndexManager:
             with os.fdopen(tmp_fd, "wb") as f:
                 for i in range(0, total, BATCH_SIZE):
                     if stop_check and stop_check():
-                        return None
+                        return
                     batch_ids = ids[i:i + BATCH_SIZE]
                     batch_vecs = old_mgr.get_items(batch_ids)
                     f.write(batch_vecs.astype(np.float32).tobytes())
 
-            new_hnsw = hnswlib.Index(space="cosine", dim=dim)
+            new_hnsw = hnswlib.Index(space="cosine", dim=self.__dim)
             new_hnsw.init_index(
                 max_elements=max(total, INITIAL_CAPCITY),
                 ef_construction=HNSW_EF_CONSTRUCTION,
                 M=HNSW_M,
-                random_seed=42,
+                random_seed=42
             )
             with open(tmp_path, "rb") as f:
                 for i in range(0, total, BATCH_SIZE):
                     if stop_check and stop_check():
-                        return
+                        break
                     count = min(BATCH_SIZE, total - i)
-                    raw = f.read(count * dim * 4)
-                    batch_vecs = np.frombuffer(raw, dtype=np.float32).reshape(count, dim)
+                    raw = f.read(count * self.__dim * 4)
+                    batch_vecs = np.frombuffer(raw, dtype=np.float32).reshape(count, self.__dim)
                     new_hnsw.add_items(batch_vecs, np.arange(i, i + count))
                     progress_bar.update(count)
                     progress_bar.refresh()
-            old_mgr.close()
-            new_hnsw.save_index(index_path)
+            self.close()
+            new_hnsw.save_index(self.__index_path)
+            return self.__class__(self.__index_path, self.__index_capacity, self.__dim, total)
         finally:
             try:
                 os.unlink(tmp_path)
             except OSError:
                 pass
-        return cls(index_path, index_capacity, dim, total)
 
     def close(self) -> None:
         self.__hnsw_index = None
