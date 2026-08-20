@@ -142,8 +142,6 @@ class SearchTool:
             progress_bar: tqdm
         ) -> None:
         def _process_item(item: str) -> tuple[str, np.ndarray | None]:
-            if self.force_stop_update:
-                return item, None
             image_obj = image_ops.parse_image_from_path(item)
             return item, self.__multimodal_encoder.encode_image(image_obj) if image_obj is not None else None
         
@@ -162,7 +160,7 @@ class SearchTool:
                 for _ in range(window):
                     pending.add(executor.submit(_process_item, next(need_iter)))
 
-                while pending:
+                while pending and not self.force_stop_update:
                     done, pending = wait(pending, return_when=FIRST_COMPLETED)
                     for future in done:
                         try:
@@ -393,9 +391,8 @@ class SearchTool:
                 self.reset_index()
                 return
             try:
-                new_mgr = self.__vec_idx_mgr.build_from_vectors(
-                    ids=valid_ids, 
-                    old_mgr=self.__vec_idx_mgr,
+                new_mgr = self.__vec_idx_mgr.compact(
+                    compact_ids=valid_ids, 
                     progress_bar=progress_bar,
                     stop_check=lambda: self.force_stop_update
                 )

@@ -95,13 +95,8 @@ class VectorIndexManager:
         assert self.__hnsw_index is not None
         return self.__hnsw_index.get_items(ids)   # type: ignore[return-value]
 
-    def build_from_vectors(self,
-        ids: list[int],
-        old_mgr: "VectorIndexManager",
-        progress_bar: tqdm,
-        stop_check: None | Callable = None
-    ) -> "VectorIndexManager | None":
-        total = len(ids)
+    def compact(self, compact_ids: list[int], progress_bar: tqdm, stop_check: None | Callable = None) -> "VectorIndexManager | None":
+        total = len(compact_ids)
         progress_bar.total += total
         tmp_fd, tmp_path = tempfile.mkstemp(suffix=".npy")
         try:
@@ -109,8 +104,8 @@ class VectorIndexManager:
                 for i in range(0, total, BATCH_SIZE):
                     if stop_check and stop_check():
                         return
-                    batch_ids = ids[i:i + BATCH_SIZE]
-                    batch_vecs = old_mgr.get_items(batch_ids)
+                    batch_ids = compact_ids[i:i + BATCH_SIZE]
+                    batch_vecs = self.get_items(batch_ids)
                     f.write(batch_vecs.astype(np.float32).tobytes())
 
             new_hnsw = hnswlib.Index(space="cosine", dim=self.__dim)
@@ -123,7 +118,7 @@ class VectorIndexManager:
             with open(tmp_path, "rb") as f:
                 for i in range(0, total, BATCH_SIZE):
                     if stop_check and stop_check():
-                        break
+                        return
                     count = min(BATCH_SIZE, total - i)
                     raw = f.read(count * self.__dim * 4)
                     batch_vecs = np.frombuffer(raw, dtype=np.float32).reshape(count, self.__dim)
@@ -178,6 +173,7 @@ class NameIndexManager:
             Path(self.__name_index_path).parent.mkdir(exist_ok=True, parents=True)
             self.__name_index = []
         finally:
+            self.__valid_index_count: int = 0
             for entry in self.__name_index:
                 if entry[0] != NameIndexManager.NOTEXISTS:
                     entry[0] = file_ops.fast_normalize(entry[0])
