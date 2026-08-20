@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Literal
 import json
 import logging
 import os
@@ -29,12 +29,12 @@ class VectorIndexManager:
             index_path: str,
             index_capacity: int,
             dim: int,
-            current_capacity: int
+            current_elements: int
         ) -> None:
         self.__index_path: str = index_path
         self.__index_capacity: int = index_capacity
         self.__dim: int = dim
-        self.__current_capacity: int = current_capacity
+        self.__current_capacity: int = current_elements
         self.__hnsw_index: hnswlib.Index | None = None
         self.__init_index()
 
@@ -83,7 +83,7 @@ class VectorIndexManager:
         except Exception as e:
             logging.error(f"删除向量时出错: {e}")
 
-    def match(self, fv, nc=5):
+    def match(self, fv: np.ndarray, nc=5):
         assert self.__hnsw_index is not None
         self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 2))
         labels, distances = self.__hnsw_index.knn_query(fv, k=nc)
