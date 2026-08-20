@@ -99,7 +99,7 @@ class MultiModalEncoder:
     __slots__ = (
         "__preprocess", "__normalization", "__output_index",
         "__context_length", "__tokenizer", "__text_encoder_path",
-        "image_session", "text_session",
+        "image_session", "text_session"
     )
 
     def __init__(self, config: EncoderConfig) -> None:
@@ -116,7 +116,7 @@ class MultiModalEncoder:
         self.__tokenizer = create_tokenizer(".")
         self.__text_encoder_path = config.text_encoder_path
         self.text_session = None
-        self.image_session = self._init_onnx_session(config.image_encoder_path)        
+        self.image_session = self._init_onnx_session(config.image_encoder_path)
 
     def tokenize(self, texts) -> np.ndarray:
         if self.__tokenizer is None:
