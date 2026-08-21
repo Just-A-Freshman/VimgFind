@@ -388,6 +388,8 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
     
     def clear(self) -> None:
         self._cancel_timer()
+        self.__image_loader.stop()
+        self.__image_loader = ImageLoader()
         self.__loading_tasks.clear()
         self.__visible_image_data.clear()
         self._results.clear()
