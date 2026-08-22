@@ -8,6 +8,7 @@ from re import sub
 from typing import Iterator
 import logging
 import random
+import os
 
 from PIL import Image
 from tqdm import tqdm
@@ -196,7 +197,7 @@ class SearchTool:
     def remove_nonexists(self) -> None:
         self.__init_event.wait()
         for idx, (index_file, _) in tqdm(enumerate(self.__name_idx_mgr.name_index), ascii=False, ncols=50):
-            if Path(index_file).exists() or index_file == NameIndexManager.NOTEXISTS:
+            if os.path.exists(index_file) or index_file == NameIndexManager.NOTEXISTS:
                 continue
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
@@ -255,7 +256,8 @@ class SearchTool:
 
     def checkout(
             self,
-            content: Image.Image | str, threshold: float = 0.0,
+            content: Image.Image | str, 
+            threshold: float = 0.0,
             file_ext_label: str = "",
             size_min: float | None = None,
             size_max: float | None = None,
