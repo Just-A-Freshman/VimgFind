@@ -9,6 +9,7 @@ import tkinter as tk
 from .base import BasicImagePreviewView
 from config.settings import TkS
 from utils.i18n import _
+from tkinterdnd2 import DND_FILES
 
 
 class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
@@ -35,6 +36,9 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
         for column in self["columns"]:
             self.heading(column, command=lambda column=column: self.__sort_column(column, False))
         self.master.after(50, create_scrollbar)
+        self.drag_source_register(1, DND_FILES)
+        self.dnd_bind('<<DragInitCmd>>', self.on_drag_init)
+        self.dnd_bind('<<DragEndCmd>>', self.on_drag_end)
 
     def __sort_column(self, col: str, reverse: bool) -> None:
         data = [(self.set(k, col), k) for k in self.get_children("")]

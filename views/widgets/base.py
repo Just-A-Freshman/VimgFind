@@ -8,6 +8,7 @@ import hashlib
 import tkinter as tk
 
 from ttkbootstrap import Style
+from tkinterdnd2 import COPY, DND_FILES
 
 import utils.file_ops as file_ops
 
@@ -16,6 +17,7 @@ ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
 
 class BasicImagePreviewView:
     __slots__ = ("master", "_results", "theme_color")
+    drag_source_active = False
 
     def __init__(self, master: tk.Widget) -> None:
         self.master = master
@@ -67,6 +69,30 @@ class BasicImagePreviewView:
 
     def bind(self, sequence: str | None = None, func: Callable | None = None, add: bool | Literal['', '+'] | None = None) -> None:
         ...
+
+    def dnd_bind(self, sequence: str | None = None, func: Callable | None = None, add: bool | Literal['', '+'] | None = None) -> Any:
+        ...
+
+    def drag_source_register(self, button: int | None = None, *dndtypes: str) -> None:
+        ...
+
+    def on_drag_init(self, event) -> tuple:
+        BasicImagePreviewView.drag_source_active = True
+        selected = self.selection()
+        if not selected:
+            return ("", "", "")
+        paths = []
+        for item in selected:
+            if item in self._results:
+                path = self._results[item][0]
+                if isinstance(path, Path):
+                    paths.append(str(path))
+        if not paths:
+            return ("", "", "")
+        return (COPY, DND_FILES, tuple(paths))
+
+    def on_drag_end(self, event) -> None:
+        BasicImagePreviewView.drag_source_active = False
 
     def destroy(self) -> None:
         ...

@@ -12,6 +12,7 @@ from .image_loader import ImageLoader
 from config.settings import TkS
 from utils.i18n import _
 import utils.file_ops as file_ops
+from tkinterdnd2 import DND_FILES
 
 
 class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
@@ -83,6 +84,9 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self.bind("<FocusIn>", lambda e: self.config(highlightthickness=TkS(1)))
         self.bind("<FocusOut>", lambda e: self.config(highlightbackground=self.theme_color.selectbg, highlightthickness=TkS(0.5)))
         self.master.after(50, create_scrollbar)
+        self.drag_source_register(1, DND_FILES)
+        self.dnd_bind('<<DragInitCmd>>', self.on_drag_init)
+        self.dnd_bind('<<DragEndCmd>>', self.on_drag_end)
 
     def change_theme(self) -> None:
         super().change_theme()

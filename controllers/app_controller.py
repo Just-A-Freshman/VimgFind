@@ -4,6 +4,7 @@ from tkinter import messagebox
 from tkinterdnd2 import DND_FILES
 
 from views import WinGUI
+from views.widgets.base import BasicImagePreviewView
 from config.settings import Setting
 from core import SearchTool
 from .search_controller import SearchController, FilterController
@@ -51,6 +52,8 @@ class AppController:
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
 
     def __on_drop(self, event) -> None:
+        if BasicImagePreviewView.drag_source_active:
+            return
         file_paths_str: str = getattr(event, "data")
         file_paths = file_ops.extract_file_paths(file_paths_str)
         tab_id = self.view.switch_tab.index(self.view.switch_tab.select())
