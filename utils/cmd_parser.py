@@ -39,21 +39,21 @@ class VarExpr:
 
 
 def parse(command: str) -> ParseResult:
-    tokens, exprs, errors, asks, warnings = __analyze(command)
+    tokens, exprs, errors, asks, warnings = _analyze(command)
     return ParseResult(None, errors, asks, warnings)
 
 
 def resolve(command: str, vars: dict[str, str | list[str]]) -> ParseResult:
-    tokens, exprs, errors, asks, warnings = __analyze(command)
+    tokens, exprs, errors, asks, warnings = _analyze(command)
     if errors:
         return ParseResult(None, errors, asks, warnings)
     argv: list[str] = []
     for token, token_exprs in zip(tokens, exprs):
-        argv.extend(__expand_token(token, token_exprs, vars))
+        argv.extend(_expand_token(token, token_exprs, vars))
     return ParseResult(argv, [], asks, warnings)
 
 
-def __analyze(command: str):
+def _analyze(command: str):
     """返回 (tokens, exprs_per_token, errors, asks, warnings)。"""
     raw_lines = [ln.strip() for ln in command.split("\n")]
     exec_lines: list[tuple[int, str]] = []
@@ -68,7 +68,7 @@ def __analyze(command: str):
         return [], [], [ParseError(line_no, 1, "E001", "命令只允许一行，多步骤请封装到脚本中")], [], []
 
     line_no, text = exec_lines[0]
-    tokens, starts, token_errors = __tokenize(text)
+    tokens, starts, token_errors = _tokenize(text)
     if token_errors:
         return tokens, [[] for _ in tokens], token_errors, [], []
 
@@ -77,7 +77,7 @@ def __analyze(command: str):
     asks: list[str] = []
     warnings: list[str] = []
     for token, start in zip(tokens, starts):
-        token_exprs, var_errors = __parse_var_exprs(token, start)
+        token_exprs, var_errors = _parse_var_exprs(token, start)
         for e in var_errors:
             errors.append(ParseError(line_no, e.col, e.code, e.message))
         for expr in token_exprs:
@@ -89,7 +89,7 @@ def __analyze(command: str):
     return tokens, exprs_per_token, errors, asks, warnings
 
 
-def __tokenize(text: str) -> tuple[list[str], list[int], list[ParseError]]:
+def _tokenize(text: str) -> tuple[list[str], list[int], list[ParseError]]:
     tokens: list[str] = []
     starts: list[int] = []
     errors: list[ParseError] = []
@@ -140,7 +140,7 @@ def __tokenize(text: str) -> tuple[list[str], list[int], list[ParseError]]:
     return tokens, starts, errors
 
 
-def __parse_var_exprs(token: str, token_col: int) -> tuple[list[VarExpr], list[ParseError]]:
+def _parse_var_exprs(token: str, token_col: int) -> tuple[list[VarExpr], list[ParseError]]:
     exprs: list[VarExpr] = []
     errors: list[ParseError] = []
     i = 0
@@ -160,17 +160,17 @@ def __parse_var_exprs(token: str, token_col: int) -> tuple[list[VarExpr], list[P
             colon = body.find(":")
             name = body[:colon] if colon != -1 else body
             mod = body[colon + 1 :] if colon != -1 else ""
-            err = __validate_var(name, mod, col)
+            err = _validate_var(name, mod, col)
             if err is not None:
                 errors.append(err)
             else:
-                sep = __unescape_sep(mod[4:]) if mod else None
+                sep = _unescape_sep(mod[4:]) if mod else None
                 exprs.append(VarExpr(raw, name, sep, col))
         i = j + 1
     return exprs, errors
 
 
-def __validate_var(name: str, mod: str, col: int) -> ParseError | None:
+def _validate_var(name: str, mod: str, col: int) -> ParseError | None:
     if not VAR_NAME_RE.match(name):
         return ParseError(1, col, "E006", f"变量名含非法字符：`{name}`")
     if name not in ALL_VARS:
@@ -185,7 +185,7 @@ def __validate_var(name: str, mod: str, col: int) -> ParseError | None:
     return None
 
 
-def __unescape_sep(value: str) -> str:
+def _unescape_sep(value: str) -> str:
     out: list[str] = []
     i = 0
     while i < len(value):
@@ -208,7 +208,7 @@ def __unescape_sep(value: str) -> str:
     return "".join(out)
 
 
-def __expand_token(token: str, exprs: list[VarExpr], vars: dict) -> list[str]:
+def _expand_token(token: str, exprs: list[VarExpr], vars: dict) -> list[str]:
     if not exprs:
         return [token]
     if len(exprs) == 1 and exprs[0].raw == token:
