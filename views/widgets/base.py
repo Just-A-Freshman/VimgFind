@@ -23,6 +23,9 @@ class BasicImagePreviewView:
         self.master = master
         self._results: OrderedDict[str, tuple] = OrderedDict(dict())
         self.theme_color = self.get_theme_colors()
+        self.drag_source_register(1, DND_FILES)
+        self.dnd_bind('<<DragInitCmd>>', self.on_drag_init)
+        self.dnd_bind('<<DragEndCmd>>', self.on_drag_end)
 
     def generate_path_item(self, path: Path, unique: bool = True) -> str:
         norm_path = file_ops.fast_normalize(path)

@@ -10,6 +10,7 @@ from ttkbootstrap.widgets import ToolTip
 from .base import BasicImagePreviewView
 from utils.i18n import _
 import utils.image_ops as image_ops
+from tkinterdnd2 import DND_FILES
 
 
 class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
