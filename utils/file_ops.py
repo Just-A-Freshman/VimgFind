@@ -170,6 +170,41 @@ def truncate_filename(filename: str, target_width: int = 16) -> str:
     return str(file_path.name)
 
 
+def get_path_type(path: str) -> Literal["local", "unc_ip", "unc_hostname", "mapped_drive"]:
+    normalized = path.replace("/", "\\").rstrip("\\")
+    
+    if normalized.startswith("\\\\"):
+        if normalized.startswith("\\\\?\\UNC\\"):
+            normalized = "\\" + normalized[7:]
+        elif normalized.startswith("\\\\?\\"):
+            return "local"
+
+        parts = normalized.split("\\")
+        if len(parts) >= 3:
+            server = parts[2]
+            if server and all(p.isdigit() for p in server.split(".")):
+                return "unc_ip"
+            return "unc_hostname"
+        return "local"
+
+    if len(normalized) >= 2 and normalized[1] == ":":
+        try:
+            import win32file
+            import pywintypes
+        except ImportError:
+            pass
+        else:
+            try:
+                drive_letter = normalized[:2].upper()
+                drive_type = win32file.GetDriveType(drive_letter)
+                if drive_type == 4:
+                    return "mapped_drive"
+            except pywintypes.error:
+                pass
+
+    return "local"
+
+
 def get_metainfo(file_path: str | Path) -> int:
     return os.path.getsize(file_path)
 
@@ -181,17 +216,13 @@ def fast_normalize(path: str | Path) -> str:
     return os.path.normcase(os.path.normpath(s))
 
 
-def real_normalize(path: str | Path) -> str:
-    return os.path.normcase(os.path.realpath(path))
-
-
 def is_path_under(path: str | Path, parent_dir: str | Path) -> bool:
     fast_path = fast_normalize(path)
     fast_parent = fast_normalize(parent_dir)
     if fast_path.startswith(fast_parent.rstrip(os.sep) + os.sep):
         return True
-    real_path = real_normalize(path)
-    real_parent = real_normalize(parent_dir)
+    real_path = os.path.normcase(os.path.realpath(path))
+    real_parent = os.path.normcase(os.path.realpath(parent_dir))
     return real_path.startswith(real_parent.rstrip(os.sep) + os.sep)
 
 
