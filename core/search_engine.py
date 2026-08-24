@@ -357,7 +357,8 @@ class SearchTool:
             image_dirs: list[str], 
             max_workers: int, 
             exclude_rules: list[str],
-            progress_bar: tqdm
+            progress_bar: tqdm,
+            force_soft_rebuild: bool = False,
         ) -> None:
         self.__init_event.wait()
         try:
@@ -367,6 +368,9 @@ class SearchTool:
                 self.remove_files(self.__get_changed_files(image_dir))
                 
             if not self.verify_index_match():
+                if force_soft_rebuild:
+                    logging.warning("模型校验不匹配，跳过自动压缩")
+                    return
                 self.reset_index()
 
             valid_ids = [
@@ -388,10 +392,10 @@ class SearchTool:
                 self.__name_idx_mgr.compact(valid_ids)
             except Exception as e:
                 logging.error(f"软重建失败: {e}", exc_info=True)
-                self.reset_index()
+                self.reset_index() if not force_soft_rebuild else None
         except Exception as e:
             logging.exception(f"重建索引过程异常：{e}，执行硬重建")
-            self.reset_index()
+            self.reset_index() if not force_soft_rebuild else None
         finally:
             self.update_index(image_dirs, max_workers, exclude_rules, progress_bar)
             self.save_index()
