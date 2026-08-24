@@ -45,8 +45,11 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
                         if rules_obj and rules_obj.should_skip_file(entry, target_dir):
                             continue
                         yield entry.path
-        except PermissionError:
-            pass
+        except PermissionError as e:
+            logging.warning(f"访问权限不足: {path} ({e})")
+        except OSError as e:
+            logging.warning(f"跳过不可访问的目录: {path} ({e})")
+
     print(_("目录扫描完成：共处理 {scanned_count} 项", scanned_count=scanned_count))
 
 
