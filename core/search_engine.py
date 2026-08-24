@@ -33,9 +33,6 @@ class SearchStatus(str, Enum):
     PARTIAL_OMITTED = "partialOmitted"
 
 
-THRESHOLD_EPSILON = 1e-3
-
-
 class SearchTool:
     __slots__ = (
         "__init_event", "force_stop_update", "__checkout_status",
@@ -308,13 +305,7 @@ class SearchTool:
 
     def checkout(
             self,
-            content: Image.Image | str, 
-            threshold: float = 0.0,
-            file_ext_label: str = "",
-            size_min: float | None = None,
-            size_max: float | None = None,
-            folder_filters: list[str] | None = None,
-            dedup: bool = False
+            content: Image.Image | str,
         ) -> Iterator[tuple[Path, float]]:
         self.__init_event.wait()
         self.__checkout_status = SearchStatus.OK
@@ -337,73 +328,13 @@ class SearchTool:
         sim_list, ids_list = self.__vec_idx_mgr.match(fv, self.__name_idx_mgr.results_count)
         name_index_len = len(self.__name_idx_mgr.name_index)
 
-        yield from self._filter_and_yield_results(
-            ids_list, sim_list, threshold, name_index_len, file_ext_label, 
-            size_min, size_max, folder_filters, dedup
-        )
-
-    def _filter_and_yield_results(
-            self,
-            ids_list: list[int], sim_list: list[float],
-            threshold: float, name_index_len: int,
-            file_ext_label: str,
-            size_min: float | None, size_max: float | None,
-            folder_filters: list[str] | None,
-            dedup: bool = False
-        ) -> Iterator[tuple[Path, float]]:
-        ext_set = Setting.ext_group_map.get(file_ext_label)
-        yielded_count = 0
-        threshold -= THRESHOLD_EPSILON
-        prev_similarity: float | None = None
-        prev_sizes: list[int] = []
-
         for img_id, similarity in zip(ids_list, sim_list):
-            if similarity < threshold:
-                break
             if img_id >= name_index_len:
                 logging.warning(f"发现孤立向量ID={img_id}，已自动清理")
                 self.__vec_idx_mgr.delete_vector(img_id)
                 continue
-
             file_path = Path(self.__name_idx_mgr.name_index[img_id][0])
-
-            if ext_set and file_path.suffix.lower() not in ext_set:
-                continue
-
-            try:
-                st_size = file_path.stat().st_size
-            except OSError:
-                self.__checkout_status = SearchStatus.PARTIAL_OMITTED
-                continue
-            if size_min is not None or size_max is not None:
-                file_size_mb = st_size / (1024 * 1024)
-                if size_min is not None and file_size_mb < size_min:
-                    continue
-                if size_max is not None and file_size_mb > size_max:
-                    continue
-
-            if folder_filters:
-                if not any(file_ops.is_path_under(file_path, f) for f in folder_filters):
-                    continue
-
-            if dedup:
-                if prev_similarity is None:
-                    prev_similarity = similarity
-                    prev_sizes = [st_size]
-                elif abs(similarity - prev_similarity) < THRESHOLD_EPSILON:
-                    if st_size in prev_sizes:
-                        prev_sizes.append(st_size)
-                        continue
-                    prev_sizes.append(st_size)
-                else:
-                    prev_similarity = similarity
-                    prev_sizes = [st_size]
-
-            yielded_count += 1
             yield (file_path, similarity)
-
-        if yielded_count == 0:
-            self.__checkout_status = SearchStatus.NO_RESULTS
 
     def is_empty_index(self) -> bool:
         return self.__name_idx_mgr.results_count == 0
