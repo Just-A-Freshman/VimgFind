@@ -32,6 +32,7 @@ class SearchController:
         self.__last_search_content: Path | str = ""
         self.__last_save_dir: Path | None = None
         self.__is_finish_search: Event = Event()
+        self.__search_gen: int = 0
         self.__current_page: int = 0
         self.__queue_paths: list[str] = []
         self.__preview_timer: str | None = None
@@ -42,7 +43,6 @@ class SearchController:
         self.__search_status: SearchStatus = SearchStatus.OK
         self.__partial_omitted: bool = False
         self.__is_first_item: bool = True
-        self.__force_stop_search: bool = False
 
     def env_init(self, only_preview_widgets: bool = False) -> None:
         tab = self.app.view.search_tab
@@ -211,7 +211,7 @@ class SearchController:
         self.__show_toast_timer = self.app.view.after(duration, lambda: toast.place_forget())
 
     def __filter_and_enrich_results(
-        self, results_iter, threshold, ext, size_min, size_max, folder_filters, dedup
+        self, results_iter, current_gen, threshold, ext, size_min, size_max, folder_filters, dedup
     ):
         ext_set = Setting.ext_group_map.get(ext)
         eps = 1e-3
@@ -222,7 +222,7 @@ class SearchController:
         omitted = 0
 
         for img_path, similarity in results_iter:
-            if self.__force_stop_search:
+            if self.__search_gen != current_gen:
                 break
             if similarity < threshold:
                 break
@@ -278,6 +278,8 @@ class SearchController:
         assert self.app.search_tools
         if not self.__is_allow_to_search():
             return
+        self.__search_gen += 1
+        current_gen = self.__search_gen
         self.__is_finish_search.clear()
         tab = self.app.view.search_tab
         if len(self.__queue_paths) > 0 or input_data is None:
@@ -322,13 +324,13 @@ class SearchController:
                 self.__poll_timer = None
 
             for enriched in self.__filter_and_enrich_results(
-                results, threshold, ext, size_min, size_max, folder_filters, dedup
+                results, current_gen, threshold, ext, size_min, size_max, folder_filters, dedup
             ):
-                if self.__force_stop_search:
+                if self.__search_gen != current_gen:
                     return
                 self.__result_queue.put(enriched)
 
-            if self.__force_stop_search:
+            if self.__search_gen != current_gen:
                 return
             self.__result_queue.put(None)
             self.__poll_timer = tab.after(10, self.__poll_results_queue)
@@ -344,7 +346,7 @@ class SearchController:
             messagebox.showinfo(_("提示"), _("请在索引选项卡索引至少一个目录！"))
             return False
         if not self.__is_finish_search.is_set():
-            self.__force_stop_search = True
+            self.__search_gen += 1
             self.__is_finish_search.set()
             if self.__poll_timer is not None:
                 try:
