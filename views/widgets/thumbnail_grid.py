@@ -12,7 +12,6 @@ from .image_loader import ImageLoader
 from config.settings import TkS
 from utils.i18n import _
 import utils.file_ops as file_ops
-from tkinterdnd2 import DND_FILES
 
 
 class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
@@ -76,7 +75,8 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self.bind("<MouseWheel>", self._on_mousewheel)
         self.bind("<Button-4>", self._on_mousewheel)
         self.bind("<Button-5>", self._on_mousewheel)
-        self.bind("<Button-1>", self._on_canvas_click)
+        self.bind("<Button-1>", self._on_press)
+        self.bind("<ButtonRelease-1>", self._on_release)
         self.bind("<KeyPress>", self._on_keyboard_click)
         self.bind("<<ThemeChanged>>", lambda e: self.change_theme())
         self.bind("<Enter>", lambda e: self.config(highlightbackground=self.theme_color.primary))
@@ -184,38 +184,30 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
             self.master.after_cancel(self.__scroll_timer)
         self.__scroll_timer = self.master.after(100, delayed_resize)
 
-    def _on_canvas_click(self, event: tk.Event) -> None:
+    def _handle_click(self, item: str, ctrl: bool, shift: bool) -> None:
         self.focus_set()
-        clicked_item = self.identify_item(event)
-        if not clicked_item:
-            return
-        state = int(event.state)
-        ctrl_pressed = (state & 0x0004) != 0
-        shift_pressed = (state & 0x0001) != 0
-
-        if ctrl_pressed:
-            if clicked_item in self.__selected_items:
-                self.__selected_items.remove(clicked_item)
-                self._set_item_selected(clicked_item, False)
+        if ctrl:
+            if item in self.__selected_items:
+                self.__selected_items.remove(item)
+                self._set_item_selected(item, False)
             else:
-                self.__selected_items.add(clicked_item)
-                self._set_item_selected(clicked_item, True)
-        elif shift_pressed:
+                self.__selected_items.add(item)
+                self._set_item_selected(item, True)
+        elif shift:
             if not self.__selected_items:
-                self.__selected_items.add(clicked_item)
-                self._set_item_selected(clicked_item, True)
+                self.__selected_items.add(item)
+                self._set_item_selected(item, True)
             else:
-                if clicked_item not in self._results:
+                if item not in self._results:
                     return
                 keys = list(self._results.keys())
-                start = next(i for i, k in enumerate(keys) if k == clicked_item or k in self.__selected_items)
-                end = keys.index(clicked_item, start)
+                start = next(i for i, k in enumerate(keys) if k == item or k in self.__selected_items)
+                end = keys.index(item, start)
                 collected = keys[start:end + 1]
                 if collected:
                     self.selection_set(*collected)
         else:
-            self.selection_set(clicked_item)
-            self.event_generate("<<ItemviewSelect>>")
+            self.selection_set(item)
 
     def _schedule_load(self, interval: int = 100) -> None:
         if self.__scroll_timer:

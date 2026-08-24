@@ -16,16 +16,54 @@ ThemeColor = namedtuple("ThemeColor", ["primary", "fg", "selectbg", "inputbg"])
 
 
 class BasicImagePreviewView:
-    __slots__ = ("master", "_results", "theme_color")
+    __slots__ = ("master", "_results", "theme_color", "_press_info")
     drag_source_active = False
 
     def __init__(self, master: tk.Widget) -> None:
         self.master = master
         self._results: OrderedDict[str, tuple] = OrderedDict(dict())
+        self._press_info = None
         self.theme_color = self.get_theme_colors()
         self.drag_source_register(1, DND_FILES)
         self.dnd_bind('<<DragInitCmd>>', self.on_drag_init)
         self.dnd_bind('<<DragEndCmd>>', self.on_drag_end)
+
+    def _on_press(self, event: tk.Event) -> None:
+        self.focus_set()
+        item = self.identify_item(event)
+        if not item:
+            self._press_info = None
+            return
+        ctrl = (int(event.state) & 0x0004) != 0
+        shift = (int(event.state) & 0x0001) != 0
+        was_selected = item in self.selection()
+        self._press_info = {
+            'item': item,
+            'x': event.x_root,
+            'y': event.y_root,
+            'was_selected': was_selected,
+            'drag_started': False,
+            'ctrl': ctrl,
+            'shift': shift,
+        }
+        if not was_selected or ctrl or shift:
+            self._handle_click(item, ctrl, shift)
+            self._press_info['selection_applied'] = True
+        else:
+            self._press_info['selection_applied'] = False
+
+    def _on_release(self, event: tk.Event) -> None:
+        info = self._press_info
+        if not info:
+            return
+        self._press_info = None
+        if info['drag_started']:
+            return
+        if not info.get('selection_applied', False):
+            self._handle_click(info['item'], info['ctrl'], info['shift'])
+
+    def _handle_click(self, item: str, ctrl: bool, shift: bool) -> None:
+        ...
 
     def generate_path_item(self, path: Path, unique: bool = True) -> str:
         norm_path = file_ops.fast_normalize(path)
@@ -79,8 +117,13 @@ class BasicImagePreviewView:
     def drag_source_register(self, button: int | None = None, *dndtypes: str) -> None:
         ...
 
+    def focus_set(self) -> None:
+        ...
+
     def on_drag_init(self, event) -> tuple:
         BasicImagePreviewView.drag_source_active = True
+        if self._press_info:
+            self._press_info['drag_started'] = True
         selected = self.selection()
         if not selected:
             return ("", "", "")
