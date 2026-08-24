@@ -90,6 +90,8 @@ class SearchTool:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
                 continue
+            except OSError:
+                continue
             if old_metainfo != new_metainfo:
                 self.__name_idx_mgr.name_index[idx][1] = new_metainfo
                 changed_files.append(index_file)
