@@ -45,7 +45,7 @@ class MenuController:
             if item.type == "separator" or item.shortcut in shortcut.INNER_SHORTCUT or item.shortcut != custom_shortcut:
                 continue
             paths = [Path(preview_view.item(fid)[0]) for fid in selected_ids]
-            paths = [p for p in paths if p.exists()]
+            paths = [p for p in paths if unc_ops.safe_exists(p)]
             if not paths:
                 continue
             if item.type == "embedded":
@@ -68,7 +68,7 @@ class MenuController:
         else:
             event.widget.selection_set(current_selected_item)
             selected_files = [Path(event.widget.item(current_selected_item)[0])]
-        exists_files: list[Path] = [f for f in selected_files if f.exists()]
+        exists_files: list[Path] = [f for f in selected_files if unc_ops.safe_exists(f)]
         if len(exists_files) == 0:
             messagebox.showinfo(_("提示"), _("选中文件不存在！"))
             return
@@ -98,11 +98,10 @@ class MenuController:
             return
         selected_file = Path(event.widget.item(selection[0])[0])
 
-        if file_ops.get_path_type(str(selected_file)) != "local":
-            unc_root = unc_ops.get_unc_root(str(selected_file))
-            if unc_root and not unc_ops.is_share_online(unc_root, timeout=2.0):
-                messagebox.showerror(_("错误"), _("网络错误，无法访问该文件！"))
-                return
+        unc_root = unc_ops.get_unc_root(str(selected_file))
+        if unc_root and not unc_ops.is_share_online(unc_root, timeout=2.0):
+            messagebox.showerror(_("错误"), _("网络路径不可达，无法访问该文件！"))
+            return
 
         if not selected_file.exists():
             messagebox.showinfo(_("提示"), _("文件不存在！"))

@@ -73,6 +73,15 @@ def is_share_online(unc_root: str, timeout: float = 3.0) -> bool:
     return result
 
 
+def safe_exists(path: str | os.PathLike, timeout: float = 2.0) -> bool:
+    path_str = str(path)
+    unc_root = get_unc_root(path_str)
+    if unc_root is not None:
+        if not is_share_online(unc_root, timeout=timeout):
+            return False
+    return os.path.exists(path_str)
+
+
 def resolve_mapped_drive(path: str) -> str:
     if len(path) < 2 or path[1] != ":":
         return path

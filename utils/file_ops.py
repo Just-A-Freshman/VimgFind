@@ -13,6 +13,7 @@ import time
 
 from .i18n import _
 from . import exclude_rules
+from . import unc_ops as unc_ops
 
 
 class DROPFILES(ctypes.Structure):
@@ -55,7 +56,7 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
 
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
     file_path = Path(file_path).resolve()
-    if not file_path.exists():
+    if not unc_ops.safe_exists(file_path):
         logging.error(f"文件不存在：{file_path}，无法打开！")
 
     command: list[str] = []
@@ -73,7 +74,7 @@ def copy_files(*file_paths: str | Path) -> None:
     valid_paths = []
     for path in file_paths:
         abs_path = Path(path).absolute()
-        if abs_path.exists() and abs_path.is_file():
+        if unc_ops.safe_exists(abs_path) and abs_path.is_file():
             valid_paths.append(str(abs_path).replace("/", "\\") + "\0")
     if not valid_paths:
         try:
@@ -124,7 +125,7 @@ def delete_file(file_path: str | Path, hard=True) -> None:
 def save_as(src_path: str | Path, dest_path: str | Path, is_binary: bool = False, inplace=True) -> bool:
     src_path = Path(src_path)
     dest_path = Path(dest_path)
-    if not src_path.exists() or src_path.is_dir() or dest_path.is_dir():
+    if not unc_ops.safe_exists(src_path) or src_path.is_dir() or dest_path.is_dir():
         return False
     try:
         dest_path = dest_path if inplace else generate_copy_name(dest_path)
