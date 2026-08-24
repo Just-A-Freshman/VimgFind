@@ -7,8 +7,9 @@ from dataclasses import dataclass
 from threading import Event
 import tkinter as tk
 import datetime
+import itertools
 import logging
-import math
+import queue
 
 from PIL import Image
 
@@ -36,6 +37,11 @@ class SearchController:
         self.__preview_timer: str | None = None
         self.__nav_debounce_timer: str | None = None
         self.__show_toast_timer: str | None = None
+        self.__result_queue: queue.Queue | None = None
+        self.__search_status: SearchStatus = SearchStatus.OK
+        self.__partial_omitted: bool = False
+        self.__is_first_item: bool = True
+        self.__poll_timer: str | None = None
 
     def env_init(self, only_preview_widgets: bool = False) -> None:
         tab = self.app.view.search_tab
@@ -183,8 +189,16 @@ class SearchController:
             self.env_init(only_preview_widgets=True)
         if len(self.__queue_paths) > 0:
             tab.set_nav_visible(True)
-        self.__smooth_preview(iter(results), B_min=50, B_max=300, r=10, m=1)
-        tab.preview_view.selection_set(*current_selection)
+        
+        def redisplay():
+            try:
+                for res in results:
+                    self.app.view.search_tab.preview_view.append(*res)
+                if current_selection:
+                    tab.preview_view.selection_set(*current_selection)
+            except Exception as e:
+                logging.error(f"切换预览模式时出现异常：{e}")
+        tab.after(10, redisplay)
 
     def show_toast(self, message: str, duration: int = 1500) -> None:
         toast = self.app.view.search_tab.toast_label
@@ -195,16 +209,67 @@ class SearchController:
             self.app.view.after_cancel(self.__show_toast_timer)
         self.__show_toast_timer = self.app.view.after(duration, lambda: toast.place_forget())
 
-    @staticmethod
-    def __generate_extra_info(image_path: Path, similarity: float) -> tuple:
-        st = image_path.stat()
-        mtime = datetime.datetime.fromtimestamp(st.st_mtime)
-        content = (
-            f"{st.st_size / 1024 / 1024:.2f}MB",
-            mtime.strftime("%Y-%m-%d %H:%M:%S"),
-            f"{similarity:.2f}%"
-        )
-        return content
+    def __filter_and_enrich_results(
+        self, results_iter, threshold, ext, size_min, size_max, folder_filters, dedup
+    ):
+        ext_set = Setting.ext_group_map.get(ext)
+        eps = 1e-3
+        threshold -= eps
+        prev_similarity = None
+        prev_sizes = []
+        yielded = 0
+        omitted = 0
+
+        for img_path, similarity in results_iter:
+            if similarity < threshold:
+                break
+
+            if ext_set and img_path.suffix.lower() not in ext_set:
+                continue
+
+            try:
+                st = img_path.stat()
+            except OSError:
+                omitted += 1
+                continue
+
+            if size_min is not None or size_max is not None:
+                mb = st.st_size / (1024 * 1024)
+                if size_min is not None and mb < size_min:
+                    continue
+                if size_max is not None and mb > size_max:
+                    continue
+
+            if folder_filters:
+                if not any(file_ops.is_path_under(img_path, f) for f in folder_filters):
+                    continue
+
+            if dedup:
+                if prev_similarity is None:
+                    prev_similarity = similarity
+                    prev_sizes = [st.st_size]
+                elif abs(similarity - prev_similarity) < eps:
+                    if st.st_size in prev_sizes:
+                        prev_sizes.append(st.st_size)
+                        continue
+                    prev_sizes.append(st.st_size)
+                else:
+                    prev_similarity = similarity
+                    prev_sizes = [st.st_size]
+
+            mtime = datetime.datetime.fromtimestamp(st.st_mtime)
+            yielded += 1
+            yield (
+                img_path,
+                f"{st.st_size / 1024 / 1024:.2f}MB",
+                mtime.strftime("%Y-%m-%d %H:%M:%S"),
+                f"{similarity:.2f}%",
+            )
+
+        if yielded == 0:
+            self.__search_status = SearchStatus.NO_RESULTS
+        if omitted > 0:
+            self.__partial_omitted = True
 
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools
@@ -233,21 +298,34 @@ class SearchController:
             return
         try:
             tab.preview_view.clear()
-            threshold, ext, size_min, size_max, folder_filters, dedup = self.app.filter_controller.get_search_filters()
-            results = self.app.search_tools.checkout(input_data, threshold, ext, size_min, size_max, folder_filters, dedup)
+            filters = self.app.filter_controller.get_search_filters()
+            threshold, ext, size_min, size_max, folder_filters, dedup = filters
+
+            results = self.app.search_tools.checkout(input_data)
             try:
                 first_result = next(results)
             except StopIteration:
                 self.__handle_empty_result(self.app.search_tools.checkout_status)
                 self.__is_finish_search.set()
                 return
-            first_img_path, first_sim = first_result
-            first_extra_info = self.__generate_extra_info(first_img_path, first_sim)
-            item = tab.preview_view.append(first_img_path, *first_extra_info)
-            tab.preview_view.selection_set(item)
-            self.__smooth_preview(((img_path, *self.__generate_extra_info(img_path, sim)) for img_path, sim in results))
-            if self.app.search_tools.checkout_status == SearchStatus.PARTIAL_OMITTED:
-                self.show_toast(_("部分无效结果被隐藏，建议更新索引。"), duration=3000)
+            results = itertools.chain([first_result], results)
+
+            self.__result_queue = queue.Queue()
+            self.__search_status = SearchStatus.OK
+            self.__partial_omitted = False
+            self.__is_first_item = True
+            if self.__poll_timer is not None:
+                tab.after_cancel(self.__poll_timer)
+                self.__poll_timer = None
+
+            for enriched in self.__filter_and_enrich_results(
+                results, threshold, ext, size_min, size_max, folder_filters, dedup
+            ):
+                self.__result_queue.put(enriched)
+            self.__result_queue.put(None)
+
+            self.__poll_timer = tab.after(10, self.__poll_results_queue)
+
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
@@ -297,44 +375,32 @@ class SearchController:
         elif status == SearchStatus.ENCODE_FAILED:
             messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
 
-    def __smooth_preview(self, results_iter, B_min=10, B_max=100, r=0.8, m=5) -> None:
-        preview_batch_k = 0
-        preview_batch_buffer = []
-        preview_iter = results_iter
+    def __poll_results_queue(self) -> None:
+        self.__poll_timer = None
+        q = self.__result_queue
+        if q is None:
+            return
 
-        def process_next_batch() -> None:
-            nonlocal preview_batch_k, preview_batch_buffer, preview_iter
-            if preview_iter is None:
-                return
-            batch_size = max(1, round(B_min + (B_max - B_min) / (1 + math.exp(-r * (preview_batch_k - m)))))
-            buffer = preview_batch_buffer
-            try:
-                while len(buffer) < batch_size:
-                    img_path, *extra_info = next(preview_iter)
-                    if img_path.exists():
-                        buffer.append((img_path, *extra_info))
-            except StopIteration:
-                if buffer:
-                    self.__append_preview_results(buffer)
-                preview_iter = None
-                preview_batch_buffer = []
-                self.__is_finish_search.set()
-                return
-            self.__append_preview_results(buffer)
-            preview_batch_k += 1
-            preview_batch_buffer = []
-            self.app.view.after(10, process_next_batch)
-        
-        return process_next_batch()
-
-    def __append_preview_results(self, results) -> None:
         try:
-            for res in results:
-                self.app.view.search_tab.preview_view.append(*res)
-        except Exception as e:
-            logging.error(f"插入搜索结果时出现异常：{e}")
-            self.__is_finish_search.set()
-            raise RuntimeError("强制终止搜索")
+            while True:
+                item = q.get_nowait()
+                if item is None:
+                    if self.__search_status == SearchStatus.NO_RESULTS:
+                        self.__handle_empty_result(SearchStatus.NO_RESULTS)
+                    if self.__partial_omitted:
+                        self.show_toast(_("部分无效结果被隐藏，建议更新索引。"), duration=3000)
+                    self.__is_finish_search.set()
+                    self.__result_queue = None
+                    return
+                img_path, *extra_info = item
+                item_id = self.app.view.search_tab.preview_view.append(img_path, *extra_info)
+                if self.__is_first_item:
+                    self.__is_first_item = False
+                    self.app.view.search_tab.preview_view.selection_set(item_id)
+        except queue.Empty:
+            pass
+
+        self.__poll_timer = self.app.view.after(50, self.__poll_results_queue)
 
     def __debounce_navigate(self, direction: int) -> None:
         @decorators.send_task
