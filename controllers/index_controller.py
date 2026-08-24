@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING
+from pathlib import Path
 from tkinter import messagebox, filedialog
 import tkinter as tk
 import logging
@@ -11,6 +12,7 @@ from tqdm import tqdm
 from .exclude_controller import ExcludePreviewController
 from utils.i18n import _
 import utils.file_ops as file_ops
+import utils.unc_ops as unc_ops
 import utils.decorators as decorators
 import utils.idle_tracker as idle_tracker
 
@@ -22,8 +24,8 @@ RANGE_LABEL = {"current": "当前模型", "all": "全部模型"}
 class IndexController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
-        self._is_updating: bool = False
-        self._is_auto_updating: bool = False
+        self.__is_updating: bool = False
+        self.__is_auto_updating: bool = False
         self._is_cleaning: bool = False
 
     def env_init(self) -> None:
@@ -65,11 +67,11 @@ class IndexController:
 
     @property
     def is_updating(self) -> bool:
-        return self._is_updating
+        return self.__is_updating
 
     @property
     def is_auto_updating(self) -> bool:
-        return self._is_auto_updating
+        return self.__is_auto_updating
 
     def update_index_tip(self) -> None:
         assert self.app.search_tools
@@ -91,6 +93,13 @@ class IndexController:
             dir_path = filedialog.askdirectory(title=_("选择索引文件夹"))
             if not dir_path:
                 return
+
+        if file_ops.get_path_type(dir_path) == "mapped_drive":
+            unc_path = unc_ops.resolve_mapped_drive(dir_path)
+            if unc_path != dir_path:
+                messagebox.showinfo(_("提示"), _("已将网络映射盘「{drive}」转换为 UNC 路径「{unc}」", drive=dir_path, unc=unc_path))
+                dir_path = unc_path
+
         search_dirs: list = self.app.setting.model.index.search_dir
         if dir_path in search_dirs:
             messagebox.showinfo(_("提示"), _("新索引的目录已包含在当前索引目录中！"))
@@ -139,12 +148,12 @@ class IndexController:
             self.app.search_tools.remove_duplicate()
 
         if auto:
-            if self._is_updating:
+            if self.__is_updating:
                 return
             show_message = False
-            self._is_auto_updating = True
+            self.__is_auto_updating = True
         else:
-            self._is_auto_updating = False        
+            self.__is_auto_updating = False        
         self.__run_index_task(sync_current_model, show_message)
 
     @decorators.send_task
@@ -161,12 +170,37 @@ class IndexController:
             answer = messagebox.askyesno(_("提示"), _("您确定要重建全部模型的索引吗？"))
             if not answer:
                 return
-        self._is_auto_updating = False
+        self.__is_auto_updating = False
         self.__run_index_task(rebuild_current_model)
 
     def __get_index_params(self) -> tuple[list[str], int, list[str], tqdm]:
+        search_dirs = self.app.setting.model.index.search_dir
+        filtered_dirs: list[str] = []
+        unc_dirs: list[str] = []
+        for d in search_dirs:
+            dtype = file_ops.get_path_type(d)
+            if dtype == "local":
+                if Path(d).exists():
+                    filtered_dirs.append(d)
+            else:
+                unc_dirs.append(d)
+
+        if unc_dirs:
+            with ThreadPoolExecutor(max_workers=min(len(unc_dirs), 8)) as ex:
+                fut_to_dir = {
+                    ex.submit(unc_ops.is_share_online, unc_ops.get_unc_root(d) or d): d
+                    for d in unc_dirs
+                }
+                for fut in as_completed(fut_to_dir):
+                    d = fut_to_dir[fut]
+                    try:
+                        if fut.result():
+                            filtered_dirs.append(d)
+                    except Exception:
+                        pass
+
         return (
-            [d for d in self.app.setting.model.index.search_dir if Path(d).exists()],
+            filtered_dirs,
             int(float(self.app.view.index_tab.update_threads_count_scale.get())),
             self.app.setting.model.index.exclude_rules or [],
             tqdm(total=0, ascii=False, ncols=50)
@@ -180,7 +214,7 @@ class IndexController:
             text=_("终止索引更新"),
             command=lambda: setattr(self.app.search_tools, "force_stop_update", True)
         )
-        self._is_updating = True
+        self.__is_updating = True
         self.app.model_controller.on_model_select()
         self.__check_queue()
         try:
@@ -213,8 +247,8 @@ class IndexController:
             tab.delete_index_button.config(state=tk.NORMAL)
             tab.rebuild_index_button.config(state=tk.NORMAL)
             self.app.model_controller.on_model_select()
-            self._is_updating = False
-            self._is_auto_updating = False
+            self.__is_updating = False
+            self.__is_auto_updating = False
 
     def __open_exclude_dialog(self) -> None:
         from views.exclude_dialog import ExcludeDialog
@@ -254,7 +288,7 @@ class IndexController:
         answer = messagebox.askyesno(_("提示"), _("你确定要删除选中目录吗？"))
         if not answer:
             return
-        self._is_updating = True
+        self.__is_updating = True
         self.__check_queue()
         dirs_to_delete = []
         search_dirs: list = self.app.setting.model.index.search_dir
@@ -269,7 +303,7 @@ class IndexController:
             self.app.search_tools.remove_files_in_directory(dir_path, remaining_dirs)
         self.app.search_tools.remove_nonexists()
         self.app.setting.save()
-        self._is_updating = False
+        self.__is_updating = False
         self.app.view.after(1000, self.update_index_tip)
 
     def __toggle_auto_update(self) -> None:
@@ -301,7 +335,7 @@ class IndexController:
         if not search_dirs:
             messagebox.showinfo(_("提示"), _("当前没有索引目录。"))
             return
-        if self._is_updating:
+        if self.__is_updating:
             messagebox.showinfo(_("提示"), _("索引正在更新中，禁用排除图片清理！"))
             return
         if self._is_cleaning:
@@ -322,7 +356,7 @@ class IndexController:
                 _("将在索引中移除 {count} 个匹配排除规则的文件记录。\n\n此操作不可撤消，是否继续？", count=len(excluded))
             ):
                 return
-            if self._is_updating:
+            if self.__is_updating:
                 messagebox.showinfo(_("提示"), _("索引正在更新中，禁用排除图片清理！"))
                 return
             self.app.search_tools.remove_files(excluded)
@@ -339,5 +373,5 @@ class IndexController:
                 self.app.view.index_tab.index_tip_label.config(text=message)
         except Exception as e:
             logging.warning(f"__check_queue 异常: {e}")
-        if self._is_updating:
+        if self.__is_updating:
             self.app.view.after(200, self.__check_queue)

@@ -21,6 +21,7 @@ import utils.exclude_rules as exclude_rules
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.decorators as decorators
+import utils.unc_ops as unc_ops
 
 
 class SearchStatus(str, Enum):
@@ -83,7 +84,14 @@ class SearchTool:
                 continue
             if not file_ops.is_path_under(index_file, target_dir):
                 continue
-            new_metainfo = file_ops.get_metainfo(index_file)
+            try:
+                new_metainfo = file_ops.get_metainfo(index_file)
+            except FileNotFoundError:
+                self.__name_idx_mgr.delete_name(idx)
+                self.__vec_idx_mgr.delete_vector(idx)
+                continue
+            except OSError:
+                continue
             if old_metainfo != new_metainfo:
                 self.__name_idx_mgr.name_index[idx][1] = new_metainfo
                 changed_files.append(index_file)
@@ -111,6 +119,10 @@ class SearchTool:
 
         samples = random.sample(valid_entries, sample_count)
         for idx, fpath in samples:
+            if file_ops.get_path_type(fpath) != "local":
+                unc_root = unc_ops.get_unc_root(fpath)
+                if unc_root and not unc_ops.is_share_online(unc_root):
+                    continue
             image_obj = image_ops.parse_image_from_path(fpath)
             if image_obj is None:
                 return False
@@ -196,11 +208,51 @@ class SearchTool:
 
     def remove_nonexists(self) -> None:
         self.__init_event.wait()
-        for idx, (index_file, _) in tqdm(enumerate(self.__name_idx_mgr.name_index), ascii=False, ncols=50):
-            if os.path.exists(index_file) or index_file == NameIndexManager.NOTEXISTS:
+        local_indices: list[int] = []
+        unc_groups: dict[str, list[int]] = {}
+
+        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
+            if index_file == NameIndexManager.NOTEXISTS:
+                continue
+            path_type = file_ops.get_path_type(index_file)
+            if path_type == "local":
+                local_indices.append(idx)
+            else:
+                unc_root = unc_ops.get_unc_root(index_file)
+                if unc_root:
+                    unc_groups.setdefault(unc_root, []).append(idx)
+
+        for idx in tqdm(local_indices, ascii=False, ncols=50):
+            index_file = self.__name_idx_mgr.name_index[idx][0]
+            if os.path.exists(index_file):
                 continue
             self.__name_idx_mgr.delete_name(idx)
             self.__vec_idx_mgr.delete_vector(idx)
+
+        for unc_root, indices in tqdm(unc_groups.items(), desc="检查网络共享", ascii=False, ncols=50):
+            if not unc_ops.is_share_online(unc_root):
+                tqdm.write(f"  跳过离线共享: {unc_root}")
+                continue
+
+            to_delete: list[int] = []
+            for idx in indices:
+                index_file = self.__name_idx_mgr.name_index[idx][0]
+                if index_file == NameIndexManager.NOTEXISTS:
+                    continue
+                if os.path.exists(index_file):
+                    continue
+                to_delete.append(idx)
+
+            if not to_delete:
+                continue
+
+            if not unc_ops.is_share_online(unc_root):
+                tqdm.write(f"  共享中途断线: {unc_root}")
+                continue
+
+            for idx in to_delete:
+                self.__name_idx_mgr.delete_name(idx)
+                self.__vec_idx_mgr.delete_vector(idx)
 
     def get_excluded_files(self, rules: list[str], search_dirs: list[str]) -> list[str]:
         self.__init_event.wait()
