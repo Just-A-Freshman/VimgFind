@@ -37,11 +37,12 @@ class SearchController:
         self.__preview_timer: str | None = None
         self.__nav_debounce_timer: str | None = None
         self.__show_toast_timer: str | None = None
+        self.__poll_timer: str | None = None
         self.__result_queue: queue.Queue | None = None
         self.__search_status: SearchStatus = SearchStatus.OK
         self.__partial_omitted: bool = False
         self.__is_first_item: bool = True
-        self.__poll_timer: str | None = None
+        self.__force_stop_search: bool = False
 
     def env_init(self, only_preview_widgets: bool = False) -> None:
         tab = self.app.view.search_tab
@@ -221,6 +222,8 @@ class SearchController:
         omitted = 0
 
         for img_path, similarity in results_iter:
+            if self.__force_stop_search:
+                break
             if similarity < threshold:
                 break
 
@@ -321,9 +324,13 @@ class SearchController:
             for enriched in self.__filter_and_enrich_results(
                 results, threshold, ext, size_min, size_max, folder_filters, dedup
             ):
+                if self.__force_stop_search:
+                    return
                 self.__result_queue.put(enriched)
-            self.__result_queue.put(None)
 
+            if self.__force_stop_search:
+                return
+            self.__result_queue.put(None)
             self.__poll_timer = tab.after(10, self.__poll_results_queue)
 
         except Exception as e:
@@ -337,7 +344,15 @@ class SearchController:
             messagebox.showinfo(_("提示"), _("请在索引选项卡索引至少一个目录！"))
             return False
         if not self.__is_finish_search.is_set():
-            return False
+            self.__force_stop_search = True
+            self.__is_finish_search.set()
+            if self.__poll_timer is not None:
+                try:
+                    self.app.view.after_cancel(self.__poll_timer)
+                except Exception:
+                    pass
+                self.__poll_timer = None
+            self.__result_queue = None
         if self.app.index_controller.is_updating:
             if self.app.index_controller.is_auto_updating:
                 self.app.search_tools.force_stop_update = True
