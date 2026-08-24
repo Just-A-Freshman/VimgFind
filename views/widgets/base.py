@@ -28,7 +28,7 @@ class BasicImagePreviewView:
         self.dnd_bind('<<DragInitCmd>>', self.on_drag_init)
         self.dnd_bind('<<DragEndCmd>>', self.on_drag_end)
 
-    def _on_press(self, event: tk.Event) -> None:
+    def _on_press(self, event: tk.Event) -> str | None:
         self.focus_set()
         item = self.identify_item(event)
         if not item:

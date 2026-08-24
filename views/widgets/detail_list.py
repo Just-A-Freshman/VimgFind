@@ -9,7 +9,6 @@ import tkinter as tk
 from .base import BasicImagePreviewView
 from config.settings import TkS
 from utils.i18n import _
-from tkinterdnd2 import DND_FILES
 
 
 class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
@@ -36,6 +35,8 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
         for column in self["columns"]:
             self.heading(column, command=lambda column=column: self.__sort_column(column, False))
         self.master.after(50, create_scrollbar)
+        self.bind("<Button-1>", self._on_press)
+        self.bind("<ButtonRelease-1>", self._on_release)
 
     def __sort_column(self, col: str, reverse: bool) -> None:
         data = [(self.set(k, col), k) for k in self.get_children("")]
@@ -46,6 +47,29 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
         for index, (tmp, k) in enumerate(data):
             self.move(k, "", index)
         self.heading(col, command=lambda: self.__sort_column(col, not reverse))
+
+    def _on_press(self, event: tk.Event) -> str | None:
+        BasicImagePreviewView._on_press(self, event)
+        self.tk.call('tkdnd::_begin_drag', 'press', '1', self._w, '', event.x_root, event.y_root, event.x, event.y)    # type: ignore
+        return "break"
+
+    def _handle_click(self, item: str, ctrl: bool, shift: bool) -> None:
+        self.focus_set()
+        if ctrl:
+            self.selection_toggle(item)
+        elif shift:
+            sel = self.selection()
+            if not sel:
+                self.selection_set(item)
+            else:
+                children = self.get_children()
+                start = min(children.index(s) for s in sel)
+                end = children.index(item)
+                if start > end:
+                    start, end = end, start
+                self.selection_set(*children[start:end + 1])
+        else:
+            self.selection_set(item)
 
     def append(self, image_path: Path, *extra_info: str | int) -> str:
         iid = self.generate_path_item(image_path)
