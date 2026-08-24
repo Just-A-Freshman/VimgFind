@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from tkinter import Tk
 from typing import Iterator, Literal
+from functools import lru_cache
 import ctypes
 import hashlib
 import logging
@@ -220,13 +221,20 @@ def fast_normalize(path: str | Path) -> str:
     return os.path.normcase(os.path.normpath(s))
 
 
+@lru_cache
+def real_normalize(path: str | Path) -> str:
+    return os.path.normcase(os.path.realpath(path))
+
+
 def is_path_under(path: str | Path, parent_dir: str | Path) -> bool:
     fast_path = fast_normalize(path)
     fast_parent = fast_normalize(parent_dir)
     if fast_path.startswith(fast_parent.rstrip(os.sep) + os.sep):
         return True
-    real_path = os.path.normcase(os.path.realpath(path))
-    real_parent = os.path.normcase(os.path.realpath(parent_dir))
+    if fast_path[:2] != fast_parent[:2]:
+        return False
+    real_path = real_normalize(fast_path)
+    real_parent = real_normalize(fast_parent)
     return real_path.startswith(real_parent.rstrip(os.sep) + os.sep)
 
 
