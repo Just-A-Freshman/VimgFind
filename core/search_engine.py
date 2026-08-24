@@ -77,6 +77,8 @@ class SearchTool:
     def __get_changed_files(self, target_dir: str) -> list[str]:
         changed_files = []
         for idx, (index_file, old_metainfo) in enumerate(self.__name_idx_mgr.name_index):
+            if self.force_stop_update:
+                break
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
             if not file_ops.is_path_under(index_file, target_dir):
@@ -220,6 +222,8 @@ class SearchTool:
                     unc_groups.setdefault(unc_root, []).append(idx)
 
         for idx in tqdm(local_indices, ascii=False, ncols=50):
+            if self.force_stop_update:
+                break
             index_file = self.__name_idx_mgr.name_index[idx][0]
             if os.path.exists(index_file):
                 continue
@@ -227,20 +231,23 @@ class SearchTool:
             self.__vec_idx_mgr.delete_vector(idx)
 
         for unc_root, indices in tqdm(unc_groups.items(), desc="检查网络共享", ascii=False, ncols=50):
+            if self.force_stop_update:
+                break
             if not unc_ops.is_share_online(unc_root):
                 tqdm.write(f"  跳过离线共享: {unc_root}")
                 continue
 
             to_delete: list[int] = []
             for idx in indices:
+                if self.force_stop_update:
+                    break
                 index_file = self.__name_idx_mgr.name_index[idx][0]
                 if index_file == NameIndexManager.NOTEXISTS:
                     continue
-                if os.path.exists(index_file):
-                    continue
-                to_delete.append(idx)
+                if not unc_ops.safe_exists(index_file, timeout=2.0):
+                    to_delete.append(idx)
 
-            if not to_delete:
+            if not to_delete or self.force_stop_update:
                 continue
 
             if not unc_ops.is_share_online(unc_root):
