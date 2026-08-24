@@ -7,9 +7,8 @@ from dataclasses import dataclass
 from threading import Event
 import tkinter as tk
 import datetime
-import itertools
 import logging
-import queue
+import math
 
 from PIL import Image
 
@@ -32,17 +31,11 @@ class SearchController:
         self.__last_search_content: Path | str = ""
         self.__last_save_dir: Path | None = None
         self.__is_finish_search: Event = Event()
-        self.__search_gen: int = 0
         self.__current_page: int = 0
         self.__queue_paths: list[str] = []
         self.__preview_timer: str | None = None
         self.__nav_debounce_timer: str | None = None
         self.__show_toast_timer: str | None = None
-        self.__poll_timer: str | None = None
-        self.__result_queue: queue.Queue | None = None
-        self.__search_status: SearchStatus = SearchStatus.OK
-        self.__partial_omitted: bool = False
-        self.__is_first_item: bool = True
 
     def env_init(self, only_preview_widgets: bool = False) -> None:
         tab = self.app.view.search_tab
@@ -190,16 +183,8 @@ class SearchController:
             self.env_init(only_preview_widgets=True)
         if len(self.__queue_paths) > 0:
             tab.set_nav_visible(True)
-        
-        def redisplay():
-            try:
-                for res in results:
-                    self.app.view.search_tab.preview_view.append(*res)
-                if current_selection:
-                    tab.preview_view.selection_set(*current_selection)
-            except Exception as e:
-                logging.error(f"切换预览模式时出现异常：{e}")
-        tab.after(10, redisplay)
+        self.__smooth_preview(iter(results), B_min=50, B_max=300, r=10, m=1)
+        tab.preview_view.selection_set(*current_selection)
 
     def show_toast(self, message: str, duration: int = 1500) -> None:
         toast = self.app.view.search_tab.toast_label
@@ -210,9 +195,8 @@ class SearchController:
             self.app.view.after_cancel(self.__show_toast_timer)
         self.__show_toast_timer = self.app.view.after(duration, lambda: toast.place_forget())
 
-    def __filter_and_enrich_results(
-        self, results_iter, current_gen, threshold, ext, size_min, size_max, folder_filters, dedup
-    ):
+    def __filter_and_enrich_results(self, results_iter):
+        threshold, ext, size_min, size_max, folder_filters, dedup = self.app.filter_controller.get_search_filters()
         ext_set = Setting.ext_group_map.get(ext)
         eps = 1e-3
         threshold -= eps
@@ -222,11 +206,9 @@ class SearchController:
         omitted = 0
 
         for img_path, similarity in results_iter:
-            if self.__search_gen != current_gen:
-                break
             if similarity < threshold:
                 break
-
+            img_path = Path(img_path)
             if ext_set and img_path.suffix.lower() not in ext_set:
                 continue
 
@@ -269,17 +251,10 @@ class SearchController:
                 f"{similarity:.2f}%",
             )
 
-        if yielded == 0:
-            self.__search_status = SearchStatus.NO_RESULTS
-        if omitted > 0:
-            self.__partial_omitted = True
-
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools
         if not self.__is_allow_to_search():
             return
-        self.__search_gen += 1
-        current_gen = self.__search_gen
         self.__is_finish_search.clear()
         tab = self.app.view.search_tab
         if len(self.__queue_paths) > 0 or input_data is None:
@@ -303,38 +278,18 @@ class SearchController:
             return
         try:
             tab.preview_view.clear()
-            filters = self.app.filter_controller.get_search_filters()
-            threshold, ext, size_min, size_max, folder_filters, dedup = filters
-
-            results = self.app.search_tools.checkout(input_data)
+            results = self.__filter_and_enrich_results(self.app.search_tools.checkout(input_data))
             try:
                 first_result = next(results)
             except StopIteration:
                 self.__handle_empty_result(self.app.search_tools.checkout_status)
                 self.__is_finish_search.set()
                 return
-            results = itertools.chain([first_result], results)
-
-            self.__result_queue = queue.Queue()
-            self.__search_status = SearchStatus.OK
-            self.__partial_omitted = False
-            self.__is_first_item = True
-            if self.__poll_timer is not None:
-                tab.after_cancel(self.__poll_timer)
-                self.__poll_timer = None
-
-            for enriched in self.__filter_and_enrich_results(
-                results, current_gen, threshold, ext, size_min, size_max, folder_filters, dedup
-            ):
-                if self.__search_gen != current_gen:
-                    return
-                self.__result_queue.put(enriched)
-
-            if self.__search_gen != current_gen:
-                return
-            self.__result_queue.put(None)
-            self.__poll_timer = tab.after(10, self.__poll_results_queue)
-
+            item = tab.preview_view.append(*first_result)
+            tab.preview_view.selection_set(item)
+            self.__smooth_preview(results)
+            if self.app.search_tools.checkout_status == SearchStatus.PARTIAL_OMITTED:
+                self.show_toast(_("部分无效结果被隐藏，建议更新索引。"), duration=3000)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
@@ -392,32 +347,44 @@ class SearchController:
         elif status == SearchStatus.ENCODE_FAILED:
             messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
 
-    def __poll_results_queue(self) -> None:
-        self.__poll_timer = None
-        q = self.__result_queue
-        if q is None:
-            return
+    def __smooth_preview(self, results_iter, B_min=10, B_max=100, r=0.8, m=5) -> None:
+        preview_batch_k = 0
+        preview_batch_buffer = []
+        preview_iter = results_iter
 
+        def process_next_batch() -> None:
+            nonlocal preview_batch_k, preview_batch_buffer, preview_iter
+            if preview_iter is None:
+                return
+            batch_size = max(1, round(B_min + (B_max - B_min) / (1 + math.exp(-r * (preview_batch_k - m)))))
+            buffer = preview_batch_buffer
+            try:
+                while len(buffer) < batch_size:
+                    img_path, *extra_info = next(preview_iter)
+                    if img_path.exists():
+                        buffer.append((img_path, *extra_info))
+            except StopIteration:
+                if buffer:
+                    self.__append_preview_results(buffer)
+                preview_iter = None
+                preview_batch_buffer = []
+                self.__is_finish_search.set()
+                return
+            self.__append_preview_results(buffer)
+            preview_batch_k += 1
+            preview_batch_buffer = []
+            self.app.view.after(10, process_next_batch)
+        
+        return process_next_batch()
+    
+    def __append_preview_results(self, results) -> None:
         try:
-            while True:
-                item = q.get_nowait()
-                if item is None:
-                    if self.__search_status == SearchStatus.NO_RESULTS:
-                        self.__handle_empty_result(SearchStatus.NO_RESULTS)
-                    if self.__partial_omitted:
-                        self.show_toast(_("已过滤部分无效结果"), duration=3000)
-                    self.__is_finish_search.set()
-                    self.__result_queue = None
-                    return
-                img_path, *extra_info = item
-                item_id = self.app.view.search_tab.preview_view.append(img_path, *extra_info)
-                if self.__is_first_item:
-                    self.__is_first_item = False
-                    self.app.view.search_tab.preview_view.selection_set(item_id)
-        except queue.Empty:
-            pass
-
-        self.__poll_timer = self.app.view.after(50, self.__poll_results_queue)
+            for res in results:
+                self.app.view.search_tab.preview_view.append(*res)
+        except Exception as e:
+            logging.error(f"插入搜索结果时出现异常：{e}")
+            self.__is_finish_search.set()
+            raise RuntimeError("强制终止搜索")
 
     def __debounce_navigate(self, direction: int) -> None:
         @decorators.send_task

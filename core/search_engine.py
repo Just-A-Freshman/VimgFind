@@ -313,7 +313,7 @@ class SearchTool:
     def checkout(
             self,
             content: Image.Image | str,
-        ) -> Iterator[tuple[Path, float]]:
+        ) -> Iterator[tuple[str, float]]:
         self.__init_event.wait()
         self.__checkout_status = SearchStatus.OK
 
@@ -340,7 +340,7 @@ class SearchTool:
                 logging.warning(f"发现孤立向量ID={img_id}，已自动清理")
                 self.__vec_idx_mgr.delete_vector(img_id)
                 continue
-            file_path = Path(self.__name_idx_mgr.name_index[img_id][0])
+            file_path = self.__name_idx_mgr.name_index[img_id][0]
             yield (file_path, similarity)
 
     def is_empty_index(self) -> bool:
