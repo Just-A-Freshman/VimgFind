@@ -78,7 +78,22 @@ class SearchTool:
         return self.__checkout_status
     
     def __get_changed_files(self, target_dir: str) -> list[str]:
-        return _get_changed_files_unc_aware(self.__name_idx_mgr, self.__vec_idx_mgr, target_dir)
+        changed_files = []
+        for idx, (index_file, old_metainfo) in enumerate(self.__name_idx_mgr.name_index):
+            if index_file == NameIndexManager.NOTEXISTS:
+                continue
+            if not file_ops.is_path_under(index_file, target_dir):
+                continue
+            try:
+                new_metainfo = file_ops.get_metainfo(index_file)
+            except FileNotFoundError:
+                self.__name_idx_mgr.delete_name(idx)
+                self.__vec_idx_mgr.delete_vector(idx)
+                continue
+            if old_metainfo != new_metainfo:
+                self.__name_idx_mgr.name_index[idx][1] = new_metainfo
+                changed_files.append(index_file)
+        return changed_files
 
     def __get_new_files(self, target_dir: str, exclude_rules: list[str] | None = None) -> list[str]:
         new_files = []
@@ -191,7 +206,51 @@ class SearchTool:
 
     def remove_nonexists(self) -> None:
         self.__init_event.wait()
-        _remove_nonexists_unc_aware(self.__name_idx_mgr, self.__vec_idx_mgr)
+        local_indices: list[int] = []
+        unc_groups: dict[str, list[int]] = {}
+
+        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
+            if index_file == NameIndexManager.NOTEXISTS:
+                continue
+            path_type = file_ops.get_path_type(index_file)
+            if path_type == "local":
+                local_indices.append(idx)
+            else:
+                unc_root = unc_ops.get_unc_root(index_file)
+                if unc_root:
+                    unc_groups.setdefault(unc_root, []).append(idx)
+
+        for idx in tqdm(local_indices, ascii=False, ncols=50):
+            index_file = self.__name_idx_mgr.name_index[idx][0]
+            if os.path.exists(index_file):
+                continue
+            self.__name_idx_mgr.delete_name(idx)
+            self.__vec_idx_mgr.delete_vector(idx)
+
+        for unc_root, indices in tqdm(unc_groups.items(), desc="检查网络共享", ascii=False, ncols=50):
+            if not unc_ops.is_share_online(unc_root):
+                tqdm.write(f"  跳过离线共享: {unc_root}")
+                continue
+
+            to_delete: list[int] = []
+            for idx in indices:
+                index_file = self.__name_idx_mgr.name_index[idx][0]
+                if index_file == NameIndexManager.NOTEXISTS:
+                    continue
+                if os.path.exists(index_file):
+                    continue
+                to_delete.append(idx)
+
+            if not to_delete:
+                continue
+
+            if not unc_ops.is_share_online(unc_root):
+                tqdm.write(f"  共享中途断线: {unc_root}")
+                continue
+
+            for idx in to_delete:
+                self.__name_idx_mgr.delete_name(idx)
+                self.__vec_idx_mgr.delete_vector(idx)
 
     def get_excluded_files(self, rules: list[str], search_dirs: list[str]) -> list[str]:
         self.__init_event.wait()
@@ -415,107 +474,3 @@ class SearchTool:
         vec_idx_mgr: VectorIndexManager | None = getattr(self, '_SearchTool__vec_idx_mgr', None)
         if vec_idx_mgr is not None:
             vec_idx_mgr.close()
-
-
-# =============================================================================
-# 模块级函数（可测试，不依赖 SearchTool 实例）
-# =============================================================================
-
-
-def _remove_nonexists_unc_aware(
-    name_idx_mgr: "NameIndexManager",
-    vec_idx_mgr: "VectorIndexManager",
-) -> None:
-    """UNC 感知的 remove_nonexists 实现。
-
-    按路径类型分组处理：
-    - 本地路径：直接检查 os.path.exists，不存在则删
-    - UNC 路径：按 share_root 分组，两头验证在线状态
-
-    单独提取为模块级函数以便测试。
-    """
-    from .index_manager import NameIndexManager as NIM
-
-    local_indices: list[int] = []
-    unc_groups: dict[str, list[int]] = {}  # share_root → [indices]
-
-    # 第一步：分组
-    for idx, (index_file, _) in enumerate(name_idx_mgr.name_index):
-        if index_file == NIM.NOTEXISTS:
-            continue
-        path_type = file_ops.get_path_type(index_file)
-        if path_type == "local":
-            local_indices.append(idx)
-        else:
-            unc_root = unc_ops.get_unc_root(index_file)
-            if unc_root:
-                unc_groups.setdefault(unc_root, []).append(idx)
-
-    # 第二步：处理本地路径（原有逻辑，可显示进度）
-    for idx in tqdm(local_indices, ascii=False, ncols=50):
-        index_file = name_idx_mgr.name_index[idx][0]
-        if os.path.exists(index_file):
-            continue
-        name_idx_mgr.delete_name(idx)
-        vec_idx_mgr.delete_vector(idx)
-
-    # 第三步：处理 UNC 路径组
-    for unc_root, indices in tqdm(unc_groups.items(), desc="检查网络共享", ascii=False, ncols=50):
-        # 1. 检测共享在线
-        if not unc_ops.is_share_online(unc_root):
-            tqdm.write(f"  跳过离线共享: {unc_root}")
-            continue  # 离线，跳过整组
-
-        # 2. 逐个检查文件，记录待删
-        to_delete: list[int] = []
-        for idx in indices:
-            index_file = name_idx_mgr.name_index[idx][0]
-            if index_file == NIM.NOTEXISTS:
-                continue
-            if os.path.exists(index_file):
-                continue
-            to_delete.append(idx)
-
-        if not to_delete:
-            continue
-
-        # 3. 结束重检：共享是否仍在在线
-        if not unc_ops.is_share_online(unc_root):
-            tqdm.write(f"  共享中途断线: {unc_root}")
-            continue  # 中途断线，不清除待删列表
-
-        # 4. 确认在线，批量删除
-        for idx in to_delete:
-            name_idx_mgr.delete_name(idx)
-            vec_idx_mgr.delete_vector(idx)
-
-
-def _get_changed_files_unc_aware(
-    name_idx_mgr: "NameIndexManager",
-    vec_idx_mgr: "VectorIndexManager",
-    target_dir: str,
-) -> list[str]:
-    """UNC 感知的 __get_changed_files 实现。
-
-    额外处理 FileNotFoundError：文件被删时从索引中删除该条目。
-
-    单独提取为模块级函数以便测试。
-    """
-    from .index_manager import NameIndexManager as NIM
-
-    changed_files = []
-    for idx, (index_file, old_metainfo) in enumerate(name_idx_mgr.name_index):
-        if index_file == NIM.NOTEXISTS:
-            continue
-        if not file_ops.is_path_under(index_file, target_dir):
-            continue
-        try:
-            new_metainfo = file_ops.get_metainfo(index_file)
-        except FileNotFoundError:
-            name_idx_mgr.delete_name(idx)
-            vec_idx_mgr.delete_vector(idx)
-            continue
-        if old_metainfo != new_metainfo:
-            name_idx_mgr.name_index[idx][1] = new_metainfo
-            changed_files.append(index_file)
-    return changed_files
