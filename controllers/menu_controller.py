@@ -22,6 +22,7 @@ import utils.file_ops as file_ops
 import utils.image_ops as image_ops
 import utils.decorators as decorators
 import utils.cmd_parser as cmd_parser
+import utils.unc_ops as unc_ops
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -96,6 +97,13 @@ class MenuController:
         if len(selection) == 0:
             return
         selected_file = Path(event.widget.item(selection[0])[0])
+
+        if file_ops.get_path_type(str(selected_file)) != "local":
+            unc_root = unc_ops.get_unc_root(str(selected_file))
+            if unc_root and not unc_ops.is_share_online(unc_root, timeout=2.0):
+                messagebox.showerror(_("错误"), _("网络错误，无法访问该文件！"))
+                return
+
         if not selected_file.exists():
             messagebox.showinfo(_("提示"), _("文件不存在！"))
         else:

@@ -388,7 +388,7 @@ class SearchController:
                     if self.__search_status == SearchStatus.NO_RESULTS:
                         self.__handle_empty_result(SearchStatus.NO_RESULTS)
                     if self.__partial_omitted:
-                        self.show_toast(_("部分无效结果被隐藏，建议更新索引。"), duration=3000)
+                        self.show_toast(_("已过滤部分无效结果"), duration=3000)
                     self.__is_finish_search.set()
                     self.__result_queue = None
                     return
