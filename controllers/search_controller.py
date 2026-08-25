@@ -22,7 +22,6 @@ import utils.shortcut as shortcut
 import utils.decorators as decorators
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
-import utils.unc_ops as unc_ops
 
 if TYPE_CHECKING:
     from .app_controller import AppController
