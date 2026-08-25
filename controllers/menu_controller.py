@@ -94,7 +94,7 @@ class MenuController:
         if not isinstance(event.widget, BasicImagePreviewView):
             return
         selection = event.widget.selection()
-        if len(selection) == 0:
+        if len(selection) == 0 or not event.widget.identify_item(event):
             return
         selected_file = Path(event.widget.item(selection[0])[0])
 
