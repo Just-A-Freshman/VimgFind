@@ -143,9 +143,12 @@ class IndexController:
     def __sync_index(self, show_message: bool = True, auto: bool = False) -> None:
         def sync_current_model() -> None:
             assert self.app.search_tools
-            self.app.search_tools.remove_nonexists()
-            self.app.search_tools.update_index(*self.__get_index_params())
-            self.app.search_tools.remove_duplicate()
+            tools = self.app.search_tools
+            tools.remove_nonexists()
+            tools.update_index(*self.__get_index_params())
+            tools.remove_duplicate()
+            if auto and tools.total_index_count > 100000 and tools.valid_index_count / tools.total_index_count < 0.8:
+                tools.rebuild_index(*self.__get_index_params(), force_soft_rebuild=True)
 
         if auto:
             if self.__is_updating:
