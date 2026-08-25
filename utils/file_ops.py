@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from tkinter import Tk
 from typing import Callable, Iterator, Literal
@@ -10,6 +11,7 @@ import logging
 import os
 import queue
 import shutil
+import stat
 import subprocess
 import threading
 
@@ -186,7 +188,25 @@ def delete_file(file_path: str | Path, hard=True) -> None:
 def save_as(src_path: str | Path, dest_path: str | Path) -> bool:
     src_path = Path(src_path)
     dest_path = Path(dest_path)
-    if not unc_ops.safe_exists(src_path) or src_path.is_dir() or dest_path.is_dir():
+
+    try:
+        src_is_unc = str(src_path).startswith("\\\\")
+        dest_is_unc = str(dest_path).startswith("\\\\")
+        if src_is_unc and dest_is_unc:
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                src_fut = pool.submit(os.stat, src_path)
+                dest_fut = pool.submit(os.stat, dest_path)
+                src_st = src_fut.result()
+                try:
+                    dest_fut.result()
+                except OSError:
+                    pass
+        else:
+            src_st = os.stat(src_path)
+    except OSError:
+        return False
+
+    if not stat.S_ISREG(src_st.st_mode):
         return False
     try:
         shutil.copy2(src_path, dest_path)
