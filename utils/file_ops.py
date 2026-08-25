@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from pathlib import Path
 from tkinter import Tk
-from typing import Iterator, Literal
+from typing import Callable, Iterator, Literal
 from functools import lru_cache
 import ctypes
 import hashlib
 import logging
 import os
+import queue
 import shutil
 import subprocess
+import threading
 
 from .i18n import _
 from . import decorators
@@ -27,32 +29,95 @@ class DROPFILES(ctypes.Structure):
     ]
 
 
-def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = None) -> Iterator[str]:
+def get_file_iterator(
+    target_dir: str,
+    exclude_rules_list: list[str] | None = None,
+    max_workers: int = 8,
+    stop_check: Callable[[], bool] | None = None,
+) -> Iterator[str]:
     rules_obj = exclude_rules.compile_rules(exclude_rules_list)
-    stack = [target_dir]
+    dir_queue: queue.Queue[str | None] = queue.Queue()
+    result_queue: queue.Queue[str | None] = queue.Queue()
     scanned_count = 0
-    while stack:
-        path = stack.pop()
-        try:
-            with os.scandir(path) as it:
-                for entry in it:
-                    scanned_count += 1
-                    if scanned_count % 50 == 0:
-                        print(_("正在扫描目录... 已处理 {scanned_count} 项", scanned_count=scanned_count))
-                    if entry.is_dir(follow_symlinks=False):
-                        if rules_obj and rules_obj.should_skip_dir(entry, target_dir):
-                            continue
-                        stack.append(entry.path)
-                    elif entry.is_file(follow_symlinks=False):
-                        if rules_obj and rules_obj.should_skip_file(entry, target_dir):
-                            continue
-                        yield entry.path
-        except PermissionError as e:
-            logging.warning(f"访问权限不足: {path} ({e})")
-        except OSError as e:
-            logging.warning(f"跳过不可访问的目录: {path} ({e})")
+    count_lock = threading.Lock()
 
-    print(_("目录扫描完成：共处理 {scanned_count} 项", scanned_count=scanned_count))
+    pending = [0]  # 待处理目录数（队列中 + 正在处理）
+    pending_lock = threading.Lock()
+    all_done = threading.Event()
+    stop_event = threading.Event()
+
+    def add_dir(dir_path: str) -> None:
+        with pending_lock:
+            pending[0] += 1
+        dir_queue.put(dir_path)
+
+    def worker() -> None:
+        nonlocal scanned_count
+        while True:
+            dir_path = dir_queue.get()
+            if dir_path is None:
+                break
+            try:
+                with os.scandir(dir_path) as it:
+                    for entry in it:
+                        if stop_event.is_set():
+                            return
+                        if stop_check and stop_check():
+                            stop_event.set()
+                            return
+                        with count_lock:
+                            scanned_count += 1
+                            if scanned_count % 50 == 0:
+                                print(_("正在扫描目录... 已处理 {scanned_count} 项", scanned_count=scanned_count))
+                        if entry.is_dir(follow_symlinks=False):
+                            if rules_obj and rules_obj.should_skip_dir(entry, target_dir):
+                                continue
+                            add_dir(entry.path)
+                        elif entry.is_file(follow_symlinks=False):
+                            if rules_obj and rules_obj.should_skip_file(entry, target_dir):
+                                continue
+                            result_queue.put(entry.path)
+            except PermissionError as e:
+                logging.warning(f"访问权限不足: {dir_path} ({e})")
+            except OSError as e:
+                logging.warning(f"跳过不可访问的目录: {dir_path} ({e})")
+            finally:
+                with pending_lock:
+                    pending[0] -= 1
+                    if pending[0] == 0:
+                        all_done.set()
+
+    add_dir(target_dir)
+    threads = [threading.Thread(target=worker, daemon=True) for _ in range(max_workers)]
+    for t in threads:
+        t.start()
+
+    def watcher() -> None:
+        all_done.wait()
+        for _ in threads:
+            dir_queue.put(None)
+        result_queue.put(None)
+
+    threading.Thread(target=watcher, daemon=True).start()
+
+    try:
+        while True:
+            if stop_event.is_set():
+                break
+            if stop_check and stop_check():
+                stop_event.set()
+                break
+            try:
+                item = result_queue.get(timeout=0.3)
+            except queue.Empty:
+                continue
+            if item is None:
+                break
+            yield item
+    finally:
+        stop_event.set()
+        all_done.set()  # 解阻塞 watcher，让它发结束信号
+        print(_("目录扫描完成：共处理 {scanned_count} 项", scanned_count=scanned_count))
 
 
 @decorators.send_task

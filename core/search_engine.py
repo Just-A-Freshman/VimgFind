@@ -128,7 +128,7 @@ class SearchTool:
 
     def __get_new_files(self, target_dir: str, exclude_rules: list[str] | None = None) -> list[str]:
         new_files = []
-        current_files = file_ops.get_file_iterator(target_dir, exclude_rules)
+        current_files = file_ops.get_file_iterator(target_dir, exclude_rules, stop_check=lambda: self.force_stop_update)
         existing_files = set(i[0] for i in self.__name_idx_mgr.name_index if i[0] != NameIndexManager.NOTEXISTS)
         new_files = []
         for file in current_files:
