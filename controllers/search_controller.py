@@ -20,6 +20,7 @@ import utils.shortcut as shortcut
 import utils.decorators as decorators
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
+import utils.unc_ops as unc_ops
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -205,15 +206,19 @@ class SearchController:
         yielded = 0
         omitted = 0
 
-        for img_path, similarity in results_iter:
+        raw_results = list(results_iter)
+        if not raw_results:
+            return
+
+        stat_cache = unc_ops.batch_stat([str(p) for p, _ in raw_results], max_workers=8)
+        for img_path_str, similarity in raw_results:
             if similarity < threshold:
                 break
-            img_path = Path(img_path)
+            img_path = Path(img_path_str)
             if ext_set and img_path.suffix.lower() not in ext_set:
                 continue
-
             try:
-                st = img_path.stat()
+                st = stat_cache.get(str(img_path)) or img_path.stat()
             except OSError:
                 omitted += 1
                 continue

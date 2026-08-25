@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 import os
 import socket
-import threading
 
 import pywintypes
 import win32file
@@ -80,6 +81,24 @@ def safe_exists(path: str | os.PathLike, timeout: float = 2.0) -> bool:
         if not is_share_online(unc_root, timeout=timeout):
             return False
     return os.path.exists(path_str)
+
+
+def batch_stat(paths: list[str], max_workers: int = 100) -> dict[str, os.stat_result | None]:
+    unc_paths = [p for p in paths if p.startswith("\\\\")]
+    if not unc_paths:
+        return {}
+
+    n = min(max_workers, len(unc_paths))
+    cache: dict[str, os.stat_result | None] = {}
+    with ThreadPoolExecutor(max_workers=n) as pool:
+        fut_map = {pool.submit(os.stat, p): p for p in unc_paths}
+        for f in as_completed(fut_map):
+            p = fut_map[f]
+            try:
+                cache[p] = f.result()
+            except OSError:
+                cache[p] = None
+    return cache
 
 
 def resolve_mapped_drive(path: str) -> str:
