@@ -74,13 +74,26 @@ class SearchTool:
     
     def __get_changed_files(self, target_dir: str) -> list[str]:
         changed_files = []
-        for idx, (index_file, old_metainfo) in enumerate(self.__name_idx_mgr.name_index):
+        to_check: list[tuple[int, str]] = []
+        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
             if self.force_stop_update:
                 break
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
             if not file_ops.is_path_under(index_file, target_dir):
                 continue
+            to_check.append((idx, index_file))
+
+        if not to_check or self.force_stop_update:
+            return changed_files
+
+        local_pairs: list[tuple[int, str]] = [(i, f) for i, f in to_check if not f.startswith("\\\\")]
+        unc_pairs: list[tuple[int, str]] = [(i, f) for i, f in to_check if f.startswith("\\\\")]
+
+        for idx, index_file in local_pairs:
+            if self.force_stop_update:
+                break
+            old_metainfo = self.__name_idx_mgr.name_index[idx][1]
             try:
                 new_metainfo = file_ops.get_metainfo(index_file)
             except FileNotFoundError:
@@ -92,6 +105,25 @@ class SearchTool:
             if old_metainfo != new_metainfo:
                 self.__name_idx_mgr.name_index[idx][1] = new_metainfo
                 changed_files.append(index_file)
+
+        if unc_pairs:
+            unc_paths = [f for _, f in unc_pairs]
+            stat_map = unc_ops.batch_stat(unc_paths)
+            for idx, index_file in unc_pairs:
+                if self.force_stop_update:
+                    break
+                old_metainfo = self.__name_idx_mgr.name_index[idx][1]
+                stat_result = stat_map.get(index_file)
+                if stat_result is None:
+                    if not os.path.exists(index_file):
+                        self.__name_idx_mgr.delete_name(idx)
+                        self.__vec_idx_mgr.delete_vector(idx)
+                    continue
+                new_metainfo = stat_result.st_size
+                if old_metainfo != new_metainfo:
+                    self.__name_idx_mgr.name_index[idx][1] = new_metainfo
+                    changed_files.append(index_file)
+
         return changed_files
 
     def __get_new_files(self, target_dir: str, exclude_rules: list[str] | None = None) -> list[str]:
