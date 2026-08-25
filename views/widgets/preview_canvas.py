@@ -10,7 +10,7 @@ from ttkbootstrap.widgets import ToolTip
 from .base import BasicImagePreviewView
 from utils.i18n import _
 import utils.image_ops as image_ops
-from tkinterdnd2 import DND_FILES
+import utils.file_ops as file_ops
 
 
 class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
@@ -58,7 +58,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         self.clear()
         self._results[iid] = (image_path, imgtk)
         self.create_image(x, y, anchor=tk.CENTER, image=imgtk)
-        self.__tooltip.text = str(image_path.resolve())
+        self.__tooltip.text = file_ops.display_normalize(image_path)
         return iid
     
     def delete(self, *items) -> None:

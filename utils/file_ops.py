@@ -210,6 +210,12 @@ def get_metainfo(file_path: str | Path) -> int:
     return os.path.getsize(file_path)
 
 
+def display_normalize(path: str | Path) -> str:
+    if get_path_type(str(path)) == "local":
+        return str(path.resolve()) if isinstance(path, Path) else str(Path(path).resolve())
+    return fast_normalize(path)
+
+
 def fast_normalize(path: str | Path) -> str:
     s = os.fspath(path)
     if not os.path.isabs(s):
