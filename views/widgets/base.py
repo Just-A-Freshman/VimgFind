@@ -117,6 +117,9 @@ class BasicImagePreviewView:
     def drag_source_register(self, button: int | None = None, *dndtypes: str) -> None:
         ...
 
+    def drag_source_unregister(self):
+        ...
+
     def focus_set(self) -> None:
         ...
 

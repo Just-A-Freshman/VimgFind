@@ -5,10 +5,11 @@ from pathlib import Path
 from tkinter.ttk import Treeview, Scrollbar
 import tkinter as tk
 
-
 from .base import BasicImagePreviewView
 from config.settings import TkS
 from utils.i18n import _
+
+from tkinterdnd2 import DND_FILES
 
 
 class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
@@ -52,7 +53,9 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
         BasicImagePreviewView._on_press(self, event)
         region = self.identify("region", event.x, event.y)
         if region not in ("cell", "tree"):
+            self.drag_source_unregister()
             return
+        self.drag_source_register(1, DND_FILES)
         self.tk.call('tkdnd::_begin_drag', 'press', '1', self._w, '', event.x_root, event.y_root, event.x, event.y)    # type: ignore
         return "break"
 
