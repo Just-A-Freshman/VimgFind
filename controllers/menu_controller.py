@@ -70,14 +70,9 @@ class MenuController:
         else:
             event.widget.selection_set(current_selected_item)
             selected_files = [Path(event.widget.item(current_selected_item)[0])]
-        exists_files: list[Path] = []
-        if selected_files:
-            exists_map = unc_ops.batch_exists([str(p) for p in selected_files])
-            exists_files = [f for f in selected_files if exists_map.get(str(f), False)]
-        if len(exists_files) == 0:
-            messagebox.showinfo(_("提示"), _("选中文件不存在！"))
+        if not selected_files:
             return
-        menu = self.__create_context_menu(event, exists_files)
+        menu = self.__create_context_menu(event, selected_files)
         menu.post(event.x_root, event.y_root)
         menu.bind("<Unmap>", lambda e: menu.destroy())
 
