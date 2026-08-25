@@ -33,7 +33,7 @@ VimgFind 是一款运行在**本地**的 AI 搜图工具。同时支持以图搜
 - **多种模型可切换**：内置 5 个预转换模型，覆盖语义、细节、抗干扰、中文语义等不同检索取向；
 - **索引排除规则**：在索引阶段就把“永远不想搜到”的图片（表情包、缓存缩略图等）挡在门外；
 - **自定义右键菜单**：控制内置菜单项显示与快捷键，支持拖拽排序，还可编写带变量的自定义命令；
-- **自动更新索引**（尚有提升空间）：程序启动后会系统空闲时（默认 300 秒）自动增量更新索引，不打扰工作。
+- **自动更新索引**：程序启动后会系统空闲时（默认 300 秒）自动增量更新索引，不打扰工作。
 
 
 
@@ -73,8 +73,10 @@ shasum -a 256 VimgFind-2.5.2-macos.dmg
 
 **Windows 用户**
 
-- 完整程序：[Github 下载 VimgFind-v2.5.2](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iKQcC41o45qf)
-- 更新程序：[Github 下载 v2.5.2 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.2-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/ikIpA40w58di)
+- 完整程序：[Github 下载 VimgFind-v2.5.3](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iciPQ44kvxgj)
+- 更新程序：[Github 下载 v2.5.3 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/ie7qL44kvuid)
+
+提示：作者测试发现2.5.1和2.5.2的检查更新功能都有问题，因此建议手动下载更新程序，然后按图片进行操作：![image-20260825233524161](https://raw.githubusercontent.com/Just-A-Freshman/image-bed/main/Typora/image-20260825233524161.png)
 
 
 
@@ -95,7 +97,7 @@ shasum -a 256 VimgFind-2.5.2-macos.dmg
 ## 4. 资源占用与性能建议
 
 - **磁盘**：索引文件约 400 张图片 / 1 MB，通常可忽略；
-- **内存**：模型约占 170 MB（OSNet）～ 1.6 GB（Chinese-CLIP）；HNSW 索引需整体加载进内存， 100 万张图占用约 6–8 GB；
+- **内存**：启动后内存约占135MB（OSNet）～ 880 MB（Chinese-CLIP）；HNSW 索引需整体加载进内存， 100 万张图（1000维）占用约 4-6 GB；
 - **建议**：图片量大时，用不同模型分管不同文件夹（分散索引内存），并用排除规则过滤表情包/缩略图等噪音，从根源降低内存与检索干扰。
 
 ## 5. 源码运行与打包
@@ -116,10 +118,10 @@ python ./main.py
 
 ```powershell
 pip install pyinstaller==6.2
-pyinstaller -D main.py -i config/data/favicon.ico -w
+pyinstaller build_exe/main.spec --noconfirm --clean
+python build_exe/build_trim.py dist/main
+xcopy /E /I /Y "build_exe\config\." "dist\main\_internal\config\"
 ```
-
-打包完成后，将 `config/data/` 与 `docs/` 文件夹复制到 `_internal` 下即可。
 
 ### macOS
 
@@ -129,7 +131,7 @@ pyinstaller -D main.py -i config/data/favicon.ico -w
 
 ## 6. 更新与反馈
 
-- 更新日志：[VimgFind v2.5.2 更新日志](https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.5)
+- 更新日志：[VimgFind v2.5.3 更新日志](https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.5)
 - 历史版本：[Releases](https://github.com/Just-A-Freshman/VimgFind/releases)
 - 需求与问题：[提交 Issue](https://github.com/Just-A-Freshman/VimgFind/issues)
 
@@ -137,8 +139,14 @@ pyinstaller -D main.py -i config/data/favicon.ico -w
 
 ## 7. 未来规划
 
-- [x] 多模型多索引：不同模型独立索引，自由切换
-- [x] macOS 支持
+- [ ] 增加排除规则的作用范围，并且要能根据某个文件夹看到他的排除规则（***）
+
+- [ ] 索引自动更新加强（程序关闭后仍能保持静默运行，更新线程设置为10时软件在后台未被使用3分钟后则调取1-2线程静默更新 电脑整体未使用30分钟后再调用10线程）（***）
+
+- [ ] 在索引目录下的索引地址最边上添加具体有多少张图片的显示（**）
+- [ ] 关于关闭按钮的提速（程序启动颇需要花费一些时间，用户希望能够让它像Everything那样关闭后保留某些进程，使下一次打开速度更快 / 或者让关闭变成收缩到盘符，方便下次快速打开）（**）
+- [ ] 模型Skill，用于指导Agent将任意图像或多模态模型转化成程序可以识别与使用的形式（**）
+- [ ] 筛选界面优化（待定，见讨论：https://github.com/Just-A-Freshman/VimgFind/discussions/15）（*）
 
 
 
