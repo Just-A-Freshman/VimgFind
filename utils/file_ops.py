@@ -10,7 +10,6 @@ import logging
 import os
 import shutil
 import subprocess
-import time
 
 from .i18n import _
 from . import decorators
@@ -58,10 +57,6 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
 
 @decorators.send_task
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
-    file_path = Path(file_path).resolve()
-    if not unc_ops.safe_exists(file_path):
-        logging.error(f"文件不存在：{file_path}，无法打开！")
-
     command: list[str] = []
     if highlight:
         command = ["explorer.exe", "/select,", str(file_path)]
