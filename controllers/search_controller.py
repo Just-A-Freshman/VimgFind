@@ -212,7 +212,7 @@ class SearchController:
         if not raw_results:
             return
 
-        with ThreadPoolExecutor(max_workers=10) as pool:
+        with ThreadPoolExecutor(max_workers=50) as pool:
             path_to_future = {img_path_str: pool.submit(os.stat, img_path_str) for img_path_str, _ in raw_results}
             for img_path_str, similarity in raw_results:
                 if similarity < threshold:
@@ -372,7 +372,7 @@ class SearchController:
             preview_batch_buffer = []
             self.app.view.after(10, process_next_batch)
         
-        return process_next_batch()
+        self.app.view.after(0, process_next_batch)
     
     def __append_preview_results(self, results) -> None:
         try:
