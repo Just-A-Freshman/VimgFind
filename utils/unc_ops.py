@@ -29,6 +29,16 @@ def _is_server_reachable(unc_root: str, timeout: float = 2.0) -> bool:
         return True
     except (socket.timeout, OSError, socket.gaierror):
         return False
+    
+
+def _exists_one(path: str, root_online: dict[str, bool]) -> bool:
+    root = get_unc_root(path) if path.startswith("\\\\") else None
+    if root and not root_online.get(root, True):
+        return False
+    try:
+        return os.path.exists(path)
+    except OSError:
+        return False
 
 
 def get_unc_root(path: str) -> str | None:
@@ -99,6 +109,30 @@ def batch_stat(paths: list[str], max_workers: int = 50) -> dict[str, os.stat_res
             except OSError:
                 cache[p] = None
     return cache
+
+
+def batch_exists(paths: list[str], timeout: float = 2.0, max_workers: int = 50) -> dict[str, bool]:
+    root_online: dict[str, bool] = {}
+    for p in paths:
+        if p.startswith("\\\\"):
+            root = get_unc_root(p)
+            if root and root not in root_online:
+                root_online[root] = False
+
+    if root_online:
+        n = min(max_workers, len(root_online))
+        with ThreadPoolExecutor(max_workers=n) as pool:
+            fut_map = {pool.submit(is_share_online, r, timeout): r for r in root_online}
+            for f in as_completed(fut_map):
+                root_online[fut_map[f]] = f.result()
+
+    result: dict[str, bool] = {}
+    n = min(max_workers, len(paths))
+    with ThreadPoolExecutor(max_workers=n) as pool:
+        fut_map = {pool.submit(_exists_one, p, root_online): p for p in paths}
+        for f in as_completed(fut_map):
+            result[fut_map[f]] = f.result()
+    return result
 
 
 def resolve_mapped_drive(path: str) -> str:
