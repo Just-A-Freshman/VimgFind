@@ -83,7 +83,7 @@ def safe_exists(path: str | os.PathLike, timeout: float = 2.0) -> bool:
     return os.path.exists(path_str)
 
 
-def batch_stat(paths: list[str], max_workers: int = 100) -> dict[str, os.stat_result | None]:
+def batch_stat(paths: list[str], max_workers: int = 50) -> dict[str, os.stat_result | None]:
     unc_paths = [p for p in paths if p.startswith("\\\\")]
     if not unc_paths:
         return {}

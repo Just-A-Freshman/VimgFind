@@ -13,6 +13,7 @@ import subprocess
 import time
 
 from .i18n import _
+from . import decorators
 from . import exclude_rules
 from . import unc_ops as unc_ops
 
@@ -55,6 +56,7 @@ def get_file_iterator(target_dir: str, exclude_rules_list: list[str] | None = No
     print(_("目录扫描完成：共处理 {scanned_count} 项", scanned_count=scanned_count))
 
 
+@decorators.send_task
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
     file_path = Path(file_path).resolve()
     if not unc_ops.safe_exists(file_path):
