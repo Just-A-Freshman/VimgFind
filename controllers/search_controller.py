@@ -5,10 +5,12 @@ from tkinter import filedialog, messagebox
 from typing import TYPE_CHECKING, Literal
 from dataclasses import dataclass
 from threading import Event
+from concurrent.futures import ThreadPoolExecutor
 import tkinter as tk
 import datetime
 import logging
 import math
+import os
 
 from PIL import Image
 
@@ -210,51 +212,52 @@ class SearchController:
         if not raw_results:
             return
 
-        stat_cache = unc_ops.batch_stat([str(p) for p, _ in raw_results], max_workers=8)
-        for img_path_str, similarity in raw_results:
-            if similarity < threshold:
-                break
-            img_path = Path(img_path_str)
-            if ext_set and img_path.suffix.lower() not in ext_set:
-                continue
-            try:
-                st = stat_cache.get(str(img_path)) or img_path.stat()
-            except OSError:
-                omitted += 1
-                continue
-
-            if size_min is not None or size_max is not None:
-                mb = st.st_size / (1024 * 1024)
-                if size_min is not None and mb < size_min:
+        with ThreadPoolExecutor(max_workers=10) as pool:
+            path_to_future = {img_path_str: pool.submit(os.stat, img_path_str) for img_path_str, _ in raw_results}
+            for img_path_str, similarity in raw_results:
+                if similarity < threshold:
+                    break
+                img_path = Path(img_path_str)
+                if ext_set and img_path.suffix.lower() not in ext_set:
                     continue
-                if size_max is not None and mb > size_max:
+                try:
+                    st = path_to_future[img_path_str].result()
+                except OSError:
+                    omitted += 1
                     continue
 
-            if folder_filters:
-                if not any(file_ops.is_path_under(img_path, f) for f in folder_filters):
-                    continue
-
-            if dedup:
-                if prev_similarity is None:
-                    prev_similarity = similarity
-                    prev_sizes = [st.st_size]
-                elif abs(similarity - prev_similarity) < eps:
-                    if st.st_size in prev_sizes:
-                        prev_sizes.append(st.st_size)
+                if size_min is not None or size_max is not None:
+                    mb = st.st_size / (1024 * 1024)
+                    if size_min is not None and mb < size_min:
                         continue
-                    prev_sizes.append(st.st_size)
-                else:
-                    prev_similarity = similarity
-                    prev_sizes = [st.st_size]
+                    if size_max is not None and mb > size_max:
+                        continue
 
-            mtime = datetime.datetime.fromtimestamp(st.st_mtime)
-            yielded += 1
-            yield (
-                img_path,
-                f"{st.st_size / 1024 / 1024:.2f}MB",
-                mtime.strftime("%Y-%m-%d %H:%M:%S"),
-                f"{similarity:.2f}%",
-            )
+                if folder_filters:
+                    if not any(file_ops.is_path_under(img_path, f) for f in folder_filters):
+                        continue
+
+                if dedup:
+                    if prev_similarity is None:
+                        prev_similarity = similarity
+                        prev_sizes = [st.st_size]
+                    elif abs(similarity - prev_similarity) < eps:
+                        if st.st_size in prev_sizes:
+                            prev_sizes.append(st.st_size)
+                            continue
+                        prev_sizes.append(st.st_size)
+                    else:
+                        prev_similarity = similarity
+                        prev_sizes = [st.st_size]
+
+                mtime = datetime.datetime.fromtimestamp(st.st_mtime)
+                yielded += 1
+                yield (
+                    img_path,
+                    f"{st.st_size / 1024 / 1024:.2f}MB",
+                    mtime.strftime("%Y-%m-%d %H:%M:%S"),
+                    f"{similarity:.2f}%",
+                )
 
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools
