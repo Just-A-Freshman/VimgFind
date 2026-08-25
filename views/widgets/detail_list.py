@@ -50,6 +50,9 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
 
     def _on_press(self, event: tk.Event) -> str | None:
         BasicImagePreviewView._on_press(self, event)
+        region = self.identify("region", event.x, event.y)
+        if region not in ("cell", "tree"):
+            return
         self.tk.call('tkdnd::_begin_drag', 'press', '1', self._w, '', event.x_root, event.y_root, event.x, event.y)    # type: ignore
         return "break"
 
