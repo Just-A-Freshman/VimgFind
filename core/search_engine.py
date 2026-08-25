@@ -235,15 +235,22 @@ class SearchTool:
                 tqdm.write(f"  跳过离线共享: {unc_root}")
                 continue
 
-            to_delete: list[int] = []
+            files_to_check: list[str] = []
+            file_indices: list[int] = []
             for idx in indices:
                 if self.force_stop_update:
                     break
                 index_file = self.__name_idx_mgr.name_index[idx][0]
                 if index_file == NameIndexManager.NOTEXISTS:
                     continue
-                if not unc_ops.safe_exists(index_file, timeout=2.0):
-                    to_delete.append(idx)
+                files_to_check.append(index_file)
+                file_indices.append(idx)
+
+            if not files_to_check:
+                continue
+
+            exists_map = unc_ops.batch_exists(files_to_check, timeout=2.0)
+            to_delete = [file_indices[i] for i, f in enumerate(files_to_check) if not exists_map.get(f, False)]
 
             if not to_delete or self.force_stop_update:
                 continue
@@ -251,7 +258,7 @@ class SearchTool:
             if not unc_ops.is_share_online(unc_root):
                 tqdm.write(f"  共享中途断线: {unc_root}")
                 continue
-
+            
             for idx in to_delete:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
