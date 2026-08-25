@@ -60,7 +60,7 @@ def parse_image_from_url(url: str) -> Image.Image | None:
 def save_as_image(src_path: Path, dest_path : Path) -> bool:
     try:
         if dest_path.suffix.lower() == src_path.suffix.lower():
-            if not file_ops.save_as(src_path, dest_path, True):
+            if not file_ops.save_as(src_path, dest_path):
                 raise Exception("系统权限错误！")
             return False
         img: Image.Image = Image.open(src_path)

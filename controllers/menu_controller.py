@@ -109,11 +109,11 @@ class MenuController:
             file_ops.open_file(selected_file)
 
     def save_as_image(self, *src_paths: Path) -> None:
-        self.__last_image_save_dir = self.__last_image_save_dir or src_paths[0].parent 
+        self.__last_image_save_dir = self.__last_image_save_dir or src_paths[0].parent
         for src_path in src_paths:
             save_path = filedialog.asksaveasfilename(
                 filetypes=[(f"{i}(*{i})", f"*{i}") for i in Setting.accepted_exts if i not in [".psd"]],
-                initialfile=file_ops.generate_copy_name(self.__last_image_save_dir / src_path.name).name,
+                initialfile=src_path.name,
                 initialdir=self.__last_image_save_dir,
                 defaultextension=src_path.suffix
             )

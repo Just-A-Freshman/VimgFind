@@ -125,19 +125,13 @@ def delete_file(file_path: str | Path, hard=True) -> None:
         logging.error(f"删除文件失败: {file_path}")
 
 
-def save_as(src_path: str | Path, dest_path: str | Path, is_binary: bool = False, inplace=True) -> bool:
+def save_as(src_path: str | Path, dest_path: str | Path) -> bool:
     src_path = Path(src_path)
     dest_path = Path(dest_path)
     if not unc_ops.safe_exists(src_path) or src_path.is_dir() or dest_path.is_dir():
         return False
     try:
-        dest_path = dest_path if inplace else generate_copy_name(dest_path)
-        if is_binary:
-            shutil.copy2(src_path, dest_path)
-        else:
-            with open(src_path, 'r', encoding='utf-8') as f_src, \
-                 open(dest_path, 'w', encoding='utf-8') as f_dst:
-                shutil.copyfileobj(f_src, f_dst)
+        shutil.copy2(src_path, dest_path)
         return True
     except (PermissionError, OSError):
         return False
@@ -262,37 +256,6 @@ def generate_unique_filename(target_dir: Path, suffix: str) -> Path:
     if attempts >= max_attempts:
         raise RuntimeError("超出最大尝试次数，无法生成唯一文件名")
     return full_path
-
-
-def generate_copy_name(file_path: str | Path) -> Path:
-    orig = file_path if isinstance(file_path, Path) else Path(file_path)
-    if not orig.exists():
-        return orig
-    
-    stem = orig.stem
-    candidate = orig.with_stem(f"{stem}(2)")
-    if not candidate.exists():
-        return candidate
-    low, high = 2, 4
-    while True:
-        candidate = orig.with_stem(f"{stem}({high})")
-        if not candidate.exists():
-            break
-        low = high
-        high *= 2
-        if high > 1024:
-            ts = int(time.time() * 1000)
-            return orig.with_stem(f"{stem}_{ts}")
-
-    while low + 1 < high:
-        mid = (low + high) // 2
-        candidate = orig.with_stem(f"{stem}({mid})")
-        if candidate.exists():
-            low = mid
-        else:
-            high = mid
-
-    return orig.with_stem(f"{stem}({high})")
 
 
 def extract_file_paths(text: str) -> list[str]:
