@@ -41,7 +41,7 @@ def get_file_iterator(
     scanned_count = 0
     count_lock = threading.Lock()
 
-    pending = [0]  # 待处理目录数（队列中 + 正在处理）
+    pending = [0]
     pending_lock = threading.Lock()
     all_done = threading.Event()
     stop_event = threading.Event()
@@ -116,7 +116,7 @@ def get_file_iterator(
             yield item
     finally:
         stop_event.set()
-        all_done.set()  # 解阻塞 watcher，让它发结束信号
+        all_done.set()
         print(_("目录扫描完成：共处理 {scanned_count} 项", scanned_count=scanned_count))
 
 
