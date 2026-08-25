@@ -23,6 +23,7 @@ import utils.shortcut as shortcut
 import utils.decorators as decorators
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
+import utils.unc_ops as unc_ops
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -116,7 +117,12 @@ class SearchController:
                 self.show_toast(_("内容过长，已截断到3000行。"))
             accept_exts = set(Setting.accepted_exts)
             all_paths = [Path(l.strip()) for l in lines if l.strip()]
-            valid_paths = [str(p.absolute()) for p in all_paths if p.is_file() and p.suffix.lower() in accept_exts]
+            ext_filtered = [p for p in all_paths if p.suffix.lower() in accept_exts]
+            if ext_filtered:
+                exists_map = unc_ops.batch_exists([str(p.absolute()) for p in ext_filtered])
+                valid_paths = [str(p.absolute()) for p in ext_filtered if exists_map.get(str(p.absolute()), False)]
+            else:
+                valid_paths = []
             if len(valid_paths) > 1:
                 self.__queue_paths = valid_paths
                 self.__current_page = 0
