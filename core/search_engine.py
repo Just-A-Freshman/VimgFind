@@ -258,7 +258,7 @@ class SearchTool:
             if not unc_ops.is_share_online(unc_root):
                 tqdm.write(f"  共享中途断线: {unc_root}")
                 continue
-            
+
             for idx in to_delete:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
