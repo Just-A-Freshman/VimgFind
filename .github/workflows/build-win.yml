@@ -1,0 +1,72 @@
+name: Windows 构建打包测试
+
+on:
+  workflow_dispatch:        # 手动触发
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ttkbootstrap==1.19.0 tkinterdnd2==0.4.3 pathspec psutil pywin32
+          pip install pyinstaller
+
+      - name: 步骤1 — PyInstaller 打包
+        run: pyinstaller build_exe/main.spec --noconfirm --clean
+
+      - name: 步骤2 — 裁剪 dist
+        run: python build_exe/build_trim.py dist/main
+
+      - name: 步骤3 — 移动 config 到 _internal
+        run: |
+          # 将 build_exe/config/（含 data/ 子目录）复制到 _internal/config/
+          if not exist "dist\main\_internal\config" mkdir "dist\main\_internal\config"
+          xcopy /E /I /Y "build_exe\config\." "dist\main\_internal\config\"
+
+      - name: 步骤4 — 验证构建产物
+        run: |
+          if not exist "dist\main\main.exe" exit /b 1
+          echo "✓ main.exe 已生成"
+          dir "dist\main\_internal\config\data"
+          echo "✓ config 已移动到 _internal/"
+
+      - name: 步骤5 — 启动测试
+        run: |
+          start /B dist\main\main.exe
+          REM 等 15 秒让窗口初始化
+          timeout /T 15 /NOBREAK >nul
+          tasklist /FI "IMAGENAME eq main.exe" 2>nul | find /I /N "main.exe" >nul
+          if errorlevel 1 (
+            echo "✗ 应用启动失败"
+            exit /b 1
+          )
+          echo "✓ 应用启动成功"
+          REM 打印窗口标题确认
+          powershell -Command "
+            $p = Get-Process main -ErrorAction SilentlyContinue;
+            if ($p) { Write-Host 'PID: ' $p.Id; $p.MainWindowTitle }
+          "
+          taskkill /F /IM main.exe >nul 2>&1
+          echo "✓ 应用已关闭"
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: VimgFind-win64
+          path: dist/main/
