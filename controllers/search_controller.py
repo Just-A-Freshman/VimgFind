@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+from threading import Event
 from pathlib import Path
 from tkinter import filedialog, messagebox
 from typing import TYPE_CHECKING, Literal
 from dataclasses import dataclass
-from threading import Event
-from concurrent.futures import ThreadPoolExecutor
+
 import tkinter as tk
 import datetime
 import logging
