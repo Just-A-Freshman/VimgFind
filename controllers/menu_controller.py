@@ -45,7 +45,9 @@ class MenuController:
             if item.type == "separator" or item.shortcut in shortcut.INNER_SHORTCUT or item.shortcut != custom_shortcut:
                 continue
             paths = [Path(preview_view.item(fid)[0]) for fid in selected_ids]
-            paths = [p for p in paths if unc_ops.safe_exists(p)]
+            if paths:
+                exists_map = unc_ops.batch_exists([str(p) for p in paths])
+                paths = [p for p in paths if exists_map.get(str(p), False)]
             if not paths:
                 continue
             if item.type == "embedded":
@@ -68,7 +70,10 @@ class MenuController:
         else:
             event.widget.selection_set(current_selected_item)
             selected_files = [Path(event.widget.item(current_selected_item)[0])]
-        exists_files: list[Path] = [f for f in selected_files if unc_ops.safe_exists(f)]
+        exists_files: list[Path] = []
+        if selected_files:
+            exists_map = unc_ops.batch_exists([str(p) for p in selected_files])
+            exists_files = [f for f in selected_files if exists_map.get(str(f), False)]
         if len(exists_files) == 0:
             messagebox.showinfo(_("提示"), _("选中文件不存在！"))
             return
