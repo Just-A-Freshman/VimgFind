@@ -73,8 +73,8 @@ shasum -a 256 VimgFind-2.5.2-macos.dmg
 
 **Windows 用户**
 
-- 完整程序：[Github 下载 VimgFind-v2.5.3](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iciPQ44kvxgj)
-- 更新程序：[Github 下载 v2.5.3 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/ie7qL44kvuid)
+- 完整程序：[Github 下载 VimgFind-v2.5.3](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iFi9f44likeh)
+- 更新程序：[Github 下载 v2.5.3 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iZJII44likud)
 
 提示：作者测试发现2.5.1和2.5.2的检查更新功能都有问题，因此建议手动下载更新程序，然后按图片进行操作：![image-20260825233524161](https://raw.githubusercontent.com/Just-A-Freshman/image-bed/main/Typora/image-20260825233524161.png)
 
