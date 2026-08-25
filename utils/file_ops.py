@@ -74,11 +74,9 @@ def open_file(file_path: str | Path, highlight: bool = False) -> None:
 
 def copy_files(*file_paths: str | Path) -> None:
     import win32clipboard
-    valid_paths = []
-    for path in file_paths:
-        abs_path = Path(path).absolute()
-        if unc_ops.safe_exists(abs_path) and abs_path.is_file():
-            valid_paths.append(str(abs_path).replace("/", "\\") + "\0")
+    paths = [str(Path(p).absolute()) for p in file_paths]
+    exists_map = unc_ops.batch_exists(paths)
+    valid_paths = [p.replace("/", "\\") + "\0" for p in paths if exists_map.get(p, False)]
     if not valid_paths:
         try:
             win32clipboard.OpenClipboard()
