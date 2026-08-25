@@ -28,7 +28,9 @@ jobs:
           pip install pyinstaller
 
       - name: 步骤1 — PyInstaller 打包
-        run: pyinstaller build_exe/main.spec --noconfirm --clean
+        run: |
+          copy build_exe\main.spec main.spec
+          pyinstaller main.spec --noconfirm --clean
 
       - name: 步骤2 — 裁剪 dist
         run: python build_exe/build_trim.py dist/main
