@@ -12,7 +12,7 @@
     "schedule_index_save_interval": 600,
     "maximize_window": false,
     "topmost_window": false,
-    "locale": "zh-CN",
+    "locale": "en-US",
     "menu_items": [
         {
             "name": "复制图片",
