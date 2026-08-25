@@ -351,8 +351,7 @@ class SearchController:
             try:
                 while len(buffer) < batch_size:
                     img_path, *extra_info = next(preview_iter)
-                    if img_path.exists():
-                        buffer.append((img_path, *extra_info))
+                    buffer.append((img_path, *extra_info))
             except StopIteration:
                 if buffer:
                     self.__append_preview_results(buffer)
