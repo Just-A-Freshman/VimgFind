@@ -372,7 +372,7 @@ class SearchController:
             preview_batch_buffer = []
             self.app.view.after(10, process_next_batch)
         
-        self.app.view.after(0, process_next_batch)
+        return process_next_batch()
     
     def __append_preview_results(self, results) -> None:
         try:
