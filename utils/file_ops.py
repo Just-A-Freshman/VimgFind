@@ -233,6 +233,7 @@ def is_path_under(path: str | Path, parent_dir: str | Path) -> bool:
         qp = fast_parent.split("\\")
         if len(pp) < 4 or len(qp) < 4 or pp[2] != qp[2] or pp[3] != qp[3]:
             return False
+        return False
     real_path = real_normalize(fast_path)
     real_parent = real_normalize(fast_parent)
     return real_path.startswith(real_parent.rstrip(os.sep) + os.sep)
