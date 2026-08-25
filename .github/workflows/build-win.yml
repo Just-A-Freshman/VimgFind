@@ -34,6 +34,8 @@ jobs:
 
       - name: 步骤2 — 裁剪 dist
         run: python build_exe/build_trim.py dist/main
+        env:
+          PYTHONIOENCODING: utf-8
 
       - name: 步骤3 — 移动 config 到 _internal
         run: |
