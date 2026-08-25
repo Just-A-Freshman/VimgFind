@@ -1,12 +1,12 @@
 {
     "max_work_thread": 12,
-    "max_match_count": 50,
-    "preview_mode": "medium_ico",
+    "max_match_count": 5,
+    "preview_mode": "big_ico",
     "auto_update_index": true,
     "auto_update_idle_threshold": 300,
     "update_index_range": "current",
-    "ui_style": "superhero",
-    "current_model": "chinese-clip",
+    "ui_style": "sandstone",
+    "current_model": "osnet",
     "remote_manifest_url": "https://gitee.com/Chorgri/VimgFind/blob/main/models.json",
     "cache_ttl": 3600,
     "schedule_index_save_interval": 600,
@@ -25,7 +25,7 @@
         {
             "name": "复制名称",
             "type": "custom",
-            "is_visible": true,
+            "is_visible": false,
             "shortcut": [],
             "batch_mode": true,
             "command": "cmd /c  \"echo {noext}| clip\""
