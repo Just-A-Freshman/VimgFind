@@ -29,8 +29,6 @@ class SearchStatus(str, Enum):
     EMPTY_INDEX = "empty_index"
     EMPTY_INPUT = "empty_input"
     ENCODE_FAILED = "encode_failed"
-    NO_RESULTS = "no_results"
-    PARTIAL_OMITTED = "partialOmitted"
 
 
 class SearchTool:
@@ -310,10 +308,7 @@ class SearchTool:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
 
-    def checkout(
-            self,
-            content: Image.Image | str,
-        ) -> Iterator[tuple[str, float]]:
+    def checkout(self, content: Image.Image | str) -> Iterator[tuple[str, float]]:
         self.__init_event.wait()
         self.__checkout_status = SearchStatus.OK
 

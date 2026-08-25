@@ -288,8 +288,6 @@ class SearchController:
             item = tab.preview_view.append(*first_result)
             tab.preview_view.selection_set(item)
             self.__smooth_preview(results)
-            if self.app.search_tools.checkout_status == SearchStatus.PARTIAL_OMITTED:
-                self.show_toast(_("部分无效结果被隐藏，建议更新索引。"), duration=3000)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
@@ -301,15 +299,7 @@ class SearchController:
             messagebox.showinfo(_("提示"), _("请在索引选项卡索引至少一个目录！"))
             return False
         if not self.__is_finish_search.is_set():
-            self.__search_gen += 1
-            self.__is_finish_search.set()
-            if self.__poll_timer is not None:
-                try:
-                    self.app.view.after_cancel(self.__poll_timer)
-                except Exception:
-                    pass
-                self.__poll_timer = None
-            self.__result_queue = None
+            return False
         if self.app.index_controller.is_updating:
             if self.app.index_controller.is_auto_updating:
                 self.app.search_tools.force_stop_update = True
@@ -342,10 +332,10 @@ class SearchController:
             messagebox.showinfo(_("提示"), _("索引中还没有任何图像，也许\n你还没有点击更新索引目录？"))
         elif status == SearchStatus.EMPTY_INPUT:
             messagebox.showinfo(_("提示"), _("请输入搜索内容！"))
-        elif status == SearchStatus.NO_RESULTS:
-            messagebox.showinfo(_("提示"), _("筛选条件过于严格，没有匹配到任何图像！"))
         elif status == SearchStatus.ENCODE_FAILED:
             messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
+        else:
+            messagebox.showinfo(_("提示"), _("未匹配到任何图片！"))
 
     def __smooth_preview(self, results_iter, B_min=10, B_max=100, r=0.8, m=5) -> None:
         preview_batch_k = 0
