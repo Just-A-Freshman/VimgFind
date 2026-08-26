@@ -73,8 +73,8 @@ shasum -a 256 VimgFind-2.5.2-macos.dmg
 
 **Windows 用户**
 
-- 完整程序：[Github 下载 VimgFind-v2.5.3](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iFi9f44likeh)
-- 更新程序：[Github 下载 v2.5.3 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iZJII44likud)
+- 完整程序：[Github 下载 VimgFind-v2.5.3](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iCGey44p6ntc)
+- 更新程序：[Github 下载 v2.5.3 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iu8a244p6mkh)
 
 提示：作者测试发现2.5.1和2.5.2的检查更新功能都有问题，因此建议手动下载更新程序，然后按图片进行操作：![image-20260825233524161](https://raw.githubusercontent.com/Just-A-Freshman/image-bed/main/Typora/image-20260825233524161.png)
 
@@ -114,14 +114,18 @@ pip install -r requirements.txt
 python ./main.py
 ```
 
-自行打包：
+### 打包工作流
+
+打包分两步：**构建 exe** → **组装更新包**。
+
+#### 构建 exe
 
 ```powershell
+conda activate vimgfind
 pip install pyinstaller==6.2
-pyinstaller build_exe/main.spec --noconfirm --clean
-python build_exe/build_trim.py dist/main
-xcopy /E /I /Y "build_exe\config\." "dist\main\_internal\config\"
+build_exe\build_local.bat
 ```
+打包完成后可在：@dist/main/ 下看到实际产物；
 
 ### macOS
 
