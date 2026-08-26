@@ -58,6 +58,7 @@ class IndexController:
         ))
         tab.update_threads_count_scale.bind("<ButtonRelease-1>", lambda e: setattr(self.app.setting.app, "max_work_thread", int(float(e.widget.get()))))
         self.app.model_controller.add_models_updated_callback(self.refresh_switch_model_combobox)
+        self.__toggle_auto_update()
 
     def refresh_switch_model_combobox(self) -> None:
         tab = self.app.view.index_tab
