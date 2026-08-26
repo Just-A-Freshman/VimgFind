@@ -144,7 +144,7 @@ class IndexFrame(Frame):
     def __set_update_threads_count_scale(self, parent) -> Scale:
         tip = Label(parent, text=_("更新线程：{count}", count=8), anchor=tk.W)
         tip.grid(row=2, column=1, padx=(TkS(2), TkS(5)), sticky=tk.E)
-        scale = Scale(parent, from_=4, to=20, orient=tk.HORIZONTAL)
+        scale = Scale(parent, from_=4, to=30, orient=tk.HORIZONTAL)
         scale.grid(row=2, column=2, padx=(0, TkS(2)), sticky=tk.EW)
         scale.config(command=lambda value: tip.config(text=_("更新线程:  {count:0>2}", count=int(float(value)))))
         return scale
