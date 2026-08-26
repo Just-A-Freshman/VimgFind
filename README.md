@@ -114,12 +114,7 @@ pip install -r requirements.txt
 python ./main.py
 ```
 
-### 打包工作流
-
-打包分两步：**构建 exe** → **组装更新包**。
-
-#### 构建 exe
-
+### 打包
 ```powershell
 conda activate vimgfind
 pip install pyinstaller==6.2
