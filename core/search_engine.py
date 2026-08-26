@@ -183,9 +183,10 @@ class SearchTool:
             exclude_rules: list[str],
             progress_bar: tqdm
         ) -> None:
-        def _process_item(item: str) -> tuple[str, np.ndarray | None]:
+        def _process_item(item: str) -> tuple[str, int, np.ndarray | None]:
             image_obj = image_ops.parse_image_from_path(item)
-            return item, self.__multimodal_encoder.encode_image(image_obj) if image_obj is not None else None
+            metainfo = file_ops.get_metainfo(item)
+            return item, metainfo, self.__multimodal_encoder.encode_image(image_obj) if image_obj is not None else None
         
         self.__init_event.wait()
         for image_dir in image_dirs:
@@ -206,13 +207,13 @@ class SearchTool:
                     done, pending = wait(pending, return_when=FIRST_COMPLETED)
                     for future in done:
                         try:
-                            file_path, fv = future.result()
+                            file_path, metainfo, fv = future.result()
                         except Exception as e:
                             logging.error(f"索引线程错误: {e}", exc_info=True)
                             progress_bar.update(1)
                             continue
                         if fv is not None:
-                            self.__vec_idx_mgr.add_vector(fv, self.__name_idx_mgr.add_name(file_path))
+                            self.__vec_idx_mgr.add_vector(fv, self.__name_idx_mgr.add_name(file_path, metainfo))
                         progress_bar.update(1)
 
                     for _ in range(len(done)):

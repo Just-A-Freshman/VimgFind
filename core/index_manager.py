@@ -179,11 +179,8 @@ class NameIndexManager:
                     entry[0] = file_ops.fast_normalize(entry[0])
                     self.__valid_index_count += 1
 
-    def add_name(self, name: Path | str) -> int:
-        self.__name_index.append([
-            file_ops.fast_normalize(str(name)),
-            file_ops.get_metainfo(name)
-        ])
+    def add_name(self, name: Path | str, metainfo: int) -> int:
+        self.__name_index.append([file_ops.fast_normalize(str(name)), metainfo])
         self.__valid_index_count += 1
         return len(self.__name_index) - 1
 
