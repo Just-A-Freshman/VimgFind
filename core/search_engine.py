@@ -74,60 +74,33 @@ class SearchTool:
     
     def __get_changed_files(self, target_dir: str) -> list[str]:
         changed_files = []
-        to_check: list[tuple[int, str]] = []
-        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
+        unc_file_ids: list[int] = []
+        for idx, (index_file, old_metainfo) in enumerate(self.__name_idx_mgr.name_index):
             if self.force_stop_update:
                 break
-            if index_file == NameIndexManager.NOTEXISTS:
+            if index_file == NameIndexManager.NOTEXISTS or not file_ops.is_path_under(index_file, target_dir):
                 continue
-            if not file_ops.is_path_under(index_file, target_dir):
+            if index_file.startswith("\\\\"):
+                unc_file_ids.append(idx)
                 continue
-            to_check.append((idx, index_file))
-
-        if not to_check or self.force_stop_update:
-            return changed_files
-
-        local_pairs: list[tuple[int, str]] = [(i, f) for i, f in to_check if not f.startswith("\\\\")]
-        unc_pairs: list[tuple[int, str]] = [(i, f) for i, f in to_check if f.startswith("\\\\")]
-
-        for idx, index_file in local_pairs:
-            if self.force_stop_update:
-                break
-            old_metainfo = self.__name_idx_mgr.name_index[idx][1]
-            try:
-                new_metainfo = file_ops.get_metainfo(index_file)
-            except FileNotFoundError:
-                self.__name_idx_mgr.delete_name(idx)
-                self.__vec_idx_mgr.delete_vector(idx)
-                continue
-            except OSError:
-                continue
+            new_metainfo = file_ops.get_metainfo(index_file)
             if old_metainfo != new_metainfo:
                 self.__name_idx_mgr.name_index[idx][1] = new_metainfo
                 changed_files.append(index_file)
-
-        if unc_pairs:
-            unc_paths = [f for _, f in unc_pairs]
-            stat_map = unc_ops.batch_stat(unc_paths)
-            for idx, index_file in unc_pairs:
-                if self.force_stop_update:
-                    break
-                old_metainfo = self.__name_idx_mgr.name_index[idx][1]
-                stat_result = stat_map.get(index_file)
-                if stat_result is None:
-                    if not os.path.exists(index_file):
-                        self.__name_idx_mgr.delete_name(idx)
-                        self.__vec_idx_mgr.delete_vector(idx)
-                        continue
-                    try:
-                        new_metainfo = os.path.getsize(index_file)
-                    except OSError:
-                        continue
-                else:
-                    new_metainfo = stat_result.st_size
-                if old_metainfo != new_metainfo:
-                    self.__name_idx_mgr.name_index[idx][1] = new_metainfo
-                    changed_files.append(index_file)
+        
+        if len(unc_file_ids) == 0 or self.force_stop_update:
+            return changed_files
+        
+        stat_map = unc_ops.batch_stat([i[0] for i in self.__name_idx_mgr.name_index])
+        for idx in unc_file_ids:
+            if self.force_stop_update:
+                break
+            index_file, old_metainfo = self.__name_idx_mgr.name_index[idx]
+            stat_result = stat_map.get(index_file)
+            new_metainfo = stat_result.st_size if stat_result is not None else old_metainfo
+            if old_metainfo != new_metainfo:
+                self.__name_idx_mgr.name_index[idx][1] = new_metainfo
+                changed_files.append(index_file)
 
         return changed_files
 
@@ -139,8 +112,9 @@ class SearchTool:
         for file in current_files:
             if self.force_stop_update:
                 break
-            if file_ops.fast_normalize(file) not in existing_files:
-                new_files.append(file)
+            normalize_path = file_ops.fast_normalize(file)
+            if normalize_path not in existing_files:
+                new_files.append(normalize_path)
         return new_files
 
     def verify_index_match(self, sample_count: int = 3) -> bool:
@@ -195,24 +169,11 @@ class SearchTool:
         
         self.__init_event.wait()
         for image_dir in image_dirs:
-            changed_files = self.__get_changed_files(image_dir)
-            changed_norm = {file_ops.fast_normalize(f) for f in changed_files}
-
-            for idx, (fp, _) in enumerate(self.__name_idx_mgr.name_index):
-                if fp in changed_norm:
-                    self.__name_idx_mgr.delete_name(idx)
-                    self.__vec_idx_mgr.delete_vector(idx)
-
-            new_files = [
-                f for f in self.__get_new_files(image_dir, exclude_rules)
-                if file_ops.fast_normalize(f) not in changed_norm
-            ]
-            dir_files = changed_files + new_files
+            dir_files = self.__get_changed_files(image_dir) + self.__get_new_files(image_dir, exclude_rules)
             if not dir_files or self.force_stop_update:
                 continue
 
             progress_bar.total += len(dir_files)
-            
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 need_iter = iter(dir_files)
                 pending: set = set()
@@ -255,7 +216,6 @@ class SearchTool:
 
     def remove_nonexists(self) -> None:
         self.__init_event.wait()
-        local_indices: list[int] = []
         unc_groups: dict[str, list[int]] = {}
 
         for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
@@ -263,20 +223,13 @@ class SearchTool:
                 continue
             path_type = file_ops.get_path_type(index_file)
             if path_type == "local":
-                local_indices.append(idx)
+                if not os.path.exists(index_file):
+                    self.__name_idx_mgr.delete_name(idx)
+                    self.__vec_idx_mgr.delete_vector(idx)
             else:
                 unc_root = unc_ops.get_unc_root(index_file)
                 if unc_root:
                     unc_groups.setdefault(unc_root, []).append(idx)
-
-        for idx in tqdm(local_indices, ascii=False, ncols=50):
-            if self.force_stop_update:
-                break
-            index_file = self.__name_idx_mgr.name_index[idx][0]
-            if os.path.exists(index_file):
-                continue
-            self.__name_idx_mgr.delete_name(idx)
-            self.__vec_idx_mgr.delete_vector(idx)
 
         for unc_root, indices in tqdm(unc_groups.items(), desc="检查网络共享", ascii=False, ncols=50):
             if self.force_stop_update:
@@ -308,7 +261,6 @@ class SearchTool:
             if not unc_ops.is_share_online(unc_root):
                 tqdm.write(f"  共享中途断线: {unc_root}")
                 continue
-
             for idx in to_delete:
                 self.__name_idx_mgr.delete_name(idx)
                 self.__vec_idx_mgr.delete_vector(idx)
