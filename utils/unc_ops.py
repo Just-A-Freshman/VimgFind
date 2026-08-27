@@ -19,8 +19,7 @@ def _batch_stat_via_scandir(parent: str, files: list[str]) -> dict[str, os.stat_
     target_set = set()
     name_to_original = {}
     for f in files:
-        basename = os.path.basename(f)
-        lower_name = basename.lower()
+        lower_name = os.path.basename(f).lower()
         target_set.add(lower_name)
         name_to_original[lower_name] = f
 
@@ -65,7 +64,7 @@ def _batch_exists_via_scandir(parent: str, files: list[str]) -> dict[str, bool]:
     target_set = set()
     name_map = {}
     for f in files:
-        lower_name = f.lower()
+        lower_name = os.path.basename(f).lower()
         target_set.add(lower_name)
         name_map[lower_name] = f
 
