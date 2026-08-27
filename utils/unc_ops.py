@@ -9,20 +9,79 @@ import pywintypes
 import win32file
 
 
+SMB_BATCH_SCANDIR_THRESHOLD = 3
 
-def _extract_server(unc_root: str) -> str | None:
+
+def _batch_stat_via_scandir(parent: str, files: list[str]) -> dict[str, os.stat_result | None]:
+    try:
+        name_to_entry = {e.name: e for e in os.scandir(parent)}
+    except OSError:
+        return {f: None for f in files}
+    result: dict[str, os.stat_result | None] = {}
+    for f in files:
+        entry = name_to_entry.get(os.path.basename(f))
+        if entry is None:
+            result[f] = None
+            continue
+        try:
+            result[f] = entry.stat(follow_symlinks=False)
+        except OSError:
+            result[f] = None
+    return result
+
+
+def _batch_stat_via_thread(files: list[str], max_workers: int) -> dict[str, os.stat_result | None]:
+    n = min(max_workers, len(files))
+    if n <= 0:
+        return {}
+    cache: dict[str, os.stat_result | None] = {}
+    with ThreadPoolExecutor(max_workers=n) as pool:
+        fut_map = {pool.submit(os.stat, p): p for p in files}
+        for f in as_completed(fut_map):
+            p = fut_map[f]
+            try:
+                cache[p] = f.result()
+            except OSError:
+                cache[p] = None
+    return cache
+
+
+def _batch_exists_via_scandir(parent: str, files: list[str]) -> dict[str, bool]:
+    try:
+        names = {e.name for e in os.scandir(parent)}
+    except OSError:
+        return {}
+    return {f: os.path.basename(f) in names for f in files}
+
+
+def _batch_exists_via_thread(files: list[str], root_online: dict[str, bool], max_workers: int) -> dict[str, bool]:
+    def exists_one(path: str, root_online: dict[str, bool]) -> bool:
+        root = get_unc_root(path) if path.startswith("\\\\") else None
+        if root and not root_online.get(root, True):
+            return False
+        try:
+            return os.path.exists(path)
+        except OSError:
+            return False
+        
+    result: dict[str, bool] = {}
+    n = min(max_workers, len(files))
+    if n <= 0:
+        return result
+    with ThreadPoolExecutor(max_workers=n) as pool:
+        fut_map = {pool.submit(exists_one, p, root_online): p for p in files}
+        for f in as_completed(fut_map):
+            result[fut_map[f]] = f.result()
+    return result
+
+
+def is_server_reachable(unc_root: str, timeout: float = 2.0) -> bool:
     if not unc_root or not unc_root.startswith("\\\\"):
-        return None
+        return False
     parts = unc_root.split("\\")
     if len(parts) < 3:
-        return None
-    return parts[2]
-
-
-def _is_server_reachable(unc_root: str, timeout: float = 2.0) -> bool:
-    server = _extract_server(unc_root)
-    if server is None:
         return False
+    server = parts[2]
     try:
         sock = socket.create_connection((server, 445), timeout=timeout)
         sock.close()
@@ -30,16 +89,6 @@ def _is_server_reachable(unc_root: str, timeout: float = 2.0) -> bool:
     except (socket.timeout, OSError, socket.gaierror):
         return False
     
-
-def _exists_one(path: str, root_online: dict[str, bool]) -> bool:
-    root = get_unc_root(path) if path.startswith("\\\\") else None
-    if root and not root_online.get(root, True):
-        return False
-    try:
-        return os.path.exists(path)
-    except OSError:
-        return False
-
 
 def get_unc_root(path: str) -> str | None:
     normalized = path.replace("/", "\\")
@@ -60,7 +109,7 @@ def get_unc_root(path: str) -> str | None:
 
 
 def is_share_online(unc_root: str, timeout: float = 3.0) -> bool:
-    if not _is_server_reachable(unc_root, timeout=min(timeout, 2.0)):
+    if not is_server_reachable(unc_root, timeout=min(timeout, 2.0)):
         return False
 
     result: bool | Exception = True
@@ -98,17 +147,18 @@ def batch_stat(paths: list[str], max_workers: int = 50) -> dict[str, os.stat_res
     if not unc_paths:
         return {}
 
-    n = min(max_workers, len(unc_paths))
-    cache: dict[str, os.stat_result | None] = {}
-    with ThreadPoolExecutor(max_workers=n) as pool:
-        fut_map = {pool.submit(os.stat, p): p for p in unc_paths}
-        for f in as_completed(fut_map):
-            p = fut_map[f]
-            try:
-                cache[p] = f.result()
-            except OSError:
-                cache[p] = None
-    return cache
+    groups: dict[str, list[str]] = {}
+    for p in unc_paths:
+        parent = os.path.dirname(p)
+        groups.setdefault(parent, []).append(p)
+
+    result: dict[str, os.stat_result | None] = {}
+    for parent, files in groups.items():
+        if len(files) >= SMB_BATCH_SCANDIR_THRESHOLD:
+            result.update(_batch_stat_via_scandir(parent, files))
+        else:
+            result.update(_batch_stat_via_thread(files, max_workers))
+    return result
 
 
 def batch_exists(paths: list[str], timeout: float = 2.0, max_workers: int = 50) -> dict[str, bool]:
@@ -126,12 +176,25 @@ def batch_exists(paths: list[str], timeout: float = 2.0, max_workers: int = 50) 
             for f in as_completed(fut_map):
                 root_online[fut_map[f]] = f.result()
 
+    groups: dict[str, list[str]] = {}
+    others: list[str] = []
+    for p in paths:
+        if not p.startswith("\\\\"):
+            others.append(p)
+            continue
+        parent = os.path.dirname(p)
+        groups.setdefault(parent, []).append(p)
+
     result: dict[str, bool] = {}
-    n = min(max_workers, len(paths))
-    with ThreadPoolExecutor(max_workers=n) as pool:
-        fut_map = {pool.submit(_exists_one, p, root_online): p for p in paths}
-        for f in as_completed(fut_map):
-            result[fut_map[f]] = f.result()
+    for parent, files in groups.items():
+        if len(files) >= SMB_BATCH_SCANDIR_THRESHOLD:
+            result.update(_batch_exists_via_scandir(parent, files))
+        else:
+            result.update(_batch_exists_via_thread(files, root_online, max_workers))
+
+    if others:
+        result.update(_batch_exists_via_thread(others, root_online, max_workers))
+
     return result
 
 
