@@ -118,8 +118,13 @@ class SearchTool:
                     if not os.path.exists(index_file):
                         self.__name_idx_mgr.delete_name(idx)
                         self.__vec_idx_mgr.delete_vector(idx)
-                    continue
-                new_metainfo = stat_result.st_size
+                        continue
+                    try:
+                        new_metainfo = os.path.getsize(index_file)
+                    except OSError:
+                        continue
+                else:
+                    new_metainfo = stat_result.st_size
                 if old_metainfo != new_metainfo:
                     self.__name_idx_mgr.name_index[idx][1] = new_metainfo
                     changed_files.append(index_file)
@@ -190,7 +195,19 @@ class SearchTool:
         
         self.__init_event.wait()
         for image_dir in image_dirs:
-            dir_files = self.__get_changed_files(image_dir) + self.__get_new_files(image_dir, exclude_rules)
+            changed_files = self.__get_changed_files(image_dir)
+            changed_norm = {file_ops.fast_normalize(f) for f in changed_files}
+
+            for idx, (fp, _) in enumerate(self.__name_idx_mgr.name_index):
+                if fp in changed_norm:
+                    self.__name_idx_mgr.delete_name(idx)
+                    self.__vec_idx_mgr.delete_vector(idx)
+
+            new_files = [
+                f for f in self.__get_new_files(image_dir, exclude_rules)
+                if file_ops.fast_normalize(f) not in changed_norm
+            ]
+            dir_files = changed_files + new_files
             if not dir_files or self.force_stop_update:
                 continue
 

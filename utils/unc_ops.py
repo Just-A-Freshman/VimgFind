@@ -9,7 +9,7 @@ import pywintypes
 import win32file
 
 
-SMB_BATCH_SCANDIR_THRESHOLD = 3
+SMB_BATCH_SCANDIR_THRESHOLD = 300
 
 
 def _batch_stat_via_scandir(parent: str, files: list[str]) -> dict[str, os.stat_result | None]:
