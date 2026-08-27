@@ -9,24 +9,36 @@ import pywintypes
 import win32file
 
 
-SMB_BATCH_SCANDIR_THRESHOLD = 300
+SMB_BATCH_SCANDIR_THRESHOLD = 50
 
 
 def _batch_stat_via_scandir(parent: str, files: list[str]) -> dict[str, os.stat_result | None]:
-    try:
-        name_to_entry = {e.name: e for e in os.scandir(parent)}
-    except OSError:
-        return {f: None for f in files}
-    result: dict[str, os.stat_result | None] = {}
+    if not files:
+        return {}
+
+    target_set = set()
+    name_to_original = {}
     for f in files:
-        entry = name_to_entry.get(os.path.basename(f))
-        if entry is None:
-            result[f] = None
-            continue
-        try:
-            result[f] = entry.stat(follow_symlinks=False)
-        except OSError:
-            result[f] = None
+        basename = os.path.basename(f)
+        lower_name = basename.lower()
+        target_set.add(lower_name)
+        name_to_original[lower_name] = f
+
+    result: dict[str, os.stat_result | None] = {f: None for f in files}
+    try:
+        for entry in os.scandir(parent):
+            entry_lower = entry.name.lower()
+            if entry_lower in target_set:
+                original_path = name_to_original[entry_lower]
+                try:
+                    result[original_path] = entry.stat(follow_symlinks=False)
+                except OSError:
+                    result[original_path] = None
+                target_set.remove(entry_lower)
+                if not target_set:
+                    break
+    except OSError:
+        pass
     return result
 
 
@@ -47,11 +59,29 @@ def _batch_stat_via_thread(files: list[str], max_workers: int) -> dict[str, os.s
 
 
 def _batch_exists_via_scandir(parent: str, files: list[str]) -> dict[str, bool]:
-    try:
-        names = {e.name for e in os.scandir(parent)}
-    except OSError:
+    if not files:
         return {}
-    return {f: os.path.basename(f) in names for f in files}
+
+    target_set = set()
+    name_map = {}
+    for f in files:
+        lower_name = f.lower()
+        target_set.add(lower_name)
+        name_map[lower_name] = f
+
+    result = {f: False for f in files}
+    try:
+        for entry in os.scandir(parent):
+            entry_lower = entry.name.lower()
+            if entry_lower in target_set:
+                original_name = name_map[entry_lower]
+                result[original_name] = True
+                target_set.remove(entry_lower)
+                if not target_set:
+                    break
+    except OSError:
+        pass
+    return result
 
 
 def _batch_exists_via_thread(files: list[str], root_online: dict[str, bool], max_workers: int) -> dict[str, bool]:
@@ -146,7 +176,6 @@ def batch_stat(paths: list[str], max_workers: int = 50) -> dict[str, os.stat_res
     unc_paths = [p for p in paths if p.startswith("\\\\")]
     if not unc_paths:
         return {}
-
     groups: dict[str, list[str]] = {}
     for p in unc_paths:
         parent = os.path.dirname(p)
