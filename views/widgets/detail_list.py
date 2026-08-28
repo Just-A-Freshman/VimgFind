@@ -57,6 +57,9 @@ class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
             return
         self.drag_source_register(1, DND_FILES)
         self.tk.call('tkdnd::_begin_drag', 'press', '1', self._w, '', event.x_root, event.y_root, event.x, event.y)    # type: ignore
+        item = self.identify_row(event.y)
+        if item:
+            self.focus(item)
         return "break"
 
     def _handle_click(self, item: str, ctrl: bool, shift: bool) -> None:
