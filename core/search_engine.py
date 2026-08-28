@@ -231,6 +231,9 @@ class SearchTool:
                 if unc_root:
                     unc_groups.setdefault(unc_root, []).append(idx)
 
+        if not unc_groups:
+            return
+
         for unc_root, indices in tqdm(unc_groups.items(), desc="检查网络共享", ascii=False, ncols=50):
             if self.force_stop_update:
                 break
