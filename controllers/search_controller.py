@@ -414,11 +414,11 @@ class SearchController:
         @decorators.send_task
         def _preview() -> None:
             try:
-                first_item = selection[0]
-                image_path = self.app.view.search_tab.preview_view.item(first_item)[0]
-                image_obj = image_ops.parse_image_from_path(image_path)
-                if image_obj is not None:
-                    self.app.view.search_tab.preview_canvas2.append(image_path, image_obj)
+                old_image_path = self.app.view.search_tab.preview_view.item(selection[0])[0]
+                self.app.view.search_tab.preview_canvas2.append(old_image_path)
+                new_image_path = self.app.view.search_tab.preview_view.item(self.app.view.search_tab.preview_view.selection()[0])[0]
+                if old_image_path != new_image_path:
+                    self.__preview_found_image()
             except KeyError:
                 return
         selection = self.app.view.search_tab.preview_view.selection()
