@@ -126,9 +126,9 @@ def get_file_iterator(
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
     command: list[str] = []
     if highlight:
-        command = ["explorer.exe", "/select,", str(file_path)]
+        command = ["explorer.exe", "/select,", fast_normalize(file_path)]
     else:
-        command = ["explorer.exe", str(file_path)]
+        command = ["explorer.exe", fast_normalize(file_path)]
     returncode, _, stderr = run_cmd(command)
     if returncode == -1:
         logging.error(f"打开文件失败：命令 {' '.join(command)} 执行错误，详情：{stderr}")
