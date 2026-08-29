@@ -327,9 +327,10 @@ class SearchController:
     def __setup_search_ui(self, input_data: Image.Image | str | None, source_path: str | None) -> bool:
         tab = self.app.view.search_tab
         if isinstance(input_data, str):
-            tab.preview_frame1.grid_forget()
-            tab.preview_frame2.grid(row=0, column=0, sticky=tk.NSEW, pady=(TkS(2), 0), rowspan=2)
             tab.preview_canvas1.clear()
+            tab.preview_canvas2.clear()
+            tab.preview_frame2.grid(row=0, column=0, sticky=tk.NSEW, pady=(TkS(2), 0), rowspan=2)
+            tab.preview_frame1.grid_forget()
             self.__last_search_content = input_data
         elif isinstance(input_data, Image.Image):
             if isinstance(self.__last_search_content, str):
