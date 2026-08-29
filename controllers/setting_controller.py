@@ -17,7 +17,7 @@ import utils.decorators as decorators
 
 if TYPE_CHECKING:
     from .app_controller import AppController
-    from views.setting_dialog import SettingDialog, GeneralTab, CustomMenuTab
+    from views.setting_dialog import GeneralTab, CustomMenuTab
 
 
 class SettingController:
