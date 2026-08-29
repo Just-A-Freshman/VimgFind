@@ -334,6 +334,7 @@ class SearchController:
             self.__last_search_content = input_data
         elif isinstance(input_data, Image.Image):
             if isinstance(self.__last_search_content, str):
+                tab.preview_canvas2.clear()
                 tab.preview_frame1.grid(row=0, column=0, sticky=tk.NSEW, pady=(0, TkS(2)))
                 tab.preview_frame2.grid(row=1, column=0, sticky=tk.NSEW, pady=(TkS(2), 0))
             tab.search_entry.delete(0, tk.END)
