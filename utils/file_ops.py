@@ -124,14 +124,13 @@ def get_file_iterator(
 
 @decorators.send_task
 def open_file(file_path: str | Path, highlight: bool = False) -> None:
-    command: list[str] = []
     if highlight:
         command = ["explorer.exe", "/select,", fast_normalize(file_path)]
+        returncode, _, stderr = run_cmd(command)
+        if returncode == -1:
+            logging.error(f"打开文件失败：命令 {' '.join(command)} 执行错误，详情：{stderr}")
     else:
-        command = ["explorer.exe", fast_normalize(file_path)]
-    returncode, _, stderr = run_cmd(command)
-    if returncode == -1:
-        logging.error(f"打开文件失败：命令 {' '.join(command)} 执行错误，详情：{stderr}")
+        os.startfile(file_path)
 
 
 def copy_files(*file_paths: str | Path) -> None:
