@@ -9,13 +9,13 @@ from ttkbootstrap.widgets import ToolTip
 
 from config.settings import TkS
 from utils.i18n import _
-from views.widgets import DragReorderTreeview
+from views.widgets import ImageFolderTreeview
 
 
 class IndexFrame(Frame):
     index_tip_label: Label
     index_tooltip: ToolTip
-    index_dataset_table: DragReorderTreeview
+    index_dataset_table: ImageFolderTreeview
     switch_model_combobox: Combobox
     add_index_button: Button
     update_index_button: Button
@@ -73,13 +73,8 @@ class IndexFrame(Frame):
         frame.grid_columnconfigure(0, weight=1)
         return frame
 
-    def __set_index_dataset_table(self, parent) -> DragReorderTreeview:
-        columns = [" ", _("图库目录")]
-        table = DragReorderTreeview(parent, show="headings", columns=columns, ghost_column=1)
-        table.heading(0, text=columns[0], anchor=tk.CENTER)
-        table.column(0, width=TkS(30), anchor=tk.CENTER, stretch=False)
-        table.heading(1, text=columns[1], anchor=tk.CENTER)
-        table.column(1, anchor=tk.CENTER)
+    def __set_index_dataset_table(self, parent) -> ImageFolderTreeview:
+        table = ImageFolderTreeview(parent, ghost_column=0)
         table.grid(row=0, column=0, sticky=tk.NSEW, pady=(TkS(9), 0))
         return table
 

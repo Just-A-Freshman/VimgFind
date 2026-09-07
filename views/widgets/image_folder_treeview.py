@@ -6,16 +6,20 @@ import os
 
 from PIL import Image, ImageDraw, ImageTk
 
+from .drag_treeview import DragReorderTreeview
+
 
 _PLACEHOLDER = ("__placeholder__",)
 
 
-class ImageFolderTreeview(ttk.Treeview):
+class ImageFolderTreeview(DragReorderTreeview):
     def __init__(self, parent, accept_exts: set[str] | None = None, **kwargs):
         kwargs.setdefault("show", "tree headings")
+        kwargs.setdefault("selectmode", "browse")  # 禁止多选
         super().__init__(parent, **kwargs)
-        self.__build_style()
+        self.after(100, self.__build_style)
         self._accept_exts = accept_exts
+        self._style = getattr(self.master.winfo_toplevel(), "style", None) or ttk.Style()
         self._placeholder_parents: set[str] = set()
         self._collapse_timers: dict[str, str] = {}
         self._last_theme = self._style.theme_use()
@@ -28,8 +32,6 @@ class ImageFolderTreeview(ttk.Treeview):
         self.bind("<<ThemeChanged>>", self._on_theme_changed)
 
     def __build_style(self) -> None:
-        if not hasattr(self, "_img_open"):
-            self._style = getattr(self.master.winfo_toplevel(), "style", None) or ttk.Style()
         rh = self._style.lookup("Treeview", "rowheight")
         rh = int(rh) if rh else 20
         size = max(int((rh - 5) * 0.7), 8)
@@ -218,6 +220,17 @@ class ImageFolderTreeview(ttk.Treeview):
         if values and values[0] not in ("", _PLACEHOLDER[0]):
             self.insert(iid, tk.END, text="", values=_PLACEHOLDER)
             self._placeholder_parents.add(iid)
+
+    def _drag_allowed(self, source: str | None) -> bool:
+        if not source or self.parent(source) != "":
+            return False
+        stack = list(self.get_children(""))
+        while stack:
+            iid = stack.pop()
+            if self.item(iid, "open"):
+                return False
+            stack.extend(self.get_children(iid))
+        return True
 
     def _on_double_click(self, event):
         elem = self.identify_element(event.x, event.y)

@@ -48,7 +48,6 @@ class IndexController:
         tab.auto_update_checkbutton.config(command=self.__toggle_auto_update)
         tab.exclude_button.config(command=self.__open_exclude_dialog)
 
-        tab.index_dataset_table.bind("<Double-Button-1>", self.__open_dataset_folder)
         tab.switch_model_combobox.bind("<<ComboboxSelected>>", self.__switch_model)
         tab.switch_model_combobox.bind("<MouseWheel>", lambda _: "break")
         tab.update_range_combobox.bind(
@@ -118,17 +117,14 @@ class IndexController:
         for item in tb.get_children():
             tb.delete(item)
         search_dirs = self.app.setting.model.index.search_dir
-        for index, dir_path in enumerate(search_dirs, 1):
-            tb.insert("", tk.END, values=(index, dir_path))
+        for dir_path in search_dirs:
+            tb.add_folder(dir_path)
         self.app.filter_controller.refresh_folder_filter()
 
     def __on_reorder(self, source_idx: int, target_idx: int) -> None:
         search_dirs: list = self.app.setting.model.index.search_dir
         dir_to_move = search_dirs.pop(source_idx)
         search_dirs.insert(target_idx, dir_to_move)
-        tree = self.app.view.index_tab.index_dataset_table
-        for idx, item in enumerate(tree.get_children(""), 1):
-            self.app.view.index_tab.index_dataset_table.set(item, "#1", idx)
         self.app.filter_controller.refresh_folder_filter()
 
     def __switch_model(self, event) -> None:
@@ -272,16 +268,6 @@ class IndexController:
         dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
         controller.load_rules_into_view()
 
-    def __open_dataset_folder(self, event: tk.Event) -> None:
-        selection = self.app.view.index_tab.index_dataset_table.selection()
-        if not selection:
-            return
-        try:
-            dir_path = self.app.view.index_tab.index_dataset_table.item(selection[0], "values")[1]
-            file_ops.open_file(dir_path)
-        except (IndexError, FileNotFoundError) as e:
-            logging.warning(f"打开目录失败: {str(e)}")
-
     @decorators.send_task
     @decorators.redirect_output
     def __delete_search_dir(self) -> None:
@@ -297,7 +283,7 @@ class IndexController:
         dirs_to_delete = []
         search_dirs: list = self.app.setting.model.index.search_dir
         for item in selected:
-            delete_search_dir = self.app.view.index_tab.index_dataset_table.item(item, 'values')[1]
+            delete_search_dir = self.app.view.index_tab.index_dataset_table.item(item, 'values')[0]
             dirs_to_delete.append(delete_search_dir)
             search_dirs.remove(delete_search_dir)
             self.app.view.index_tab.index_dataset_table.delete(item)

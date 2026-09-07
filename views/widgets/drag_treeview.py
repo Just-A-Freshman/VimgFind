@@ -26,6 +26,10 @@ class DragReorderTreeview(Treeview):
         self.bind("<B1-Motion>", self.__drag_motion)
         self.bind("<ButtonRelease-1>", self.__drag_end)
 
+    def _drag_allowed(self, source: str | None) -> bool:
+        """Hook: subclasses may forbid drag-reorder for certain rows/state."""
+        return source is not None
+
     def config(self, *args, on_reorder: Callable | None = None, **kwargs):
         if on_reorder is not None:
             self.__on_reorder = on_reorder
@@ -46,6 +50,8 @@ class DragReorderTreeview(Treeview):
 
         if not self.__drag_active:
             if time.monotonic() - self.__press_time < self.__drag_delay:
+                return
+            if not self._drag_allowed(self.__drag_source):
                 return
             self.__drag_active = True
             self.__create_drag_ghost(event)
