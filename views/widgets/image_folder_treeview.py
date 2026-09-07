@@ -13,9 +13,9 @@ _PLACEHOLDER = ("__placeholder__",)
 
 
 class ImageFolderTreeview(DragReorderTreeview):
-    def __init__(self, parent, accept_exts: set[str] | None = None, **kwargs):
+    def __init__(self, parent, accept_exts: set[str] | None = None, heading: str = "", **kwargs):
         kwargs.setdefault("show", "tree headings")
-        kwargs.setdefault("selectmode", "browse")  # 禁止多选
+        kwargs.setdefault("selectmode", "browse")
         super().__init__(parent, **kwargs)
         self.after(100, self.__build_style)
         self._accept_exts = accept_exts
@@ -25,7 +25,7 @@ class ImageFolderTreeview(DragReorderTreeview):
         self._last_theme = self._style.theme_use()
 
         self.column("#0", anchor=tk.W, stretch=True)
-        self.heading("#0", text="图库目录")
+        self.heading("#0", text=heading)
         self.bind("<<TreeviewOpen>>", self._on_open)
         self.bind("<<TreeviewClose>>", self._on_close)
         self.bind("<Double-1>", self._on_double_click)

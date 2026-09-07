@@ -7,7 +7,7 @@ from ttkbootstrap.constants import LINK
 from ttkbootstrap import Button, Checkbutton, Scale
 from ttkbootstrap.widgets import ToolTip
 
-from config.settings import TkS
+from config.settings import TkS, Setting
 from utils.i18n import _
 from views.widgets import ImageFolderTreeview
 
@@ -74,7 +74,7 @@ class IndexFrame(Frame):
         return frame
 
     def __set_index_dataset_table(self, parent) -> ImageFolderTreeview:
-        table = ImageFolderTreeview(parent, ghost_column=0)
+        table = ImageFolderTreeview(parent, ghost_column=0, accept_exts=set(Setting.accepted_exts), heading=_("图库目录"))
         table.grid(row=0, column=0, sticky=tk.NSEW, pady=(TkS(9), 0))
         return table
 
