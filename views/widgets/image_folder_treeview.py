@@ -7,7 +7,7 @@ import os
 from PIL import Image, ImageDraw, ImageTk
 
 from .drag_treeview import DragReorderTreeview
-
+from config.settings import TkS
 
 _PLACEHOLDER = ("__placeholder__",)
 
@@ -20,12 +20,15 @@ class ImageFolderTreeview(DragReorderTreeview):
         self.after(100, self.__build_style)
         self._accept_exts = accept_exts
         self._style = getattr(self.master.winfo_toplevel(), "style", None) or ttk.Style()
+        self.__scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.yview)
         self._placeholder_parents: set[str] = set()
         self._collapse_timers: dict[str, str] = {}
         self._last_theme = self._style.theme_use()
 
+        self.__scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=TkS(1), padx=TkS(1))
         self.column("#0", anchor=tk.W, stretch=True)
         self.heading("#0", text=heading)
+        self.configure(yscrollcommand=self.__scrollbar.set, padding=(0, 0, self.__scrollbar.winfo_reqwidth(), 0))
         self.bind("<<TreeviewOpen>>", self._on_open)
         self.bind("<<TreeviewClose>>", self._on_close)
         self.bind("<Double-1>", self._on_double_click)
