@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from tkinter import ttk
+import tkinter.font as tkfont
 import tkinter as tk
 import os
 
@@ -10,11 +12,15 @@ from ttkbootstrap import Style
 from .drag_treeview import DragReorderTreeview
 from config.settings import TkS
 
+if TYPE_CHECKING:
+    from utils.exclude_rules import ExcludeRules
+
 _PLACEHOLDER = ("__placeholder__",)
 
 
 class ImageFolderTreeview(DragReorderTreeview):
     _EL = "folder_indicator"
+    _EX_TAG = "_excluded"
 
     def __init__(self, parent, accept_exts: set[str] | None = None, heading: str = "", **kwargs):
         kwargs.setdefault("show", "tree headings")
@@ -28,6 +34,7 @@ class ImageFolderTreeview(DragReorderTreeview):
         super().__init__(parent, **kwargs)
         self.after(100, self.__build_style)
         self._accept_exts = accept_exts
+        self._exclude_rules: ExcludeRules | None = None
         self._style = getattr(self.master.winfo_toplevel(), "style", None) or ttk.Style()
         self.__scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.yview)
         self._placeholder_parents: set[str] = set()
@@ -90,6 +97,18 @@ class ImageFolderTreeview(DragReorderTreeview):
             }),
         ])
         self._style.configure(self._style_name, indent=indent)
+
+        try:
+            base = self._style.lookup(self._style_name, "font")
+            base = tkfont.nametofont("TkDefaultFont") if not base else tkfont.Font(font=base)
+            attrs = base.actual()
+            self._excluded_font = tkfont.Font(
+                family=attrs["family"], size=attrs["size"],
+                weight=attrs["weight"], slant=attrs["slant"], overstrike=True,
+            )
+            self.tag_configure(self._EX_TAG, font=self._excluded_font)
+        except tk.TclError:
+            pass
 
     def _on_theme_changed(self, event):
         current = self._style.theme_use()
@@ -257,7 +276,33 @@ class ImageFolderTreeview(DragReorderTreeview):
         os.startfile(values[0])
         return "break"
 
+    def _rule_skip(self, path: str, root: str, is_dir: bool) -> bool:
+        rules = self._exclude_rules
+        if rules is None or not root:
+            return False
+        try:
+            return rules.should_skip_dir(path, root) if is_dir else rules.should_skip_file(path, root)
+        except (OSError, PermissionError):
+            return False
+
+    def _subtree_state(self, parent_iid: str) -> tuple[str, bool]:
+        chain = []
+        cur = parent_iid
+        while cur:
+            values = self.item(cur, "values")
+            chain.append(values[0] if values and values[0] != _PLACEHOLDER[0] else "")
+            cur = self.parent(cur)
+        chain.reverse()
+        root = chain[0] if chain else ""
+        if not root or self._exclude_rules is None:
+            return ("", False)
+        for dir_path in chain[1:]:
+            if self._rule_skip(dir_path, root, True):
+                return (root, True)
+        return (root, False)
+
     def _full_scan(self, parent_iid: str, path: str):
+        root, ancestor_excluded = self._subtree_state(parent_iid)
         dirs = []
         files = []
         for e in os.scandir(path):
@@ -270,13 +315,22 @@ class ImageFolderTreeview(DragReorderTreeview):
         files.sort(key=lambda x: x.name.lower())
 
         for entry in dirs:
-            child = self.insert(parent_iid, tk.END, text=f"  {entry.name}", values=(entry.path,), open=False, image=self._img_folder)
+            excluded = ancestor_excluded or self._rule_skip(entry.path, root, True)
+            child = self.insert(
+                parent_iid, tk.END, text=f"  {entry.name}", values=(entry.path,),
+                open=False, image=self._img_folder,
+                tags=(self._EX_TAG,) if excluded else (),
+            )
             self._prescan(child, entry.path)
 
         for entry in files:
             if self._accept_exts is not None and os.path.splitext(entry.name)[1].lower() not in self._accept_exts:
                 continue
-            self.insert(parent_iid, tk.END, text=f"  {entry.name}", values=(entry.path,), image=self._img_file)
+            excluded = ancestor_excluded or self._rule_skip(entry.path, root, False)
+            self.insert(
+                parent_iid, tk.END, text=f"  {entry.name}", values=(entry.path,),
+                image=self._img_file, tags=(self._EX_TAG,) if excluded else (),
+            )
 
     def add_folder(self, abs_path: str) -> str | None:
         if not os.path.isdir(abs_path):
@@ -292,3 +346,26 @@ class ImageFolderTreeview(DragReorderTreeview):
             if v and v[0] != _PLACEHOLDER[0]:
                 paths.append(v[0])
         return paths
+
+    def refresh_exclude_rules(self, exclude_rules: ExcludeRules | None = None) -> None:
+        self._exclude_rules = exclude_rules
+        stack: list[tuple[str, str, bool]] = []
+        for top in self.get_children(""):
+            if self.item(top, "tags"):
+                self.item(top, tags=())
+            values = self.item(top, "values")
+            if values and values[0] != _PLACEHOLDER[0]:
+                stack.extend((c, values[0], False) for c in self.get_children(top))
+
+        while stack:
+            iid, root, ancestor_excluded = stack.pop()
+            values = self.item(iid, "values")
+            if not values or values[0] == _PLACEHOLDER[0]:
+                continue
+            path = values[0]
+            is_dir = os.path.isdir(path)
+            excluded = ancestor_excluded or self._rule_skip(path, root, is_dir)
+            if excluded != bool(self.item(iid, "tags")):
+                self.item(iid, tags=(self._EX_TAG,) if excluded else ())
+            if is_dir:
+                stack.extend((c, root, excluded) for c in self.get_children(iid))
