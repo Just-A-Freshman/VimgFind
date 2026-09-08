@@ -27,7 +27,6 @@ class DragReorderTreeview(Treeview):
         self.bind("<ButtonRelease-1>", self.__drag_end)
 
     def _drag_allowed(self, source: str | None) -> bool:
-        """Hook: subclasses may forbid drag-reorder for certain rows/state."""
         return source is not None
 
     def config(self, *args, on_reorder: Callable | None = None, **kwargs):

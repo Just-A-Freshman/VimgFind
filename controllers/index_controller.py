@@ -114,11 +114,21 @@ class IndexController:
 
     def refresh_index_dataset_table(self) -> None:
         tb = self.app.view.index_tab.index_dataset_table
-        for item in tb.get_children():
-            tb.delete(item)
-        search_dirs = self.app.setting.model.index.search_dir
-        for dir_path in search_dirs:
-            tb.add_folder(dir_path)
+        search_dirs: list = self.app.setting.model.index.search_dir
+        want = [d for d in search_dirs if Path(d).is_dir()]
+        have = tb.get_folder_paths()
+        if want != have:
+            for iid in tb.get_children(""):
+                if tb.item(iid, "values")[0] not in want:
+                    tb.delete(iid)
+            for dir_path in want:
+                if dir_path not in have:
+                    tb.add_folder(dir_path)
+            if want != tb.get_folder_paths():
+                for iid in tb.get_children(""):
+                    tb.delete(iid)
+                for dir_path in want:
+                    tb.add_folder(dir_path)
         self.app.filter_controller.refresh_folder_filter()
 
     def __on_reorder(self, source_idx: int, target_idx: int) -> None:
