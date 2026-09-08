@@ -109,7 +109,8 @@ shasum -a 256 VimgFind-2.5.2-macos.dmg
 ```powershell
 git clone https://github.com/Just-A-Freshman/VimgFind.git
 cd VimgFind
-conda create -n vimgfind python=3.12 && conda activate vimgfind
+conda create -n vimgfind python=3.12
+conda activate vimgfind
 pip install -r requirements.txt
 python ./main.py
 ```
@@ -137,13 +138,16 @@ build_exe\build_local.bat
 
 
 ## 7. 未来规划
+重要性：较高 / 复杂度：中等
+- [ ] 以及重新设计增量排除规则实际应用效果预览方式；
+- [ ] 增加排除规则的作用范围，并且要能根据某个文件夹看到他的排除规则；
+- [ ] 程序关闭可以选择收缩到托盘（注意释放资源，避免后台持续占用）或者直接关闭程序。
 
-- [ ] 增加排除规则的作用范围，并且要能根据某个文件夹看到他的排除规则（***）
-
+重要性：很高 / 复杂度：很高
 - [ ] 索引自动更新加强（程序关闭后仍能保持静默运行，更新线程设置为10时软件在后台未被使用3分钟后则调取1-2线程静默更新 电脑整体未使用30分钟后再调用10线程）（***）
 
-- [ ] 在索引目录下的索引地址最边上添加具体有多少张图片的显示（**）
-- [ ] 关于关闭按钮的提速（程序启动颇需要花费一些时间，用户希望能够让它像Everything那样关闭后保留某些进程，使下一次打开速度更快 / 或者让关闭变成收缩到盘符，方便下次快速打开）（**）
+
+重要性：很低  / 复杂度：很高
 - [ ] 模型Skill，用于指导Agent将任意图像或多模态模型转化成程序可以识别与使用的形式（**）
 - [ ] 筛选界面优化（待定，见讨论：https://github.com/Just-A-Freshman/VimgFind/discussions/15）（*）
 
