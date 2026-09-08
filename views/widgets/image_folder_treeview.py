@@ -5,6 +5,7 @@ import tkinter as tk
 import os
 
 from PIL import Image, ImageDraw, ImageTk
+from ttkbootstrap import Style
 
 from .drag_treeview import DragReorderTreeview
 from config.settings import TkS
@@ -13,9 +14,17 @@ _PLACEHOLDER = ("__placeholder__",)
 
 
 class ImageFolderTreeview(DragReorderTreeview):
+    _EL = "folder_indicator"
+
     def __init__(self, parent, accept_exts: set[str] | None = None, heading: str = "", **kwargs):
         kwargs.setdefault("show", "tree headings")
         kwargs.setdefault("selectmode", "browse")
+        self._style_name = f"ImgFolder.{kwargs.get('style') or 'Treeview'}"
+        kwargs["style"] = self._style_name
+        style = Style.get_instance() or Style()
+        if not style.style_exists_in_theme(self._style_name):
+            style.configure(self._style_name, relief="flat")
+        
         super().__init__(parent, **kwargs)
         self.after(100, self.__build_style)
         self._accept_exts = accept_exts
@@ -35,16 +44,16 @@ class ImageFolderTreeview(DragReorderTreeview):
         self.bind("<<ThemeChanged>>", self._on_theme_changed)
 
     def __build_style(self) -> None:
-        rh = self._style.lookup("Treeview", "rowheight")
+        rh = self._style.lookup(self._style_name, "rowheight")
         rh = int(rh) if rh else 20
         size = max(int((rh - 5) * 0.7), 8)
         indent = max(size + 10, 20)
 
-        fg = self._style.lookup("Treeview", "foreground")
+        fg = self._style.lookup(self._style_name, "foreground")
         if not fg or not fg.startswith("#"):
             fg = "#888888"
 
-        el_name = "folder_indicator"
+        el_name = self._EL
         icon_size = int(size * 0.8)
         if not hasattr(self, "_img_open"):
             self._img_open, self._img_close = self._make_chevron_images(size, fg)
@@ -70,7 +79,7 @@ class ImageFolderTreeview(DragReorderTreeview):
         except tk.TclError:
             pass
 
-        self._style.layout("Treeview.Item", [
+        self._style.layout(f"{self._style_name}.Item", [
             ("Treeitem.padding", {
                 "sticky": "nswe",
                 "children": [
@@ -80,7 +89,7 @@ class ImageFolderTreeview(DragReorderTreeview):
                 ],
             }),
         ])
-        self._style.configure("Treeview", indent=indent)
+        self._style.configure(self._style_name, indent=indent)
 
     def _on_theme_changed(self, event):
         current = self._style.theme_use()
@@ -237,7 +246,7 @@ class ImageFolderTreeview(DragReorderTreeview):
 
     def _on_double_click(self, event):
         elem = self.identify_element(event.x, event.y)
-        if elem == "folder_indicator":
+        if elem == self._EL:
             return
         iid = self.identify_row(event.y)
         if not iid:
