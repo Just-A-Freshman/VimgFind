@@ -15,6 +15,7 @@ import utils.file_ops as file_ops
 import utils.unc_ops as unc_ops
 import utils.decorators as decorators
 import utils.idle_tracker as idle_tracker
+import utils.exclude_rules as exclude_rules
 
 if TYPE_CHECKING:
     from .app_controller import AppController
@@ -130,6 +131,14 @@ class IndexController:
                 for dir_path in want:
                     tb.add_folder(dir_path)
         self.app.filter_controller.refresh_folder_filter()
+        self.__apply_exclude_rules()
+
+    def __apply_exclude_rules(self, rules: list[str] | None = None) -> None:
+        if rules is None:
+            rules = self.app.setting.model.index.exclude_rules or []
+        self.app.view.index_tab.index_dataset_table.refresh_exclude_rules(
+            exclude_rules.compile_rules(rules)
+        )
 
     def __on_reorder(self, source_idx: int, target_idx: int) -> None:
         search_dirs: list = self.app.setting.model.index.search_dir
@@ -263,18 +272,13 @@ class IndexController:
     def __open_exclude_dialog(self) -> None:
         from views.exclude_dialog import ExcludeDialog
         dialog = ExcludeDialog(self.app.view)
-        if dialog.rules_tree.bind("<<TreeviewSelect>>"):
+        if dialog.rules_tree.bind("<Double-Button-1>"):
             return
-        controller = ExcludePreviewController(dialog, self.app.setting)
+        controller = ExcludePreviewController(dialog, self.app.setting, on_rules_changed=self.__apply_exclude_rules)
         dialog.help_btn.config(command=lambda: self.app.setting.link_to_docs(_("排除规则")))
-        dialog.stop_btn.config(command=controller.stop_scan)
         dialog.add_rule_btn.config(command=controller.on_add_name)
         dialog.del_rule_btn.config(command=controller.on_delete_selected)
-        dialog.browse_btn.config(command=controller.on_browse)
-        dialog.preview_path_entry.bind("<Return>", lambda e: controller.trigger_preview())
-        dialog.rules_tree.bind("<<TreeviewSelect>>", controller.on_rule_select)
         dialog.rules_tree.bind("<Double-Button-1>", controller.on_item_double_click)
-        dialog.preview_tree.bind("<Double-Button-1>", controller.on_preview_double_click)
         dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
         controller.load_rules_into_view()
 
