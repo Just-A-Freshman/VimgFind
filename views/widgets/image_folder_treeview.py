@@ -106,7 +106,7 @@ class ImageFolderTreeview(DragReorderTreeview):
                 family=attrs["family"], size=attrs["size"],
                 weight=attrs["weight"], slant=attrs["slant"], overstrike=True,
             )
-            self.tag_configure(self._EX_TAG, font=self._excluded_font)
+            self.tag_configure(self._EX_TAG, font=self._excluded_font, foreground="#FF0000")
         except tk.TclError:
             pass
 
