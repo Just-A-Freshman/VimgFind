@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from tkinter import ttk
 import tkinter.font as tkfont
 import tkinter as tk
+import stat
 import os
 
 from PIL import Image, ImageDraw, ImageTk
@@ -11,6 +12,7 @@ from ttkbootstrap import Style
 
 from .drag_treeview import DragReorderTreeview
 from config.settings import TkS
+import utils.unc_ops as unc_ops
 
 if TYPE_CHECKING:
     from utils.exclude_rules import ExcludeRules
@@ -276,12 +278,12 @@ class ImageFolderTreeview(DragReorderTreeview):
         os.startfile(values[0])
         return "break"
 
-    def _rule_skip(self, path: str, root: str, is_dir: bool) -> bool:
+    def _rule_skip(self, path: str, root: str, is_dir: bool, st: os.stat_result | None = None) -> bool:
         rules = self._exclude_rules
         if rules is None or not root:
             return False
         try:
-            return rules.should_skip_dir(path, root) if is_dir else rules.should_skip_file(path, root)
+            return rules.should_skip_dir(path, root) if is_dir else rules.should_skip_file(path, root, st)
         except (OSError, PermissionError):
             return False
 
@@ -349,23 +351,35 @@ class ImageFolderTreeview(DragReorderTreeview):
 
     def refresh_exclude_rules(self, exclude_rules: ExcludeRules | None = None) -> None:
         self._exclude_rules = exclude_rules
-        stack: list[tuple[str, str, bool]] = []
+        stack: list[tuple[str, str]] = []
         for top in self.get_children(""):
             if self.item(top, "tags"):
                 self.item(top, tags=())
             values = self.item(top, "values")
             if values and values[0] != _PLACEHOLDER[0]:
-                stack.extend((c, values[0], False) for c in self.get_children(top))
+                stack.extend((c, values[0]) for c in self.get_children(top))
 
+        nodes: list[tuple[str, str, str]] = []
         while stack:
-            iid, root, ancestor_excluded = stack.pop()
+            iid, root = stack.pop()
             values = self.item(iid, "values")
             if not values or values[0] == _PLACEHOLDER[0]:
                 continue
             path = values[0]
-            is_dir = os.path.isdir(path)
-            excluded = ancestor_excluded or self._rule_skip(path, root, is_dir)
+            nodes.append((iid, root, path))
+            stack.extend((c, root) for c in self.get_children(iid))
+
+        stats = unc_ops.batch_stat([path for _, _, path in nodes])
+
+        excluded_by: dict[str, bool] = {}
+        for iid, root, path in nodes:
+            if path in stats:
+                st = stats[path]
+                is_dir = st is not None and stat.S_ISDIR(st.st_mode)
+            else:
+                st = None
+                is_dir = os.path.isdir(path)
+            excluded = excluded_by.get(self.parent(iid), False) or self._rule_skip(path, root, is_dir, st)
             if excluded != bool(self.item(iid, "tags")):
                 self.item(iid, tags=(self._EX_TAG,) if excluded else ())
-            if is_dir:
-                stack.extend((c, root, excluded) for c in self.get_children(iid))
+            excluded_by[iid] = excluded
