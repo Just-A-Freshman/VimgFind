@@ -13,6 +13,7 @@ from ttkbootstrap import Style
 from .drag_treeview import DragReorderTreeview
 from config.settings import TkS
 import utils.unc_ops as unc_ops
+import utils.file_ops as file_ops
 
 if TYPE_CHECKING:
     from utils.exclude_rules import ExcludeRules
@@ -275,7 +276,7 @@ class ImageFolderTreeview(DragReorderTreeview):
         values = self.item(iid, "values")
         if not values or values[0] == _PLACEHOLDER[0]:
             return
-        os.startfile(values[0])
+        file_ops.open_file(values[0])
         return "break"
 
     def _rule_skip(self, path: str, root: str, is_dir: bool, st: os.stat_result | None = None) -> bool:
