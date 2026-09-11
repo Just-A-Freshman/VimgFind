@@ -15,7 +15,7 @@ from tkinterdnd2 import DND_FILES
 class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
     def __init__(self, master: tk.Widget, extra_columns: dict[str, int]) -> None:
         columns = {_("名称"): TkS(80), **extra_columns}
-        Treeview.__init__(self, master, show="headings", columns=list(columns), padding=TkS(1))
+        Treeview.__init__(self, master, show="headings", columns=list(columns))
         BasicImagePreviewView.__init__(self, master)
         self.__env_init(columns)
         

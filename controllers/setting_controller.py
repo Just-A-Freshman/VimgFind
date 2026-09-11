@@ -42,8 +42,7 @@ class SettingController:
         style.configure("Search.TEntry", padding=(TkS(2), 0, TkS(27), 0))
         style.configure("Treeview", rowheight=TkS(30), padding=(0, 0))
         style.configure("NoBorder.Treeview", borderwidth=0, relief=tk.FLAT)
-        style.configure("Treeview.Heading", borderwidth=TkS(0.5), background=activate_color, relief=tk.SUNKEN, lightcolor=activate_color, darkcolor=activate_color, bordercolor=style.lookup("Vertical.TScrollbar", "arrowcolor")) # type:ignore
-        style.map("Treeview.Heading", background=[('active', colors.get("inputbg"))])
+        style.map("Treeview.Heading", background=[('pressed', colors.get("secondary")), ('active', style.lookup("Vertical.TScrollbar", "arrowcolor"))])
         style.configure('inner.Link.TButton', background=colors.get("inputbg"), borderwidth=0, foreground=colors.get("info"))
         style.map('TNotebook.Tab', padding=[('selected', (TkS(13), TkS(2.5))), ('!selected', (TkS(13), TkS(2.5)))])
         style.map('sub.TNotebook.Tab', padding=[('selected', (TkS(3), TkS(2.5))), ('!selected', (TkS(3), TkS(2.5)))])
