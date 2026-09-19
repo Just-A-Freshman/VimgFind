@@ -29,7 +29,7 @@ class SettingDialog(simpledialog.SingletonDialog):
         custom_menu_tab = CustomMenuTab(notebook)
         notebook.add(general_tab, text=_("  常规  "))
         notebook.add(custom_menu_tab, text=_("  自定义菜单  "))
-        notebook.pack(fill=tk.BOTH, expand=True, padx=TkS(5), pady=TkS(5))
+        notebook.pack(fill=tk.BOTH, expand=True)
         return general_tab, custom_menu_tab
 
 
@@ -156,9 +156,9 @@ class CustomMenuTab(Frame):
 
     def __set_column_frames(self) -> tuple[Frame, Frame]:
         left_frame = Frame(self)
-        left_frame.grid(row=0, column=0, sticky=tk.NSEW, padx=(0, TkS(2)))
+        left_frame.grid(row=0, column=0, sticky=tk.NSEW, padx=TkS(5))
         right_frame = Frame(self)
-        right_frame.grid(row=0, column=1, sticky=tk.NSEW, padx=(TkS(2), 0))
+        right_frame.grid(row=0, column=1, sticky=tk.NSEW, padx=(0, TkS(5)))
         return left_frame, right_frame
 
     def __set_menu_buttons(self, parent: Frame) -> tuple[Button, Button, Button]:
