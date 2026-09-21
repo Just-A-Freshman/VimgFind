@@ -34,6 +34,7 @@ class SettingDialog(simpledialog.SingletonDialog):
 
 
 class GeneralTab(Frame):
+    close_behavior_combobox: Combobox
     locale_combobox: Combobox
     theme_combobox: Combobox
     maximize_checkbutton: Checkbutton
@@ -46,7 +47,7 @@ class GeneralTab(Frame):
     error_log_btn: Button
     check_update_btn: Button
     __slots__ = (
-        "locale_combobox", "theme_combobox",
+        "close_behavior_combobox", "locale_combobox", "theme_combobox",
         "maximize_checkbutton", "topmost_checkbutton",
         "config_path_entry", "open_folder_btn",
         "open_config_btn", "change_config_btn",
@@ -56,23 +57,29 @@ class GeneralTab(Frame):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.grid_columnconfigure(0, weight=1)
-        self.locale_combobox, self.theme_combobox = self.__set_locale_theme_combobox()
+        self.close_behavior_combobox, self.locale_combobox, self.theme_combobox = self.__set_comboboxes()
         self.maximize_checkbutton, self.topmost_checkbutton = self.__set_maximize_topmost_checkbutton()
         config_label_frame = self.__set_config_labelframe()
         self.config_path_entry = self.__set_config_path_entry(config_label_frame)
         self.open_folder_btn, self.open_config_btn, self.change_config_btn = self.__set_config_buttons(config_label_frame)
         self.help_btn, self.error_log_btn, self.check_update_btn = self.__set_bottom_buttons()
 
-    def __set_locale_theme_combobox(self) -> tuple[Combobox, Combobox]:
-        frame = Frame(self)
-        frame.grid(row=0, column=0, padx=TkS(15), sticky=tk.W)
-        Label(frame, text=_("显示语言：")).grid(row=0, column=0, sticky=tk.W)
-        Label(frame, text=_("主题设置：")).grid(row=1, column=0, sticky=tk.W)
-        locale_combobox = Combobox(frame, state="readonly")
-        theme_combobox = Combobox(frame, state="readonly")
+    def __set_comboboxes(self) -> tuple[Combobox, Combobox, Combobox]:
+        close_frame = Frame(self)
+        close_frame.grid(row=0, column=0, padx=TkS(15), sticky=tk.W)
+        Label(close_frame, text=_("关闭行为：")).grid(row=0, column=0, sticky=tk.W)
+        close_behavior_combobox = Combobox(close_frame, state="readonly", width=13)
+        close_behavior_combobox.grid(row=0, column=1, pady=TkS(12))
+
+        locale_frame = Frame(self)
+        locale_frame.grid(row=1, column=0, padx=TkS(15), sticky=tk.W)
+        Label(locale_frame, text=_("显示语言：")).grid(row=0, column=0, sticky=tk.W)
+        Label(locale_frame, text=_("主题设置：")).grid(row=0, column=2, padx=(TkS(20), 0), sticky=tk.W)
+        locale_combobox = Combobox(locale_frame, state="readonly", width=13)
+        theme_combobox = Combobox(locale_frame, state="readonly", width=13)
         locale_combobox.grid(row=0, column=1, pady=TkS(12))
-        theme_combobox.grid(row=1, column=1, pady=TkS(12))
-        return locale_combobox, theme_combobox
+        theme_combobox.grid(row=0, column=3, pady=TkS(12))
+        return close_behavior_combobox, locale_combobox, theme_combobox
     
     def __set_maximize_topmost_checkbutton(self) -> tuple[Checkbutton, Checkbutton]:
         checkbutton_frame = Frame(self)
