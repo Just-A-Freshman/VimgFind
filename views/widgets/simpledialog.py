@@ -1,8 +1,10 @@
-from ttkbootstrap import Frame, Button
+from typing import Literal
 from tkinter import simpledialog
 import tkinter as tk
 
-from config.settings import TkS, WinInfo
+from ttkbootstrap import Frame, Button, Checkbutton, Label
+
+from config.settings import TkS
 from utils.i18n import _
 
 
@@ -47,6 +49,33 @@ class SingletonDialog(tk.Toplevel):
         self.after(50, lambda: self.attributes('-alpha', 1) or self.deiconify())
 
 
+class AskCloseActionDialog(BasicDialog):
+    def __init__(self, parent) -> None:
+        self.close_action: Literal["ask", "tray", "ask"] = "ask"
+        self.remember: tk.BooleanVar = tk.BooleanVar(value=False)
+        self.result: tuple[Literal["ask", "tray", "ask"], bool] | None = None
+        super().__init__(parent, title=_("关闭窗口"))
+
+    def body(self, master) -> None:
+        Label(master, text=_("请选择关闭方式：")).pack(pady=TkS(8))
+
+    def buttonbox(self) -> None:
+        box = Frame(self)
+        upper_box = Frame(box)
+        lower_box = Frame(box)
+        buttons = ((_("直接关闭"), "primary", "exit"), (_("收到托盘"), "primary", "tray"), (_("取消"), "secondary", "ask"))
+        for text, style, close_action in buttons:
+            btn = Button(upper_box, text=text, takefocus=False, padding=(TkS(14), TkS(6)), style=style)
+            btn.pack(side=tk.LEFT, padx=TkS(5))
+            btn.config(command=lambda a=close_action: setattr(self, "result", (a, self.remember.get())) or self.ok())
+        remember_btn = Checkbutton(lower_box, text=_("记住我的选择"), cursor="hand2", variable=self.remember)
+        remember_btn.pack(pady=TkS(16))
+        self.bind("<Escape>", lambda _: self.cancel())
+        box.pack(expand=True, fill=tk.X, pady=TkS(10))
+        upper_box.pack()
+        lower_box.pack()    
+
+
 class AskStringDialog(BasicDialog, simpledialog._QueryString):    #type:ignore
     ...
 
@@ -68,3 +97,7 @@ def askfloat(title, prompt, **kwargs):
 def askinteger(title, prompt, **kwargs):
     dialog = AskIntDialog(title, prompt, **kwargs)
     return dialog.result
+
+def ask_close_action(parent) -> tuple[Literal["ask", "tray", "ask"], bool] | None:
+    dialog = AskCloseActionDialog(parent)
+    return dialog.result   
