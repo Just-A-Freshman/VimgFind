@@ -84,6 +84,7 @@ class AppSettings:
     maximize_window: bool = False
     topmost_window: bool = False
     locale: str = "zh-CN"
+    close_action: Literal["tray", "exit", "ask"] = "exit"
     menu_items: list[MenuItemDef] = field(default_factory=list)
     other_config_path: str = ""
 
