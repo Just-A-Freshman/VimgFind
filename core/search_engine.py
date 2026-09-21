@@ -414,6 +414,11 @@ class SearchTool:
             self.update_index(image_dirs, max_workers, exclude_rules, progress_bar)
             self.save_index()
 
+    def release_model(self) -> bool:
+        if not self.__init_event.is_set():
+            return False
+        return self.__multimodal_encoder.release()
+
     def destroy(self, wait: bool = False) -> None:
         if not wait:
             self.__init_event.set()
