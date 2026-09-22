@@ -58,7 +58,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         self.clear()
         self._results[iid] = (image_path, imgtk)
         self.create_image(x, y, anchor=tk.CENTER, image=imgtk)
-        self.__tooltip.text = file_ops.display_normalize(image_path)
+        self.__tooltip.text = str(image_path)
         return iid
     
     def delete(self, *items) -> None:
