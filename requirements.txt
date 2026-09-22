@@ -8,3 +8,4 @@ ttkbootstrap==1.19.0
 tkinterdnd2==0.4.3
 pathspec==0.12.1
 send2trash==2.1.0
+pystray==0.19.5
