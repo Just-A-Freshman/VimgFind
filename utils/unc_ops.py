@@ -226,6 +226,46 @@ def batch_exists(paths: list[str], timeout: float = 2.0, max_workers: int = 50) 
     return result
 
 
+def fast_unc_resolver():
+    cache = {}
+    lock = threading.Lock()
+
+    def resolve(path: str):
+        if not path.startswith("\\\\"):
+            return os.path.realpath(path)
+        stripped = path.rstrip("\\/") or path
+        parent = os.path.dirname(stripped)
+        if not parent:
+            return path
+
+        key = os.path.normcase(parent)
+        mapping = cache.get(key)
+
+        if mapping is None:
+            with lock:
+                mapping = cache.get(key)
+                if mapping is None:
+                    try:
+                        m = {}
+                        with os.scandir(parent) as it:
+                            for e in it:
+                                m[e.name.lower()] = e.name
+                    except OSError:
+                        m = {}
+                    cache[key] = m
+                    mapping = m
+
+        base = os.path.basename(stripped)
+        real = mapping.get(base.lower())
+        if real is None:
+            return path
+        if real == base:
+            return path
+        return os.path.join(parent, real)
+
+    return resolve
+
+
 def resolve_mapped_drive(path: str) -> str:
     if len(path) < 2 or path[1] != ":":
         return path

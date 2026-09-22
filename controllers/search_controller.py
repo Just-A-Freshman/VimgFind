@@ -218,18 +218,19 @@ class SearchController:
         if not raw_results:
             return
 
+        resolve = unc_ops.fast_unc_resolver()
         with ThreadPoolExecutor(max_workers=50) as pool:
-            path_to_future = {img_path_str: pool.submit(os.stat, img_path_str) for img_path_str, _ in raw_results}
+            path_to_future = {img_path_str: pool.submit(lambda f: (os.stat(f), resolve(f)), img_path_str) for img_path_str, _ in raw_results}
             for img_path_str, similarity in raw_results:
                 if similarity < threshold:
                     break
-                img_path = Path(img_path_str)
-                if ext_set and img_path.suffix.lower() not in ext_set:
-                    continue
                 try:
-                    st = path_to_future[img_path_str].result()
+                    st, realpath = path_to_future[img_path_str].result()
                 except OSError:
                     omitted += 1
+                    continue
+                img_path = Path(realpath)
+                if ext_set and img_path.suffix.lower() not in ext_set:
                     continue
 
                 if size_min is not None or size_max is not None:
@@ -338,7 +339,7 @@ class SearchController:
                 tab.preview_frame1.grid(row=0, column=0, sticky=tk.NSEW, pady=(0, TkS(2)))
                 tab.preview_frame2.grid(row=1, column=0, sticky=tk.NSEW, pady=(TkS(2), 0))
             tab.search_entry.delete(0, tk.END)
-            tab.search_entry.insert(0, file_ops.display_normalize(source_path) if source_path else "")
+            tab.search_entry.insert(0, source_path or "")
             tab.search_entry.xview_moveto(1.0)
             source_path_obj = Path(source_path) if source_path is not None else "" 
             if source_path_obj and source_path_obj.is_file():
