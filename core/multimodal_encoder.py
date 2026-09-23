@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable, Literal
+from threading import Lock
 import logging
 
 from PIL import Image
@@ -99,7 +100,8 @@ class MultiModalEncoder:
     __slots__ = (
         "__preprocess", "__normalization", "__output_index",
         "__context_length", "__tokenizer", "__text_encoder_path",
-        "image_session", "text_session"
+        "__image_encoder_path", "__lock", "__inflight",
+        "__image_session", "__text_session"
     )
 
     def __init__(self, config: EncoderConfig) -> None:
@@ -113,10 +115,13 @@ class MultiModalEncoder:
         self.__normalization = config.normalization
         self.__output_index = config.output_index
         self.__context_length = config.context_length
-        self.__tokenizer = create_tokenizer(".")
         self.__text_encoder_path = config.text_encoder_path
-        self.text_session = None
-        self.image_session = self._init_onnx_session(config.image_encoder_path)
+        self.__image_encoder_path = config.image_encoder_path
+        self.__image_session = self._init_onnx_session(self.__image_encoder_path)
+        self.__tokenizer = None
+        self.__text_session = None
+        self.__lock = Lock()
+        self.__inflight = 0
 
     def tokenize(self, texts) -> np.ndarray:
         if self.__tokenizer is None:
@@ -170,24 +175,40 @@ class MultiModalEncoder:
             fv /= norm
 
     def encode_image(self, image_obj: Image.Image) -> np.ndarray | None:
-        assert self.image_session is not None, "该模型不是图片模型，无法进行以图搜图"
+        with self.__lock:
+            if self.__image_session is None:
+                self.__image_session = self._init_onnx_session(self.__image_encoder_path)
+        session = self.__image_session
+        if session is None:
+            logging.error("图像模型未加载，无法进行以图搜图")
+            return None
         processed_image = self.__preprocess(image_obj)
         if processed_image is None:
             return None
+        with self.__lock:
+            self.__inflight += 1
         try:
-            input_name = self.image_session.get_inputs()[0].name
-            result = self.image_session.run([], {input_name: processed_image})
+            input_name = session.get_inputs()[0].name
+            result = session.run([], {input_name: processed_image})
             image_features = result[self.__output_index][0] # type: ignore[index]
             self._normalize(image_features)
         except Exception as e:
             logging.error(f"编码图像时出现错误: {e}")
             return None
+        finally:
+            with self.__lock:
+                self.__inflight -= 1
         return image_features
 
     def encode_text(self, input_text: str) -> np.ndarray | None:
-        if self.text_session is None:
-            self.text_session = self._init_onnx_session(self.__text_encoder_path)
-        assert self.text_session is not None and self.__tokenizer is not None, "该模型不是文字模型，无法进行以文搜图"
+        with self.__lock:
+            if self.__text_session is None and self.__text_encoder_path:
+                self.__text_session = self._init_onnx_session(self.__text_encoder_path)
+                self.__tokenizer = create_tokenizer(".")
+        
+        assert self.__text_session and self.__tokenizer, "该模型不是文本模型，\n无法进行以文搜图"
+        with self.__lock:
+            self.__inflight += 1
         try:
             text = self.tokenize(input_text)
             attention_mask = (text != self.__tokenizer.pad_token_id).astype(np.int32)
@@ -196,7 +217,7 @@ class MultiModalEncoder:
                 one_text = np.expand_dims(text[i], axis=0)
                 one_mask = np.expand_dims(attention_mask[i], axis=0)
                 feed = {}
-                for inp in self.text_session.get_inputs():
+                for inp in self.__text_session.get_inputs():
                     if inp.name == "attention_mask":
                         dtype = np.int32 if "int32" in inp.type else np.int64
                         feed[inp.name] = one_mask.astype(dtype)
@@ -206,7 +227,7 @@ class MultiModalEncoder:
                     else:
                         feed[inp.name] = one_text
 
-                results = self.text_session.run(None, feed)
+                results = self.__text_session.run(None, feed)
                 text_feature = None
                 for r in results:
                     if isinstance(r, np.ndarray) and len(r.shape) == 2:
@@ -225,10 +246,13 @@ class MultiModalEncoder:
         except Exception as e:
             logging.error(f"编码文字时出现错误: {e}")
             return None
+        finally:
+            with self.__lock:
+                self.__inflight -= 1
         
     def clear_cache(self):
-        if self.image_session is not None:
-            self.image_session.set_providers(
+        if self.__image_session is not None:
+            self.__image_session.set_providers(
                 providers=['CPUExecutionProvider'],
                 provider_options=[{
                     'enable_cpu_mem_arena': False,
@@ -238,6 +262,13 @@ class MultiModalEncoder:
             )
 
     def close(self) -> None:
-        self.image_session = None
-        self.text_session = None
+        self.__image_session = None
+        self.__text_session = None
         self.__tokenizer = None
+
+    def release(self) -> bool:
+        with self.__lock:
+            if self.__inflight > 0:
+                return False
+            self.close()
+        return True
