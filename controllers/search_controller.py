@@ -305,7 +305,7 @@ class SearchController:
             self.__smooth_preview(results)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
-            messagebox.showerror(_("错误"), _("搜索过程发生异常：{e}", e=str(e)))
+            messagebox.showerror(_("错误"), _("搜索过程发生异常：\n{e}", e=str(e)))
             self.__is_finish_search.set()
 
     def __is_allow_to_search(self) -> bool:
