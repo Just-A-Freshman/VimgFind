@@ -88,7 +88,7 @@ class GeneralController:
         self.app = app_controller
         locales = I18n.available_locales()
         self.LOCALE_MAP: dict[str, int] = {loc: i for i, loc in enumerate(locales)}
-        self.REVERSE_LOCALE_MAP: dict[int, str] = {i: loc for i, loc in enumerate(locales)}
+        self.CLOSE_ACTION_LABELS: dict[str, str] = {"tray": _("收到托盘"), "exit": _("直接关闭"), "ask": _("每次询问")}
 
     def env_init(self) -> None:
         tab = self.general_tab
@@ -97,6 +97,7 @@ class GeneralController:
             tab.topmost_checkbutton.invoke()
         tab.theme_combobox.bind("<<ComboboxSelected>>", lambda _: self.app.setting_controller.change_theme(tab.theme_combobox.get()))
         tab.locale_combobox.bind("<<ComboboxSelected>>", self.__on_locale_change)
+        tab.close_behavior_combobox.bind("<<ComboboxSelected>>", self.__on_close_action_change)
         tab.maximize_checkbutton.config(command=lambda: setattr(
             self.app.setting.app, "maximize_window",
             self.general_tab.maximize_checkbutton.instate(["selected"]))
@@ -108,10 +109,12 @@ class GeneralController:
         tab.help_btn.config(command=lambda: self.app.setting.link_to_docs())
         tab.error_log_btn.config(command=lambda: file_ops.open_file(Setting.error_log))
         tab.check_update_btn.config(command=self.__check_update)
+        tab.close_behavior_combobox.config(values=list(self.CLOSE_ACTION_LABELS.values()))
         tab.locale_combobox.config(values=[I18n.locale_name(loc) for loc in I18n.available_locales()])
-        idx = self.LOCALE_MAP.get(self.app.setting.app.locale, 0)
-        tab.locale_combobox.current(idx)
-
+        tab.locale_combobox.current(self.LOCALE_MAP.get(self.app.setting.app.locale, 0))
+        close_action = "exit" if self.app.setting.app.close_action not in self.CLOSE_ACTION_LABELS else self.app.setting.app.close_action
+        self.app.setting.app.close_action = close_action
+        tab.close_behavior_combobox.set(self.CLOSE_ACTION_LABELS[close_action])
         themes = sorted(self.app.view.style.theme_names())
         tab.theme_combobox.config(values=themes)
         current = self.app.setting.app.ui_style
@@ -134,7 +137,7 @@ class GeneralController:
 
     def __on_locale_change(self, _event=None) -> None:
         idx = self.general_tab.locale_combobox.current()
-        new_locale = self.REVERSE_LOCALE_MAP.get(idx, "zh-CN")
+        new_locale = {i: loc for i, loc in enumerate(self.LOCALE_MAP)}.get(idx, "zh-CN")
         if new_locale != self.app.setting.app.locale:
             self.app.setting.app.locale = new_locale
             I18n().load(new_locale)
@@ -147,6 +150,12 @@ class GeneralController:
         self.app.setting.app.topmost_window = is_topmost
         self.app.view.attributes("-topmost", is_topmost)
         self.app.setting_controller.dialog.attributes("-topmost", is_topmost)
+
+    def __on_close_action_change(self, _event=None) -> None:
+        label = self.general_tab.close_behavior_combobox.get()
+        new_close_action = {v: k for k, v in self.CLOSE_ACTION_LABELS.items()}.get(label)
+        if new_close_action != self.app.setting.app.locale:
+            self.app.setting.app.close_action = new_close_action   # type: ignore
 
     def __change_config_path(self) -> None:
         path = filedialog.askopenfilename(

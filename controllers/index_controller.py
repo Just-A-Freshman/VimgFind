@@ -268,6 +268,7 @@ class IndexController:
             self.app.model_controller.on_model_select()
             self.__is_updating = False
             self.__is_auto_updating = False
+            self.app.view.after(0, self.app.tray_controller.schedule_release)
 
     def __open_exclude_dialog(self) -> None:
         from views.exclude_dialog import ExcludeDialog
