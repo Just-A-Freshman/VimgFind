@@ -5,6 +5,7 @@ from tkinterdnd2 import DND_FILES
 
 from views import WinGUI
 from views.widgets.base import BasicImagePreviewView
+from views.widgets.simpledialog import ask_close_action
 from config.settings import Setting
 from core import SearchTool
 from .search_controller import SearchController, FilterController
@@ -12,6 +13,7 @@ from .index_controller import IndexController
 from .model_controller import ModelController
 from .setting_controller import SettingController
 from .menu_controller import MenuController
+from .tray_controller import TrayController
 from utils.i18n import I18n, _
 import utils.file_ops as file_ops
 import utils.decorators as decorators
@@ -23,6 +25,7 @@ class AppController:
         I18n().load(self.setting.app.locale)
         self.view = WinGUI(self.setting.app.maximize_window, self.setting.app.topmost_window)
         self.search_tools: SearchTool | None = None
+        self.tray_controller = TrayController(self)
         self.setting_controller = SettingController(self)
         self.search_controller = SearchController(self)
         self.filter_controller = FilterController(self)
@@ -73,7 +76,22 @@ class AppController:
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
 
     def destroy(self) -> None:
+        action = self.setting.app.close_action
+        if action == "ask":
+            result = ask_close_action(self.view)
+            if result is None:
+                return
+            action, remember = result
+            if action == "ask":
+                return
+            if remember:
+                self.setting.app.close_action = action
+                self.setting.save()
+        if action == "tray":
+            self.tray_controller.hide()
+            return
         try:
+            self.tray_controller.stop()
             if hasattr(self.index_controller, 'idle_tracker'):
                 self.index_controller.idle_tracker.stop()
             self.setting.save()
@@ -87,4 +105,3 @@ class AppController:
             messagebox.showerror(_("错误"), str(e))
         finally:
             self.view.destroy()
-
