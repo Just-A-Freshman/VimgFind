@@ -232,5 +232,16 @@
   "配置编辑": "Edit Config",
   "错误日志": "Error Log",
   "默认提示信息": "Default prompt message",
-  "部分无效结果被隐藏，建议更新索引。": "Some invalid results are hidden. Consider updating the index."
+  "部分无效结果被隐藏，建议更新索引。": "Some invalid results are hidden. Consider updating the index.",
+  "关闭行为：": "On close:",
+  "收到托盘": "Minimize to tray",
+  "直接关闭": "Exit",
+  "每次询问": "Ask every time",
+  "关闭窗口": "Close window",
+  "请选择关闭方式": "Choose what closing the window does",
+  "记住我的选择": "Remember my choice",
+  "显示主窗口": "Show main window",
+  "退出": "Exit",
+  "已最小化到托盘，双击图标恢复": "Minimized to tray. Double-click the icon to restore.",
+  "托盘不可用，已直接关闭程序": "Tray is unavailable; the app was closed instead"
 }
