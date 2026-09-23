@@ -43,7 +43,7 @@ class AppController:
         self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)
         self.view.drop_target_register(DND_FILES)
         self.view.dnd_bind('<<Drop>>', self.__on_drop)
-        self.view.protocol("WM_DELETE_WINDOW", self.destroy)
+        self.view.protocol("WM_DELETE_WINDOW", self.__on_close)
 
         # env init
         self.search_controller.env_init()
@@ -75,7 +75,7 @@ class AppController:
             self.search_tools.save_index()
         self.view.after(self.setting.app.schedule_index_save_interval * 1000, self.__schedule_save)
 
-    def destroy(self) -> None:
+    def __on_close(self):
         action = self.setting.app.close_action
         if action == "ask":
             result = ask_close_action(self.view)
@@ -89,7 +89,10 @@ class AppController:
                 self.setting.save()
         if action == "tray":
             self.tray_controller.hide()
-            return
+        else:
+            self.destroy()
+
+    def destroy(self) -> None:
         try:
             self.tray_controller.stop()
             if hasattr(self.index_controller, 'idle_tracker'):
