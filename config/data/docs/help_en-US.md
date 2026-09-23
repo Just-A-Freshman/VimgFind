@@ -1,24 +1,31 @@
 # Search
+
 ## How to select multiple images at once?
-1.  **Discontinuous selection**: Hold down the `Ctrl` key on the bottom left of the keyboard without releasing it, then use the mouse to select multiple different images, and execute the corresponding right-click menu command.
-2.  **Continuous selection**: Hold down the `Shift` key on the bottom left of the keyboard without releasing it, then click one image with the mouse, and then click another image. All images between these two images will be selected.
+
+1. **Discontinuous selection**: Hold down the `Ctrl` key at the bottom left of the keyboard without releasing it, then use the mouse to select multiple different images, and execute the corresponding right-click menu command.
+2. **Continuous selection**: Hold down the `Shift` key at the bottom left of the keyboard without releasing it, then click one image with the mouse, and then click another image. All images between these two images will be selected.
 
 Actually, this is just an implementation of the default behavior of most operating systems. However, it should be noted that when selecting multiple images and right-clicking to open the image or open the folder, only the first selected image and the folder where the first image is located will always be opened.
+
 ## How to use search filters?
+
 In the search interface, there is a downward arrow on the far right inside the search box. Click it to see a series of filtering options:
-1.  **Similarity Threshold**: Any image with a similarity lower than this threshold will not appear in the search results.
-2.  **File Type**: Select specific file types through the file extension.
-3.  **File Size**: The actual storage occupation of the image, with two units: `KB` and `MB`.
-4.  **Belonging Folder**: Filter based on the indexed folder the image belongs to.
-5.  **Deduplication**: After checking, only the first one of completely identical images (same content and same size) will be displayed.
+
+1. **Similarity Threshold**: Any image with a similarity lower than this threshold will not appear in the search results.
+2. **File Type**: Select specific file types through the file extension.
+3. **File Size**: The actual storage occupation of the image, with two units: `KB` and `MB`.
+4. **Belonging Folder**: Filter based on the indexed folder the image belongs to.
+5. **Deduplication**: After checking, only the first one of completely identical images (same content and same size) will be displayed.
 
 A few points to note:
 
-1.  Search filter conditions are not saved in the configuration file, so the search filter conditions will **reset** every time the program restarts. The reason for this design is that search filtering is usually a temporary configuration, and saving it in the configuration file might mislead the search after the next program startup.
-2.  Search filtering is performed after all search results are returned. For example, clicking the "..." button in the top right corner and selecting: `Number of results returned: 100`, then search filtering is a further filtering of these 100 images. The number of displayed results after filtering will naturally be less than or equal to 100. Therefore, after setting filter conditions during a search, if it displays `Filter condition too strict, no matching images found!`, there are two countermeasures:
-    *   Click the "..." button in the top right corner and increase the number of returned results.
-    *   Long-term countermeasure: Observe carefully what characteristics these images that do not meet the conditions have. Do you **never** want them to be searched out? If so, try writing an **Exclusion Rule** to permanently exclude them from the index.
+1. Search filter conditions are not saved in the configuration file, so the search filter conditions will **reset** every time the program restarts. The reason for this design is that search filtering is usually a temporary configuration, and saving it in the configuration file might mislead the search after the next program startup.
+2. Search filtering is performed after all search results are returned. For example, clicking the "..." button in the top right corner and selecting: `Number of results returned: 100`, then search filtering is a further filtering of these 100 images. The number of displayed results after filtering will naturally be less than or equal to 100. Therefore, after setting filter conditions during a search, if it displays `Filter condition too strict, no matching images found!`, there are two countermeasures:
+    - Click the "..." button in the top right corner and increase the number of returned results.
+    - Long-term countermeasure: Observe carefully what characteristics these images that do not meet the conditions have. Do you **never** want them to be searched out? If so, try writing an **Exclusion Rule** to permanently exclude them from the index.
+
 ## How to perform a multi-image search?
+
 > **Question:**
 > Can I use multiple images simultaneously to search for similar images? Will pasting dozens of images cause a crash?
 
@@ -31,8 +38,11 @@ A few points to note:
 
 **Paste Limitation:**
 Path text input via pasting will be truncated if it exceeds **3000 lines** (a prompt will pop up in the bottom right corner). This is to prevent processing blockage caused by accidentally pasting ultra-large text.
+
 # Index
+
 ## What if the index capacity is insufficient?
+
 > **Question:**
 > I have a lot of images. Will the index one day be "full"? What if it really gets full?
 
@@ -47,35 +57,43 @@ In the Model tab, double-click the model currently in use to open its configurat
     "index_capacity": 1000000
 }
 ```
+
 Change the number to the value you need. **It takes effect after restarting the program.**
+
 - **Increasing**: Takes effect automatically, no rebuild required. The index will gradually expand during image addition until the new limit is reached.
 - **Decreasing (and image count won't grow continuously)**: The original index is retained, and search works normally. However, if subsequent images increase beyond the new limit, an error will be reported during updates. In this case, perform a "Rebuild Index" to reallocate according to the new capacity.
 
 **If your image volume really far exceeds a million, there are two more fundamental countermeasures:**
-| Countermeasure                                               | Method                                                       | Benefit                                                      |
-| :----------------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| **Use exclusion rules to reduce meaningless images**         | Filter out memes, thumbnails, temporary files, etc., before indexing (see "Exclusion Rules · Quick Start") | Cleaner index, smaller size, and sometimes faster scanning   |
-| **Multi-model management**                                   | Different models manage different folders, each performing its own duty | Breaks the single-model capacity limit and leverages the retrieval strengths of different models |
+
+| Countermeasure                                       | Method                                                       | Benefit                                                      |
+| :--------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| **Use exclusion rules to reduce meaningless images** | Filter out memes, thumbnails, temporary files, etc., before indexing (see "Exclusion Rules · Quick Start") | Cleaner index, smaller size, and sometimes faster scanning   |
+| **Multi-model management**                           | Different models manage different folders, each performing its own duty | Breaks the single-model capacity limit and leverages the retrieval strengths of different models |
 
 In principle, directly modifying the model configuration is a last resort. Because the HNSW index needs to load the entire index into memory, the default upper limit of index capacity is essentially to limit unlimited memory growth.
+
 ## What is the behavior of automatic index updating?
+
 Note: The following behaviors apply to versions after 2.5:
 
-| Stage                                                        | Behavior                                                     | Purpose                                                      |
-| :----------------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| After startup                                                | Auto-update **does not execute immediately**, but enters idle listening | Avoid resource competition during startup peak               |
-| System idle reaches threshold (default 300 seconds)          | Automatically triggers index update                          | Updates silently while you are away, not disturbing work     |
-| You operate the computer during the update                   | Update **will not pause**, continues running in the background | Allows an update to finish completely, avoiding fragmentation |
-| You actively search during the update                        | **Auto-update is silently terminated**, search takes priority | Search fluency is not affected                               |
-| After update is interrupted by search                        | Waits for the next idle period to trigger again (not abandoned) | Ensures the update always completes, just postponed          |
+| Stage                                               | Behavior                                                     | Purpose                                                      |
+| :-------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| After startup                                       | Auto-update **does not execute immediately**, but enters idle listening | Avoid resource competition during startup peak               |
+| System idle reaches threshold (default 300 seconds) | Automatically triggers index update                          | Updates silently while you are away, not disturbing work     |
+| You operate the computer during the update          | Update **will not pause**, continues running in the background | Allows an update to finish completely, avoiding fragmentation |
+| You actively search during the update               | **Auto-update is silently terminated**, search takes priority | Search fluency is not affected                               |
+| After update is interrupted by search               | Waits for the next idle period to trigger again (not abandoned) | Ensures the update always completes, just postponed          |
 
 **Idle threshold can be customized:**
-In General Settings → Regular Tab → Open configuration file, modify `auto_update_idle_threshold` (unit: seconds).
+In General Settings → General Tab → Open configuration file, modify `auto_update_idle_threshold` (unit: seconds).
 
 > **Difference between Manual Update and Auto Update:**
+>
 > - Manually clicking "Update Index Directory" **executes immediately**, unaffected by idle status.
 > - When search interrupts: Manual update will pop up a window asking "Terminate?" giving you a choice; Auto update has no prompt and directly yields to the search.
+
 ## What does "Rebuild Index" actually do?
+
 > **Question:**
 > Does clicking "Rebuild Index" mean scanning all images again? It feels like it will take a long time.
 
@@ -83,12 +101,14 @@ The behavior of Rebuild Index is as follows (versions after 2.5):
 
 ```text
 Rebuild Index Start
-├─ Cleanup: Remove non-existent, duplicate, or changed vectors
-└─ Model Matching Check:
-   └─ Match → Reuse existing index, only scan new or changed images (very fast)
-   └─ Mismatch/Corrupt → Automatic hard rebuild (brand new creation, speed equivalent to first index)
+  ├─ Cleanup: Remove non-existent, duplicate, or changed vectors
+  ├─ Model Matching Check:
+  └─ Match → Reuse existing index, only scan new or changed images (very fast)
+      Mismatch/Corrupt → Automatic hard rebuild (brand new creation, speed equivalent to first index)
 ```
+
 **What causes "Mismatch" and triggers a hard rebuild?**
+
 - The model itself was changed (ONNX file changed).
 - Modified `image_size`, `mean/std`, `preprocess_type`, `normalization`, `output_index`, `index_dim` in `models.json`.
 - Index file physically damaged.
@@ -98,8 +118,11 @@ If the index cannot be reused normally due to an accident, you can manually dele
 
 > **An important reminder:**
 > After modifying preprocessing parameters (like `mean/std`), **do not directly click "Update Index Directory"**, because "Update" does not do vector consistency verification and will mix newly encoded vectors into the old index, causing distorted search results. You must click "Rebuild Index" to let the system automatically detect and execute a hard rebuild. In the vast majority of cases, rebuilding is just "filling gaps", which is very fast; only when the model truly changes is a full rebuild required.
+
 # Model
+
 ## How to use my own trained model?
+
 > **Question:**
 > I want to use my own fine-tuned model for searching. Does the tool support this? How should I do it?
 
@@ -108,6 +131,7 @@ Simply put: Prepare an optimized **ONNX format model**, place it under the progr
 
 **Model folder organization:**
 One folder per model, the folder name is the unique ID of the model. The folder must contain:
+
 - Image encoding model (`.onnx`, default in the root directory)
 - Text encoding model (`.onnx`, not required, only needed for multimodal models)
 - `models.json` configuration file (placed in the root directory)
@@ -115,6 +139,7 @@ One folder per model, the folder name is the unique ID of the model. The folder 
 Once a model folder is prepared, place it in: `./config/data/models/` and it can be directly recognized and used. Alternatively, you can compress the model folder into a `.zip` format first, and then click "Load Local Model" in the Model tab.
 
 We will focus on the format of `models.json`. As a direct reference, you can double-click the currently used model in the Model tab to see what a standard `models.json` looks like. Among these, the parameters you particularly need to care about:
+
 | Parameter            | Meaning                                                      | Consequence of filling wrong                                 |
 | :------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
 | `image_size`         | Size of the image after preprocessing. E.g., filling 224 means the preprocessed image size is `224 * 224` | The model cannot encode the preprocessed image into a vector, search crashes directly |
@@ -127,6 +152,7 @@ We will focus on the format of `models.json`. As a direct reference, you can dou
 | `image_encoder_path` | File path of the image encoding model (.onnx) with the model folder as the working directory. Can use absolute path. | Cannot find the corresponding image encoding model, program freezes directly |
 | `text_encoder_path`  | File path of the text encoding model (.onnx) with the model folder as the working directory. Can use absolute path. | For multimodal models, cannot find the corresponding text encoding model, text-to-image search unusable |
 | `index_dim`          | Dimension of the vector output by the model                  | Cannot build index, program crashes directly                 |
+
 > ⚠️ **Especially note `normalization`:**
 >
 > - Image retrieval models (like CLIP series) mostly output **unit vectors**, filling `true` is the safe choice.
@@ -134,7 +160,9 @@ We will focus on the format of `models.json`. As a direct reference, you can dou
 > - If you are unsure about the nature of your own model, filling `true` is almost always safer. Filling `false` is only to save an **unnecessary normalization**, speeding up indexing and searching.
 
 Also, we highly desire users to try contributing converted models. If you successfully complete a model conversion, you are very welcome to contribute the model in our issues. In fact, the core of contributing a model is this `models.json` file.
+
 ## What if the model download fails?
+
 > **Question:** In the Model tab, I clicked the download button for a specific model, but the result showed download failed. What should I do?
 
 In this case, manual download is recommended. On the details page of each model, a download link is displayed. You can copy this link to a browser or third-party download software for downloading.
@@ -144,7 +172,9 @@ If you cannot access the corresponding link because you cannot access Github, it
 - [GitHub Accelerated Download Proxy - Fast Access to GitHub Files](https://gh-proxy.com/)
 
 After manually downloading the model, **no need to unzip**. Click `Load Local Model` in the model interface, select the corresponding model, and wait a few seconds.
+
 ## After switching models, the index content is "gone"?
+
 > **Question:** After downloading multiple models, in the Index tab, I clicked to switch models, and the originally indexed folders are gone?
 
 This is not "gone", but rather: the model and the index file content correspond one-to-one. **As long as you switch the model back**, you can see the originally indexed folders.
@@ -152,8 +182,11 @@ This is not "gone", but rather: the model and the index file content correspond 
 Every time you download a new model, the index file content for the new model is always empty, and you need to equip the corresponding index file content for this model. A good habit is to let models that are better at specific search tasks manage specific folders, rather than dumping everything onto one model.
 
 Also, if a model is deleted, its corresponding index is truly "gone". Therefore, before deleting a model, please confirm that the content it indexes is no longer useful.
+
 # Exclusion Rules
+
 ## What is the use of Exclusion Rules?
+
 > **Question:**
 > My folder has everything—photos, screenshots, memes, temporary cache images, and various thumbnails automatically generated by software. I search for a serious photo, and a bunch of unrelated stuff pops up. Is there a way to make these things simply not appear in the search results?
 
@@ -161,25 +194,31 @@ Also, if a model is deleted, its corresponding index is truly "gone". Therefore,
 Exclusion rules are used to **exclude images you don't want to search for right at the indexing stage**. It is not a post-filter; it stops these files from entering the search library at the source—once excluded, they will never appear in your search results.
 
 **Difference from "Search Result Filtering":**
-|                                                              | Search Result Filtering                     | Exclusion Rules                                              |
-| :----------------------------------------------------------- | :------------------------------------------ | :----------------------------------------------------------- |
-| **Action Stage**                                             | Filtered during search                      | Not indexed at the indexing stage                            |
-| **Characteristics**                                          | Need to set filter conditions every time    | Simply don't get in                                          |
-| **Suitable for**                                             | Temporarily want to exclude certain results | You clearly know "I never want to search for this type of thing" |
+
+|                     | Search Result Filtering                     | Exclusion Rules                                              |
+| :------------------ | :------------------------------------------ | :----------------------------------------------------------- |
+| **Action Stage**    | Filtered during search                      | Not indexed at the indexing stage                            |
+| **Characteristics** | Need to set filter conditions every time    | Simply don't get in                                          |
+| **Suitable for**    | Temporarily want to exclude certain results | You clearly know "I never want to search for this type of thing" |
 
 **Location:**
 
 The Exclusion Rules function is in the Index tab. Click "Exclusion Rule Management" in the bottom right corner, and write in the editing area above. Click "New Rule" to start writing. The written rules can be previewed for their actual matching effect by selecting a folder below.
+
 ## How to exclude an entire folder?
+
 > **Question:**
 > I have a `Memes/` folder with thousands of images. Every time I search for serious photos, they get mixed in. How can I make the entire folder not indexed?
 
 **Just write the folder name directly:**
+
 ```
 Memes/
 ```
+
 **What this rule does:**
 Matches a folder named `Memes` at any level, excluding all images inside it along with the folder.
+
 **Similar common scenarios:**
 
 | What you want to exclude           | How to write it | Explanation                                                  |
@@ -188,37 +227,43 @@ Matches a folder named `Memes` at any level, excluding all images inside it alon
 | Certain suffix files               | `*.gif`         | All gifs are not indexed                                     |
 | A specific file                    | `temp.jpg`      | `temp.jpg` at any location is not indexed                    |
 | Folder with `/` added at the front | `/People/`      | Only excludes `People/` in the root directory; subdirectories with the same name will not be affected |
+
 ## How to match specific file name patterns?
+
 > **Question:**
 > What I want to exclude is not just a fixed folder name, but a category of files with patterns—for example, all those starting with `temp_`, or file names containing number sequences. How to write this?
 
 **Use wildcards to describe file name patterns:**
 
-| The effect you want               | How to write it                                      | What it matched                                              |
-| :-------------------------------- | :--------------------------------------------------- | :----------------------------------------------------------- |
-| All PNG files                     | `*.png`                                              | `Screenshot.png`, `Icon.png`                                 |
-| `temp_` followed by one character | `temp_?.jpg`                                         | `temp_1.jpg`, `temp_a.jpg`                                   |
-| Starts with Photo or photo        | `[Pp]hoto*.jpg`                                      | `Photo_a.jpg`, `photo_123.jpg`                               |
-| Any depth (including root)        | `**/thumbnail.jpg`                                   | `thumbnail.jpg` (root), `a/thumbnail.jpg`, `a/b/thumbnail.jpg` |
+| The effect you want               | How to write it    | What it matched                                              |
+| :-------------------------------- | :----------------- | :----------------------------------------------------------- |
+| All PNG files                     | `*.png`            | `Screenshot.png`, `Icon.png`                                 |
+| `temp_` followed by one character | `temp_?.jpg`       | `temp_1.jpg`, `temp_a.jpg`                                   |
+| Starts with Photo or photo        | `[Pp]hoto*.jpg`    | `Photo_a.jpg`, `photo_123.jpg`                               |
+| Any depth (including root)        | `**/thumbnail.jpg` | `thumbnail.jpg` (root), `a/thumbnail.jpg`, `a/b/thumbnail.jpg` |
 
 **Meaning of these symbols:**
 
-| Symbol                            | Function                                             | One-sentence explanation                                     |
-| :---                              | :---                                                 | :---                                                         |
-| `*`                               | Matches any number of characters (not including `/`) | "Anything is fine, as long as it's not in a subdirectory"    |
-| `?`                               | Matches **exactly one** character                    | "One character is fine, but there must be one"               |
-| `[abc]`                           | Matches any one character in the brackets            | "Any of these is fine"                                       |
-| `**`                              | Matches zero or more directory levels                | "No matter how deep in which subdirectory, it can find it"   |
-| Trailing `/`                      | Matches only directories, not files                  | "I only want folders, not files with the same name"          |
+| Symbol       | Function                                             | One-sentence explanation                                   |
+| :----------- | :--------------------------------------------------- | :--------------------------------------------------------- |
+| `*`          | Matches any number of characters (not including `/`) | "Anything is fine, as long as it's not in a subdirectory"  |
+| `?`          | Matches **exactly one** character                    | "One character is fine, but there must be one"             |
+| `[abc]`      | Matches any one character in the brackets            | "Any of these is fine"                                     |
+| `**`         | Matches zero or more directory levels                | "No matter how deep in which subdirectory, it can find it" |
+| Trailing `/` | Matches only directories, not files                  | "I only want folders, not files with the same name"        |
+
 ## Want to keep specific content after excluding?
+
 > **Question:**
 > I wrote `*.png` to exclude all PNGs, but I want to keep the png images in the `Selected/` folder. What should I do?
 
 **Write a "re-include" rule starting with `!` and place it below the exclusion rule:**
+
 ```
-*.png ← First exclude all PNGs
-!Selected/ ← Then keep this folder
+*.png          ← First exclude all PNGs
+!Selected/     ← Then keep this folder
 ```
+
 **Key rules:**
 
 1. The `!` negation rule must be written **after** the corresponding exclusion rule. Order is important.
@@ -229,69 +274,55 @@ Matches a folder named `Memes` at any level, excluding all images inside it alon
     | :-------------------------------------------- | :--------------------------- | :----------------------------------------------------------- |
     | File has been excluded by **Special Rule**    | `#max_size=1kb` + `!big.png` | Special rules (size/time) filter before pattern matching, `!` cannot cancel |
     | The file extension **is not an image at all** | `!readme.txt`                | The index only collects image formats; non-image files are ignored before matching |
+
 ## Exclude by file size or modification time?
+
 > **Question:**
 > I want to exclude those particularly large files (like 50MB scans), or old photos from a long time ago. Folder and file names can't describe these conditions. What to do?
 
 **Use special rules, starting with `#`, followed by keywords and values:**
 
-| What you want to exclude                                  | How to write it                                              | Effect                                                       |
-| :-------------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| Images smaller than 100KB (too small, usually thumbnails) | `#min_size: 100kb`                                           | Exclude files smaller than 100KB                             |
-| Files larger than 10MB (too large, might be scans)        | `#max_size=10mb`                                             | Exclude files larger than 10MB                               |
-| Old photos before 2024                                    | `#min_modified=2024-01-01`                                   | Exclude files modified earlier than 2024-01-01               |
-| New files added after a certain date                      | `#max_modified=1704067200`                                   | Exclude files modified later than the specified timestamp    |
+| What you want to exclude                                  | How to write it            | Effect                                                    |
+| :-------------------------------------------------------- | :------------------------- | :-------------------------------------------------------- |
+| Images smaller than 100KB (too small, usually thumbnails) | `#min_size: 100kb`         | Exclude files smaller than 100KB                          |
+| Files larger than 10MB (too large, might be scans)        | `#max_size=10mb`           | Exclude files larger than 10MB                            |
+| Old photos before 2024                                    | `#min_modified=2024-01-01` | Exclude files modified earlier than 2024-01-01            |
+| New files added after a certain date                      | `#max_modified=1704067200` | Exclude files modified later than the specified timestamp |
 
 **Value format description:**
 
-| Type                                                      | Format                                                       | Example                                                      |
-| :---                                                      | :---                                                         | :---                                                         |
-| File Size                                                 | Number + Unit (`b`/`kb`/`mb`), default is bytes if unit is not written | `500` = 500 bytes, `1.5mb` = 1.5 megabytes                   |
-| Modification Time                                         | `YYYY-MM-DD` date format, or Unix timestamp number           | `2024-06-15` or `1718400000`                                 |
+| Type              | Format                                                       | Example                                    |
+| :---------------- | :----------------------------------------------------------- | :----------------------------------------- |
+| File Size         | Number + Unit (`b`/`kb`/`mb`), default is bytes if unit is not written | `500` = 500 bytes, `1.5mb` = 1.5 megabytes |
+| Modification Time | `YYYY-MM-DD` date format, or Unix timestamp number           | `2024-06-15` or `1718400000`               |
 
 **Key Understanding:**
 
-| Keyword                                                   | Exclusion Logic                                              | Memory Method                                                |
-| :---                                                      | :---                                                         | :---                                                         |
-| `min_size`                                                | File is **smaller than** this value → Exclude                | "Minimum must be this big, smaller than this is unwanted"    |
-| `max_size`                                                | File is **larger than** this value → Exclude                 | "Maximum can only be this big, larger than this is unwanted" |
-| `min_modified`                                            | Time is **earlier than** this date → Exclude                 | "Earliest can only be this day, earlier than this is unwanted" |
-| `max_modified`                                            | Time is **later than** this date → Exclude                   | "Latest can only be this day, later than this is unwanted"   |
+| Keyword        | Exclusion Logic                               | Memory Method                                                |
+| :------------- | :-------------------------------------------- | :----------------------------------------------------------- |
+| `min_size`     | File is **smaller than** this value → Exclude | "Minimum must be this big, smaller than this is unwanted"    |
+| `max_size`     | File is **larger than** this value → Exclude  | "Maximum can only be this big, larger than this is unwanted" |
+| `min_modified` | Time is **earlier than** this date → Exclude  | "Earliest can only be this day, earlier than this is unwanted" |
+| `max_modified` | Time is **later than** this date → Exclude    | "Latest can only be this day, later than this is unwanted"   |
 
 > ⚠️ **Note:**
 >
 > 1. Special rules start with `#`, but it is not a comment. Only lines starting with `#` that are not these keywords are comments. Writing is case-insensitive, both `=` and `:` work.
 > 2. **If the value format is written incorrectly, the rule will be silently ignored.** For example, `#min_size: abc` (cannot be parsed into a number), the entire rule will not work, no error will be reported, and it won't be treated as a comment. Please ensure the value format is correct when writing, otherwise you might think the rule is effective, but actually it's like writing nothing.
+
 ## Exclusion rule effect preview?
+
 > **Question:**
 > I wrote a few rules but I'm not sure if they will accidentally injure important images, or miss files I wanted to exclude. Is there a way to preview the effect of the rules without actually rebuilding the index?
 
-**Use the preview window at the bottom of the editing interface.**
+In version 2.5.4, the preview effect of exclusion rules is viewed in the gallery directory on the left side of the [Index interface]. Excluded images are marked with a red strikethrough:
 
-The Exclusion Rule Management interface is divided into two parts:
+![image-20260923203234422](image/image-20260923203234422.png)
 
-| Area                               | Function                                                     |
-| :--------------------------------- | :----------------------------------------------------------- |
-| **Top**                            | Rule editing list, you write rules and adjust order here     |
-| **Bottom**                         | Effect preview window, see "what would happen if applied" here |
+⚠️ **Important note:** The strikethrough in the gallery directory is only used to indicate that an exclusion rule has successfully applied to this file, but it does not mean that the file has been removed from the index. It serves only as a preview function and will not actually affect the index in any way. If you need to actually remove images marked with a red strikethrough from the index, you need to click the "Clean Excluded Images" button.
 
-**How to use the preview window:**
-
-
-1. Select a **local folder** on your computer in the preview window below (does not need to be the currently indexed directory).
-2. In the rule list above, **click to select a specific rule** (or select nothing — click "New Rule" first, then click on empty space to cancel all selections. This represents applying all rules).
-3. The preview window will immediately show: in this folder, how many images will be excluded by the rule(s) you selected (or all rules).
-
-**Its design purpose:**
-
-| Your worry                                                   | How preview function helps you                               |
-| :----------------------------------------------------------- | :----------------------------------------------------------- |
-| Wildcards written too broadly, accidentally injuring normal files | Select a folder with normal images to check, confirm no error before saving |
-| Rule written incorrectly, didn't match the files to be excluded at all | Select a folder containing target files, see if preview results hit |
-| Multiple rules affecting each other, unclear on final effect | Preview one by one, or look at the summary effect of "All Rules" |
-> ⚠️ **Important distinction:**
-> The preview window only shows the simulated effect of the rules on the **folder you manually selected**, and **will not modify any index data**. It is purely a safe "rehearsal ground" for you to confirm if the rules meet expectations before actual application.
 ## What is the "Clean Excluded Images" button for?
+
 > **Question:**
 > I didn't write exclusion rules at the beginning, and already indexed a batch of messy images. Later I added rules, but the previous garbage is still in the library. What to do?
 
@@ -307,16 +338,17 @@ The Exclusion Rule Management interface is divided into two parts:
 **When to use:**
 
 | Scenario                                                     | Need to click this button?                                   |
-| :---                                                         | :---                                                         |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
 | Just wrote exclusion rules, never indexed before             | Not needed, applied automatically during indexing            |
 | Already indexed a batch of images, added exclusion rules later | **Needed**, to clear the fish that slipped through the net before |
 | Modified existing exclusion rules, want to see effect immediately | **Needed**, to make modifications take effect on indexed images |
 
 # Custom Menu Commands
+
 ## What is the use of Custom Menu Commands?
+
 > **Question:**
 > I can already use this tool to search images, right-click to open, copy, save as—so what else can "Custom Menu Commands" let me do?
-
 
 **Answer:**
 It lets you add **your own commands** to the right-click menu to directly call any external program or script on the selected images, completing automation operations not built into the search tool itself.
@@ -333,6 +365,7 @@ You searched for a batch of screenshots and want to quickly convert them all to 
 | Already enough—until you find "one step missing" | Fill that step, making the tool fit your workflow better     |
 
 ## What does a custom command consist of?
+
 > **Question:**
 > I decided to add a command myself—what exactly is it made of? What do I need to write?
 
@@ -356,17 +389,19 @@ In this command, `ffmpeg` is the **subject** executing the command. `-i`, `{path
 
 **What do these variables mean?**
 
-| Variable                            | What it represents                                           |
-| :---                                | :---                                                         |
-| `{path}`                            | Full path of the selected image, e.g., `D:\Photos\2024\IMG_001.png` |
-| `{dir}`                             | The folder where the image is located                        |
-| `{name}`                            | Complete filename, e.g., `IMG_001.png`                       |
-| `{noext}`                           | Filename without extension, e.g., `IMG_001`                  |
-| `{ext}`                             | Extension with dot, e.g., `.png`                             |
-| `{count}`                           | Number of selected images. Note: in **Normal Mode** it is always 1, only actually counts in **Batch Mode**. |
+| Variable  | What it represents                                           |
+| :-------- | :----------------------------------------------------------- |
+| `{path}`  | Full path of the selected image, e.g., `D:\Photos\2024\IMG_001.png` |
+| `{dir}`   | The folder where the image is located                        |
+| `{name}`  | Complete filename, e.g., `IMG_001.png`                       |
+| `{noext}` | Filename without extension, e.g., `IMG_001`                  |
+| `{ext}`   | Extension with dot, e.g., `.png`                             |
+| `{count}` | Number of selected images. Note: in **Normal Mode** it is always 1, only actually counts in **Batch Mode**. |
 
 > **Note**: You don't need to add quotes to `{path}`, because the tool automatically guarantees the path is passed as a complete argument. Even if you habitually add quotes (like `"{path}"`), it won't cause an error, it's just redundant.
+
 ## For multi-image processing, use Batch Mode or Normal Mode?
+
 > **Question:**
 > I often select dozens of images at once for processing. Should I use Normal Mode or Batch Mode?
 
@@ -376,24 +411,36 @@ In this command, `ffmpeg` is the **subject** executing the command. `-i`, `{path
 | :------------------------------------- | :------------------------ | :---------------------------------------- |
 | Each image gets an independent result  | **Normal Mode** (Default) | No mutual interference, writing unchanged |
 | Program needs to see all files at once | **Batch Mode**            | Start program only once, high efficiency  |
+
 ### Normal Mode (Default)
+
 **Introduction:** Select $n$ images, the command is executed independently $n$ times. Each time, variables in the command are replaced with info of that specific image.
+
 **Suitable for:** Adding watermarks one by one, converting formats, color grading, generating thumbnails... any "one in, one out" operation.
+
 **Characteristics:** Command is simple, but multi-image processing efficiency is relatively low because $n$ images means opening the process $n$ times repeatedly.
+
 ### Batch Mode (Manually check to enable when needed)
+
 **Introduction:** Command executes only once, but you need to use `{paths}` (note the **s**) to receive the list of all files.
+
 **Suitable for:** Stitching long images, merging into PDF, counting all image info... operations where the program needs a "global overview".
+
 **Quick Judgment Rule:**
+
 - Command logic is "one file → one file": Use Normal Mode, variable is `{path}`
 - Command logic is "a pile of files → one result": Use Batch Mode, variable is `{paths}`
 
 **Variable pointing in Batch Mode:**
+
 - `{path}`, `{dir}`, `{name}`, `{noext}`, `{ext}` all point to the **first file**.
 - `{paths}` is the list of all files.
 - `{count}` is the total number of files.
 
 This design is to maintain consistency with variable meanings in Normal Mode and avoid confusion.
+
 ## How to specify the separator for the file list?
+
 > **Question:**
 > I enabled Batch Mode and used `{paths}`—but the program requires files to be separated by commas. What to do?
 
@@ -407,18 +454,21 @@ This design is to maintain consistency with variable meanings in Normal Mode and
 | Comma separated                           | `{paths:sep=,}`  | `Image1,Image2,Image3` (combined into one argument) |
 | Pipe separated (Common for FFmpeg concat) | `{paths:sep=\|}` | `Image1\|Image2\|Image3`                            |
 | Newline separated                         | `{paths:sep=\n}` | One path per line                                   |
+
 > **Purpose:** Different programs have different format requirements for file lists. `sep` lets you adapt one command to various situations.
+
 ## The grouping role of quotes
+
 > **Question:**
 > I know variable paths don't need quotes, but the command itself has other spaces—for example, I want to pass a fixed argument with spaces to the program. How to write?
 
 **Core Rule:**
 
-| Your purpose                                                 | Writing        | Effect                                                       |
-| :----------------------------------------------------------- | :------------- | :----------------------------------------------------------- |
-| Treat a fixed string containing spaces as **one argument**   | `"fixed text"` | Merged into one argument `fixed text`, quotes are stripped   |
-| Protect variables (unnecessary, but harmless)                | `"{path}"`     | Result is exactly the same as not writing quotes. Quotes only group, are not passed to the program |
-| Include literal double quotes in the argument                | `"a\"b"`       | Becomes one argument `a"b` (`\"` is escape)                  |
+| Your purpose                                               | Writing        | Effect                                                       |
+| :--------------------------------------------------------- | :------------- | :----------------------------------------------------------- |
+| Treat a fixed string containing spaces as **one argument** | `"fixed text"` | Merged into one argument `fixed text`, quotes are stripped   |
+| Protect variables (unnecessary, but harmless)              | `"{path}"`     | Result is exactly the same as not writing quotes. Quotes only group, are not passed to the program |
+| Include literal double quotes in the argument              | `"a\"b"`       | Becomes one argument `a"b` (`\"` is escape)                  |
 
 **Regular quotes do not become part of the data passed to the program.** Their only role is to tell the parser during the tokenization stage "these words should be together". If you absolutely must use quotes, use the escape symbol `\`.
 
@@ -427,14 +477,20 @@ This design is to maintain consistency with variable meanings in Normal Mode and
 ```text
 ffmpeg -i {path} -vf "drawtext=text='hello world':x=10:y=10" {dir}/out.mp4
 ```
+
 Here `"drawtext=text='hello world':x=10:y=10"` is a whole filter substring. It must be wrapped in double quotes, otherwise spaces would cut it into several arguments.
+
 **About whether `{path}` needs quotes:**
 The conclusion is **no need**. Because variable values are injected into the argument array after tokenization is complete. Paths containing spaces are treated as a whole. If you add quotes, like `"{path}"`, the quotes disappear after just grouping. The final parameter passed to the program is exactly the same as without quotes—no negative effect, but purely redundant.
+
 ## Manually input data before command execution
+
 > **Question:**
 > For example, the text for a watermark is different every time, or I want to manually select the output folder—can an input box pop up when executing the command for me to fill in?
 
-**Yes, use `ask` series variables.** When the command executes to these variables, an input window will pop up. After filling, it continues.**Available ask variables:**
+**Yes, use `ask` series variables.** When the command executes to these variables, an input window will pop up. After filling, it continues.
+
+**Available ask variables:**
 
 | Variable       | What pops up              | Suitable scenarios                                           |
 | :------------- | :------------------------ | :----------------------------------------------------------- |
@@ -446,15 +502,21 @@ The conclusion is **no need**. Because variable values are injected into the arg
 | `{ask_files}`  | Multi file selection box  | Extra batch file selection. As a list variable, can be used with `sep` modifier, e.g., `{ask_files:sep=,}` |
 
 **Example:**
+
 ```
 Custom Watermark → magick {path} -gravity southeast -fill white -pointsize 36 -annotate 0 "{ask_string}" {dir}/watermarked_{name}
 ```
+
 When executing:
+
 1. A text box pops up.
 2. You type "Zhang San Shot 2024".
 3. Watermark text is "Zhang San Shot 2024".
+
 > **Note:** If the same ask variable appears multiple times in a command, the box only pops up once. User clicking Cancel aborts execution.
+
 ## How to test written commands?
+
 > **Question:**
 > I finished writing the command, but I'm not sure if it will work normally, or even worried it might damage the original image. How to test safely?
 
@@ -475,10 +537,15 @@ When editing a command, click the **●Normal** button in the bottom right. When
 Also, if a command has a syntax error, such as not using the correct variable name, whether in Normal Mode or Test Mode, it will be intercepted before actual execution. A parsing error will pop up a box with line/column numbers (like "Unclosed quote, line 1 column 6").
 
 > **Recommended workflow:** Write command → Enable Test Mode → Select one image and multiple images to verify → Confirm no error → Disable Test Mode → Official use.
+
 ## How to close the test window that pops up in the right-click menu?
+
 As mentioned above, this is behavior in Test Mode. Go to the configuration settings in the top right corner of the interface, enter Custom Menu, select the currently used menu, and then click the Test button in the bottom right corner so it changes to Normal.
-![image-20260805143732289](image/image-20260805143732289.png)
+
+![image-20260923203446577](image/image-20260923203446577.png)
+
 ## What are common errors?
+
 > **Question:**
 > I feel I understand, but is there a checklist for me to quickly check against when writing commands?
 
@@ -491,7 +558,9 @@ As mentioned above, this is behavior in Test Mode. Go to the configuration setti
 | Writing multiple lines for one command    | One line is one complete command, multiple lines will error  | Encapsulate multi-step logic into .py or .ps1 scripts |
 | Using `{paths}` in Normal Mode            | In Normal Mode `{paths}` only contains one element           | Switch to Batch Mode when a list is needed            |
 | Command starts with `#`                   | Content starting with `#` is treated as a comment and will not be executed | Remove `#`                                            |
+
 ## One line of command can't handle complex functions?
+
 > **Question:**
 > What I want to do isn't just "convert format"—it might involve multi-step processing, pipe operations, clipboard interaction. One line of command definitely can't handle it. What to do?
 
@@ -503,26 +572,59 @@ As mentioned above, this is behavior in Test Mode. Go to the configuration setti
 
 ```python
 import sys, pyperclip
-paths = sys.argv[1:] # Receive all paths
+paths = sys.argv[1:]  # Receive all paths
 pyperclip.copy("\n".join(paths))
 ```
+
 **Custom command and enable Batch Mode:**
 
 ```
 Copy paths to clipboard → python D:/tools/copy_paths.py {paths}
 ```
+
 > **Principle:** The command itself is responsible for "calling the script", the script is responsible for "specific logic". Each does its job, simple and reliable.
+
+# Miscellaneous
+
+## What are the close behavior options?
+
+> **Question:**
+> I only use this tool occasionally during work and close it after each use. But reopening always takes a moment — it has to read the index and load the model again. Can I close the window without quitting the app?
+
+**Yes. In General Settings → General, set "On close" to "Minimize to tray".**
+
+| Option           | What happens after you click the X                           | Who it is for                                                |
+| :--------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| Minimize to tray | The window disappears and the app keeps running in the system tray (bottom-right corner). Double-click the tray icon to bring it back anytime | People who want it ready instantly and don't want to wait for a restart |
+| Exit             | The app quits completely and all memory is released          | People who are done with it and don't mind restarting next time |
+| Ask every time   | A dialog pops up on every X click, with a "Remember my choice" checkbox | People who haven't decided, or who need different behavior in different situations |
+
+**Using the tray icon:**
+
+| Action                                                      | Effect                                               |
+| :---------------------------------------------------------- | :--------------------------------------------------- |
+| Double-click the tray icon / right-click → Show main window | The window comes back (maximized state is preserved) |
+| Right-click → Exit                                          | The app really quits (the index is saved normally)   |
+
+**What happens while it is hidden in the tray:**
+
+| Behavior                                        | Description                                                  |
+| :---------------------------------------------- | :----------------------------------------------------------- |
+| The index stays in memory                       | Searching is still instant when you bring the window back — no need to re-read the index |
+| Model memory is released after 30 seconds       | If it stays hidden and unused, the model is dropped from memory after 30 seconds. At that point, memory usage is mainly determined by the size of the index. As for whether to be more aggressive and even release the index memory—that is not easy to implement, so the idea is temporarily shelved. |
+| The index still updates automatically when idle | It keeps working according to your "auto update index" setting, and the model memory is released again after the update finishes |
+| The first search afterwards is a bit slower     | Once the model has been released, the first search has to load it again (a few hundred milliseconds to a second or two), then everything is back to normal |
+
+> **Note:** Model memory is only released while the window is **hidden in the tray**. If you merely **minimize** the window to the taskbar, the app assumes you are about to use it again and does not release anything.
+
 # User Feedback
+
 Here are several channels for user feedback. Things you can do in the feedback channels include:
+
 1. Propose new features. You should explain in detail why you need this feature, what the current operation strategy is, and what the approximate implementation of the desired function looks like.
-
 2. Report bugs, clearly explaining the reproduction process.
-
 3. Improvement ideas for certain existing functions / UI.
-
 4. Certain questions about functions not mentioned in the help documentation.
-
-
 
 Feedback Channels:
 
