@@ -8,9 +8,18 @@
 
 [English](./README.en.md) · [更新日志](https://github.com/Just-A-Freshman/VimgFind/releases/tag/program2.5)
 
-💬 **参与 UI 讨论**：[筛选面板优化讨论](https://github.com/Just-A-Freshman/VimgFind/discussions/15)
-
 </div>
+
+
+
+公告：我们正在评估是否为 [排除规则] 增加"作用域"能力——即让某条规则只对部分
+索引文件夹生效，而非全局生效。在动手之前，我们想先了解这个需求在真实
+使用中的普遍程度，避免为低频场景增加所有用户的配置负担。
+
+**无论你是否用过排除规则、是否遇到过相关困扰，你的回答都同样有价值。**
+一道单选题，60 秒即可完成：[参与讨论 →](https://github.com/Just-A-Freshman/VimgFind/discussions/17)
+
+
 
 ## 1. 项目简介
 
@@ -40,6 +49,12 @@ VimgFind 是一款运行在**本地**的 AI 搜图工具。同时支持以图搜
 ## 3. 快速上手
 
 ### 3.1 安装
+**Windows 用户**
+
+- 完整程序：[Github 下载 VimgFind-v2.5.3](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iCGey44p6ntc)
+- 更新程序：[Github 下载 v2.5.3 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iu8a244p6mkh)
+
+提示：作者测试发现2.5.1和2.5.2的检查更新功能都有问题，因此建议手动下载更新程序，然后按图片进行操作：![image-20260825233524161](https://raw.githubusercontent.com/Just-A-Freshman/image-bed/main/Typora/image-20260825233524161.png)
 
 **macOS 用户**
 
@@ -70,13 +85,6 @@ bash /tmp/vimgfind-install.sh
 shasum -a 256 VimgFind-2.5.2-macos.dmg
 # 期望输出：917960061391634332ac7b7e486d168363e67b8c1ba284a8edb80c92f6ffa79b
 ```
-
-**Windows 用户**
-
-- 完整程序：[Github 下载 VimgFind-v2.5.3](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iCGey44p6ntc)
-- 更新程序：[Github 下载 v2.5.3 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.3-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iu8a244p6mkh)
-
-提示：作者测试发现2.5.1和2.5.2的检查更新功能都有问题，因此建议手动下载更新程序，然后按图片进行操作：![image-20260825233524161](https://raw.githubusercontent.com/Just-A-Freshman/image-bed/main/Typora/image-20260825233524161.png)
 
 
 
