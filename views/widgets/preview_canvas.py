@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable, Literal
 from pathlib import Path
 import tkinter as tk
+import datetime
 
 from PIL import Image, ImageTk, ImageOps, UnidentifiedImageError
 from ttkbootstrap.widgets import ToolTip
@@ -10,7 +11,7 @@ from ttkbootstrap.widgets import ToolTip
 from .base import BasicImagePreviewView
 from utils.i18n import _
 import utils.image_ops as image_ops
-import utils.file_ops as file_ops
+import utils.decorators as decorators
 
 
 class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
@@ -21,7 +22,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         BasicImagePreviewView.__init__(self, master)
         self.pack(fill=tk.BOTH, expand=True)
         self.bind('<Configure>', self.__on_configure)
-        self.__tooltip = ToolTip(self, text=_("没有文件"), delay=500, topmost=True)
+        self.__tooltip = ToolTip(self, text=_("没有文件"), delay=500, topmost=True, wraplength=10000)
         self.__resize_timer: str = ""
 
     def __on_configure(self, event: tk.Event) -> None:
@@ -36,6 +37,16 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         if self.__resize_timer:
             self.after_cancel(self.__resize_timer)
         self.__resize_timer = tk.Canvas.after(self, 500, lambda: self.clear() or self.append(image_path))
+
+    @decorators.send_task
+    def __set_tooltip_text(self, image_path: Path) -> None:
+        st = image_path.stat()
+        size=f"{st.st_size // 1024}KB" if st.st_size < 1024 * 1024 else f"{st.st_size / (1024 * 1024):.2}MB"
+        mtime = datetime.datetime.fromtimestamp(st.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        self.__tooltip.text = _(
+            "{name}\n路径：{parent}\n大小：{size}\n修改时间：{mtime}",
+            name=image_path.name, parent=str(image_path.parent), size=size, mtime=mtime
+        )
 
     def append(self, image_path: Path, image_obj: Image.Image | None = None) -> str:
         if self.__resize_timer:
@@ -58,7 +69,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
         self.clear()
         self._results[iid] = (image_path, imgtk)
         self.create_image(x, y, anchor=tk.CENTER, image=imgtk)
-        self.__tooltip.text = str(image_path)
+        self.__set_tooltip_text(image_path)
         return iid
     
     def delete(self, *items) -> None:
