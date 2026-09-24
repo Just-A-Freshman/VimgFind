@@ -41,7 +41,7 @@ class PreviewCanvasView(tk.Canvas, BasicImagePreviewView):
     @decorators.send_task
     def __set_tooltip_text(self, image_path: Path) -> None:
         st = image_path.stat()
-        size=f"{st.st_size // 1024}KB" if st.st_size < 1024 * 1024 else f"{st.st_size / (1024 * 1024):.2}MB"
+        size=f"{st.st_size // 1024}KB" if st.st_size < 1024 * 1024 else f"{st.st_size / (1024 * 1024):.2f}MB"
         mtime = datetime.datetime.fromtimestamp(st.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
         self.__tooltip.text = _(
             "{name}\n路径：{parent}\n大小：{size}\n修改时间：{mtime}",
