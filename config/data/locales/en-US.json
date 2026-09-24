@@ -131,6 +131,7 @@
   "无法识别该图片类型！": "Unrecognized image type!",
   "无法识别剪切板中的图片数据！": "No image data found in clipboard!",
   "网络路径不可达，无法访问该文件！": "Network path unreachable, cannot access the file!",
+  "{name}\n路径：{parent}\n大小：{size}\n修改时间：{mtime}": "{name}\nPath: {parent}\nSize: {size}\nModified Time: {mtime}",
   "无法检查更新：{error}\n\n请检查网络连接后重试。": "Update check failed: {error}\n\nCheck your network and retry.",
   "修改时间": "Modified",
   "被排除索引的文件夹/文件": "Excluded from index",
