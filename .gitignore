@@ -245,3 +245,9 @@ docs/*.md
 AGENT.MD
 
 todo
+
+# others
+image/
+PRD/
+reply/
+hnswlib/
