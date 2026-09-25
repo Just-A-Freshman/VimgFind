@@ -24,6 +24,7 @@ _PLACEHOLDER = ("__placeholder__",)
 class ImageFolderTreeview(DragReorderTreeview):
     _EL = "folder_indicator"
     _EX_TAG = "_excluded"
+    _MAYBE_TAG = "_maybe_excluded"
 
     def __init__(self, parent, accept_exts: set[str] | None = None, heading: str = "", **kwargs):
         kwargs.setdefault("show", "tree headings")
@@ -110,6 +111,7 @@ class ImageFolderTreeview(DragReorderTreeview):
                 weight=attrs["weight"], slant=attrs["slant"], overstrike=True,
             )
             self.tag_configure(self._EX_TAG, font=self._excluded_font, foreground="#FF0000")
+            self.tag_configure(self._MAYBE_TAG, font=self._excluded_font, foreground="#FF8C00")
         except tk.TclError:
             pass
 
@@ -288,6 +290,19 @@ class ImageFolderTreeview(DragReorderTreeview):
         except (OSError, PermissionError):
             return False
 
+    def _rule_tag(self, path: str, root: str, is_dir: bool, st: os.stat_result | None = None) -> tuple[str, ...]:
+        rules = self._exclude_rules
+        if rules is None or not root:
+            return ()
+        try:
+            if is_dir:
+                if rules.should_skip_dir(path, root):
+                    return (self._EX_TAG,)
+                return (self._MAYBE_TAG,) if rules._is_excluded(os.path.relpath(path, root), True) else ()
+            return (self._EX_TAG,) if rules.should_skip_file(path, root, st) else ()
+        except (OSError, PermissionError):
+            return ()
+
     def _subtree_state(self, parent_iid: str) -> tuple[str, bool]:
         chain = []
         cur = parent_iid
@@ -318,21 +333,21 @@ class ImageFolderTreeview(DragReorderTreeview):
         files.sort(key=lambda x: x.name.lower())
 
         for entry in dirs:
-            excluded = ancestor_excluded or self._rule_skip(entry.path, root, True)
+            tags = (self._EX_TAG,) if ancestor_excluded else self._rule_tag(entry.path, root, True)
             child = self.insert(
                 parent_iid, tk.END, text=f"  {entry.name}", values=(entry.path,),
                 open=False, image=self._img_folder,
-                tags=(self._EX_TAG,) if excluded else (),
+                tags=tags,
             )
             self._prescan(child, entry.path)
 
         for entry in files:
             if self._accept_exts is not None and os.path.splitext(entry.name)[1].lower() not in self._accept_exts:
                 continue
-            excluded = ancestor_excluded or self._rule_skip(entry.path, root, False)
+            tags = (self._EX_TAG,) if ancestor_excluded else self._rule_tag(entry.path, root, False)
             self.insert(
                 parent_iid, tk.END, text=f"  {entry.name}", values=(entry.path,),
-                image=self._img_file, tags=(self._EX_TAG,) if excluded else (),
+                image=self._img_file, tags=tags,
             )
 
     def add_folder(self, abs_path: str) -> str | None:
@@ -372,7 +387,7 @@ class ImageFolderTreeview(DragReorderTreeview):
 
         stats = unc_ops.batch_stat([path for _, _, path in nodes])
 
-        excluded_by: dict[str, bool] = {}
+        tags_by: dict[str, tuple[str, ...]] = {}
         for iid, root, path in nodes:
             if path in stats:
                 st = stats[path]
@@ -380,7 +395,8 @@ class ImageFolderTreeview(DragReorderTreeview):
             else:
                 st = None
                 is_dir = os.path.isdir(path)
-            excluded = excluded_by.get(self.parent(iid), False) or self._rule_skip(path, root, is_dir, st)
-            if excluded != bool(self.item(iid, "tags")):
-                self.item(iid, tags=(self._EX_TAG,) if excluded else ())
-            excluded_by[iid] = excluded
+            parent_tags = tags_by.get(self.parent(iid), ())
+            tags = (self._EX_TAG,) if self._EX_TAG in parent_tags else self._rule_tag(path, root, is_dir, st)
+            if tags != self.item(iid, "tags"):
+                self.item(iid, tags=tags)
+            tags_by[iid] = tags

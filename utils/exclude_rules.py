@@ -41,9 +41,10 @@ class ExcludeRules:
             if not rule.startswith("!"):
                 continue
             body = rule[1:]
-            if body.startswith("/"):
+            rooted = body.startswith("/")
+            if rooted:
                 body = body[1:]
-            if "/" not in body or self.__has_wildcard(body):
+            if self.__has_wildcard(body) or not (rooted or "/" in body.rstrip("/")):
                 self._has_unanchored_negation = True
             else:
                 self._anchored_negation.append(body)
