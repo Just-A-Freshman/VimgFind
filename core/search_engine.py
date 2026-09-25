@@ -17,6 +17,7 @@ import numpy as np
 from .index_manager import VectorIndexManager, NameIndexManager
 from .multimodal_encoder import MultiModalEncoder
 from config.settings import Setting
+from utils.i18n import _
 import utils.exclude_rules as exclude_rules
 import utils.file_ops as file_ops
 import utils.image_ops as image_ops
@@ -205,7 +206,7 @@ class SearchTool:
     def remove_duplicate(self) -> None:
         self.__init_event.wait()
         seen_paths: set[str] = set()
-        for idx, (file_path, _) in enumerate(self.__name_idx_mgr.name_index):
+        for idx, (file_path, metainfo) in tqdm(enumerate(self.__name_idx_mgr.name_index), desc=_("检查重复索引中")):
             if file_path == NameIndexManager.NOTEXISTS:
                 continue
             if file_path in seen_paths:
@@ -218,7 +219,7 @@ class SearchTool:
         self.__init_event.wait()
         unc_groups: dict[str, list[int]] = {}
 
-        for idx, (index_file, _) in enumerate(self.__name_idx_mgr.name_index):
+        for idx, (index_file, metainfo) in tqdm(enumerate(self.__name_idx_mgr.name_index), desc=_("检查无效索引中")):
             if index_file == NameIndexManager.NOTEXISTS:
                 continue
             path_type = file_ops.get_path_type(index_file)
