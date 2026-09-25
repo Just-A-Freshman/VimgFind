@@ -85,7 +85,7 @@ class VectorIndexManager:
 
     def match(self, fv: np.ndarray, nc=5):
         assert self.__hnsw_index is not None
-        self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 2))
+        self.__hnsw_index.set_ef(max(HNSW_MIN_EF, nc * 5))
         labels, distances = self.__hnsw_index.knn_query(fv, k=nc)
         cos_similarities = 1.0 - distances[0]
         logits_per_image = 100 * cos_similarities
