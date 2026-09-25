@@ -88,6 +88,8 @@
   "排除项过多，仅展示前 {max} 条，建议缩小预览范围": "Too many exclusions, showing first {max} items. Narrow your preview scope.",
   "正在检查排除文件...": "Checking exclusion files...",
   "检查完成。": "Check complete.",
+  "检查重复索引中": "Checking for duplicate indexes",
+  "检查无效索引中": "Checking for invalid indexes",
   "索引正在更新中，禁用排除图片清理！": "Index is being updated, disabling exclusion image cleanup!",
   "继续": "Resume",
   "暂停": "Pause",
