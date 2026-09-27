@@ -102,12 +102,6 @@ class MultiThreadDownloader:
         self._cancel_event = threading.Event()
 
     def _get_file_info(self) -> None:
-        """一次请求拿到直链、总大小、是否支持分片。
-
-        用 `Range: bytes=0-0` 而不是 HEAD：HEAD 在 github.com 上经常被直接重置；
-        302 之后的 CDN 主机才是真正下载的地方 —— 记下它，所有分片都直接连 CDN，
-        不用每个线程各自去 github.com 握一次手（原来就是这么整体失败的）。
-        """
         last: Exception | None = None
         for attempt in range(self.max_retries + 1):
             if self._cancel_event.is_set():
@@ -148,12 +142,10 @@ class MultiThreadDownloader:
         self.num_threads = min(self.num_threads, max_possible, 64)
 
     def _sleep(self, seconds: float) -> None:
-        """退避睡眠，取消/继续能立刻打断，不会把退出拖成 1+2+4+8 秒。"""
         self._cancel_event.wait(seconds)
         self._pause_event.wait()
 
     def _re_resolve(self) -> None:
-        """签名直链失效（401/403）时才换一条，且只让一个线程去解析，其余等它。"""
         with self._resolve_lock:
             if time.time() - self._resolved_at < 1.0:
                 return
@@ -164,12 +156,6 @@ class MultiThreadDownloader:
                 logging.warning(f"重新解析下载直链失败: {e}")
 
     def _get_ranges(self):
-        """把文件切成远多于线程数的小块，谁下完谁接着领 —— 不用等最慢那一个。
-
-        静态均分时实测过一次：15/16 片 55s 就完了，一片卡着拖到 111s（固定 16 份、
-        join 等最慢的）。块数取线程数的 4 倍，代价只是多几次 TLS 握手。
-        上限 8MB：每个连接的“快段”只有开头那几 MB（之后掉到 ~0.1MB/s）。
-        """
         if not self.accept_ranges:
             return [(0, self.file_size - 1)]
 
@@ -193,7 +179,6 @@ class MultiThreadDownloader:
         self._pause_event.set()  # unblock paused threads so they can exit
 
     def _worker(self) -> None:
-        """领一块下一块：早下完的线程把剩下的活分掉，不让最慢的那条连接定总时长。"""
         while True:
             with self._queue_lock:
                 if not self._pending:
@@ -202,7 +187,6 @@ class MultiThreadDownloader:
             self._download_part(index, *self.ranges[index])
 
     def _part_size(self, part_file: str, length: int) -> int:
-        """这一块手上已有多少字节；比该有的长就截回去，别把多余字节拼进最终文件。"""
         if not os.path.exists(part_file):
             return 0
         size = os.path.getsize(part_file)
@@ -212,7 +196,6 @@ class MultiThreadDownloader:
         return size
 
     def _fetch_into(self, part_file: str, first: int, end: int, part_index: int) -> None:
-        """从 first 字节续写这一块（分块级续传）。"""
         headers = {'Range': f'bytes={first}-{end}'}
         with fetch_url(self._url, timeout=8, headers=headers, validate=False) as resp:
             status = getattr(resp, "status", 206)
@@ -239,7 +222,6 @@ class MultiThreadDownloader:
             self.progress_callback(self.downloaded, self.file_size)
 
     def _download_part(self, part_index, start, end) -> None:
-        """下完这一块，失败就带着已有字节重连续传 —— 一次断线不该作废整包。"""
         part_file = self.part_files[part_index]
         length = end - start + 1
         last: Exception | None = None
@@ -270,11 +252,6 @@ class MultiThreadDownloader:
                 self._error_msg = f"分片 {part_index} 下载失败（重试 {self.max_retries} 次）: {last}"
 
     def _prepare_parts(self, ranges) -> None:
-        """上次留下的分片直接当续传起点，进度也一并算上（否则进度条会从 0 开始）。
-
-        分片名带起始偏移：偏移对得上就能接着用（同一份文件的字节总在同一个位置），
-        对不上（换了文件/切法）的直接删掉，不会拿旧字节拼出错包。
-        """
         self.ranges = ranges
         self.part_files = [f"{self.save_path}.part{start}" for start, _ in ranges]
         self._part_done = [0] * len(ranges)
