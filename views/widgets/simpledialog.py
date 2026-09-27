@@ -20,6 +20,7 @@ class BasicDialog(simpledialog.Dialog):
         box.grid_columnconfigure(3, weight=1)
         btn_save.grid(row=0, column=1, padx=TkS(3), pady=TkS(3))
         btn_cancel.grid(row=0, column=2, padx=TkS(3), pady=TkS(3))
+        self.attributes('-topmost', 1)
         self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.cancel)
 
