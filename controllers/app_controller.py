@@ -92,6 +92,10 @@ class AppController:
         else:
             self.destroy()
 
+    def activate(self) -> None:
+        self.tray_controller.show()
+        self.view.after(60, lambda: (self.view.lift(), self.view.focus_force()))
+
     def destroy(self) -> None:
         try:
             self.tray_controller.stop()
