@@ -66,7 +66,7 @@ class GeneralTab(Frame):
 
     def __set_comboboxes(self) -> tuple[Combobox, Combobox, Combobox]:
         close_frame = Frame(self)
-        close_frame.grid(row=0, column=0, padx=TkS(15), sticky=tk.W)
+        close_frame.grid(row=0, column=0, padx=TkS(15), pady=(TkS(10), 0), sticky=tk.W)
         Label(close_frame, text=_("关闭行为：")).grid(row=0, column=0, sticky=tk.W)
         close_behavior_combobox = Combobox(close_frame, state="readonly", width=13)
         close_behavior_combobox.grid(row=0, column=1, pady=TkS(12))
