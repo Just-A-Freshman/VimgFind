@@ -65,10 +65,12 @@ class MultiThreadDownloader:
             url, 
             save_path, 
             num_threads=32, 
-            chunk_size=8192, 
+            chunk_size=262144, 
             checksum: str = "",
             progress_callback=None,
             validate: bool = True,
+            max_retries: int = 4,
+            retry_backoff: float = 1.0,
         ) -> None:
         self.url = url
         self.save_path = save_path
@@ -77,14 +79,22 @@ class MultiThreadDownloader:
         self.checksum = checksum
         self.progress_callback = progress_callback
         self.validate = validate
+        self.max_retries = max_retries
+        self.retry_backoff = retry_backoff
 
         self.file_size = 0
         self.accept_ranges = False
         self.downloaded = 0
-        self.lock = threading.Lock()
         self.error_lock = threading.Lock()
         self.threads = []
         self.part_files = []
+        self.ranges = []
+        self._pending = []
+        self._queue_lock = threading.Lock()
+        self._part_done = []
+        self._url: str = url
+        self._resolve_lock = threading.Lock()
+        self._resolved_at = 0.0
         self._has_error = False
         self._error_msg = ""
         self._pause_event = threading.Event()
@@ -92,29 +102,70 @@ class MultiThreadDownloader:
         self._cancel_event = threading.Event()
 
     def _get_file_info(self) -> None:
-        try:
-            with fetch_url(self.url, timeout=30, method='HEAD', validate=self.validate) as resp:
-                self.file_size = int(resp.headers.get('Content-Length', 0))
-                self.accept_ranges = resp.headers.get('Accept-Ranges', '').lower() == 'bytes'
-        except (OSError, ValueError) as e:
-            raise RuntimeError(f"无法获取文件信息: {e}")
+        last: Exception | None = None
+        for attempt in range(self.max_retries + 1):
+            if self._cancel_event.is_set():
+                raise RuntimeError("下载已取消")
+            try:
+                with fetch_url(
+                    self.url, timeout=10, headers={'Range': 'bytes=0-0'}, 
+                    validate=self.validate
+                ) as resp:
+                    geturl = getattr(resp, 'geturl', None)
+                    if callable(geturl):
+                        self._url = geturl() or self.url  # type: ignore
+                    content_range = resp.headers.get('Content-Range', '')
+                    if '/' in content_range:
+                        self.file_size = int(content_range.rsplit('/', 1)[1])
+                        self.accept_ranges = True
+                    else:
+                        self.file_size = int(resp.headers.get('Content-Length', 0) or 0)
+                        self.accept_ranges = False
+                if self.file_size == 0:
+                    raise RuntimeError("无法获取文件大小，下载取消")
+                self._resolved_at = time.time()
+                break
+            except Exception as e:
+                last = e
+                if attempt < self.max_retries:
+                    self._sleep(self.retry_backoff * 2 ** attempt)
+        else:
+            raise RuntimeError(f"无法获取文件信息（重试 {self.max_retries} 次失败）: {last}")
 
-        if self.file_size == 0:
-            raise RuntimeError("无法获取文件大小，下载取消")
+        if self.validate and self._url != self.url and not validate_url_safe(self._url):
+            raise ValueError(f"不安全的 URL，已拦截: {self._url}")
 
         if not self.accept_ranges or self.file_size < self.chunk_size * 2:
             self.num_threads = 1
-            
+
         max_possible = max(1, self.file_size // self.chunk_size)
         self.num_threads = min(self.num_threads, max_possible, 64)
 
+    def _sleep(self, seconds: float) -> None:
+        self._cancel_event.wait(seconds)
+        self._pause_event.wait()
+
+    def _re_resolve(self) -> None:
+        with self._resolve_lock:
+            if time.time() - self._resolved_at < 1.0:
+                return
+            logging.warning("下载直链失效，重新解析")
+            try:
+                self._get_file_info()
+            except RuntimeError as e:
+                logging.warning(f"重新解析下载直链失败: {e}")
+
     def _get_ranges(self):
-        part_size = self.file_size // self.num_threads
+        if not self.accept_ranges:
+            return [(0, self.file_size - 1)]
+
+        part_size = min(8 << 20, max(self.chunk_size, -(-self.file_size // (self.num_threads * 4))))
         ranges = []
-        for i in range(self.num_threads):
-            start = i * part_size
-            end = self.file_size - 1 if i == self.num_threads - 1 else (i + 1) * part_size - 1
+        start = 0
+        while start < self.file_size:
+            end = min(start + part_size, self.file_size) - 1
             ranges.append((start, end))
+            start = end + 1
         return ranges
 
     def pause(self) -> None:
@@ -127,43 +178,96 @@ class MultiThreadDownloader:
         self._cancel_event.set()
         self._pause_event.set()  # unblock paused threads so they can exit
 
-    def _download_part(self, part_index, start, end) -> None:
-        if self._has_error:
-            return
-        if self._cancel_event.is_set():
-            return
-        part_file = f"{self.save_path}.part{part_index}"
-        with self.lock:
-            self.part_files.append(part_file)
+    def _worker(self) -> None:
+            with self._queue_lock:
+                if not self._pending:
+                    return
+                index = self._pending.pop(0)
+            self._download_part(index, *self.ranges[index])
 
-        headers = {'Range': f'bytes={start}-{end}'}
-        try:
-            with fetch_url(self.url, timeout=60, headers=headers, validate=self.validate) as resp:
-                with open(part_file, 'wb') as f:
-                    while True:
-                        if self._has_error:
-                            return
-                        self._pause_event.wait()
-                        if self._cancel_event.is_set():
-                            return
-                        chunk = resp.read(self.chunk_size)
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                        with self.lock:
-                            self.downloaded += len(chunk)
-                            if self.progress_callback:
-                                self.progress_callback(self.downloaded, self.file_size)
-        except Exception as e:
-            with self.error_lock:
-                if not self._has_error:
-                    self._has_error = True
-                    self._error_msg = f"线程 {part_index} 下载失败: {e}"
-            if os.path.exists(part_file):
-                try:
+    def _part_size(self, part_file: str, length: int) -> int:
+        if not os.path.exists(part_file):
+            return 0
+        size = os.path.getsize(part_file)
+        if size > length:
+            os.truncate(part_file, length)
+            size = length
+        return size
+
+    def _fetch_into(self, part_file: str, first: int, end: int, part_index: int) -> None:
+        headers = {'Range': f'bytes={first}-{end}'}
+        with fetch_url(self._url, timeout=8, headers=headers, validate=False) as resp:
+            status = getattr(resp, "status", 206)
+            content_range = resp.headers.get("Content-Range", "")
+            if content_range and not content_range.startswith(f"bytes {first}-"):
+                raise RuntimeError(f"服务器返回的范围不对：{content_range}，期望从 {first} 开始")
+            if status == 200 and (first != 0 or end != self.file_size - 1):
+                raise RuntimeError(f"服务器忽略了 Range（回了 200 整包），分片 {first}-{end} 不可信")
+            with open(part_file, 'ab') as f:
+                while True:
+                    self._pause_event.wait()
+                    if self._cancel_event.is_set() or self._has_error:
+                        return
+                    chunk = resp.read1(self.chunk_size) if hasattr(resp, "read1") else resp.read(self.chunk_size)
+                    if not chunk:
+                        return
+                    f.write(chunk)
+                    self._count(part_index, len(chunk))
+
+    def _count(self, part_index: int, nbytes: int) -> None:
+        self._part_done[part_index] += nbytes
+        self.downloaded = sum(self._part_done)
+        if self.progress_callback:
+            self.progress_callback(self.downloaded, self.file_size)
+
+    def _download_part(self, part_index, start, end) -> None:
+        part_file = self.part_files[part_index]
+        length = end - start + 1
+        last: Exception | None = None
+
+        for attempt in range(self.max_retries + 1):
+            if self._cancel_event.is_set() or self._has_error:
+                return
+            written = self._part_size(part_file, length)
+            if written == length:
+                return
+            try:
+                self._fetch_into(part_file, start + written, end, part_index)
+            except Exception as e:
+                last = e
+                if getattr(e, 'code', None) in (401, 403):
+                    self._re_resolve()
+            if self._part_size(part_file, length) == length:
+                return
+            if last is None:
+                last = RuntimeError("连接提前结束")
+            logging.warning(f"分片 {part_index} 第 {attempt + 1}/{self.max_retries + 1} 次尝试失败: {last}")
+            if attempt < self.max_retries:
+                self._sleep(self.retry_backoff * 2 ** attempt)
+
+        with self.error_lock:
+            if not self._has_error:
+                self._has_error = True
+                self._error_msg = f"分片 {part_index} 下载失败（重试 {self.max_retries} 次）: {last}"
+
+    def _prepare_parts(self, ranges) -> None:
+        self.ranges = ranges
+        self.part_files = [f"{self.save_path}.part{start}" for start, _ in ranges]
+        self._part_done = [0] * len(ranges)
+        expected = set(self.part_files)
+        base = Path(self.save_path)
+        for stale in base.parent.glob(base.name + ".part*"):
+            if str(stale) not in expected:
+                os.remove(stale)
+        for i, (part_file, (start, end)) in enumerate(zip(self.part_files, ranges)):
+            self._part_done[i] = self._part_size(part_file, end - start + 1)
+        if not self.accept_ranges:
+            for i, (part_file, (start, end)) in enumerate(zip(self.part_files, ranges)):
+                if 0 < self._part_done[i] < end - start + 1:
                     os.remove(part_file)
-                except OSError:
-                    pass
+                    self._part_done[i] = 0
+        self.downloaded = sum(self._part_done)
+        self._pending = list(range(len(ranges)))
 
     @property
     def is_cancelled(self) -> bool:
@@ -177,19 +281,16 @@ class MultiThreadDownloader:
     def download(self) -> None:
         self._get_file_info()
         ranges = self._get_ranges()
+        self._prepare_parts(ranges)
 
         self.threads.clear()
-        self.part_files.clear()
-        self.downloaded = 0
         self._has_error = False
         self._error_msg = ""
+        if self.progress_callback:
+            self.progress_callback(self.downloaded, self.file_size)
 
-        for i, (start, end) in enumerate(ranges):
-            t = threading.Thread(
-                target=self._download_part,
-                args=(i, start, end),
-                daemon=True
-            )
+        for _ in range(min(self.num_threads, len(ranges))):
+            t = threading.Thread(target=self._worker, daemon=True)
             self.threads.append(t)
             t.start()
 
@@ -197,11 +298,9 @@ class MultiThreadDownloader:
             t.join()
 
         if self._cancel_event.is_set():
-            self._cleanup()
             raise RuntimeError("下载已取消")
 
         if self._has_error:
-            self._cleanup()
             raise RuntimeError(self._error_msg)
 
         self._merge_files()
@@ -281,7 +380,7 @@ class DownloadTask:
             self._last_time = now
             self.downloaded_bytes = downloaded
             self.total_bytes = total
-            if self._progress_callback and now - _last_ui >= 0.1:
+            if self._progress_callback and (now - _last_ui >= 0.1 or downloaded >= total):
                 _last_ui = now
                 self._progress_callback(downloaded, total, self.speed)
         return wrapped
