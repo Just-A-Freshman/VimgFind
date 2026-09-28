@@ -51,7 +51,9 @@ VimgFind 是一款运行在**本地**的 AI 搜图工具。同时支持以图搜
 **Windows 用户**
 
 - 完整程序：[Github 下载 VimgFind-v2.5.4](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.4-win64.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/ijeym4aa2pfc)
-- 更新程序：[Github 下载 v2.5.4 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.4-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iWijn4aa2rla)
+- 更新程序：[Github 下载 v2.5.4 更新包](https://github.com/Just-A-Freshman/VimgFind/releases/download/program2.5/VimgFind-2.5.4-win64-update.zip) ｜ [蓝奏云下载](https://wwbbm.lanzouv.com/iXDkb4aal5yf)
+
+>Tip：2.5.2和2.5.3版本点击检查更新可以直接进行更新。但由于更新逻辑存在一定BUG，因此更新包下载好后，跳出的重启窗口，不要立即确定，必须等待个2-3秒后再确定。
 
 
 
