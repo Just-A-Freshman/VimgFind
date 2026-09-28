@@ -1,5 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+import sys
+
+# 版本资源：exe 带 FileVersion，更新脚本靠它判版本、靠它做包自检
+# （PRD/update_protocol_v3.md §1.4.1）。版本号单一真源 = config/settings.py 的 WinInfo.version。
+for _p in (SPECPATH, os.path.join(SPECPATH, 'build_exe'), os.path.dirname(SPECPATH)):
+    if _p and _p not in sys.path:
+        sys.path.insert(0, _p)
+from version_utils import make_version_info, read_version  # noqa: E402
+
+_APP_VERSION = read_version()
+
 
 a = Analysis(
     ['main.py'],
@@ -45,6 +57,9 @@ a = Analysis(
         #   ImageGrab（ttkbootstrap colordropper 依赖）, GimpGradientFile/GimpPaletteFile（ImagePalette 依赖），
         #   以及 7 个格式插件：Bmp/Gif/Jpeg/Png/Psd/Tiff/WebP
         # 排除 AvifImagePlugin 同时去掉 _avif.pyd（1.8MB 二进制）；ImageCms 去掉 _imagingcms.pyd。
+        # 【不要排除】IcoImagePlugin：托盘用的是 pystray，它必须把 PNG 存成 ICO
+        # （pystray/_util.serialized_image(icon, 'ICO') → PIL save）才能拿到 HICON；
+        # 少了这个插件，打包版托盘会静默失败（异常在 pystray 线程里，windowed 构建没有 stderr）。
         # --- 未支持的格式插件 ---
         'PIL.AvifImagePlugin',
         'PIL.BlpImagePlugin',
@@ -61,7 +76,6 @@ a = Analysis(
         'PIL.GribStubImagePlugin',
         'PIL.Hdf5StubImagePlugin',
         'PIL.IcnsImagePlugin',
-        'PIL.IcoImagePlugin',
         'PIL.ImImagePlugin',
         'PIL.ImtImagePlugin',
         'PIL.IptcImagePlugin',
@@ -136,6 +150,7 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=['config\\data\\favicon.ico'],
+    version=make_version_info(_APP_VERSION),
 )
 coll = COLLECT(
     exe,
