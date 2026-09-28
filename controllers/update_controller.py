@@ -37,9 +37,11 @@ class UpdateController:
         self.__dialog: UpdateDialog | None = None
         self.__downloader: internet.MultiThreadDownloader | None = None
         self.__temp_dir: Path | None = None
+        self.__version = ""
         self.__cancelled = False
 
     def do_update(self, download_url: str, version: str) -> None:
+        self.__version = version
         dialog = UpdateDialog(self.app.view)
         dialog.status_label.config(text=_("正在下载更新包 v{version}...", version=version))
         self.__dialog = dialog
@@ -166,12 +168,13 @@ class UpdateController:
             if not bat_path:
                 raise FileNotFoundError("未找到 update.bat 安装脚本")
             subprocess.Popen(
-                [str(bat_path), ROOT],
+                [str(bat_path), str(ROOT), self.__version],
                 shell=True,
-                creationflags=subprocess.CREATE_NEW_CONSOLE,
+                creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
+                stdin=subprocess.DEVNULL,
             )
-            messagebox.showinfo(_("更新完成"), _("更新包已下载并安装，请重启程序以完成更新。"))
         except Exception as e:
             messagebox.showerror(_("更新失败"), _("更新过程中出现错误：\n{msg}", msg=str(e)))
-        finally:
             self.__cleanup()
+            return
+        self.app.destroy()
