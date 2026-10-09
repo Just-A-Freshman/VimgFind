@@ -201,8 +201,10 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
                 if item not in self._results:
                     return
                 keys = list(self._results.keys())
-                start = next(i for i, k in enumerate(keys) if k == item or k in self.__selected_items)
-                end = keys.index(item, start)
+                selected_items = [i for i, k in enumerate(keys) if k in self.__selected_items]
+                current_click_item = next(i for i, res in enumerate(self._results) if res == item)
+                start = min(selected_items[0], current_click_item)
+                end = selected_items[-1] if current_click_item < selected_items[0] else current_click_item
                 collected = keys[start:end + 1]
                 if collected:
                     self.selection_set(*collected)
