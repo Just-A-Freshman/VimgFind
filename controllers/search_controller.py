@@ -261,9 +261,9 @@ class SearchController:
                 yielded += 1
                 yield (
                     img_path,
-                    f"{st.st_size / 1024 / 1024:.2f}MB",
+                    f"{st.st_size / 1024 / 1024:>6.2f}MB",
                     mtime.strftime("%Y-%m-%d %H:%M:%S"),
-                    f"{similarity:.2f}%",
+                    f"{similarity:>7.2f}%",
                 )
 
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
