@@ -18,7 +18,7 @@ class MetaInfo:
 @dataclass(slots=True)
 class EncoderConfig:
     image_size: int = 0
-    preprocess_type: Literal["resize", "resize_crop", "resize_pad"] = "resize"
+    preprocess_type: Literal["resize", "resize_crop", "resize_pad", "resize_ar"] = "resize"
     fill_color: tuple[int, int, int] | None = None
     context_length: int = 0
     mean: tuple[float, float, float] = (0, 0, 0)
@@ -27,6 +27,10 @@ class EncoderConfig:
     output_index: int = 0
     image_encoder_path: str = ""
     text_encoder_path: str = ""
+    # resize_ar（保持宽高比）专用，对应源模型 image processor 的 patch_size / pooling_kernel_size / max_soft_tokens
+    patch_size: int = 16
+    pool_size: int = 3
+    max_soft_tokens: int = 0
 
 
 @dataclass(slots=True)
