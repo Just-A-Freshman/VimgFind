@@ -397,9 +397,9 @@ class UnigramTokenizer(BaseTokenizer):
         tok._decoder = {}
         tok._scores = {}
 
-        tok._add_dummy_prefix = True
-        tok._remove_extra_whitespaces = True
-        tok._escape_whitespaces = True
+        tok._add_dummy_prefix = bool(data.get("add_dummy_prefix", True))
+        tok._remove_extra_whitespaces = bool(data.get("remove_extra_whitespaces", True))
+        tok._escape_whitespaces = bool(data.get("escape_whitespaces", True))
 
         tok._control_tokens = set()
         tok._byte_tokens = set()
