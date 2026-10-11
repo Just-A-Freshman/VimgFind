@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Callable, Literal
 from threading import Lock
 import logging
@@ -12,21 +13,26 @@ from .tokenizer import create_tokenizer
 from config.types import EncoderConfig
 
 class ImagePreprocess:
-    VALID_TYPES = frozenset({"resize", "resize_crop", "resize_pad"})
-    __slots__ = ("__image_size", "__mean", "__std", "__fill_color", "__apply_geometry")
+    __slots__ = ("__image_size", "__mean", "__std", "__fill_color", "__ar_params", "__apply_geometry")
 
     def __init__(
         self,
         image_size: int,
-        preprocess_type: Literal["resize", "resize_crop", "resize_pad"] = "resize_crop",
+        preprocess_type: Literal["resize", "resize_crop", "resize_pad", "resize_ar"] = "resize_crop",
         mean: tuple[float, float, float] | np.ndarray | None = None,
         std: tuple[float, float, float] | np.ndarray | None = None,
-        fill_color: tuple[int, int, int] | None = None
+        fill_color: tuple[int, int, int] | None = None,
+        patch_size: int = 16,
+        pool_size: int = 3,
+        max_soft_tokens: int = 0
     ) -> None:
-        if preprocess_type not in self.VALID_TYPES:
+        if preprocess_type not in {"resize", "resize_crop", "resize_pad", "resize_ar"}:
             raise ValueError(f"未知的 preprocess_type: {preprocess_type!r}")
+        if preprocess_type == "resize_ar" and min(patch_size, pool_size, max_soft_tokens) <= 0:
+            raise ValueError("resize_ar 需要 patch_size / pool_size / max_soft_tokens 均 > 0")
 
         self.__image_size = image_size
+        self.__ar_params = (patch_size, pool_size, max_soft_tokens)
         self.__mean = np.array(mean, dtype=np.float32).ravel()[:, None, None] if mean is not None else None
         self.__std = np.array(std, dtype=np.float32).ravel()[:, None, None] if std is not None else None
 
@@ -44,6 +50,7 @@ class ImagePreprocess:
             "resize": self.__apply_resize,
             "resize_crop": self.__apply_resize_crop,
             "resize_pad": self.__apply_resize_pad,
+            "resize_ar": self.__apply_resize_ar,
         }
         self.__apply_geometry = _geo_map[preprocess_type]
 
@@ -95,6 +102,32 @@ class ImagePreprocess:
         canvas.paste(img, (left, top))
         return canvas
 
+    def __apply_resize_ar(self, img: Image.Image) -> Image.Image:   
+        width, height = img.size
+        patch_size, pool_size, max_soft_tokens = self.__ar_params
+        side = patch_size * pool_size
+        max_patches = max_soft_tokens * pool_size**2
+        factor = math.sqrt(max_patches * patch_size**2 / (height * width))
+        target_h = int(math.floor(factor * height / side)) * side
+        target_w = int(math.floor(factor * width / side)) * side
+        max_side = (max_patches // pool_size**2) * side
+        if target_h == 0 and target_w == 0:
+            raise ValueError(f"{width}x{height} 太小，无法缩放到 {side} 的整数倍")
+        if target_h == 0:
+            target_h = side
+            target_w = min(int(math.floor(width / height)) * side, max_side)
+        elif target_w == 0:
+            target_w = side
+            target_h = min(int(math.floor(height / width)) * side, max_side)
+
+        if target_h * target_w > max_patches * patch_size**2:
+            raise ValueError(
+                f"{width}x{height} 缩放为 {target_h}x{target_w} 超出 {max_patches} 个 patch 的预算"
+            )
+        if (target_h, target_w) == (height, width):
+            return img
+        return img.resize((target_w, target_h), Image.Resampling.BICUBIC)
+
 
 class MultiModalEncoder:
     __slots__ = (
@@ -111,6 +144,9 @@ class MultiModalEncoder:
             mean=config.mean,
             std=config.std,
             fill_color=config.fill_color,
+            patch_size=config.patch_size,
+            pool_size=config.pool_size,
+            max_soft_tokens=config.max_soft_tokens,
         )
         self.__normalization = config.normalization
         self.__output_index = config.output_index
@@ -218,10 +254,11 @@ class MultiModalEncoder:
                 one_mask = np.expand_dims(attention_mask[i], axis=0)
                 feed = {}
                 for inp in self.__text_session.get_inputs():
-                    if inp.name == "attention_mask":
+                    name = inp.name.lower()
+                    if "attention_mask" in name:
                         dtype = np.int32 if "int32" in inp.type else np.int64
                         feed[inp.name] = one_mask.astype(dtype)
-                    elif inp.name == "input_ids":
+                    elif "input_ids" in name:
                         dtype = np.int32 if "int32" in inp.type else np.int64
                         feed[inp.name] = one_text.astype(dtype)
                     else:
