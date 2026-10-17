@@ -342,7 +342,7 @@ class SearchController:
     def __is_allow_to_search(self) -> bool:
         assert self.app.search_tools
         if not self.app.setting.model.index.search_dir:
-            messagebox.showinfo(_("提示"), _("请在索引选项卡索引至少一个目录！"))
+            self.app.view.search_tab.set_empty_tip(_("请先在索引选项卡添加至少一个索引目录并点击更新"))
             return False
         if not self.__is_finish_search.is_set():
             return False
@@ -383,7 +383,10 @@ class SearchController:
     def __handle_empty_result(self, status: SearchStatus) -> None:
         tab = self.app.view.search_tab
         if status == SearchStatus.EMPTY_INDEX:
-            tab.set_empty_tip(_("索引中还没有任何图像，也许\n你还没有点击更新索引目录？"))
+            if len(self.app.setting.model.index.search_dir):
+                tab.set_empty_tip(_("索引中还没有图片呢，也许你还没有点击更新索引目录？"))
+            else:
+                tab.set_empty_tip(_("请先在索引选项卡添加至少一个索引目录并点击更新"))
         elif status == SearchStatus.EMPTY_INPUT:
             messagebox.showinfo(_("提示"), _("请输入搜索内容！"))
         elif status == SearchStatus.ENCODE_FAILED:

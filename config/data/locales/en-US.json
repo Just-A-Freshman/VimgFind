@@ -74,7 +74,6 @@
   "管理排除规则": "Deny Rules",
   "筛选条件过于严格，没有匹配到任何图像！": "Filters are too strict, no matching images!",
   "索引中没有匹配排除规则的文件。": "No files match the exclusion rules.",
-  "索引中还没有任何图像，也许\n你还没有点击更新索引目录？": "No images in the index yet.\nHave you clicked 'Update Index'?",
   "索引更新中，暂不可用": "Index updating, unavailable",
   "索引更新完成！": "Index update complete!",
   "索引更新时遇到错误：{e}": "Index update error: {e}",
@@ -137,7 +136,6 @@
   "无法检查更新：{error}\n\n请检查网络连接后重试。": "Update check failed: {error}\n\nCheck your network and retry.",
   "修改时间": "Modified",
   "被排除索引的文件夹/文件": "Excluded from index",
-  "请在索引选项卡索引至少一个目录！": "Please index at least one directory in the Index tab!",
   "警告": "Warning",
   "正在扫描目录... 已处理 {scanned_count} 项": "Scanning directory...{scanned_count} items processed",
   "目录扫描完成：共处理 {scanned_count} 项": "Directory scan completed: {scanned_count} items processed",
@@ -246,5 +244,8 @@
   "显示主窗口": "Show main window",
   "退出": "Exit",
   "已最小化到托盘，双击图标恢复": "Minimized to tray. Double-click the icon to restore.",
-  "托盘不可用，已直接关闭程序": "Tray is unavailable; the app was closed instead"
+  "托盘不可用，已直接关闭程序": "Tray is unavailable; the app was closed instead",
+  "筛选条件过于严格，试试在右上角把结果数调高？": "Filters are too strict. Try increasing the result count in the top-right corner?",
+  "请先在索引选项卡添加至少一个索引目录并点击更新": "Add at least one index folder and click Update Index in the Index tab first.",
+  "索引中还没有图片呢，也许你还没有点击更新索引目录？": "No images in the index yet. Have you clicked Update Index in the Index tab?"
 }
