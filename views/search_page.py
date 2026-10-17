@@ -275,13 +275,13 @@ class SearchFrame(Frame):
         if not text:
             self.empty_tip_label.place_forget()
             return
-        self.empty_tip_label.config(text=text)
+        self.empty_tip_label.config(text=text, wraplength=max(TkS(40), int(self.preview_container.winfo_width() * 0.8)))
         self.empty_tip_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         self.empty_tip_label.lift()
 
     def set_nav_visible(self, show: bool) -> None:
         if show:
-            self.nav_frame.grid(row=1, column=0, sticky='ew', padx=(TkS(1), TkS(12)), pady=(0, TkS(1)))
+            self.nav_frame.grid(row=1, column=0, sticky=tk.EW, padx=(TkS(1), TkS(12)), pady=(0, TkS(1)))
             self.nav_frame.lift()
         else:
             self.nav_frame.grid_forget()
