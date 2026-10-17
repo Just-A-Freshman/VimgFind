@@ -31,7 +31,7 @@ class FilterPanel(SingletonDialog):
     def __init__(self, parent) -> None:
         if hasattr(self, "_initialized"):
             return
-        super().__init__(parent, title=_("过滤设置"), padx=TkS(6), pady=TkS(6))
+        super().__init__(parent, title=_("过滤设置"), padx=TkS(6), pady=TkS(6), width=TkS(320), height=TkS(230))
         for col, weight in enumerate([0, 1, 0, 0, 1, 0, 0]):
             self.grid_columnconfigure(col, weight=weight)
         self.grid_columnconfigure(6, minsize=TkS(6))
