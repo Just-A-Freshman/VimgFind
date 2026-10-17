@@ -278,16 +278,12 @@ class SearchController:
 
         return keep
 
-    @staticmethod
-    def __stat_result(resolve, img_path: str) -> tuple[os.stat_result, str]:
-        return os.stat(img_path), resolve(img_path)
-
     def __iter_filtered_results(self, raw_results: Iterator[tuple[str, float]]) -> Iterator[FilterResult]:
         cache = self.__results_cache = []
         keep = self.__build_filter()
         resolve = unc_ops.fast_unc_resolver()
         with ThreadPoolExecutor(max_workers=50) as pool:
-            futures = [(img_path, similarity, pool.submit(self.__stat_result, resolve, img_path))
+            futures = [(img_path, similarity, pool.submit(lambda resolve, img_path: (os.stat(img_path), resolve(img_path)), resolve, img_path))
                        for img_path, similarity in raw_results]
             for img_path, similarity, future in futures:
                 try:
@@ -473,7 +469,6 @@ class SearchController:
         if self.__preview_timer is not None:
             self.app.view.after_cancel(self.__preview_timer)
         self.__preview_timer = self.app.view.after(100, _preview)
-
 
 
 class FilterController:
