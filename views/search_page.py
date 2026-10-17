@@ -22,13 +22,10 @@ class FilterPanel(SingletonDialog):
     folder_select_all: Checkbutton
     dedup_check: Checkbutton
     folder_listbox: tk.Listbox
-    confirm_btn: Button
-    cancel_btn: Button
     __slots__ = (
         "sim_scale", "sim_value", "ext_combo",
         "size_min", "size_min_unit", "size_max", "size_max_unit",
         "folder_select_all", "dedup_check", "folder_listbox",
-        "confirm_btn", "cancel_btn",
     )
 
     def __init__(self, parent) -> None:
@@ -46,7 +43,6 @@ class FilterPanel(SingletonDialog):
         self.folder_select_all = self.__set_folder_select_all(folder_left_frame)
         self.dedup_check = self.__set_dedup_check(folder_left_frame)
         self.folder_listbox = self.__set_folder_listbox()
-        self.confirm_btn, self.cancel_btn = self.__set_confirm_cancel_btn()
 
     def __set_sim_scale(self) -> tuple[Scale, Label]:
         label = Label(self, text=_("相似度阈值"), width=10, anchor=tk.W)
@@ -118,15 +114,6 @@ class FilterPanel(SingletonDialog):
         h_scroll.grid(row=1, column=0, sticky=tk.EW)
         folder_listbox.configure(xscrollcommand=h_scroll.set)
         return folder_listbox
-
-    def __set_confirm_cancel_btn(self) -> tuple[Button, Button]:
-        btn_frame = Frame(self)
-        btn_frame.grid(row=4, column=0, columnspan=7, pady=(TkS(7), TkS(15)))
-        confirm_btn = Button(btn_frame, text=_("确定"), takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)))
-        confirm_btn.grid(row=0, column=0, padx=(0, TkS(25)))
-        cancel_btn = Button(btn_frame, text=_("取消"), takefocus=False, cursor="hand2", padding=(TkS(10), TkS(4)), style="secondary")
-        cancel_btn.grid(row=0, column=1)
-        return confirm_btn, cancel_btn
 
 
 class SearchFrame(Frame):
