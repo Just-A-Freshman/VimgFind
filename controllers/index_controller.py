@@ -42,10 +42,10 @@ class IndexController:
         # bind event
         tab.index_dataset_table.config(on_reorder=self.__on_reorder)
         tab.add_index_button.config(command=self.add_search_dir)
-        tab.clean_excluded_button.config(command=self.__clean_excluded)
-        tab.update_index_button.config(command=self.__sync_index)
-        tab.delete_index_button.config(command=self.__delete_search_dir)
-        tab.rebuild_index_button.config(command=self.__rebuild_index)
+        tab.clean_excluded_button.config(command=self.clean_excluded)
+        tab.update_index_button.config(command=self.sync_index)
+        tab.delete_index_button.config(command=self.delete_search_dir)
+        tab.rebuild_index_button.config(command=self.rebuild_index)
         tab.auto_update_checkbutton.config(command=self.__toggle_auto_update)
         tab.exclude_button.config(command=self.__open_exclude_dialog)
 
@@ -113,6 +113,72 @@ class IndexController:
         self.refresh_index_dataset_table()
         self.app.setting.save()
 
+    @decorators.send_task
+    @decorators.redirect_output
+    def sync_index(self, show_message: bool = True, auto: bool = False) -> None:
+        def sync_current_model() -> None:
+            assert self.app.search_tools
+            tools = self.app.search_tools
+            tools.remove_nonexists()
+            tools.update_index(*self.__get_index_params())
+            tools.remove_duplicate()
+            if auto and tools.total_index_count > 100000 and tools.valid_index_count / tools.total_index_count < 0.8:
+                tools.rebuild_index(*self.__get_index_params(), force_soft_rebuild=True)
+
+        if auto:
+            if self.__is_updating:
+                return
+            show_message = False
+            self.__is_auto_updating = True
+        else:
+            self.__is_auto_updating = False        
+        self.__run_index_task(sync_current_model, show_message)
+
+    @decorators.send_task
+    @decorators.redirect_output
+    def delete_search_dir(self) -> None:
+        assert self.app.search_tools
+        selected = self.app.view.index_tab.index_dataset_table.selection()
+        if not selected:
+            return
+        answer = messagebox.askyesno(_("提示"), _("你确定要删除选中目录吗？"))
+        if not answer:
+            return
+        self.__is_updating = True
+        self.__check_queue()
+        dirs_to_delete = []
+        search_dirs: list = self.app.setting.model.index.search_dir
+        for item in selected:
+            delete_search_dir = self.app.view.index_tab.index_dataset_table.item(item, 'values')[0]
+            dirs_to_delete.append(delete_search_dir)
+            search_dirs.remove(delete_search_dir)
+            self.app.view.index_tab.index_dataset_table.delete(item)
+        self.refresh_index_dataset_table()
+        remaining_dirs = [d for d in self.app.setting.model.index.search_dir]
+        for dir_path in dirs_to_delete:
+            self.app.search_tools.remove_files_in_directory(dir_path, remaining_dirs)
+        self.app.search_tools.remove_nonexists()
+        self.app.setting.save()
+        self.__is_updating = False
+        self.app.view.after(1000, self.update_index_tip)
+    
+    @decorators.send_task
+    @decorators.redirect_output
+    def rebuild_index(self) -> None:
+        def rebuild_current_model() -> None:
+            assert self.app.search_tools
+            self.app.search_tools.rebuild_index(*self.__get_index_params())
+
+        answer = messagebox.askyesno(_("提示"), _("重建索引极其耗时，\n您确定要进行重建吗？"))
+        if not answer:
+            return
+        if self.app.setting.app.update_index_range == "all" and len(self.app.model_controller.get_downloaded_models()) > 1:
+            answer = messagebox.askyesno(_("提示"), _("您确定要重建全部模型的索引吗？"))
+            if not answer:
+                return
+        self.__is_auto_updating = False
+        self.__run_index_task(rebuild_current_model)
+
     def refresh_index_dataset_table(self) -> None:
         tb = self.app.view.index_tab.index_dataset_table
         search_dirs: list = self.app.setting.model.index.search_dir
@@ -153,44 +219,6 @@ class IndexController:
         models = self.app.model_controller.get_downloaded_models()
         if idx < len(models):
             self.app.model_controller.switch_model(models[idx].meta.id)
-
-    @decorators.send_task
-    @decorators.redirect_output
-    def __sync_index(self, show_message: bool = True, auto: bool = False) -> None:
-        def sync_current_model() -> None:
-            assert self.app.search_tools
-            tools = self.app.search_tools
-            tools.remove_nonexists()
-            tools.update_index(*self.__get_index_params())
-            tools.remove_duplicate()
-            if auto and tools.total_index_count > 100000 and tools.valid_index_count / tools.total_index_count < 0.8:
-                tools.rebuild_index(*self.__get_index_params(), force_soft_rebuild=True)
-
-        if auto:
-            if self.__is_updating:
-                return
-            show_message = False
-            self.__is_auto_updating = True
-        else:
-            self.__is_auto_updating = False        
-        self.__run_index_task(sync_current_model, show_message)
-
-    @decorators.send_task
-    @decorators.redirect_output
-    def __rebuild_index(self) -> None:
-        def rebuild_current_model() -> None:
-            assert self.app.search_tools
-            self.app.search_tools.rebuild_index(*self.__get_index_params())
-
-        answer = messagebox.askyesno(_("提示"), _("重建索引极其耗时，\n您确定要进行重建吗？"))
-        if not answer:
-            return
-        if self.app.setting.app.update_index_range == "all" and len(self.app.model_controller.get_downloaded_models()) > 1:
-            answer = messagebox.askyesno(_("提示"), _("您确定要重建全部模型的索引吗？"))
-            if not answer:
-                return
-        self.__is_auto_updating = False
-        self.__run_index_task(rebuild_current_model)
 
     def __get_index_params(self) -> tuple[list[str], int, list[str], tqdm]:
         search_dirs = self.app.setting.model.index.search_dir
@@ -262,7 +290,7 @@ class IndexController:
             self.app.view.switch_tab.tab(self.app.view.search_tab, state=tk.NORMAL)
             setattr(self.app.search_tools, "force_stop_update", False)
             self.app.view.after(1000, self.update_index_tip)
-            tab.update_index_button.config(text=_("更新索引目录"), command=self.__sync_index)
+            tab.update_index_button.config(text=_("更新索引目录"), command=self.sync_index)
             tab.delete_index_button.config(state=tk.NORMAL)
             tab.rebuild_index_button.config(state=tk.NORMAL)
             self.app.model_controller.on_model_select()
@@ -283,34 +311,6 @@ class IndexController:
         dialog.protocol("WM_DELETE_WINDOW", controller.on_save)
         controller.load_rules_into_view()
 
-    @decorators.send_task
-    @decorators.redirect_output
-    def __delete_search_dir(self) -> None:
-        assert self.app.search_tools
-        selected = self.app.view.index_tab.index_dataset_table.selection()
-        if not selected:
-            return
-        answer = messagebox.askyesno(_("提示"), _("你确定要删除选中目录吗？"))
-        if not answer:
-            return
-        self.__is_updating = True
-        self.__check_queue()
-        dirs_to_delete = []
-        search_dirs: list = self.app.setting.model.index.search_dir
-        for item in selected:
-            delete_search_dir = self.app.view.index_tab.index_dataset_table.item(item, 'values')[0]
-            dirs_to_delete.append(delete_search_dir)
-            search_dirs.remove(delete_search_dir)
-            self.app.view.index_tab.index_dataset_table.delete(item)
-        self.refresh_index_dataset_table()
-        remaining_dirs = [d for d in self.app.setting.model.index.search_dir]
-        for dir_path in dirs_to_delete:
-            self.app.search_tools.remove_files_in_directory(dir_path, remaining_dirs)
-        self.app.search_tools.remove_nonexists()
-        self.app.setting.save()
-        self.__is_updating = False
-        self.app.view.after(1000, self.update_index_tip)
-
     def __toggle_auto_update(self) -> None:
         enabled = self.app.view.index_tab.auto_update_checkbutton.instate(['selected'])
         self.app.setting.app.auto_update_index = enabled
@@ -319,7 +319,7 @@ class IndexController:
                 self.idle_tracker = idle_tracker.IdleMonitor(
                     root=self.app.view,
                     threshold=self.app.setting.app.auto_update_idle_threshold,
-                    on_idle=lambda: self.__sync_index(auto=True),
+                    on_idle=lambda: self.sync_index(auto=True),
                 )
                 self.idle_tracker.start()
         else:
@@ -330,7 +330,7 @@ class IndexController:
                 self.app.search_tools.force_stop_update = True
 
     @decorators.send_task
-    def __clean_excluded(self) -> None:
+    def clean_excluded(self) -> None:
         assert self.app.search_tools
         search_dirs = self.app.setting.model.index.search_dir
         rules = self.app.setting.model.index.exclude_rules or []
