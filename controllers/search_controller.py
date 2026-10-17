@@ -182,6 +182,12 @@ class SearchController:
         else:
             self.search_by_browser([str(self.__last_search_content)])
 
+    def reset_results(self) -> None:
+        self.__results_cache = []
+        tab = self.app.view.search_tab
+        tab.set_empty_tip()
+        tab.preview_view.clear()
+
     def apply_filters(self) -> None:
         if not self.__results_cache:
             return
@@ -300,14 +306,12 @@ class SearchController:
         if not self.__is_allow_to_search():
             return
         self.__is_finish_search.clear()
-        self.__results_cache = []
+        self.reset_results()
         tab = self.app.view.search_tab
-        tab.set_empty_tip()
         if len(self.__queue_paths) > 0 or input_data is None:
             tab.set_nav_state(self.__current_page + 1, len(self.__queue_paths))
             source_path = self.__queue_paths[self.__current_page]
             if not source_path or not Path(source_path).is_file():
-                tab.preview_view.clear()
                 self.show_toast(_("第 {n} 张图片不存在或已被删除！", n=self.__current_page + 1))
                 self.__is_finish_search.set()
                 return
@@ -323,7 +327,6 @@ class SearchController:
         if not self.__setup_search_ui(input_data, source_path):
             return
         try:
-            tab.preview_view.clear()
             results = self.__iter_filtered_results(self.app.search_tools.checkout(input_data))
             try:
                 first_result = next(results)
@@ -342,6 +345,7 @@ class SearchController:
     def __is_allow_to_search(self) -> bool:
         assert self.app.search_tools
         if not self.app.setting.model.index.search_dir:
+            self.reset_results()
             self.app.view.search_tab.set_empty_tip(_("请先在索引选项卡添加至少一个索引目录并点击更新"))
             return False
         if not self.__is_finish_search.is_set():

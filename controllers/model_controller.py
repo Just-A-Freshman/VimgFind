@@ -155,6 +155,7 @@ class ModelController:
         self.app.setting.app.current_model = model_id
         self.app.search_tools = SearchTool(self.app.setting)
         if resend_search:
+            self.app.search_controller.reset_results()
             self.app.search_controller.resend_last_search()
         self.app.view.index_tab.switch_model_combobox.set(self._model_cache[model_id].meta.name)
         self.app.index_controller.refresh_index_dataset_table()
