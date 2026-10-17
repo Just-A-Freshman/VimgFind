@@ -40,14 +40,12 @@ class AppController:
     def env_init(self) -> None:
         # bind event
         self.view.common_setting_btn.config(command=lambda: self.setting_controller.show_dialog())
-        self.view.bind_all("<Button-1>", self.filter_controller.on_root_click)
         self.view.drop_target_register(DND_FILES)
         self.view.dnd_bind('<<Drop>>', self.__on_drop)
         self.view.protocol("WM_DELETE_WINDOW", self.__on_close)
 
         # env init
         self.search_controller.env_init()
-        self.filter_controller.env_init()
         self.search_tools = SearchTool(self.setting)
         self.model_controller.env_init()
         self.index_controller.env_init()
