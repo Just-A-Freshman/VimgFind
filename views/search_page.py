@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar
+from PIL import Image, ImageDraw, ImageTk
+from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar, Style
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
 from config.settings import TkS, Setting
@@ -193,8 +194,33 @@ class SearchFrame(Frame):
         return ipt
 
     def __set_filter_btn(self) -> tk.Label:
-        btn = tk.Label(self, text="▼", cursor="hand2", bd=0, highlightthickness=0, relief=tk.FLAT)
+        btn = tk.Label(self, cursor="hand2", bd=0, highlightthickness=0, relief=tk.FLAT)
         btn.pack(in_=self.search_entry, side=tk.RIGHT, fill=tk.Y, ipadx=TkS(6), pady=TkS(2), padx=TkS(2))
+
+        def draw_icon(color: str) -> None:
+            scale, size = 3, TkS(16)
+            s = size * scale
+            pad = max(1, s // 8)
+            cx, half_top, half_neck = s * 0.34, s * 0.30, s * 0.07
+            neck_y, bottom = s * 0.55, s - pad
+            im = Image.new("RGBA", (s, s), 0)
+            ImageDraw.Draw(im).polygon([
+                (cx - half_top, pad), (cx + half_top, pad),
+                (cx + half_neck, neck_y), (cx + half_neck, bottom),
+                (cx - half_neck, bottom), (cx - half_neck, neck_y),
+            ], fill=color)
+            im = im.resize((size, size), Image.Resampling.LANCZOS)
+            thick = max(1, size // 12)
+            d = ImageDraw.Draw(im)
+            for i in range(3):
+                y = int(size * (0.30 + i * 0.22))
+                d.rectangle([int(size * 0.60), y, size - thick, y + thick - 1], fill=color)
+            btn.image = ImageTk.PhotoImage(im)   # type:ignore
+            btn.config(image=btn.image, bg=Style().colors.get("inputbg"))  # type:ignore
+
+        btn.bind("<<ThemeChanged>>", lambda _: draw_icon(Style().colors.get("inputfg"))) # type:ignore
+        btn.bind("<Enter>", lambda _: btn.config(bg=Style().colors.get("active")))  # type:ignore
+        btn.bind("<Leave>", lambda _: btn.config(bg=Style().colors.get("inputbg"))) # type:ignore
         return btn
 
     def __set_search_by_browser_button(self, parent) -> Button:
