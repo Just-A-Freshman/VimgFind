@@ -147,6 +147,7 @@ class SearchFrame(Frame):
     nav_next: Button
     nav_page_label: Label
     toast_label: Label
+    empty_tip_label: Label
     __slots__ = (
         "search_entry", "filter_btn",
         "search_by_browser_btn", "search_by_clipboard_btn",
@@ -155,7 +156,7 @@ class SearchFrame(Frame):
         "preview_frame1", "preview_frame2",
         "preview_canvas1", "preview_canvas2",
         "nav_frame", "nav_prev", "nav_next",
-        "nav_page_label", "toast_label",
+        "nav_page_label", "toast_label", "empty_tip_label",
     )
 
     def __init__(self, parent, **kwargs) -> None:
@@ -180,6 +181,11 @@ class SearchFrame(Frame):
         self.preview_canvas1 = PreviewCanvasView(self.preview_frame1)
         self.preview_canvas2 = PreviewCanvasView(self.preview_frame2)
         self.toast_label = Label(self.preview_container, padding=TkS(5), style="inverse-success")
+        self.empty_tip_label = Label(
+            self.preview_container, padding=TkS(12), anchor=tk.CENTER, justify=tk.CENTER,
+            background=Style().colors.get("inputbg"),   # type: ignore
+        )
+        self.empty_tip_label.bind("<<ThemeChanged>>", lambda _: self.empty_tip_label.config(background=Style().colors.get("inputbg"))) # type: ignore
         self.nav_frame, self.nav_page_label, self.nav_prev, self.nav_next = self.__set_nav_buttons()
         self.filter_panel = None
 
@@ -277,6 +283,14 @@ class SearchFrame(Frame):
         nav_prev.pack(side=tk.RIGHT, padx=(0, TkS(5)), pady=(TkS(7), TkS(2)))
         nav_frame.pack_forget()
         return nav_frame, nav_page_label, nav_prev, nav_next
+
+    def set_empty_tip(self, text: str = "") -> None:
+        if not text:
+            self.empty_tip_label.place_forget()
+            return
+        self.empty_tip_label.config(text=text)
+        self.empty_tip_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        self.empty_tip_label.lift()
 
     def set_nav_visible(self, show: bool) -> None:
         if show:
