@@ -6,11 +6,12 @@ from PIL import Image, ImageDraw, ImageTk
 from ttkbootstrap import Button, Entry, Checkbutton, Scale, Frame, Label, Labelframe, Combobox, Scrollbar, Style
 
 from .widgets import BasicImagePreviewView, PreviewCanvasView
+from .widgets.simpledialog import SingletonDialog
 from config.settings import TkS, Setting
 from utils.i18n import _
 
 
-class FilterPanel(Labelframe):
+class FilterPanel(SingletonDialog):
     sim_scale: Scale
     sim_value: Label
     ext_combo: Combobox
@@ -30,11 +31,11 @@ class FilterPanel(Labelframe):
         "confirm_btn", "cancel_btn",
     )
 
-    def __init__(self, parent, **kwargs) -> None:
-        super().__init__(parent, text=_("过滤设置"), **kwargs)
-        self.place_forget()
-        self._setup_grid()
-
+    def __init__(self, parent) -> None:
+        if hasattr(self, "_initialized"):
+            return
+        super().__init__(parent, title=_("过滤设置"), show=False, padx=TkS(6), pady=TkS(6))
+        self.__setup_grid(self)
         self.sim_scale, self.sim_value = self.__set_sim_scale()
         self.ext_combo = self.__set_ext_combo()
         self.size_min, self.size_min_unit = self.__set_size_min()
@@ -45,10 +46,11 @@ class FilterPanel(Labelframe):
         self.folder_listbox = self.__set_folder_listbox()
         self.confirm_btn, self.cancel_btn = self.__set_confirm_cancel_btn()
 
-    def _setup_grid(self) -> None:
+    @staticmethod
+    def __setup_grid(parent) -> None:
         for col, weight in enumerate([0, 1, 0, 0, 1, 0, 0]):
-            self.grid_columnconfigure(col, weight=weight)
-        self.grid_columnconfigure(6, minsize=TkS(6))
+            parent.grid_columnconfigure(col, weight=weight)
+        parent.grid_columnconfigure(6, minsize=TkS(6))
 
     def __set_sim_scale(self) -> tuple[Scale, Label]:
         label = Label(self, text=_("相似度阈值"), width=10, anchor=tk.W)
@@ -94,12 +96,14 @@ class FilterPanel(Labelframe):
         left_frame.grid(row=3, column=0, sticky=tk.NW, padx=(TkS(6), 0), pady=(TkS(5), TkS(1)))
         return left_frame
 
-    def __set_folder_select_all(self, parent: Frame) -> Checkbutton:
+    @staticmethod
+    def __set_folder_select_all(parent: Frame) -> Checkbutton:
         folder_select_all = Checkbutton(parent, text=_("全选"), cursor="hand2")
         folder_select_all.pack(anchor=tk.W, pady=(TkS(11), 0))
         return folder_select_all
 
-    def __set_dedup_check(self, parent: Frame) -> Checkbutton:
+    @staticmethod
+    def __set_dedup_check(parent: Frame) -> Checkbutton:
         dedup_check = Checkbutton(parent, text=_("去重"), cursor="hand2")
         dedup_check.pack(anchor=tk.W, pady=(TkS(8), 0))
         return dedup_check
