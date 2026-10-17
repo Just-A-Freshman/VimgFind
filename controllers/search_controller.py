@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Callable, Iterator, Literal
 from dataclasses import dataclass
 
 import tkinter as tk
@@ -19,6 +19,7 @@ from core import SearchStatus
 from config.settings import Setting, TkS
 from utils.i18n import _
 from views.widgets import DetailListView, ThumbnailGridView
+from views.search_page import FilterPanel
 import utils.shortcut as shortcut
 import utils.decorators as decorators
 import utils.file_ops as file_ops
@@ -27,6 +28,22 @@ import utils.unc_ops as unc_ops
 
 if TYPE_CHECKING:
     from .app_controller import AppController
+
+
+@dataclass(slots=True)
+class FilterResult:
+    path: Path
+    similarity: float
+    size: int
+    mtime: float
+
+    def row(self) -> tuple[Path, str, str, str]:
+        return (
+            self.path,
+            f"{self.size / 1024 / 1024:>6.2f}MB",
+            datetime.datetime.fromtimestamp(self.mtime).strftime("%Y-%m-%d %H:%M:%S"),
+            f"{self.similarity:>7.2f}%",
+        )
 
 
 class SearchController:
@@ -40,6 +57,8 @@ class SearchController:
         self.__preview_timer: str | None = None
         self.__nav_debounce_timer: str | None = None
         self.__show_toast_timer: str | None = None
+        self.__results_cache: list[FilterResult] = []
+        self.__pending_filter: bool = False
 
     def env_init(self, only_preview_widgets: bool = False) -> None:
         tab = self.app.view.search_tab
@@ -66,10 +85,8 @@ class SearchController:
         tab.search_by_clipboard_btn.config(command=self.search_image_by_clipboard)
         tab.nav_prev.config(command=lambda: self.__debounce_navigate(-1))
         tab.nav_next.config(command=lambda: self.__debounce_navigate(1))
-        tab.filter_panel.confirm_btn.config(command=self.app.filter_controller.confirm_filter)
-        tab.filter_panel.cancel_btn.config(command=self.app.filter_controller.cancel_filter)
         tab.more_options_button.bind("<ButtonPress-1>", lambda e: (self.app.menu_controller.show_adjustment_menu(e), "break")[1])
-        tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.toggle_filter_panel())
+        tab.filter_btn.bind("<Button-1>", lambda e: self.app.filter_controller.show_filter_panel())
         tab.search_entry.bind("<Return>", lambda e: self.search_image_by_text())   
 
     @decorators.send_task
@@ -165,6 +182,25 @@ class SearchController:
         else:
             self.search_by_browser([str(self.__last_search_content)])
 
+    def apply_filters(self) -> None:
+        if not self.__results_cache:
+            return
+        if not self.__is_finish_search.is_set():
+            self.__pending_filter = True
+            return
+        self.__pending_filter = False
+        keep = self.__build_filter()
+        kept = [result for result in self.__results_cache if keep(result)]
+        tab = self.app.view.search_tab
+        if not kept:
+            tab.preview_view.clear()
+            tab.set_empty_tip(_("筛选条件过于严格，试试在右上角把结果数调高？"))
+            return
+        tab.set_empty_tip()
+        self.__is_finish_search.clear()
+        tab.preview_view.clear()
+        self.__smooth_preview(result.row() for result in kept)
+
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
         try:
@@ -190,6 +226,7 @@ class SearchController:
             tab.preview_view.destroy()
             tab.preview_view = ThumbnailGridView(tab.preview_container, thumbnail_size)
             self.env_init(only_preview_widgets=True)
+        tab.empty_tip_label.lift()
         if len(self.__queue_paths) > 0:
             tab.set_nav_visible(True)
         self.__smooth_preview(iter(results), B_min=50, B_max=300, r=10, m=1)
@@ -204,74 +241,72 @@ class SearchController:
             self.app.view.after_cancel(self.__show_toast_timer)
         self.__show_toast_timer = self.app.view.after(duration, lambda: toast.place_forget())
 
-    def __filter_and_enrich_results(self, results_iter):
+    def __build_filter(self) -> Callable[[FilterResult], bool]:
         threshold, ext, size_min, size_max, folder_filters, dedup = self.app.filter_controller.get_search_filters()
         ext_set = Setting.ext_group_map.get(ext)
         eps = 1e-3
         threshold -= eps
-        prev_similarity = None
-        prev_sizes = []
-        yielded = 0
-        omitted = 0
+        prev_similarity: float | None = None
+        prev_sizes: list[int] = []
 
-        raw_results = list(results_iter)
-        if not raw_results:
-            return
+        def keep(result: FilterResult) -> bool:
+            nonlocal prev_similarity, prev_sizes
+            if result.similarity < threshold:
+                return False
+            if ext_set and result.path.suffix.lower() not in ext_set:
+                return False
+            mb = result.size / (1024 * 1024)
+            if size_min is not None and mb < size_min:
+                return False
+            if size_max is not None and mb > size_max:
+                return False
+            if folder_filters and not any(file_ops.is_path_under(result.path, f) for f in folder_filters):
+                return False
+            if dedup:
+                if prev_similarity is None:
+                    prev_similarity = result.similarity
+                    prev_sizes = [result.size]
+                elif abs(result.similarity - prev_similarity) < eps:
+                    is_duplicate = result.size in prev_sizes
+                    prev_sizes.append(result.size)
+                    if is_duplicate:
+                        return False
+                else:
+                    prev_similarity = result.similarity
+                    prev_sizes = [result.size]
+            return True
 
+        return keep
+
+    @staticmethod
+    def __stat_result(resolve, img_path: str) -> tuple[os.stat_result, str]:
+        return os.stat(img_path), resolve(img_path)
+
+    def __iter_filtered_results(self, raw_results: Iterator[tuple[str, float]]) -> Iterator[FilterResult]:
+        cache = self.__results_cache = []
+        keep = self.__build_filter()
         resolve = unc_ops.fast_unc_resolver()
         with ThreadPoolExecutor(max_workers=50) as pool:
-            path_to_future = {img_path_str: pool.submit(lambda f: (os.stat(f), resolve(f)), img_path_str) for img_path_str, _ in raw_results}
-            for img_path_str, similarity in raw_results:
-                if similarity < threshold:
-                    break
+            futures = [(img_path, similarity, pool.submit(self.__stat_result, resolve, img_path))
+                       for img_path, similarity in raw_results]
+            for img_path, similarity, future in futures:
                 try:
-                    st, realpath = path_to_future[img_path_str].result()
+                    st, realpath = future.result()
                 except OSError:
-                    omitted += 1
                     continue
-                img_path = Path(realpath)
-                if ext_set and img_path.suffix.lower() not in ext_set:
-                    continue
-
-                if size_min is not None or size_max is not None:
-                    mb = st.st_size / (1024 * 1024)
-                    if size_min is not None and mb < size_min:
-                        continue
-                    if size_max is not None and mb > size_max:
-                        continue
-
-                if folder_filters:
-                    if not any(file_ops.is_path_under(img_path, f) for f in folder_filters):
-                        continue
-
-                if dedup:
-                    if prev_similarity is None:
-                        prev_similarity = similarity
-                        prev_sizes = [st.st_size]
-                    elif abs(similarity - prev_similarity) < eps:
-                        if st.st_size in prev_sizes:
-                            prev_sizes.append(st.st_size)
-                            continue
-                        prev_sizes.append(st.st_size)
-                    else:
-                        prev_similarity = similarity
-                        prev_sizes = [st.st_size]
-
-                mtime = datetime.datetime.fromtimestamp(st.st_mtime)
-                yielded += 1
-                yield (
-                    img_path,
-                    f"{st.st_size / 1024 / 1024:>6.2f}MB",
-                    mtime.strftime("%Y-%m-%d %H:%M:%S"),
-                    f"{similarity:>7.2f}%",
-                )
+                result = FilterResult(Path(realpath), similarity, st.st_size, st.st_mtime)
+                cache.append(result)
+                if keep(result):
+                    yield result
 
     def __search_image(self, input_data: Image.Image | str | None = None, source_path: str | None = None) -> None:
         assert self.app.search_tools
         if not self.__is_allow_to_search():
             return
         self.__is_finish_search.clear()
+        self.__results_cache = []
         tab = self.app.view.search_tab
+        tab.set_empty_tip()
         if len(self.__queue_paths) > 0 or input_data is None:
             tab.set_nav_state(self.__current_page + 1, len(self.__queue_paths))
             source_path = self.__queue_paths[self.__current_page]
@@ -293,16 +328,16 @@ class SearchController:
             return
         try:
             tab.preview_view.clear()
-            results = self.__filter_and_enrich_results(self.app.search_tools.checkout(input_data))
+            results = self.__iter_filtered_results(self.app.search_tools.checkout(input_data))
             try:
                 first_result = next(results)
             except StopIteration:
                 self.__handle_empty_result(self.app.search_tools.checkout_status)
                 self.__is_finish_search.set()
                 return
-            item = tab.preview_view.append(*first_result)
+            item = tab.preview_view.append(*first_result.row())
             tab.preview_view.selection_set(item)
-            self.__smooth_preview(results)
+            self.__smooth_preview(result.row() for result in results)
         except Exception as e:
             logging.error(f"搜索异常: {e}", exc_info=True)
             messagebox.showerror(_("错误"), _("搜索过程发生异常：\n{e}", e=str(e)))
@@ -350,14 +385,15 @@ class SearchController:
         return True
 
     def __handle_empty_result(self, status: SearchStatus) -> None:
+        tab = self.app.view.search_tab
         if status == SearchStatus.EMPTY_INDEX:
-            messagebox.showinfo(_("提示"), _("索引中还没有任何图像，也许\n你还没有点击更新索引目录？"))
+            tab.set_empty_tip(_("索引中还没有任何图像，也许\n你还没有点击更新索引目录？"))
         elif status == SearchStatus.EMPTY_INPUT:
             messagebox.showinfo(_("提示"), _("请输入搜索内容！"))
         elif status == SearchStatus.ENCODE_FAILED:
             messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
         else:
-            messagebox.showinfo(_("提示"), _("未匹配到任何图片！"))
+            tab.set_empty_tip(_("未匹配到任何图片！"))
 
     def __smooth_preview(self, results_iter, B_min=10, B_max=100, r=0.8, m=5) -> None:
         preview_batch_k = 0
@@ -380,6 +416,8 @@ class SearchController:
                 preview_iter = None
                 preview_batch_buffer = []
                 self.__is_finish_search.set()
+                if self.__pending_filter:
+                    self.apply_filters()
                 return
             self.__append_preview_results(buffer)
             preview_batch_k += 1
@@ -438,44 +476,78 @@ class SearchController:
 
 
 
-@dataclass(slots=True)
-class FilterSnapshot:
-    threshold: float = 0.0
-    ext: str = ""
-    size_min: str = ""
-    size_min_unit: str = ""
-    size_max: str = ""
-    size_max_unit: str = ""
-    folder_selection: tuple = ()
-    folder_all: bool = True
-    dedup: bool = False
-
-
 class FilterController:
     def __init__(self, app_controller: AppController) -> None:
         self.app = app_controller
         self._folder_paths: list[str] = []
-        self._saved_state: FilterSnapshot | None = None
+        self._apply_timer: str | None = None
 
-    def env_init(self) -> None:
-        fp = self.app.view.search_tab.filter_panel
+    def __create_filter_panel(self) -> FilterPanel:
+        tab = self.app.view.search_tab
+        fp = tab.filter_panel = FilterPanel(tab)
+        fp.attributes('-alpha', 0)
+        fp.protocol("WM_DELETE_WINDOW", fp.withdraw)
         for i in range(2):
             fp.dedup_check.invoke()
-        fp.folder_select_all.config(
-            command=lambda: fp.folder_listbox.select_set(0, tk.END) 
-            if fp.folder_select_all.instate(["selected"]) else fp.folder_listbox.selection_clear(0, tk.END)
-        )
-        fp.sim_scale.config(command=lambda value: (fp.sim_value.config(text=f"{int(float(value))}%")))
-        fp.folder_listbox.bind("<<ListboxSelect>>", lambda _: fp.folder_select_all.state(
-            ['selected'] if len(fp.folder_listbox.curselection()) == fp.folder_listbox.size() else ['!selected']
-        ))
+        fp.sim_scale.config(command=lambda value: fp.sim_value.config(text=f"{int(float(value))}%"))
+        fp.folder_select_all.state(['selected'])
         self.refresh_folder_filter()
-        fp.folder_select_all.invoke()
+
+        fp.sim_scale.bind("<ButtonRelease-1>", lambda _: self.schedule_apply())
+        fp.ext_combo.bind("<<ComboboxSelected>>", lambda _: self.schedule_apply())
+        for entry in (fp.size_min, fp.size_max):
+            entry.bind("<KeyRelease>", lambda _: self.schedule_apply(300))
+        for combo in (fp.size_min_unit, fp.size_max_unit):
+            combo.bind("<<ComboboxSelected>>", lambda _: self.schedule_apply())
+        fp.folder_listbox.bind("<<ListboxSelect>>", lambda _: self.__on_folder_selection_changed())
+        fp.folder_select_all.config(command=self.__on_select_all_toggled)
+        fp.dedup_check.config(command=self.schedule_apply)
+
+        fp.after(50, lambda: fp.attributes('-alpha', 1) or self.__align_to_preview(fp))
+        return fp
+
+    def __on_folder_selection_changed(self) -> None:
+        fp = self.app.view.search_tab.filter_panel
+        assert fp is not None
+        fp.folder_select_all.state(
+            ['selected'] if len(fp.folder_listbox.curselection()) == fp.folder_listbox.size() else ['!selected']
+        )
+        self.schedule_apply()
+
+    def __on_select_all_toggled(self) -> None:
+        fp = self.app.view.search_tab.filter_panel
+        assert fp is not None
+        if fp.folder_select_all.instate(["selected"]):
+            fp.folder_listbox.select_set(0, tk.END)
+        else:
+            fp.folder_listbox.selection_clear(0, tk.END)
+        self.schedule_apply()
+
+    def schedule_apply(self, delay: int = 0) -> None:
+        tab = self.app.view.search_tab
+        if self._apply_timer is not None:
+            tab.after_cancel(self._apply_timer)
+        self._apply_timer = tab.after(delay, self.apply_filters)
+
+    def apply_filters(self) -> None:
+        self._apply_timer = None
+        self.app.search_controller.apply_filters()
+
+    def __align_to_preview(self, fp: FilterPanel) -> None:
+        pc = self.app.view.search_tab.preview_container
+        dx = fp.winfo_rootx() - fp.winfo_x()
+        dy = fp.winfo_rooty() - fp.winfo_y()
+        fp.geometry(
+            f"+{pc.winfo_rootx() + pc.winfo_width() - fp.winfo_width() - dx}"
+            f"+{pc.winfo_rooty() + pc.winfo_height() - fp.winfo_height() - dy}"
+        )
 
     def refresh_folder_filter(self) -> None:
         dirs = self.app.setting.model.index.search_dir
         self._folder_paths = dirs
         fp = self.app.view.search_tab.filter_panel
+        if fp is None:
+            return
         lb = fp.folder_listbox
         lb.delete(0, tk.END)
         for d in self._folder_paths:
@@ -495,6 +567,8 @@ class FilterController:
             return value / 1024 if unit == "KB" else value
 
         fp = self.app.view.search_tab.filter_panel
+        if fp is None:
+            return 0.0, "", None, None, None, False
         threshold = fp.sim_scale.get()
         ext = fp.ext_combo.get()
         size_min = parse_size(fp.size_min.get(), fp.size_min_unit.get())
@@ -507,70 +581,10 @@ class FilterController:
         dedup = fp.dedup_check.instate(['selected'])
         return threshold, ext, size_min, size_max, folder_filters, dedup
 
-    def toggle_filter_panel(self) -> None:
+    def show_filter_panel(self) -> None:
         fp = self.app.view.search_tab.filter_panel
-        if fp.winfo_viewable():
-            fp.place_forget()
-        else:
-            self._saved_state = FilterSnapshot(
-                threshold=fp.sim_scale.get(),
-                ext=fp.ext_combo.get(),
-                size_min=fp.size_min.get(),
-                size_min_unit=fp.size_min_unit.get(),
-                size_max=fp.size_max.get(),
-                size_max_unit=fp.size_max_unit.get(),
-                folder_selection=fp.folder_listbox.curselection(),
-                folder_all=fp.folder_select_all.instate(["selected"]),
-                dedup=fp.dedup_check.instate(['selected']),
-            )
-            self.__place_filter_panel()
-            self.app.view.search_tab.search_entry.bind('<Configure>', lambda e: fp.winfo_viewable() and self.__place_filter_panel())
-
-    def __place_filter_panel(self) -> None:
-        tab = self.app.view.search_tab
-        tab.update_idletasks()
-        se_x = tab.search_entry.winfo_rootx() - tab.winfo_rootx()
-        se_y = tab.search_entry.winfo_rooty() - tab.winfo_rooty()
-        se_width = tab.search_entry.winfo_width()
-        se_height = tab.search_entry.winfo_height()
-        tab.filter_panel.place(x=se_x, y=se_y + se_height, width=se_width, height=tab.filter_panel.winfo_reqheight())
-        tab.filter_panel.lift()
-
-    def confirm_filter(self) -> None:
-        self.app.view.search_tab.filter_panel.place_forget()
-        self.app.search_controller.resend_last_search()
-
-    def cancel_filter(self) -> None:
-        s = self._saved_state
-        if s is None:
+        if fp is None:
+            self.__create_filter_panel()
             return
-        fp = self.app.view.search_tab.filter_panel
-        fp.sim_scale.set(s.threshold)
-        fp.sim_value.config(text=f"{int(s.threshold)}%")
-        fp.ext_combo.set(s.ext)
-        fp.size_min.delete(0, tk.END)
-        fp.size_min.insert(0, s.size_min)
-        fp.size_min_unit.set(s.size_min_unit)
-        fp.size_max.delete(0, tk.END)
-        fp.size_max.insert(0, s.size_max)
-        fp.size_max_unit.set(s.size_max_unit)
-        fp.folder_listbox.selection_clear(0, tk.END)
-        for idx in s.folder_selection:
-            fp.folder_listbox.selection_set(idx)
-        fp.folder_select_all.state(['selected'] if s.folder_all else ['!selected'])
-        if s.dedup != fp.dedup_check.instate(['selected']):
-            fp.dedup_check.invoke()
-        self.app.view.search_tab.filter_panel.place_forget()
-
-    def on_root_click(self, event) -> None:
-        fp = self.app.view.search_tab.filter_panel
-        if not fp.winfo_viewable():
-            return
-        w = event.widget
-        if w == self.app.view.search_tab.filter_btn:
-            return
-        while w:
-            if w == fp or isinstance(w, str):
-                return
-            w = w.master
-        self.cancel_filter()
+        fp.deiconify()
+        fp.lift()
