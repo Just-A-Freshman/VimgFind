@@ -107,7 +107,6 @@
   "模型「{id}」下载失败，请检查网络后重试。": "Model「{id}」download failed. Check your network and retry.",
   "模型「{id}」已安装，是否覆盖？": "Model「{id}」is already installed. Overwrite?",
   "模型「{id}」加载成功！": "Model「{id}」loaded successfully!",
-  "未匹配到任何图片！": "No matching images found!",
   "模型列表": "Model List",
   "模型详情": "Model Details",
   "匹配图片": "Matched Image",

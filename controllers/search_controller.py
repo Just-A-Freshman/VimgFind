@@ -205,7 +205,7 @@ class SearchController:
         tab.set_empty_tip()
         self.__is_finish_search.clear()
         tab.preview_view.clear()
-        self.__smooth_preview(result.row() for result in kept)
+        self.__smooth_preview(results_iter=(result.row() for result in kept), B_min=50, B_max=300, r=10, m=1)
 
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
@@ -396,7 +396,7 @@ class SearchController:
         elif status == SearchStatus.ENCODE_FAILED:
             messagebox.showerror(_("错误"), _("图片搜索失败！\n请查看config/data/error.log获取错误信息！"))
         else:
-            tab.set_empty_tip(_("未匹配到任何图片！"))
+            tab.set_empty_tip(_("筛选条件过于严格，试试在右上角把结果数调高？"))
 
     def __smooth_preview(self, results_iter, B_min=10, B_max=100, r=0.8, m=5) -> None:
         preview_batch_k = 0
