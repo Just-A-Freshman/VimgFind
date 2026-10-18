@@ -184,9 +184,8 @@ class SearchController:
 
     def reset_results(self) -> None:
         self.__results_cache = []
-        tab = self.app.view.search_tab
-        tab.set_empty_tip()
-        tab.preview_view.clear()
+        self.app.view.search_tab.set_empty_tip()
+        self.app.view.search_tab.preview_view.clear()
 
     def apply_filters(self) -> None:
         if not self.__results_cache:
@@ -196,16 +195,18 @@ class SearchController:
             return
         self.__pending_filter = False
         keep = self.__build_filter()
-        kept = [result for result in self.__results_cache if keep(result)]
+        rows = [result.row() for result in self.__results_cache if keep(result)]
         tab = self.app.view.search_tab
-        if not kept:
+        if rows == tab.preview_view.get_show_results():
+            return
+        if not rows:
             tab.preview_view.clear()
             tab.set_empty_tip(_("筛选条件过于严格，试试在右上角把结果数调高？"))
             return
         tab.set_empty_tip()
         self.__is_finish_search.clear()
         tab.preview_view.clear()
-        self.__smooth_preview(results_iter=(result.row() for result in kept), B_min=50, B_max=300, r=10, m=1)
+        self.__smooth_preview(results_iter=iter(rows), B_min=50, B_max=300, r=10, m=1)
 
     def set_preview_result_count(self, max_match_count: int) -> None:
         assert self.app.search_tools
