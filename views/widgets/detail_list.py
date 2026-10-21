@@ -6,16 +6,17 @@ from tkinter.ttk import Treeview, Scrollbar
 import tkinter as tk
 
 from .base import BasicImagePreviewView
+from .hover_highlight import HoverTreeview
 from config.settings import TkS
 from utils.i18n import _
 
 from tkinterdnd2 import DND_FILES
 
 
-class DetailListView(Treeview, BasicImagePreviewView):   # type:ignore
+class DetailListView(HoverTreeview, BasicImagePreviewView):   # type:ignore
     def __init__(self, master: tk.Widget, extra_columns: dict[str, int]) -> None:
         columns = {_("名称"): TkS(80), **extra_columns}
-        Treeview.__init__(self, master, show="headings", columns=list(columns))
+        HoverTreeview.__init__(self, master, show="headings", columns=list(columns))
         BasicImagePreviewView.__init__(self, master)
         self.__env_init(columns)
         

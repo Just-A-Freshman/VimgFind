@@ -3,10 +3,10 @@ from __future__ import annotations
 import tkinter as tk
 
 from ttkbootstrap.constants import LINK
-from ttkbootstrap import Button, Labelframe, Frame, Treeview, Scrollbar
+from ttkbootstrap import Button, Labelframe, Frame, Scrollbar
 
 from config.settings import TkS
-from views.widgets import simpledialog
+from views.widgets import HoverTreeview, simpledialog
 from utils.i18n import _
 
 
@@ -14,7 +14,7 @@ class ExcludeDialog(simpledialog.SingletonDialog):
     add_rule_btn: Button
     del_rule_btn: Button
     help_btn: Button
-    rules_tree: Treeview
+    rules_tree: HoverTreeview
     __slots__ = ("add_rule_btn", "del_rule_btn", "help_btn", "rules_tree")
 
     def __init__(self, parent) -> None:
@@ -40,8 +40,8 @@ class ExcludeDialog(simpledialog.SingletonDialog):
         btn_frame.pack(fill=tk.X, padx=TkS(2), pady=(TkS(1), TkS(2)))
         return btn_frame
 
-    def __set_rules_tree(self, parent) -> Treeview:
-        rules_tree = Treeview(parent, columns=("name",), show="", selectmode="browse", cursor="hand2")
+    def __set_rules_tree(self, parent) -> HoverTreeview:
+        rules_tree = HoverTreeview(parent, columns=("name",), show="", selectmode="browse", cursor="hand2")
         rules_tree.column("name", stretch=True)
         rules_tree.pack(fill=tk.BOTH, expand=True, padx=TkS(2), pady=(0, TkS(1)))
         scroll = Scrollbar(rules_tree, orient=tk.VERTICAL, command=rules_tree.yview)

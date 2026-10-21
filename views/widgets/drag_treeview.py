@@ -6,10 +6,11 @@ from typing import Callable
 from tkinter.ttk import Treeview
 import tkinter as tk
 
+from .hover_highlight import HoverTreeview
 from config.settings import TkS
 
 
-class DragReorderTreeview(Treeview):
+class DragReorderTreeview(HoverTreeview):
     def __init__(self, parent, ghost_column: int = 0, drag_delay: float = 0.3, **kwargs):
         super().__init__(parent, **kwargs)
         self.__ghost_column = ghost_column

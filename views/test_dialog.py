@@ -3,12 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 import tkinter as tk
 
-from ttkbootstrap import Button, Frame, Label, Labelframe, Treeview, Text, Scrollbar
+from ttkbootstrap import Button, Frame, Label, Labelframe, Text, Scrollbar
 from ttkbootstrap.constants import LINK
 
 from config.settings import WinInfo, TkS
 from config.types import MenuItemDef
 from utils.i18n import _
+from views.widgets import HoverTreeview
 
 
 @dataclass
@@ -61,9 +62,9 @@ class TestResultDialog(tk.Toplevel):
         summary.pack(side=tk.LEFT)
         return open_btn
 
-    def __set_execution_list(self) -> Treeview:
+    def __set_execution_list(self) -> HoverTreeview:
         column_info = (("status", "", TkS(40)), ("filename", _("副本文件"), TkS(300)), ("retcode", _("返回码"), TkS(80)))
-        tree = Treeview(self, columns=[i[0] for i in column_info], show="headings", selectmode="browse", cursor="hand2", height=4)
+        tree = HoverTreeview(self, columns=[i[0] for i in column_info], show="headings", selectmode="browse", cursor="hand2", height=4)
         for i, (column, text, width) in enumerate(column_info):
             tree.heading(column, text=text, anchor=tk.CENTER)
             tree.column(column, width=width, stretch=i == 1, anchor=tk.W if i == 1 else tk.CENTER)

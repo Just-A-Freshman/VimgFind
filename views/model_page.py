@@ -3,11 +3,12 @@ from __future__ import annotations
 from enum import StrEnum
 import tkinter as tk
 
-from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Treeview, Scrollbar, Text
+from ttkbootstrap import Button, Entry, Frame, Label, Labelframe, Progressbar, Scrollbar, Text
 
 from config.settings import TkS
 from config.types import ModelConfig
 from utils.i18n import _
+from views.widgets import HoverTreeview
 
 
 class ModelStatus(StrEnum):
@@ -19,7 +20,7 @@ class ModelStatus(StrEnum):
 
 class ModelFrame(Frame):
     load_local_model_entry: Entry
-    model_tree: Treeview
+    model_tree: HoverTreeview
     detail_desc_text: Text
     use_btn: Button
     uninstall_btn: Button
@@ -84,9 +85,9 @@ class ModelFrame(Frame):
         browser_button.grid(row=0, column=1, pady=(TkS(5), TkS(5)), padx=(TkS(2), TkS(5)), ipady=TkS(5), sticky=tk.EW)
         return browser_button
 
-    def __set_model_tree(self, parent) -> Treeview:
+    def __set_model_tree(self, parent) -> HoverTreeview:
         columns_info = [(_("名称"), 40), (_("标签"), 30), (_("类型"), 30), (_("大小"), 30)]
-        tree = Treeview(parent, show="headings", columns=[i[0] for i in columns_info])
+        tree = HoverTreeview(parent, show="headings", columns=[i[0] for i in columns_info])
         tree.grid(row=1, column=0, columnspan=2, sticky=tk.NSEW, padx=TkS(5))
         for text, width in columns_info:
             tree.heading(text, text=text, anchor=tk.CENTER)
