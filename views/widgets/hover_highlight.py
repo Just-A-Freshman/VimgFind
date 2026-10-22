@@ -11,7 +11,7 @@ from config.settings import TkS
 
 HOVER_BLEND = 0.4
 HOVER_TIP_DELAY = 800
-HOVER_TIP_OFFSET = 16
+HOVER_TIP_OFFSET = 50
 HOVER_TIP_WRAP = 360
 
 
@@ -104,7 +104,7 @@ class HoverHighlight:
         ).pack()
         tip.update_idletasks()
         pointer_x, pointer_y = self.winfo_pointerx(), self.winfo_pointery() # type: ignore
-        x, y = pointer_x + HOVER_TIP_OFFSET, pointer_y + HOVER_TIP_OFFSET
+        x, y = pointer_x, pointer_y + HOVER_TIP_OFFSET
         if x + tip.winfo_width() > self.winfo_screenwidth():   # type: ignore
             x = pointer_x - tip.winfo_width() - HOVER_TIP_OFFSET
         if y + tip.winfo_height() > self.winfo_screenheight():   # type: ignore
