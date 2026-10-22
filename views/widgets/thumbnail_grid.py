@@ -8,13 +8,14 @@ import math
 import os
 
 from .base import BasicImagePreviewView
+from .hover_highlight import HoverHighlight
 from .image_loader import ImageLoader
 from config.settings import TkS
 from utils.i18n import _
 import utils.file_ops as file_ops
 
 
-class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
+class ThumbnailGridView(HoverHighlight, tk.Canvas, BasicImagePreviewView):
     MARGIN: int = TkS(10)
     FONT_HEIGHT: int = TkS(32)
     SELECTED_PADDING: int = TkS(3)
@@ -30,6 +31,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         tk.Canvas.__init__(self, master)
         BasicImagePreviewView.__init__(self, master)
         self.__env_init()
+        self._init_hover()        # 必须放在 __env_init 之后：那里的 <Leave> 绑定没写 add="+"
         self.__thumbnail_size = TkS(thumbnail_size)
         self.__characters_size = int(self.__thumbnail_size / TkS(8))
 
@@ -87,6 +89,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
 
     def change_theme(self) -> None:
         super().change_theme()
+        self._clear_hover()        # 下面会把所有 rectangle 刷成 selectbg，悬停框不能留到那时候
         for item_id in self.find_all():
             if self.type(item_id) == "text":
                 self.itemconfig(item_id, fill=self.theme_color.fg)
@@ -100,6 +103,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         )
 
     def _on_scrollbar_scroll(self, *args) -> None:
+        self._clear_hover()
         if len(args) == 2:
             self.yview(*args)
         else:
@@ -163,6 +167,7 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self._scroll_to_item(target_item, event)
 
     def _scroll_to_item(self, item: str, event: tk.Event) -> None:
+        self._clear_hover()
         _, y = self._get_item_position(item)
         item_y1 = y
         item_y2 = y + self.__thumbnail_size + self.FONT_HEIGHT
@@ -298,6 +303,8 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
             return
         if canvas_item.get("border_id", ""):
             return
+        if item == self._hover_item:
+            self._clear_hover()
         x, y = self._get_item_position(item)
         pad = ThumbnailGridView.SELECTED_PADDING
         border_id = self.create_rectangle(
@@ -307,7 +314,31 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         canvas_item["border_id"] = border_id
         self.tag_lower(border_id)
 
+    def _set_item_hover(self, item: str, hovered: bool) -> None:
+        canvas_item = self.__canvas_items.get(item)
+        if not canvas_item:
+            return
+        hover_id = canvas_item.pop("hover_id", "")
+        if hover_id:
+            tk.Canvas.delete(self, hover_id)
+        if not hovered:
+            return
+        x, y = self._get_item_position(item)
+        pad = ThumbnailGridView.SELECTED_PADDING
+        canvas_item["hover_id"] = self.create_rectangle(
+            x - pad, y - pad, x + self.__thumbnail_size + pad, y + self.__thumbnail_size + pad,
+            fill=self._hover_color, outline=self._hover_color
+        )
+        self.tag_lower(canvas_item["hover_id"])
+
+    def _identify_hover(self, event: tk.Event) -> str:
+        return self.identify_item(event)
+
+    def _hover_allowed(self, item: str) -> bool:
+        return item not in self.__selected_items
+
     def _update_layout(self) -> None:
+        self._clear_hover()
         canvas_width = self.winfo_width()
         canvas_height = self.winfo_height()
         old_cols = self.__cols
@@ -391,10 +422,12 @@ class ThumbnailGridView(tk.Canvas, BasicImagePreviewView):
         self.__canvas_items.clear()
         self.__visible_items.clear()
         self.__selected_items.clear()
+        self._clear_hover()
         tk.Canvas.delete(self, tk.ALL)
         self._update_layout()
 
     def delete(self, *items) -> None:
+        self._clear_hover()
         for key in items:
             canvas_item = self.__canvas_items.pop(key, None)
             if not canvas_item:

@@ -6,7 +6,7 @@ from tkinter.ttk import Treeview
 from ttkbootstrap import Style
 from ttkbootstrap.colorutils import color_to_rgb
 
-HOVER_BLEND = 0.5
+HOVER_BLEND = 0.4
 
 
 class HoverHighlight:
