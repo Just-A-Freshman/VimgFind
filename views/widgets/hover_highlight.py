@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import tkinter as tk
+from tkinter import ttk
 from tkinter.ttk import Treeview
 
 from ttkbootstrap import Style
 from ttkbootstrap.colorutils import color_to_rgb
 
+from config.settings import TkS
+
 HOVER_BLEND = 0.4
+HOVER_TIP_DELAY = 800
+HOVER_TIP_OFFSET = 16
+HOVER_TIP_WRAP = 360
 
 
 class HoverHighlight:
@@ -17,6 +23,8 @@ class HoverHighlight:
         self._hover_color: str = ""
         self._hover_color_key: tuple[str, str] | None = None
         self._hover_targets: list[tk.Misc] = [self] # type: ignore
+        self._tip: tk.Toplevel | None = None
+        self._tip_job: str | None = None
         self._bind_hover(self) # type: ignore
         for target in extra_targets:
             self.add_hover_target(target)
@@ -29,6 +37,9 @@ class HoverHighlight:
 
     def _hover_allowed(self, item: str) -> bool:
         return True
+
+    def _hover_info(self, item: str) -> str:
+        return ""
 
     def _apply_hover_color(self, color: str) -> None:
         ...
@@ -44,19 +55,22 @@ class HoverHighlight:
 
     def _on_hover_motion(self, event: tk.Event) -> None:
         item = self._identify_hover(event)
-        if item and not self._hover_allowed(item):
-            item = ""
         if item == self._hover_item:
             return
         self._clear_hover()
         if not item:
             return
-        self._sync_hover_color()
         self._hover_item = item
-        self._set_item_hover(item, True)
+        if self._hover_allowed(item):
+            self._sync_hover_color()
+            self._set_item_hover(item, True)
+        self._schedule_hover_tip()
 
     def _on_hover_leave(self, event: tk.Event) -> None:
         widget = self.winfo_containing(event.x_root, event.y_root) # type: ignore
+        if widget is not None and widget.winfo_toplevel() is self._tip:
+            self._clear_hover()
+            return
         while widget is not None:
             if widget is self:
                 return
@@ -64,14 +78,51 @@ class HoverHighlight:
         self._clear_hover()
 
     def _clear_hover(self) -> None:
-        if not self._hover_item:
-            return
+        self._cancel_hover_tip()
         item, self._hover_item = self._hover_item, ""
-        self._set_item_hover(item, False)
+        if item:
+            self._set_item_hover(item, False)
+
+    def _schedule_hover_tip(self) -> None:
+        self._cancel_hover_tip()
+        if self._hover_info(self._hover_item):
+            self._tip_job = self.after(HOVER_TIP_DELAY, self._show_hover_tip) # type: ignore
+
+    def _show_hover_tip(self) -> None:
+        self._tip_job = None
+        if not self.winfo_exists() or not self._hover_item: # type: ignore
+            return
+        text = self._hover_info(self._hover_item)
+        if not text:
+            return
+        tip = tk.Toplevel(self) # type: ignore
+        tip.overrideredirect(True)
+        tip.attributes("-topmost", True)
+        ttk.Label(
+            tip, text=text, style="tooltip.TLabel", justify=tk.LEFT,
+            padding=TkS(6), wraplength=TkS(HOVER_TIP_WRAP),
+        ).pack()
+        tip.update_idletasks()
+        pointer_x, pointer_y = self.winfo_pointerx(), self.winfo_pointery() # type: ignore
+        x, y = pointer_x + HOVER_TIP_OFFSET, pointer_y + HOVER_TIP_OFFSET
+        if x + tip.winfo_width() > self.winfo_screenwidth():   # type: ignore
+            x = pointer_x - tip.winfo_width() - HOVER_TIP_OFFSET
+        if y + tip.winfo_height() > self.winfo_screenheight():   # type: ignore
+            y = pointer_y - tip.winfo_height() - HOVER_TIP_OFFSET
+        tip.geometry(f"+{max(x, 0)}+{max(y, 0)}")
+        self._tip = tip
+
+    def _cancel_hover_tip(self) -> None:
+        if self._tip_job:
+            self.after_cancel(self._tip_job)  # type: ignore
+            self._tip_job = None
+        if self._tip is not None:
+            self._tip.destroy()
+            self._tip = None
 
     def _sync_hover_color(self) -> None:
         colors = Style().colors
-        key = (colors.selectbg, colors.inputbg) # type: ignore
+        key = (colors.selectbg, colors.inputbg)   # type: ignore
         if key == self._hover_color_key:
             return
         self._hover_color_key = key

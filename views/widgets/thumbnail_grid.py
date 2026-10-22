@@ -337,6 +337,17 @@ class ThumbnailGridView(HoverHighlight, tk.Canvas, BasicImagePreviewView):
     def _hover_allowed(self, item: str) -> bool:
         return item not in self.__selected_items
 
+    def _hover_info(self, item: str) -> str:
+        values = self._results.get(item)
+        if not values:
+            return ""
+        path, *extra = values
+        size, mtime, similarity = [str(value).strip() for value in (*extra, "", "", "")[:3]]
+        return _(
+            "相似度：{similarity}\n名称：{name}\n路径：{parent}\n大小：{size}\n修改时间：{mtime}",
+            similarity=similarity, name=path.name, parent=str(path.parent), size=size, mtime=mtime,
+        )
+
     def _update_layout(self) -> None:
         self._clear_hover()
         canvas_width = self.winfo_width()

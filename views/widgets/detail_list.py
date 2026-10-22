@@ -81,6 +81,10 @@ class DetailListView(HoverTreeview, BasicImagePreviewView):   # type:ignore
         else:
             self.selection_set(item)
 
+    def _hover_info(self, item: str) -> str:
+        values = self._results.get(item)
+        return str(values[0]) if values else ""
+
     def append(self, image_path: Path, *extra_info: str | int) -> str:
         iid = self.generate_path_item(image_path)
         content = (image_path.name, *extra_info)
