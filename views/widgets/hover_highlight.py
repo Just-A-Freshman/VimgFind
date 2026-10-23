@@ -12,9 +12,10 @@ from config.settings import TkS
 HOVER_BLEND = 0.4
 HOVER_TIP_DELAY = 800
 HOVER_TIP_OFFSET = 50
-HOVER_TIP_WRAP = 360
+HOVER_TIP_WRAP = 10000
 HOVER_TIP_FADE_STEP = 0.2
 HOVER_TIP_FADE_MS = 20
+HOVER_CLEAR_DELAY = 80
 
 
 class Hovertip:
@@ -67,7 +68,7 @@ class Hovertip:
 
     def _step(self, window: tk.Toplevel, target: float) -> None:
         self._job = None
-        if window is not self.window:    # 过期动画自杀
+        if window is not self.window:
             return
         alpha = float(window.attributes("-alpha"))
         if abs(target - alpha) <= HOVER_TIP_FADE_STEP:
@@ -93,6 +94,7 @@ class HoverHighlight(tk.Misc):
         self._hover_targets: list[tk.Misc] = [self]
         self._tip = Hovertip()
         self._tip_job: str | None = None
+        self._hover_clear_job: str | None = None
         self._bind_hover(self)
         for target in extra_targets:
             self.add_hover_target(target)
@@ -118,40 +120,36 @@ class HoverHighlight(tk.Misc):
 
     def _bind_hover(self, widget: tk.Misc) -> None:
         widget.bind("<Motion>", self._on_hover_motion, add="+")
-        widget.bind("<Leave>", self._on_hover_leave, add="+")
+        widget.bind("<Leave>", lambda _: self._clear_hover(), add="+")
         widget.bind("<MouseWheel>", lambda _: self._clear_hover(), add="+")
 
     def _on_hover_motion(self, event: tk.Event) -> None:
         item = self._identify_hover(event)
+        if not item:
+            if self._hover_item and self._hover_clear_job is None:
+                self._hover_clear_job = self.after(HOVER_CLEAR_DELAY, lambda: setattr(self, "_hover_clear_job", None) or self._clear_hover())
+            return
+        self._cancel_hover_clear()
         if item == self._hover_item:
             return
-        if not item and self._tip.visible:
-            return
         self._clear_hover()
-        if not item:
-            return
         self._hover_item = item
         if self._hover_allowed(item):
             self._sync_hover_color()
             self._set_item_hover(item, True)
         self._schedule_hover_tip()
 
-    def _on_hover_leave(self, event: tk.Event) -> None:
-        widget = self.winfo_containing(event.x_root, event.y_root)
-        if widget is not None and widget.winfo_toplevel() is self._tip.window:
-            self._clear_hover()
-            return
-        while widget is not None:
-            if widget is self:
-                return
-            widget = getattr(widget, "master", None)
-        self._clear_hover()
-
     def _clear_hover(self) -> None:
+        self._cancel_hover_clear()
         self._cancel_hover_tip()
         item, self._hover_item = self._hover_item, ""
         if item:
             self._set_item_hover(item, False)
+
+    def _cancel_hover_clear(self) -> None:
+        if self._hover_clear_job is not None:
+            self.after_cancel(self._hover_clear_job)
+            self._hover_clear_job = None
 
     def _schedule_hover_tip(self) -> None:
         self._cancel_hover_tip()
